@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>claim</title>
+  <script src="claimed.js"></script>
+  <style>
+    body {
+      margin: 0;
+      background: url("bg.webp") no-repeat center top fixed;
+      background-size: cover;
+      background-color: #0d0c0a;
+      font-family: sans-serif;
+      color: #e7dbb8;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      max-width: 1500px;
+      padding: 15px 40px;
+      background-color: rgba(13, 12, 10, 0.15);
+      box-sizing: border-box;
+      border-bottom-left-radius: 20px;
+      border-bottom-right-radius: 20px;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .button {
+      padding: 8px 14px;
+      background-color: transparent;
+      border: 1px solid white;
+      color: white;
+      text-decoration: none;
+      font-weight: 500;
+      border-radius: 4px;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .button:hover {
+      background-color: white;
+      color: #0d0c0a;
+    }
+     .header-right a[href="index.html"] {
+      color: #b8860b;
+      border-color: #b8860b;
+    }
+
+    .header-right a[href="index.html"]:hover {
+      background-color: #b8860b;
+      color: #0d0c0a;
+    }
+
+    .content {
+      margin-top: 480px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    input {
+      width: 300px;
+      padding: 10px 16px;
+      font-size: 13px;
+      background-color: transparent;
+      border: 1px solid #000000;
+      border-radius: 4px;
+      color: #ffffff;
+      margin-bottom: 12px;
+      outline: none;
+    }
+
+    input::placeholder {
+      color: #ffffff55;
+      font-size: 15px;
+    }
+
+    button {
+      background: transparent;
+      color: #ffffffcc;
+      font-weight: 500;
+      font-size: 18px;
+      padding: 14px 22px;
+      border: 1px solid #000000;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: border 0.3s ease, transform 0.2s ease;
+    }
+
+    button:hover {
+      border-color: #222;
+      transform: translateY(-1px);
+    }
+#timer {
+  margin-top: 20px;
+  font-size: 16px;
+  font-weight: bold;
+  color: #f0e68c; /* м'який золотий */
+  background-color: rgba(0, 0, 0, 0.3);
+  padding: 6px 14px;
+  border-radius: 6px;
+}
+    #message {
+      margin-top: 1%;
+      font-size: 11px;
+      font-weight: 200;
+      opacity: 0.85;
+    }
+
+    .error {
+      color: #ff4c4c;
+    }
+
+    .success {
+      color: #7fea8c;
+    }
+   
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-left">
+      <img src="logo.png" alt="Logo" style="height: 32px;">
+    </div>
+    <div class="header-right">
+      <a href="index.html" class="button">Collection</a>
+      <a href="claim.html" class="button">CLAIM</a>
+      <a href="https://x.com/OwlOrderBTC" target="_blank">
+        <img src="twitter-white.png" alt="twitter" style="height: 30px;">
+      </a>
+    </div>
+  </header>
+
+  <div class="content">
+    <input id="address" placeholder="Enter your Ordinals address">
+    <button id="check">Check Access</button>
+    <button id="claim" style="display:none;">Secure now</button>
+    <p id="message"></p>
+    <p id="timer"></p>
+  </div>
+
+  <script>
+    const whitelist = [
+      "bc1pp0s5et5kmdhu23gtkfem5ag5wf30vvs3ytzp6sajnp28gpvqmggq5a7tqw",
+      "bc1pabc...",
+      "bc1pxyz..."
+    ];
+
+    const message = document.getElementById("message");
+    const claimBtn = document.getElementById("claim");
+       const timerEl = document.getElementById("timer");
+    const checkBtn = document.getElementById("check");
+    const addressInput = document.getElementById("address");
+
+    const startTime = new Date("2025-06-19T18:00:00Z"); // start UTC
+    const endTime = new Date("2025-06-20T18:00:00Z");   // end UTC
+
+    function updateTimer() {
+      const now = new Date();
+      if (now < startTime) {
+        const diff = startTime - now;
+        timerEl.textContent = `⏳ Starts in ${formatTime(diff)}`;
+        checkBtn.disabled = true;
+        claimBtn.disabled = true;
+      } else if (now >= startTime && now <= endTime) {
+        const diff = endTime - now;
+        timerEl.textContent = `✅ Ends in ${formatTime(diff)}`;
+        checkBtn.disabled = false;
+      } else {
+        timerEl.textContent = "⛔ Claiming has ended.";
+        checkBtn.disabled = true;
+        claimBtn.disabled = true;
+      }
+    }
+
+    function formatTime(ms) {
+      const total = Math.floor(ms / 1000);
+      const h = String(Math.floor(total / 3600)).padStart(2, '0');
+      const m = String(Math.floor((total % 3600) / 60)).padStart(2, '0');
+      const s = String(total % 60).padStart(2, '0');
+      return `${h}:${m}:${s}`;
+    }
+
+    setInterval(updateTimer, 1000);
+    updateTimer();
+
+    document.getElementById("check").onclick = () => {
+      const inputAddress = document.getElementById("address").value.trim();
+      message.className = "";
+
+      if (!whitelist.includes(inputAddress)) {
+        message.textContent = "❌ Your address is not on the whitelist.";
+        message.classList.add("error");
+        claimBtn.style.display = "none";
+      } else if (claimed.includes(inputAddress)) {
+        message.textContent = "✅ You already secured your spot!";
+        message.classList.add("success");
+        claimBtn.style.display = "none";
+      } else {
+        message.textContent = "✅ You're eligible. Click to secure your spot!";
+        message.classList.add("success");
+        claimBtn.style.display = "inline-block";
+      }
+    };
+
+    document.getElementById("claim").onclick = () => {
+      const inputAddress = document.getElementById("address").value.trim();
+      claimBtn.style.display = "none";
+      message.textContent = "🎉 You’ve successfully secured your spot!";
+      message.className = "success";
+      console.log("📌 Copy this address to claimed.js:", `"${inputAddress}",`);
+    };
+  </script>
+</body>
+</html>
+

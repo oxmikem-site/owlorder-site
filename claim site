@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Claim your Ordinals NFT</title>
+  <style>
+    body {
+      margin: 0;
+      background: #0d0d0d;
+      color: white;
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 18px;
+      cursor: pointer;
+      background: #00ffae;
+      border: none;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h1>CLAIM YOUR FREE SPOT</h1>
+  <button id="claim">Claim</button>
+
+  <script>
+    document.getElementById("claim").onclick = () => {
+      alert("Поки що ця кнопка нічого не робить. Йдемо далі!");
+    };
+  </script>
+</body>
+</html>
