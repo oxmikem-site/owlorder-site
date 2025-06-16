@@ -166,7 +166,7 @@
     </div>
   </header>
 
-  <div class="grid" id="gallery-container">
+  <div class="grid" id="grid">
     
     <div class="frame" data-id="1">
       <model-viewer src="models/1.glb"
@@ -2117,7 +2117,6 @@ environment-image="neutral"
                     disable-zoom>
       </model-viewer>
     </div>
-    <div id="pagination" style="margin: 20px; display: flex; gap: 10px; justify-content: center;"></div>
 
 <!-- Скрите посилання на зображення для кожного ID -->
 <div style="display: none">
@@ -2272,51 +2271,7 @@ environment-image="neutral"
 <a id="download_149" href="images/149.webp" download></a>
 <a id="download_150" href="images/150.webp" download></a>
 </div>
-<script>
-  const allFrames = Array.from(document.querySelectorAll('.frame'));
-  const container = document.getElementById('gallery-container');
-  const pagination = document.getElementById('pagination');
-  const pageSize = 20;
-  let currentPage = 1;
 
-  function renderPage(page) {
-    container.innerHTML = '';
-    const start = (page - 1) * pageSize;
-    const end = start + pageSize;
-
-    allFrames.forEach((frame, i) => {
-      frame.style.display = (i >= start && i < end) ? '' : 'none';
-      if (i >= start && i < end) container.appendChild(frame);
-    });
-
-    renderPagination(page);
-  }
-
-  function renderPagination(activePage) {
-    const totalPages = Math.ceil(allFrames.length / pageSize);
-    pagination.innerHTML = '';
-
-    for (let i = 1; i <= totalPages; i++) {
-      const btn = document.createElement('button');
-      btn.textContent = i;
-      btn.style.padding = '6px 12px';
-      btn.style.border = '1px solid white';
-      btn.style.background = i === activePage ? 'white' : 'transparent';
-      btn.style.color = i === activePage ? '#000' : '#fff';
-      btn.style.cursor = 'pointer';
-
-      btn.onclick = () => {
-        currentPage = i;
-        renderPage(i);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      };
-
-      pagination.appendChild(btn);
-    }
-  }
-
-  // Запускаємо після завантаження
-  renderPage(currentPage);
 </script>
 
   <script>  
