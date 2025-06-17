@@ -160,78 +160,77 @@
     <p id="timer"></p>
   </div>
 
-  <script>
-    const whitelist = [
-      "bc1pp0s5et5kmdhu23gtkfem5ag5wf30vvs3ytzp6sajnp28gpvqmggq5a7tqw",
-      "bc1pnxgc0hhtnn328nexdtnfc64s7w9x667lwm6ef7y0vag4yx3juy2qsgxn5f",
-      "bc1pc7evznevnllyhduedcapfgklexkju43qhuxltr02c85pmdqzjp7qkdp9lt"
-    ];
+<script>
+const API_URL = "https://script.google.com/macros/s/AKfycbz0xx7E_VJZXaqm_3uxlMAZ3RHitsK3jd-26JABE4e-g01qUzXYWLj9p1EHITgAF3ZGow/exec";
 
-    const message = document.getElementById("message");
-    const claimBtn = document.getElementById("claim");
-       const timerEl = document.getElementById("timer");
-    const checkBtn = document.getElementById("check");
-    const addressInput = document.getElementById("address");
+const message = document.getElementById("message");
+const claimBtn = document.getElementById("claim");
+const checkBtn = document.getElementById("check");
+const addressInput = document.getElementById("address");
+const timerEl = document.getElementById("timer");
 
-    const startTime = new Date("2025-06-19T18:00:00Z"); // start UTC
-    const endTime = new Date("2025-06-20T18:00:00Z");   // end UTC
+const startTime = new Date("2025-06-19T18:00:00Z");
+const endTime = new Date("2025-06-20T18:00:00Z");
 
-    function updateTimer() {
-      const now = new Date();
-      if (now < startTime) {
-        const diff = startTime - now;
-        timerEl.textContent = `⏳ Starts in ${formatTime(diff)}`;
-        checkBtn.disabled = true;
-        claimBtn.disabled = true;
-      } else if (now >= startTime && now <= endTime) {
-        const diff = endTime - now;
-        timerEl.textContent = `✅ Ends in ${formatTime(diff)}`;
-        checkBtn.disabled = false;
-      } else {
-        timerEl.textContent = "⛔ Claiming has ended.";
-        checkBtn.disabled = true;
-        claimBtn.disabled = true;
-      }
-    }
+function updateTimer() {
+  const now = new Date();
+  if (now < startTime) {
+    const diff = startTime - now;
+    timerEl.textContent = `⏳ Starts in ${formatTime(diff)}`;
+    checkBtn.disabled = true;
+    claimBtn.disabled = true;
+  } else if (now >= startTime && now <= endTime) {
+    const diff = endTime - now;
+    timerEl.textContent = `✅ Ends in ${formatTime(diff)}`;
+    checkBtn.disabled = false;
+  } else {
+    timerEl.textContent = "⛔ Claiming has ended.";
+    checkBtn.disabled = true;
+    claimBtn.disabled = true;
+  }
+}
 
-    function formatTime(ms) {
-      const total = Math.floor(ms / 1000);
-      const h = String(Math.floor(total / 3600)).padStart(2, '0');
-      const m = String(Math.floor((total % 3600) / 60)).padStart(2, '0');
-      const s = String(total % 60).padStart(2, '0');
-      return `${h}:${m}:${s}`;
-    }
+function formatTime(ms) {
+  const total = Math.floor(ms / 1000);
+  const h = String(Math.floor(total / 3600)).padStart(2, '0');
+  const m = String(Math.floor((total % 3600) / 60)).padStart(2, '0');
+  const s = String(total % 60).padStart(2, '0');
+  return `${h}:${m}:${s}`;
+}
 
-    setInterval(updateTimer, 1000);
-    updateTimer();
+setInterval(updateTimer, 1000);
+updateTimer();
 
-    document.getElementById("check").onclick = () => {
-      const inputAddress = document.getElementById("address").value.trim();
-      message.className = "";
+checkBtn.onclick = async () => {
+  const inputAddress = addressInput.value.trim();
+  message.className = "";
 
-      if (!whitelist.includes(inputAddress)) {
-        message.textContent = "❌ Your address is not on the whitelist.";
-        message.classList.add("error");
-        claimBtn.style.display = "none";
-      } else if (claimed.includes(inputAddress)) {
-        message.textContent = "✅ You already secured your spot!";
-        message.classList.add("success");
-        claimBtn.style.display = "none";
-      } else {
-        message.textContent = "✅ You're eligible. Click to secure your spot!";
-        message.classList.add("success");
-        claimBtn.style.display = "inline-block";
-      }
-    };
+  if (!inputAddress) return;
 
-    document.getElementById("claim").onclick = () => {
-      const inputAddress = document.getElementById("address").value.trim();
-      claimBtn.style.display = "none";
-      message.textContent = "🎉 You’ve successfully secured your spot!";
-      message.className = "success";
-      console.log("📌 Copy this address to claimed.js:", `"${inputAddress}",`);
-    };
-  </script>
+  const response = await fetch(`${API_URL}?address=${encodeURIComponent(inputAddress)}`);
+  const result = await response.text();
+
+  if (result === "already_claimed") {
+    message.textContent = "✅ Ви вже заклеймили!";
+    message.className = "success";
+    claimBtn.style.display = "none";
+  } else if (result === "success") {
+    message.textContent = "✅ Ви в вайтлисті. Натисніть кнопку нижче!";
+    message.className = "success";
+    claimBtn.style.display = "inline-block";
+  } else {
+    message.textContent = "❌ Вашої адреси немає в білому списку.";
+    message.className = "error";
+    claimBtn.style.display = "none";
+  }
+};
+
+claimBtn.onclick = () => {
+  message.textContent = "🎉 Ви успішно заклеймили!";
+  message.className = "success";
+  claimBtn.style.display = "none";
+};
+</script>
 </body>
 </html>
 
