@@ -1,45 +1,164 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Claim</title>
+  <link rel="icon" type="image/png" href="../logo2.png">
+  <script src="claimed.js"></script>
   <style>
     body {
-      background: black;
-      color: white;
+      margin: 0;
+      background: url("bg.webp") no-repeat center top fixed;
+      background-size: cover;
+      background-color: #0d0c0a;
       font-family: sans-serif;
+      color: #e7dbb8;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      max-width: 1500px;
+      padding: 15px 40px;
+      background-color: rgba(13, 12, 10, 0.15);
+      box-sizing: border-box;
+      border-bottom-left-radius: 20px;
+      border-bottom-right-radius: 20px;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .button {
+      padding: 8px 14px;
+      background-color: transparent;
+      border: 1px solid white;
+      color: white;
+      text-decoration: none;
+      font-weight: 500;
+      border-radius: 4px;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .button:hover {
+      background-color: white;
+      color: #0d0c0a;
+    }
+     .header-right a[href="index.html"] {
+      color: #9f6625;
+      border-color: #9f6625;
+    }
+
+    .header-right a[href="index.html"]:hover {
+      background-color: #9f6625;
+      color: #0d0c0a;
+    }
+
+    .content {
+      margin-top: 480px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
       text-align: center;
-      padding: 100px 20px;
     }
-    input, button {
-      margin: 10px;
-      padding: 12px;
-      font-size: 16px;
+
+    input {
+      width: 300px;
+      padding: 10px 16px;
+      font-size: 13px;
+      background-color: transparent;
+      border: 1px solid #000000;
+      border-radius: 4px;
+      color: #ffffff;
+      margin-bottom: 12px;
+      outline: none;
     }
-    #claim {
-      display: none;
+
+    input::placeholder {
+      color: #ffffff55;
+      font-size: 15px;
     }
-    .error { color: #ff4c4c; }
-    .success { color: #7fea8c; }
-    #timer {
-      margin-top: 20px;
+
+    button {
+      background: transparent;
+      color: #ffffffcc;
+      font-weight: 500;
       font-size: 18px;
-      color: #f0e68c;
+      padding: 14px 22px;
+      border: 1px solid #000000;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: border 0.3s ease, transform 0.2s ease;
     }
+
+    button:hover {
+      border-color: #222;
+      transform: translateY(-1px);
+    }
+#timer {
+  margin-top: 20px;
+  font-size: 16px;
+  font-weight: bold;
+  color: #9f6625; /* м'який золотий */
+  background-color: rgba(0, 0, 0, 0.3);
+  padding: 6px 14px;
+  border-radius: 6px;
+}
+    #message {
+      margin-top: 1%;
+      font-size: 11px;
+      font-weight: 200;
+      opacity: 0.85;
+    }
+
+    .error {
+      color: #ff4c4c;
+    }
+
+    .success {
+      color: #7fea8c;
+    }
+   
   </style>
 </head>
 <body>
+  <header>
+    <div class="header-left">
+      <img src="../logo.png" alt="Logo" style="height: 32px;">
+    </div>
+    <div class="header-right">
+      <a href="/collection" class="button">Collection</a>
+      <a href="/claim" class="button">CLAIM</a>
+      <a href="https://x.com/OwlOrderBTC" target="_blank">
+        <img src="../twitter-white.png" alt="twitter" style="height: 30px;">
+      </a>
+    </div>
+  </header>
 
-  <h1>Claim your spot</h1>
-
-  <input id="address" placeholder="Enter your Ordinals address" />
-  <br />
-  <button id="check">Check Access</button>
-  <button id="claim">Secure now</button>
-  <p id="message"></p>
-  <p id="timer"></p>
-
+  <div class="content">
+    <input id="address" placeholder="Enter your Ordinals address">
+    <button id="check">Check Access</button>
+    <button id="claim" style="display:none;">Secure now</button>
+    <p id="message"></p>
+    <p id="timer"></p>
+  </div>
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbz0xx7E_VJZXaqm_3uxlMAZ3RHitsK3jd-26JABE4e-g01qUzXYWLj9p1EHITgAF3ZGow/exec";
 
