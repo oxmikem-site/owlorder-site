@@ -214,37 +214,58 @@
     updateTimer();
 
     checkBtn.onclick = async () => {
-      const inputAddress = addressInput.value.trim();
-      message.className = "";
-      if (!inputAddress) return;
+  const inputAddress = addressInput.value.trim();
+  message.className = "";
+  if (!inputAddress) return;
 
-      try {
-        const response = await fetch(`${API_URL}?address=${encodeURIComponent(inputAddress)}`);
-        const result = await response.text();
+  try {
+    const response = await fetch(`${API_URL}?address=${encodeURIComponent(inputAddress)}`);
+    const result = await response.text();
 
-        if (result === "already_claimed") {
-  message.textContent = "✅ You have already claimed.";
-  message.className = "success";
-  claimBtn.style.display = "none";
-} else if (result === "success") {
-  message.textContent = "✅ You are eligible. Click the button below to claim.";
-  message.className = "success";
-  claimBtn.style.display = "inline-block";
-} else if (result === "not_in_whitelist") {
-  message.textContent = "❌ Your address is not on the whitelist.";
-  message.className = "error";
-  claimBtn.style.display = "none";
-} else {
-  message.textContent = "❌ Your address is not recognized.";
-  message.className = "error";
-  claimBtn.style.display = "none";
-}
+    if (result === "already_claimed") {
+      message.textContent = "✅ This wallet has already claimed.";
+      message.className = "success";
+      claimBtn.style.display = "none";
+    } else if (result === "eligible") {
+      message.textContent = "✅ You are eligible. Click the button below to claim.";
+      message.className = "success";
+      claimBtn.style.display = "inline-block";
+    } else if (result === "not_whitelisted") {
+      message.textContent = "❌ This wallet is not on the whitelist.";
+      message.className = "error";
+      claimBtn.style.display = "none";
+    } else {
+      message.textContent = "⚠️ Unexpected response.";
+      message.className = "error";
+      claimBtn.style.display = "none";
+    }
+  } catch (err) {
+    message.textContent = "⚠️ Server connection error.";
+    message.className = "error";
+  }
+};
 
-      } catch (err) {
-        message.textContent = "⚠️ Server connection error.";
-        message.className = "error";
-      }
-    };
+claimBtn.onclick = async () => {
+  const inputAddress = addressInput.value.trim();
+
+  try {
+    const response = await fetch(`${API_URL}?address=${encodeURIComponent(inputAddress)}&claim=true`);
+    const result = await response.text();
+
+    if (result === "success") {
+      message.textContent = "🎉 You have successfully claimed!";
+      message.className = "success";
+      claimBtn.style.display = "none";
+    } else {
+      message.textContent = "❌ Something went wrong. Try again.";
+      message.className = "error";
+    }
+  } catch (err) {
+    message.textContent = "⚠️ Server connection error.";
+    message.className = "error";
+  }
+};
+
 
     claimBtn.onclick = () => {
       message.textContent = "🎉 You have successfully claimed!";
