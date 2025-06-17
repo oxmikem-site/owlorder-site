@@ -1,237 +1,120 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Claim</title>
-  <link rel="icon" type="image/png" href="../logo2.png">
-  <script src="../claimed.js"></script>
   <style>
     body {
-      margin: 0;
-     background: url("../bg.webp") no-repeat center top fixed;
-      background-size: cover;
-      background-color: #0d0c0a;
-      font-family: sans-serif;
-      color: #e7dbb8;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-height: 100vh;
-      overflow-x: hidden;
-    }
-
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      width: 100%;
-      max-width: 1500px;
-      padding: 15px 40px;
-      background-color: rgba(13, 12, 10, 0.15);
-      box-sizing: border-box;
-      border-bottom-left-radius: 20px;
-      border-bottom-right-radius: 20px;
-    }
-
-    .header-left {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .header-right {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-
-    .button {
-      padding: 8px 14px;
-      background-color: transparent;
-      border: 1px solid white;
+      background: black;
       color: white;
-      text-decoration: none;
-      font-weight: 500;
-      border-radius: 4px;
-      transition: background 0.2s, color 0.2s;
-    }
-
-    .button:hover {
-      background-color: white;
-      color: #0d0c0a;
-    }
-     .header-right a[href="/collection"] {
-      color: #b8860b;
-      border-color: #b8860b;
-    }
-
-    .header-right a[href="/collection"]:hover {
-      background-color: #b8860b;
-      color: #0d0c0a;
-    }
-
-    .content {
-      margin-top: 480px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      font-family: sans-serif;
       text-align: center;
+      padding: 100px 20px;
     }
-
-    input {
-      width: 300px;
-      padding: 10px 16px;
-      font-size: 13px;
-      background-color: transparent;
-      border: 1px solid #000000;
-      border-radius: 4px;
-      color: #ffffff;
-      margin-bottom: 12px;
-      outline: none;
+    input, button {
+      margin: 10px;
+      padding: 12px;
+      font-size: 16px;
     }
-
-    input::placeholder {
-      color: #ffffff55;
-      font-size: 15px;
+    #claim {
+      display: none;
     }
-
-    button {
-      background: transparent;
-      color: #ffffffcc;
-      font-weight: 500;
+    .error { color: #ff4c4c; }
+    .success { color: #7fea8c; }
+    #timer {
+      margin-top: 20px;
       font-size: 18px;
-      padding: 14px 22px;
-      border: 1px solid #000000;
-      border-radius: 4px;
-      cursor: pointer;
-      transition: border 0.3s ease, transform 0.2s ease;
+      color: #f0e68c;
     }
-
-    button:hover {
-      border-color: #222;
-      transform: translateY(-1px);
-    }
-#timer {
-  margin-top: 20px;
-  font-size: 16px;
-  font-weight: bold;
-  color: #9f6625; /* м'який золотий */
-  background-color: rgba(0, 0, 0, 0.3);
-  padding: 6px 14px;
-  border-radius: 6px;
-}
-    #message {
-      margin-top: 1%;
-      font-size: 11px;
-      font-weight: 200;
-      opacity: 0.85;
-    }
-
-    .error {
-      color: #ff4c4c;
-    }
-
-    .success {
-      color: #7fea8c;
-    }
-   
   </style>
 </head>
 <body>
-  <header>
-    <div class="header-left">
-      <img src="../logo.png" alt="Logo" style="height: 32px;">
-    </div>
-    <div class="header-right">
-      <a href="/collection" class="button">Collection</a>
-      <a href="/claim" class="button">CLAIM</a>
-      <a href="https://x.com/OwlOrderBTC" target="_blank">
-        <img src="../twitter-white.png" alt="twitter" style="height: 30px;">
-      </a>
-    </div>
-  </header>
 
-  <div class="content">
-    <input id="address" placeholder="Enter your Ordinals address">
-    <button id="check">Check Access</button>
-    <button id="claim" style="display:none;">Secure now</button>
-    <p id="message"></p>
-    <p id="timer"></p>
-  </div>
+  <h1>Claim your spot</h1>
 
-<script>
-const API_URL = "https://script.google.com/macros/s/AKfycbz0xx7E_VJZXaqm_3uxlMAZ3RHitsK3jd-26JABE4e-g01qUzXYWLj9p1EHITgAF3ZGow/exec";
+  <input id="address" placeholder="Enter your Ordinals address" />
+  <br />
+  <button id="check">Check Access</button>
+  <button id="claim">Secure now</button>
+  <p id="message"></p>
+  <p id="timer"></p>
 
-const message = document.getElementById("message");
-const claimBtn = document.getElementById("claim");
-const checkBtn = document.getElementById("check");
-const addressInput = document.getElementById("address");
-const timerEl = document.getElementById("timer");
+  <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbz0xx7E_VJZXaqm_3uxlMAZ3RHitsK3jd-26JABE4e-g01qUzXYWLj9p1EHITgAF3ZGow/exec";
 
-const startTime = new Date("2025-06-17T09:05:00Z");
-const endTime = new Date("2025-06-20T18:00:00Z");
+    const message = document.getElementById("message");
+    const claimBtn = document.getElementById("claim");
+    const checkBtn = document.getElementById("check");
+    const addressInput = document.getElementById("address");
+    const timerEl = document.getElementById("timer");
 
-function updateTimer() {
-  const now = new Date();
-  if (now < startTime) {
-    const diff = startTime - now;
-    timerEl.textContent = `⏳ Starts in ${formatTime(diff)}`;
-    checkBtn.disabled = true;
-    claimBtn.disabled = true;
- } else if (now >= startTime && now <= endTime) {
-  const diff = endTime - now;
-  timerEl.textContent = `✅ Ends in ${formatTime(diff)}`;
-  checkBtn.disabled = false;
-  claimBtn.disabled = false;  // ✅ додаємо це
-} else {
-    timerEl.textContent = "⛔ Claiming has ended.";
-    checkBtn.disabled = true;
-    claimBtn.disabled = true;
-  }
-}
+    const startTime = new Date("2025-06-17T09:05:00Z");
+    const endTime = new Date("2025-06-20T18:00:00Z");
 
-function formatTime(ms) {
-  const total = Math.floor(ms / 1000);
-  const h = String(Math.floor(total / 3600)).padStart(2, '0');
-  const m = String(Math.floor((total % 3600) / 60)).padStart(2, '0');
-  const s = String(total % 60).padStart(2, '0');
-  return `${h}:${m}:${s}`;
-}
+    function updateTimer() {
+      const now = new Date();
+      if (now < startTime) {
+        const diff = startTime - now;
+        timerEl.textContent = `⏳ Starts in ${formatTime(diff)}`;
+        checkBtn.disabled = true;
+        claimBtn.disabled = true;
+      } else if (now >= startTime && now <= endTime) {
+        const diff = endTime - now;
+        timerEl.textContent = `✅ Ends in ${formatTime(diff)}`;
+        checkBtn.disabled = false;
+        claimBtn.disabled = false;
+      } else {
+        timerEl.textContent = "⛔ Claiming has ended.";
+        checkBtn.disabled = true;
+        claimBtn.disabled = true;
+      }
+    }
 
-setInterval(updateTimer, 1000);
-updateTimer();
+    function formatTime(ms) {
+      const total = Math.floor(ms / 1000);
+      const h = String(Math.floor(total / 3600)).padStart(2, '0');
+      const m = String(Math.floor((total % 3600) / 60)).padStart(2, '0');
+      const s = String(total % 60).padStart(2, '0');
+      return `${h}:${m}:${s}`;
+    }
 
-checkBtn.onclick = async () => {
-  const inputAddress = addressInput.value.trim();
-  message.className = "";
+    setInterval(updateTimer, 1000);
+    updateTimer();
 
-  if (!inputAddress) return;
+    checkBtn.onclick = async () => {
+      const inputAddress = addressInput.value.trim();
+      message.className = "";
+      if (!inputAddress) return;
 
-  const response = await fetch(`${API_URL}?address=${encodeURIComponent(inputAddress)}`);
-  const result = await response.text();
+      try {
+        const response = await fetch(`${API_URL}?address=${encodeURIComponent(inputAddress)}`);
+        const result = await response.text();
 
-  if (result === "already_claimed") {
-    message.textContent = "✅ Ви вже заклеймили!";
-    message.className = "success";
-    claimBtn.style.display = "none";
-  } else if (result === "success") {
-    message.textContent = "✅ Ви в вайтлисті. Натисніть кнопку нижче!";
-    message.className = "success";
-    claimBtn.style.display = "inline-block";
-  } else {
-    message.textContent = "❌ Вашої адреси немає в білому списку.";
-    message.className = "error";
-    claimBtn.style.display = "none";
-  }
-};
+        if (result === "already_claimed") {
+          message.textContent = "✅ Ви вже заклеймили!";
+          message.className = "success";
+          claimBtn.style.display = "none";
+        } else if (result === "success") {
+          message.textContent = "✅ Ви в вайтлисті. Натисніть кнопку нижче!";
+          message.className = "success";
+          claimBtn.style.display = "inline-block";
+        } else {
+          message.textContent = "❌ Вашої адреси немає в білому списку.";
+          message.className = "error";
+          claimBtn.style.display = "none";
+        }
+      } catch (err) {
+        message.textContent = "⚠️ Помилка підключення до сервера.";
+        message.className = "error";
+      }
+    };
 
-claimBtn.onclick = () => {
-  message.textContent = "🎉 Ви успішно заклеймили!";
-  message.className = "success";
-  claimBtn.style.display = "none";
-};
-</script>
+    claimBtn.onclick = () => {
+      message.textContent = "🎉 Ви успішно заклеймили!";
+      message.className = "success";
+      claimBtn.style.display = "none";
+    };
+  </script>
 </body>
 </html>
-
