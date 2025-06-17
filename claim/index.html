@@ -179,11 +179,12 @@ function updateTimer() {
     timerEl.textContent = `⏳ Starts in ${formatTime(diff)}`;
     checkBtn.disabled = true;
     claimBtn.disabled = true;
-  } else if (now >= startTime && now <= endTime) {
-    const diff = endTime - now;
-    timerEl.textContent = `✅ Ends in ${formatTime(diff)}`;
-    checkBtn.disabled = false;
-  } else {
+ } else if (now >= startTime && now <= endTime) {
+  const diff = endTime - now;
+  timerEl.textContent = `✅ Ends in ${formatTime(diff)}`;
+  checkBtn.disabled = false;
+  claimBtn.disabled = false;  // ✅ додаємо це
+} else {
     timerEl.textContent = "⛔ Claiming has ended.";
     checkBtn.disabled = true;
     claimBtn.disabled = true;
