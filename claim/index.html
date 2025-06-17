@@ -210,26 +210,31 @@
         const result = await response.text();
 
         if (result === "already_claimed") {
-          message.textContent = "✅ Ви вже заклеймили!";
-          message.className = "success";
-          claimBtn.style.display = "none";
-        } else if (result === "success") {
-          message.textContent = "✅ Ви в вайтлисті. Натисніть кнопку нижче!";
-          message.className = "success";
-          claimBtn.style.display = "inline-block";
-        } else {
-          message.textContent = "❌ Вашої адреси немає в білому списку.";
-          message.className = "error";
-          claimBtn.style.display = "none";
-        }
+  message.textContent = "✅ You have already claimed.";
+  message.className = "success";
+  claimBtn.style.display = "none";
+} else if (result === "success") {
+  message.textContent = "✅ You are eligible. Click the button below to claim.";
+  message.className = "success";
+  claimBtn.style.display = "inline-block";
+} else if (result === "not_in_whitelist") {
+  message.textContent = "❌ Your address is not on the whitelist.";
+  message.className = "error";
+  claimBtn.style.display = "none";
+} else {
+  message.textContent = "❌ Your address is not recognized.";
+  message.className = "error";
+  claimBtn.style.display = "none";
+}
+
       } catch (err) {
-        message.textContent = "⚠️ Помилка підключення до сервера.";
+        message.textContent = "⚠️ Server connection error.";
         message.className = "error";
       }
     };
 
     claimBtn.onclick = () => {
-      message.textContent = "🎉 Ви успішно заклеймили!";
+      message.textContent = "🎉 You have successfully claimed!";
       message.className = "success";
       claimBtn.style.display = "none";
     };
