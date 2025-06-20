@@ -188,6 +188,7 @@
       if (now < startTime) {
         const diff = startTime - now;
         timerEl.textContent = `⏳ Starts in ${formatTime(diff)}`;
+        checkBtn.disabled = true;
         claimBtn.disabled = true;
       } else if (now >= startTime && now <= endTime) {
         const diff = endTime - now;
