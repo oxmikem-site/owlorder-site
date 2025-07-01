@@ -161,13 +161,13 @@
   </div>
 
   <div id="wallet-modal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background-color:rgba(0,0,0,0.6); align-items:center; justify-content:center; z-index:1000;">
-    <multi-wallet-selector chains="bitcoin" theme="dark"></multi-wallet-selector>
+    <multi-wallet-selector id="multi-wallet" chains="bitcoin" theme="dark" style="display:none;"></multi-wallet-selector>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@ordinal/wallet-connect@latest/dist/index.global.js"></script>
   <script>
     const walletModal = document.getElementById("wallet-modal");
-    const selector = document.querySelector("multi-wallet-selector");
+    const selector = document.getElementById("multi-wallet");
 
     selector?.addEventListener("connect", async (event) => {
       const wallet = event.detail;
@@ -178,10 +178,12 @@
 
     function openWalletModal() {
       walletModal.style.display = "flex";
+      selector.style.display = "block";
     }
 
     function closeWalletModal() {
       walletModal.style.display = "none";
+      selector.style.display = "none";
     }
 
     function updateWalletUI(type, address, nftCount) {
