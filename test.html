@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OWL Dashboard</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      background-color: #0d0c0a;
+      color: #e7dbb8;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 40px;
+      background-color: rgba(13, 12, 10, 0.9);
+    }
+    .content {
+      padding: 40px;
+      max-width: 1200px;
+      margin: auto;
+    }
+    .block {
+      background-color: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      padding: 30px;
+      margin-bottom: 30px;
+    }
+    .block h2 {
+      margin-top: 0;
+    }
+    .profile-photo {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      margin-right: 16px;
+    }
+    .leaderboard img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      margin: 4px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div><img src="../logo.png" alt="Logo" style="height: 36px;" /></div>
+    <nav>
+      <a href="#profile" style="color:#9f6625; margin-right:20px;">Profile</a>
+      <a href="#raffles" style="color:#9f6625;">Raffles</a>
+    </nav>
+  </header>
+
+  <div class="content">
+    <!-- Блок 1: Інформація профілю -->
+    <div class="block">
+      <h2>My Stats</h2>
+      <div style="display:flex; align-items:center;">
+        <img src="https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png" class="profile-photo" id="twitter-avatar" />
+        <div>
+          <p id="nft-count">NFTs: 0</p>
+          <p id="points-info">Points: 0 earned / 0 used</p>
+          <p id="progress">Monthly Progress: +0</p>
+          <button id="connect-btn">Connect Wallet / Twitter</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Блок 2: Завдання / рафли -->
+    <div class="block">
+      <h2>Quests & Raffles</h2>
+      <ul>
+        <li>🔁 Retweet the latest post — +50 points</li>
+        <li>💬 Join our Discord — +100 points</li>
+        <li>🎁 Raffle: 1/1 Legendary Mint — <button>Join</button></li>
+      </ul>
+    </div>
+
+    <!-- Блок 3: Leaderboard -->
+    <div class="block leaderboard">
+      <h2>Top Flyers</h2>
+      <div>
+        <img src="https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png" title="@user1" />
+        <img src="https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png" title="@user2" />
+        <img src="https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png" title="@user3" />
+      </div>
+      <p>Top 3 by points</p>
+    </div>
+  </div>
+
+  <script>
+    // TODO: додати логіку підключення та оновлення даних
+    document.getElementById("connect-btn").onclick = () => {
+      alert("Login flow will go here");
+    }
+  </script>
+</body>
+</html>
