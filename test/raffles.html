@@ -1,1 +1,191 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>OWL Raffles</title>
+  <link rel="icon" type="image/png" href="../logo2.png">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: url("../bg1.webp") no-repeat center top fixed;
+      background-size: cover;
+      background-color: #0d0c0a;
+      color: white;
+      font-family: 'Inter', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      max-width: 100vw;
+      overflow-x: hidden;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      max-width: 1500px;
+      padding: 15px 40px;
+      background-color: rgba(13, 12, 10, 0.15);
+      box-sizing: border-box;
+      border-bottom-left-radius: 20px;
+      border-bottom-right-radius: 20px;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .button {
+      padding: 8px 14px;
+      background-color: transparent;
+      border: 1px solid white;
+      color: white;
+      text-decoration: none;
+      font-weight: 500;
+      border-radius: 6px;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .button:hover {
+      background-color: white;
+      color: #0d0c0a;
+    }
+
+    .header-right a[href="/collection"] {
+      color: #9f6625;
+      border-color: #9f6625;
+    }
+
+    .header-right a[href="/collection"]:hover {
+      background-color: #9f6625;
+      color: #0d0c0a;
+    }
+
+    .section-container {
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+      padding: 40px 20px;
+      max-width: 1500px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .section {
+      background-color: rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .section h2 {
+      font-size: 22px;
+      color: #e7dbb8;
+      border-bottom: 1px solid #9f6625;
+      padding-bottom: 6px;
+      margin-bottom: 14px;
+    }
+
+    .raffle-item {
+      margin-bottom: 10px;
+      padding: 10px;
+      background-color: rgba(255, 255, 255, 0.03);
+      border-radius: 8px;
+    }
+
+    .status-live {
+      color: lightgreen;
+    }
+
+    .status-closed {
+      color: crimson;
+    }
+
+    .raffle-details {
+      margin-top: 20px;
+      padding: 20px;
+      background-color: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+    }
+
+    .action-button {
+      display: inline-block;
+      margin-top: 10px;
+      padding: 8px 14px;
+      background-color: transparent;
+      border: 1px solid white;
+      border-radius: 6px;
+      color: white;
+      text-decoration: none;
+    }
+
+    .action-button:hover {
+      background-color: white;
+      color: #0d0c0a;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-left">
+      <img src="../logo.png" alt="Logo" style="height: 32px;">
+    </div>
+    <div class="header-right">
+      <a href="/test/index.html" class="button">Dashboard</a>
+      <a href="/test/profile.html" class="button">Profile</a>
+      <a href="/test/raffles.html" class="button">Raffles</a>
+      <a href="/collection" class="button">Collection</a>
+      <a href="https://x.com/OwlOrderBTC" target="_blank">
+        <img src="../twitter-white.png" alt="twitter" style="height: 30px;">
+      </a>
+    </div>
+  </header>
+
+  <div class="section-container">
+
+    <!-- Блок 1: список усіх -->
+    <div class="section">
+      <h2>All Raffles & Quests</h2>
+
+      <div class="raffle-item">
+        🟢 <strong>Genesis Raffle</strong> — <span class="status-live">Live</span>
+      </div>
+      <div class="raffle-item">
+        🟡 <strong>Retweet Quest</strong> — <span class="status-live">Live</span>
+      </div>
+      <div class="raffle-item">
+        🔴 <strong>Minting Madness</strong> — <span class="status-closed">Closed</span>
+      </div>
+    </div>
+
+    <!-- Блок 2: Деталі вибраного -->
+    <div class="section">
+      <h2>Quest Details: Retweet Quest</h2>
+      <div class="raffle-details">
+        <p><strong>Reward:</strong> +50 points</p>
+        <p><strong>Task:</strong> Like + Retweet this tweet:  
+          <a href="https://x.com/OwlOrderBTC/status/..." target="_blank" style="color:#9f6625;">View Tweet</a>
+        </p>
+        <p><strong>Deadline:</strong> July 10, 2025</p>
+        <p><strong>Wallet for Mint:</strong> bc1qexamplewalletaddress</p>
+        <a href="#" class="action-button">Join This Quest</a>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>
