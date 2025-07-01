@@ -136,15 +136,20 @@
     <div class="section profile-summary" id="dashboard-block">
       <h2>My Dashboard</h2>
       <div id="wallet-info">
-        <button class="button" onclick="showWalletOptions()">Connect Wallet</button>
-        <div id="wallet-options" style="margin-top: 10px; display: none;">
-          <button class="button" onclick="connectUniSat()">🟡 UniSat</button>
-          <button class="button" onclick="connectSpecificBtc('xverse')">🟠 Xverse</button>
-          <button class="button" onclick="connectSpecificBtc('magiceden')">🟢 Magic Eden</button>
-          <button class="button" onclick="connectSpecificBtc('hiro')">🔵 Hiro</button>
-        </div>
-      </div>
-    </div>
+        <button class="button" onclick="openWalletModal()">Connect Wallet</button>
+     <!-- Wallet Modal -->
+<div id="wallet-modal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background-color:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; z-index:1000;">
+  <div style="background:#1a1a1a; padding:30px; border-radius:12px; width:300px; box-shadow:0 0 20px rgba(0,0,0,0.5); text-align:center;">
+    <h3 style="color:#fff; margin-bottom:20px;">Choose Wallet</h3>
+    <button class="button" style="width:100%; margin-bottom:10px;" onclick="connectUniSat()">🟡 UniSat</button>
+    <button class="button" style="width:100%; margin-bottom:10px;" onclick="connectSpecificBtc('xverse')">🟠 Xverse</button>
+    <button class="button" style="width:100%; margin-bottom:10px;" onclick="connectSpecificBtc('magiceden')">🟢 Magic Eden</button>
+    <button class="button" style="width:100%;" onclick="connectSpecificBtc('hiro')">🔵 Hiro</button>
+    <br><br>
+    <button class="button" onclick="closeWalletModal()" style="margin-top:10px;">Cancel</button>
+  </div>
+</div>
+
 
     <!-- Блок 2 -->
     <div class="section tasks">
