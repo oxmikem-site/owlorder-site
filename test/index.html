@@ -136,7 +136,13 @@
     <div class="section profile-summary" id="dashboard-block">
       <h2>My Dashboard</h2>
       <div id="wallet-info">
-        <button class="button" onclick="connectWallet()">Connect Wallet</button>
+        <button class="button" onclick="showWalletOptions()">Connect Wallet</button>
+        <div id="wallet-options" style="margin-top: 10px; display: none;">
+          <button class="button" onclick="connectUniSat()">🟡 UniSat</button>
+          <button class="button" onclick="connectSpecificBtc('xverse')">🟠 Xverse</button>
+          <button class="button" onclick="connectSpecificBtc('magiceden')">🟢 Magic Eden</button>
+          <button class="button" onclick="connectSpecificBtc('hiro')">🔵 Hiro</button>
+        </div>
       </div>
     </div>
 
@@ -163,33 +169,63 @@
     </div>
   </div>
 
-  <!-- JS: Wallet Connect -->
   <script>
-    async function connectWallet() {
+    function showWalletOptions() {
+      document.getElementById("wallet-options").style.display = "block";
+    }
+
+    async function connectUniSat() {
       if (!window.unisat) {
         alert("UniSat Wallet not installed!");
         return;
       }
-
       try {
         const accounts = await window.unisat.requestAccounts();
         const address = accounts[0];
-
-        // Тимчасово: припустимо 3 NFT
-        const nftCount = 3;
-
-        document.getElementById("wallet-info").innerHTML = `
-          <p><strong>Wallet:</strong> ${shortenAddress(address)}</p>
-          <p><strong>NFTs owned:</strong> ${nftCount}</p>
-        `;
+        updateWalletUI("UniSat", address, 3);
       } catch (err) {
         console.error(err);
-        alert("Wallet connection failed.");
+        alert("UniSat connection failed.");
       }
+    }
+
+    async function connectSpecificBtc(target) {
+      const btc = window.btc;
+      if (!btc || !btc.provider) {
+        alert(`${capitalize(target)} Wallet not detected!`);
+        return;
+      }
+
+      const providerName = btc.provider?.name?.toLowerCase() || btc.provider?.id?.toLowerCase();
+      if (!providerName.includes(target)) {
+        alert(`${capitalize(target)} Wallet not active. Please switch or install it.`);
+        return;
+      }
+
+      try {
+        const result = await btc.request("getAddresses");
+        const address = result.addresses[0].address;
+        updateWalletUI(capitalize(target), address, 3);
+      } catch (err) {
+        console.error(err);
+        alert(`${capitalize(target)} wallet connection failed.`);
+      }
+    }
+
+    function updateWalletUI(type, address, nftCount) {
+      document.getElementById("wallet-info").innerHTML = `
+        <p><strong>Wallet:</strong> ${type}</p>
+        <p><strong>Address:</strong> ${shortenAddress(address)}</p>
+        <p><strong>NFTs owned:</strong> ${nftCount}</p>
+      `;
     }
 
     function shortenAddress(addr) {
       return addr.slice(0, 6) + "..." + addr.slice(-4);
+    }
+
+    function capitalize(str) {
+      return str.charAt(0).toUpperCase() + str.slice(1);
     }
   </script>
 </body>
