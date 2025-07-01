@@ -11,7 +11,203 @@
       box-sizing: border-box;
     }
 
+    body {<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>OWL Test Dashboard</title>
+  <link rel="icon" type="image/png" href="../logo2.png">
+  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
+      margin: 0;
+      background: url("../bg1.webp") no-repeat center top fixed;
+      background-size: cover;
+      background-color: #0d0c0a;
+      color: white;
+      font-family: 'Inter', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      max-width: 100vw;
+      overflow-x: hidden;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      max-width: 1500px;
+      padding: 15px 40px;
+      background-color: rgba(13, 12, 10, 0.15);
+      box-sizing: border-box;
+      border-bottom-left-radius: 20px;
+      border-bottom-right-radius: 20px;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .button {
+      padding: 8px 14px;
+      background-color: transparent;
+      border: 1px solid white;
+      color: white;
+      text-decoration: none;
+      font-weight: 500;
+      border-radius: 6px;
+      transition: background 0.2s, color 0.2s;
+      cursor: pointer;
+    }
+
+    .button:hover {
+      background-color: white;
+      color: #0d0c0a;
+    }
+
+    .header-right a[href="/collection"] {
+      color: #9f6625;
+      border-color: #9f6625;
+    }
+
+    .header-right a[href="/collection"]:hover {
+      background-color: #9f6625;
+      color: #0d0c0a;
+    }
+
+    .section-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: 30px;
+      padding: 40px 20px;
+      max-width: 1500px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .section {
+      background-color: rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .section h2 {
+      font-size: 22px;
+      color: #e7dbb8;
+      border-bottom: 1px solid #9f6625;
+      padding-bottom: 6px;
+      margin-bottom: 14px;
+    }
+
+    .leaderboard-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .leaderboard-item img {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      margin-right: 10px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-left">
+      <img src="../logo.png" alt="Logo" style="height: 32px;">
+    </div>
+    <div class="header-right">
+      <a href="/test/index.html" class="button">Dashboard</a>
+      <a href="/test/profile.html" class="button">Profile</a>
+      <a href="/test/raffles.html" class="button">Raffles</a>
+      <a href="/collection" class="button">Collection</a>
+      <a href="https://x.com/OwlOrderBTC" target="_blank">
+        <img src="../twitter-white.png" alt="twitter" style="height: 30px;">
+      </a>
+    </div>
+  </header>
+
+  <div class="section-container">
+    <!-- Блок 1: Wallet Connect -->
+    <div class="section profile-summary" id="dashboard-block">
+      <h2>My Dashboard</h2>
+      <div id="wallet-info">
+        <button class="button" onclick="connectWallet()">Connect Wallet</button>
+      </div>
+    </div>
+
+    <!-- Блок 2 -->
+    <div class="section tasks">
+      <h2>Raffles & Quests</h2>
+      <ul>
+        <li>🔥 Retweet the main post — +50 pts</li>
+        <li>✅ Join raffle "Genesis Drop" — status: Open</li>
+      </ul>
+    </div>
+
+    <!-- Блок 3 -->
+    <div class="section leaderboard">
+      <h2>Leaderboard</h2>
+      <div class="leaderboard-item">
+        <img src="https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png" alt="Pfp">
+        <span>🦉 @topowl — 1240 pts</span>
+      </div>
+      <div class="leaderboard-item">
+        <img src="https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png" alt="Pfp">
+        <span>🦉 @wiseone — 980 pts</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- JS: Wallet Connect -->
+  <script>
+    async function connectWallet() {
+      if (!window.unisat) {
+        alert("UniSat Wallet not installed!");
+        return;
+      }
+
+      try {
+        const accounts = await window.unisat.requestAccounts();
+        const address = accounts[0];
+
+        // Тимчасово: припустимо 3 NFT
+        const nftCount = 3;
+
+        document.getElementById("wallet-info").innerHTML = `
+          <p><strong>Wallet:</strong> ${shortenAddress(address)}</p>
+          <p><strong>NFTs owned:</strong> ${nftCount}</p>
+        `;
+      } catch (err) {
+        console.error(err);
+        alert("Wallet connection failed.");
+      }
+    }
+
+    function shortenAddress(addr) {
+      return addr.slice(0, 6) + "..." + addr.slice(-4);
+    }
+  </script>
+</body>
+</html>
+
       margin: 0;
       background: url("../bg1.webp") no-repeat center top fixed;
       background-size: cover;
