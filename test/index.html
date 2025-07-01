@@ -132,7 +132,6 @@
   </header>
 
   <div class="section-container">
-    <!-- Блок 1: Wallet Connect -->
     <div class="section profile-summary" id="dashboard-block">
       <h2>My Dashboard</h2>
       <div id="wallet-info">
@@ -140,19 +139,6 @@
       </div>
     </div>
 
-    <div id="wallet-modal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background-color:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; z-index:1000;">
-      <div style="background:#1a1a1a; padding:30px; border-radius:12px; width:300px; box-shadow:0 0 20px rgba(0,0,0,0.5); text-align:center;">
-        <h3 style="color:#fff; margin-bottom:20px;">Choose Wallet</h3>
-        <button class="button" style="width:100%; margin-bottom:10px;" onclick="connectUniSat()">🟡 UniSat</button>
-        <button class="button" style="width:100%; margin-bottom:10px;" onclick="connectSpecificBtc('xverse')">🟠 Xverse</button>
-        <button class="button" style="width:100%; margin-bottom:10px;" onclick="connectSpecificBtc('magiceden')">🟢 Magic Eden</button>
-        <button class="button" style="width:100%;" onclick="connectSpecificBtc('hiro')">🔵 Hiro</button>
-        <br><br>
-        <button class="button" onclick="closeWalletModal()" style="margin-top:10px;">Cancel</button>
-      </div>
-    </div>
-
-    <!-- Блок 2 -->
     <div class="section tasks">
       <h2>Raffles & Quests</h2>
       <ul>
@@ -161,7 +147,6 @@
       </ul>
     </div>
 
-    <!-- Блок 3 -->
     <div class="section leaderboard">
       <h2>Leaderboard</h2>
       <div class="leaderboard-item">
@@ -175,43 +160,28 @@
     </div>
   </div>
 
+  <div id="wallet-modal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background-color:rgba(0,0,0,0.6); align-items:center; justify-content:center; z-index:1000;">
+    <multi-wallet-selector chains="bitcoin" theme="dark"></multi-wallet-selector>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@ordinal/wallet-connect@latest/dist/index.global.js"></script>
   <script>
+    const walletModal = document.getElementById("wallet-modal");
+    const selector = document.querySelector("multi-wallet-selector");
+
+    selector?.addEventListener("connect", async (event) => {
+      const wallet = event.detail;
+      const address = wallet.address;
+      updateWalletUI(wallet.name, address, 3);
+      closeWalletModal();
+    });
+
     function openWalletModal() {
-      document.getElementById("wallet-modal").style.display = "flex";
+      walletModal.style.display = "flex";
     }
 
     function closeWalletModal() {
-      document.getElementById("wallet-modal").style.display = "none";
-    }
-
-    async function connectUniSat() {
-      if (!window.unisat) {
-        alert("UniSat Wallet not installed!");
-        return;
-      }
-      try {
-        const accounts = await window.unisat.requestAccounts();
-        const address = accounts[0];
-        updateWalletUI("UniSat", address, 3);
-      } catch (err) {
-        console.error(err);
-        alert("UniSat connection failed.");
-      }
-    }
-
-    async function connectSpecificBtc(target) {
-      if (!window.btc || !window.btc[target]) {
-        alert(`${capitalize(target)} Wallet not found.`);
-        return;
-      }
-      try {
-        const result = await window.btc[target].request("getAddresses");
-        const address = result.addresses[0].address;
-        updateWalletUI(capitalize(target), address, 3);
-      } catch (err) {
-        console.error(err);
-        alert(`${capitalize(target)} Wallet connection failed.`);
-      }
+      walletModal.style.display = "none";
     }
 
     function updateWalletUI(type, address, nftCount) {
@@ -224,10 +194,6 @@
 
     function shortenAddress(addr) {
       return addr.slice(0, 6) + "..." + addr.slice(-4);
-    }
-
-    function capitalize(str) {
-      return str.charAt(0).toUpperCase() + str.slice(1);
     }
   </script>
 </body>
