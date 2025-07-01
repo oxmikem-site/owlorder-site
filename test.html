@@ -5,7 +5,7 @@
   <title>OWL Test Dashboard</title>
   <link rel="icon" type="image/png" href="../logo2.png">
   <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Vollkorn:wght@700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     * {
       box-sizing: border-box;
@@ -17,7 +17,7 @@
       background-size: cover;
       background-color: #0d0c0a;
       color: white;
-      font-family: 'Vollkorn', serif;
+      font-family: 'Inter', sans-serif;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -57,7 +57,7 @@
       color: white;
       text-decoration: none;
       font-weight: 500;
-      border-radius: 4px;
+      border-radius: 6px;
       transition: background 0.2s, color 0.2s;
     }
 
@@ -76,90 +76,86 @@
       color: #0d0c0a;
     }
 
-    .twitter-icon {
-      width: 20px;
-      height: 20px;
-      filter: invert(1);
-    }
-
-    .section {
+    .section-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: 30px;
+      padding: 40px 20px;
       max-width: 1500px;
       width: 100%;
-      margin-top: 40px;
-      padding: 0 20px;
       box-sizing: border-box;
     }
 
+    .section {
+      background-color: rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      padding: 20px;
+    }
+
     .section h2 {
-      font-size: 24px;
+      font-size: 22px;
       color: #e7dbb8;
       border-bottom: 1px solid #9f6625;
-      padding-bottom: 8px;
-      margin-bottom: 16px;
-    }
-
-    .leaderboard, .tasks, .profile-summary {
-      background-color: rgba(255, 255, 255, 0.05);
-      border-radius: 10px;
-      padding: 16px;
-      margin-bottom: 40px;
-    }
-
-    .leaderboard img, .profile-summary img {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      margin-right: 10px;
+      padding-bottom: 6px;
+      margin-bottom: 14px;
     }
 
     .leaderboard-item {
       display: flex;
       align-items: center;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
+    }
+
+    .leaderboard-item img {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      margin-right: 10px;
     }
   </style>
 </head>
 <body>
   <header>
-  <div class="header-left">
-    <img src="../logo.png" alt="Logo" style="height: 32px;">
-  </div>
-  <div class="header-right">
-    <a href="/dashboard" class="button">Dashboard</a>
-    <a href="/profile" class="button">Profile</a>
-    <a href="/raffles" class="button">Raffles</a>
-    <a href="/collection" class="button">Collection</a>
-    <a href="https://x.com/OwlOrderBTC" target="_blank">
-      <img src="../twitter-white.png" alt="twitter" style="height: 30px;">
-    </a>
-  </div>
-</header>
-
-
-  <div class="section profile-summary">
-    <h2>My Dashboard</h2>
-    <p>Points earned: <strong>340</strong> | Claimed: <strong>120</strong></p>
-    <p>Progress last 30 days: 📈 +42%</p>
-    <p><em>(Connect Twitter & Wallet to see more)</em></p>
-  </div>
-
-  <div class="section tasks">
-    <h2>Raffles & Quests</h2>
-    <ul>
-      <li>🔥 Retweet the main post — +50 pts</li>
-      <li>✅ Join raffle "Genesis Drop" — status: Open</li>
-    </ul>
-  </div>
-
-  <div class="section leaderboard">
-    <h2>Leaderboard</h2>
-    <div class="leaderboard-item">
-      <img src="https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png" alt="Pfp">
-      <span>🦉 @topowl — 1240 pts</span>
+    <div class="header-left">
+      <img src="../logo.png" alt="Logo" style="height: 32px;">
     </div>
-    <div class="leaderboard-item">
-      <img src="https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png" alt="Pfp">
-      <span>🦉 @wiseone — 980 pts</span>
+    <div class="header-right">
+      <a href="#" class="button">Dashboard</a>
+      <a href="#" class="button">Profile</a>
+      <a href="#" class="button">Raffles</a>
+      <a href="/collection" class="button">Collection</a>
+      <a href="https://x.com/OwlOrderBTC" target="_blank">
+        <img src="../twitter-white.png" alt="twitter" style="height: 30px;">
+      </a>
+    </div>
+  </header>
+
+  <div class="section-container">
+    <div class="section profile-summary">
+      <h2>My Dashboard</h2>
+      <p>Points earned: <strong>340</strong> | Claimed: <strong>120</strong></p>
+      <p>Progress last 30 days: 📈 +42%</p>
+      <p><em>(Connect Twitter & Wallet to see more)</em></p>
+    </div>
+
+    <div class="section tasks">
+      <h2>Raffles & Quests</h2>
+      <ul>
+        <li>🔥 Retweet the main post — +50 pts</li>
+        <li>✅ Join raffle "Genesis Drop" — status: Open</li>
+      </ul>
+    </div>
+
+    <div class="section leaderboard">
+      <h2>Leaderboard</h2>
+      <div class="leaderboard-item">
+        <img src="https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png" alt="Pfp">
+        <span>🦉 @topowl — 1240 pts</span>
+      </div>
+      <div class="leaderboard-item">
+        <img src="https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png" alt="Pfp">
+        <span>🦉 @wiseone — 980 pts</span>
+      </div>
     </div>
   </div>
 </body>
