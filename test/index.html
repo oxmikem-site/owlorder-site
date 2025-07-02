@@ -158,6 +158,7 @@
     <div class="section profile-summary" id="dashboard-block">
       <h2>My Dashboard</h2>
       <div id="wallet-info"></div>
+      <div id="nft-list"></div>
     </div>
 
     <div class="section tasks">
@@ -194,6 +195,7 @@
   <script>
     const walletModal = document.getElementById("wallet-modal");
     const walletInfo = document.getElementById("wallet-info");
+    const nftList = document.getElementById("nft-list");
     const headerLogin = document.getElementById("header-login");
 
     function openWalletModal() {
@@ -228,11 +230,30 @@
       `;
       const authButtons = document.getElementById("auth-buttons");
       authButtons.querySelector("#header-login").outerHTML = '<button class="button" onclick="logout()">Logout</button>';
+      fetchNfts(address);
     }
 
     function logout() {
       localStorage.removeItem("connectedWallet");
       location.reload();
+    }
+
+    async function fetchNfts(address) {
+      nftList.innerHTML = '<p>Loading NFTs...</p>';
+      try {
+        const response = await fetch(`https://api-mainnet.magiceden.dev/v2/wallets/${address}/ordinals?collectionSymbol=owl`);
+        const data = await response.json();
+        const nfts = data.results || data;
+
+        if (nfts.length === 0) {
+          nftList.innerHTML = '<p>No OWL NFTs found in wallet.</p>';
+        } else {
+          nftList.innerHTML = `<p><strong>OWL NFTs owned:</strong> ${nfts.length}</p>` +
+            nfts.map(nft => `<div style="margin: 10px 0;"><img src="${nft.image}" alt="NFT" style="max-width: 100px; border-radius: 8px;"><p>${nft.name}</p></div>`).join('');
+        }
+      } catch (e) {
+        nftList.innerHTML = '<p>Error loading NFTs.</p>';
+      }
     }
 
     window.onload = () => {
