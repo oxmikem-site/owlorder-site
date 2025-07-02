@@ -122,7 +122,6 @@
       width: 100vw;
       height: 100vh;
       background-color: rgba(0, 0, 0, 0.6);
-      display: flex;
       align-items: center;
       justify-content: center;
       z-index: 1000;
@@ -143,7 +142,7 @@
     <div class="header-left">
       <img src="../logo.png" alt="Logo" style="height: 32px;">
     </div>
-    <div class="header-right">
+    <div class="header-right" id="auth-buttons">
       <a href="/test/index.html" class="button">Dashboard</a>
       <a href="/test/profile.html" class="button">Profile</a>
       <a href="/test/raffles.html" class="button">Raffles</a>
@@ -158,9 +157,7 @@
   <div class="section-container">
     <div class="section profile-summary" id="dashboard-block">
       <h2>My Dashboard</h2>
-      <div id="wallet-info">
-        <button class="button" id="connect-button">Login</button>
-      </div>
+      <div id="wallet-info"></div>
     </div>
 
     <div class="section tasks">
@@ -195,9 +192,9 @@
   </div>
 
   <script>
-    const loginButton = document.getElementById("connect-button");
-    const headerLogin = document.getElementById("header-login");
     const walletModal = document.getElementById("wallet-modal");
+    const walletInfo = document.getElementById("wallet-info");
+    const headerLogin = document.getElementById("header-login");
 
     function openWalletModal() {
       walletModal.style.display = "flex";
@@ -215,10 +212,8 @@
       try {
         const accounts = await window.unisat.requestAccounts();
         const address = accounts[0];
-        document.getElementById("wallet-info").innerHTML = `
-          <p><strong>Wallet:</strong> UniSat</p>
-          <p><strong>Address:</strong> ${address.slice(0, 6)}...${address.slice(-4)}</p>
-        `;
+        localStorage.setItem("connectedWallet", address);
+        updateUI(address);
         closeWalletModal();
       } catch (err) {
         console.error(err);
@@ -226,8 +221,30 @@
       }
     }
 
-    loginButton.addEventListener("click", openWalletModal);
-    headerLogin.addEventListener("click", openWalletModal);
+    function updateUI(address) {
+      walletInfo.innerHTML = `
+        <p><strong>Wallet:</strong> UniSat</p>
+        <p><strong>Address:</strong> ${address.slice(0, 6)}...${address.slice(-4)}</p>
+      `;
+      const authButtons = document.getElementById("auth-buttons");
+      authButtons.querySelector("#header-login").outerHTML = '<button class="button" onclick="logout()">Logout</button>';
+    }
+
+    function logout() {
+      localStorage.removeItem("connectedWallet");
+      location.reload();
+    }
+
+    window.onload = () => {
+      const savedAddress = localStorage.getItem("connectedWallet");
+      if (savedAddress) {
+        updateUI(savedAddress);
+      } else {
+        walletInfo.innerHTML = '<button class="button" id="connect-button">Login</button>';
+        document.getElementById("connect-button").addEventListener("click", openWalletModal);
+        document.getElementById("header-login").addEventListener("click", openWalletModal);
+      }
+    };
   </script>
 </body>
 </html>
