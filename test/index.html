@@ -113,6 +113,29 @@
       border-radius: 50%;
       margin-right: 10px;
     }
+
+    #wallet-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: rgba(0, 0, 0, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    #wallet-modal .modal-content {
+      background: #1a1a1a;
+      padding: 30px;
+      border-radius: 12px;
+      width: 300px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+      text-align: center;
+    }
   </style>
 </head>
 <body>
@@ -125,6 +148,7 @@
       <a href="/test/profile.html" class="button">Profile</a>
       <a href="/test/raffles.html" class="button">Raffles</a>
       <a href="/collection" class="button">Collection</a>
+      <button class="button" id="header-login">Login</button>
       <a href="https://x.com/OwlOrderBTC" target="_blank">
         <img src="../twitter-white.png" alt="twitter" style="height: 30px;">
       </a>
@@ -135,7 +159,7 @@
     <div class="section profile-summary" id="dashboard-block">
       <h2>My Dashboard</h2>
       <div id="wallet-info">
-        <button class="button" id="connect-button">Connect Wallet</button>
+        <button class="button" id="connect-button">Login</button>
       </div>
     </div>
 
@@ -160,35 +184,50 @@
     </div>
   </div>
 
-  <script type="module">
-    import { Onboarding } from "https://unpkg.com/@btc-dapp/onboarding@latest";
+  <!-- Modal -->
+  <div id="wallet-modal">
+    <div class="modal-content">
+      <h3 style="color:#fff; margin-bottom:20px;">Choose Wallet</h3>
+      <button class="button" onclick="connectUniSat()">🟡 UniSat</button>
+      <br><br>
+      <button class="button" onclick="closeWalletModal()" style="margin-top:10px;">Cancel</button>
+    </div>
+  </div>
 
-    window.addEventListener("DOMContentLoaded", () => {
-      const connectButton = document.getElementById("connect-button");
+  <script>
+    const loginButton = document.getElementById("connect-button");
+    const headerLogin = document.getElementById("header-login");
+    const walletModal = document.getElementById("wallet-modal");
 
-      if (connectButton) {
-        connectButton.addEventListener("click", async () => {
-          try {
-            const onboarding = new Onboarding();
-            const wallets = await onboarding.getAccounts();
+    function openWalletModal() {
+      walletModal.style.display = "flex";
+    }
 
-            if (wallets && wallets.length > 0) {
-              const wallet = wallets[0];
-              const walletInfo = document.getElementById("wallet-info");
-              walletInfo.innerHTML = `
-                <p><strong>Wallet:</strong> ${wallet.name}</p>
-                <p><strong>Address:</strong> ${wallet.address.slice(0, 6)}...${wallet.address.slice(-4)}</p>
-              `;
-            } else {
-              alert("No supported wallets found. Please install or open a wallet supporting Ordinals.");
-            }
-          } catch (e) {
-            alert("Failed to connect wallet.");
-            console.error(e);
-          }
-        });
+    function closeWalletModal() {
+      walletModal.style.display = "none";
+    }
+
+    async function connectUniSat() {
+      if (!window.unisat) {
+        alert("UniSat Wallet not installed!");
+        return;
       }
-    });
+      try {
+        const accounts = await window.unisat.requestAccounts();
+        const address = accounts[0];
+        document.getElementById("wallet-info").innerHTML = `
+          <p><strong>Wallet:</strong> UniSat</p>
+          <p><strong>Address:</strong> ${address.slice(0, 6)}...${address.slice(-4)}</p>
+        `;
+        closeWalletModal();
+      } catch (err) {
+        console.error(err);
+        alert("UniSat connection failed.");
+      }
+    }
+
+    loginButton.addEventListener("click", openWalletModal);
+    headerLogin.addEventListener("click", openWalletModal);
   </script>
 </body>
 </html>
