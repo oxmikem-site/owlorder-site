@@ -7,10 +7,7 @@
   <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
-    * {
-      box-sizing: border-box;
-    }
-
+    * { box-sizing: border-box; }
     body {
       margin: 0;
       background: url("../bg1.webp") no-repeat center top fixed;
@@ -24,7 +21,6 @@
       max-width: 100vw;
       overflow-x: hidden;
     }
-
     header {
       display: flex;
       justify-content: space-between;
@@ -37,19 +33,8 @@
       border-bottom-left-radius: 20px;
       border-bottom-right-radius: 20px;
     }
-
-    .header-left {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .header-right {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-
+    .header-left { display: flex; align-items: center; gap: 10px; }
+    .header-right { display: flex; align-items: center; gap: 16px; }
     .button {
       padding: 8px 14px;
       background-color: transparent;
@@ -61,22 +46,15 @@
       transition: background 0.2s, color 0.2s;
       cursor: pointer;
     }
-
-    .button:hover {
-      background-color: white;
-      color: #0d0c0a;
-    }
-
+    .button:hover { background-color: white; color: #0d0c0a; }
     .header-right a[href="/collection"] {
       color: #9f6625;
       border-color: #9f6625;
     }
-
     .header-right a[href="/collection"]:hover {
       background-color: #9f6625;
       color: #0d0c0a;
     }
-
     .section-container {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
@@ -86,13 +64,11 @@
       width: 100%;
       box-sizing: border-box;
     }
-
     .section {
       background-color: rgba(255, 255, 255, 0.06);
       border-radius: 12px;
       padding: 20px;
     }
-
     .section h2 {
       font-size: 22px;
       color: #e7dbb8;
@@ -100,20 +76,17 @@
       padding-bottom: 6px;
       margin-bottom: 14px;
     }
-
     .leaderboard-item {
       display: flex;
       align-items: center;
       margin-bottom: 10px;
     }
-
     .leaderboard-item img {
       width: 36px;
       height: 36px;
       border-radius: 50%;
       margin-right: 10px;
     }
-
     #wallet-modal {
       display: none;
       position: fixed;
@@ -126,7 +99,6 @@
       justify-content: center;
       z-index: 1000;
     }
-
     #wallet-modal .modal-content {
       background: #1a1a1a;
       padding: 30px;
@@ -187,6 +159,7 @@
     <div class="modal-content">
       <h3 style="color:#fff; margin-bottom:20px;">Choose Wallet</h3>
       <button class="button" onclick="connectUniSat()">🟡 UniSat</button>
+      <button class="button" onclick="connectXverse()">🟠 Xverse</button>
       <br><br>
       <button class="button" onclick="closeWalletModal()" style="margin-top:10px;">Cancel</button>
     </div>
@@ -215,7 +188,8 @@
         const accounts = await window.unisat.requestAccounts();
         const address = accounts[0];
         localStorage.setItem("connectedWallet", address);
-        updateUI(address);
+        localStorage.setItem("walletProvider", "UniSat");
+        updateUI(address, "UniSat");
         closeWalletModal();
       } catch (err) {
         console.error(err);
@@ -223,9 +197,27 @@
       }
     }
 
-    function updateUI(address) {
+    async function connectXverse() {
+      if (!window.btc || !window.btc.request) {
+        alert("Xverse Wallet not installed!");
+        return;
+      }
+      try {
+        const result = await window.btc.request("getAddresses");
+        const address = result.addresses[0].address;
+        localStorage.setItem("connectedWallet", address);
+        localStorage.setItem("walletProvider", "Xverse");
+        updateUI(address, "Xverse");
+        closeWalletModal();
+      } catch (err) {
+        console.error(err);
+        alert("Xverse connection failed.");
+      }
+    }
+
+    function updateUI(address, provider) {
       walletInfo.innerHTML = `
-        <p><strong>Wallet:</strong> UniSat</p>
+        <p><strong>Wallet:</strong> ${provider}</p>
         <p><strong>Address:</strong> ${address.slice(0, 6)}...${address.slice(-4)}</p>
       `;
       const authButtons = document.getElementById("auth-buttons");
@@ -235,6 +227,7 @@
 
     function logout() {
       localStorage.removeItem("connectedWallet");
+      localStorage.removeItem("walletProvider");
       location.reload();
     }
 
@@ -258,8 +251,9 @@
 
     window.onload = () => {
       const savedAddress = localStorage.getItem("connectedWallet");
-      if (savedAddress) {
-        updateUI(savedAddress);
+      const savedProvider = localStorage.getItem("walletProvider");
+      if (savedAddress && savedProvider) {
+        updateUI(savedAddress, savedProvider);
       } else {
         walletInfo.innerHTML = '<button class="button" id="connect-button">Login</button>';
         document.getElementById("connect-button").addEventListener("click", openWalletModal);
