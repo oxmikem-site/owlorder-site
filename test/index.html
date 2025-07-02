@@ -241,7 +241,7 @@
     async function fetchNfts(address) {
       nftList.innerHTML = '<p>Loading NFTs...</p>';
       try {
-        const response = await fetch(`https://api-mainnet.magiceden.dev/v2/wallets/${address}/ordinals?collectionSymbol=owl`);
+        const response = await fetch(`https://api-mainnet.magiceden.dev/v2/wallets/${address}/ordinals?collectionSymbol=ord-owl`);
         const data = await response.json();
         const nfts = data.results || data;
 
