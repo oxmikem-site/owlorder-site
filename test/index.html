@@ -158,8 +158,8 @@
   <div id="wallet-modal">
     <div class="modal-content">
       <h3 style="color:#fff; margin-bottom:20px;">Choose Wallet</h3>
-      <button class="button" onclick="connectUniSat()">🟡 UniSat</button>
-      <button class="button" onclick="connectXverse()">🟠 Xverse</button>
+      <button class="button" onclick="connectWallet('UniSat')">🟡 UniSat</button>
+      <button class="button" onclick="connectWallet('Xverse')">🟠 Xverse</button>
       <br><br>
       <button class="button" onclick="closeWalletModal()" style="margin-top:10px;">Cancel</button>
     </div>
@@ -179,49 +179,42 @@
       walletModal.style.display = "none";
     }
 
-    async function connectUniSat() {
-      if (!window.unisat) {
-        alert("UniSat Wallet not installed!");
-        return;
-      }
+    async function connectWallet(provider) {
       try {
-        const accounts = await window.unisat.requestAccounts();
-        const address = accounts[0];
+        let address;
+        if (provider === 'UniSat') {
+          if (!window.unisat) throw new Error("UniSat Wallet not installed!");
+          const accounts = await window.unisat.requestAccounts();
+          address = accounts[0];
+        } else if (provider === 'Xverse') {
+          if (!window.btc || !window.btc.request) throw new Error("Xverse Wallet not installed!");
+          const result = await window.btc.request("getAddresses");
+          address = result.addresses[0].address;
+        }
         localStorage.setItem("connectedWallet", address);
-        localStorage.setItem("walletProvider", "UniSat");
-        updateUI(address, "UniSat");
+        localStorage.setItem("walletProvider", provider);
+        updateUI(address, provider);
         closeWalletModal();
       } catch (err) {
-        console.error(err);
-        alert("UniSat connection failed.");
-      }
-    }
-
-    async function connectXverse() {
-      if (!window.btc || !window.btc.request) {
-        alert("Xverse Wallet not installed!");
-        return;
-      }
-      try {
-        const result = await window.btc.request("getAddresses");
-        const address = result.addresses[0].address;
-        localStorage.setItem("connectedWallet", address);
-        localStorage.setItem("walletProvider", "Xverse");
-        updateUI(address, "Xverse");
-        closeWalletModal();
-      } catch (err) {
-        console.error(err);
-        alert("Xverse connection failed.");
+        alert(err.message);
       }
     }
 
     function updateUI(address, provider) {
-      walletInfo.innerHTML = `
-        <p><strong>Wallet:</strong> ${provider}</p>
-        <p><strong>Address:</strong> ${address.slice(0, 6)}...${address.slice(-4)}</p>
-      `;
+      walletInfo.textContent = "";
+      const walletText = document.createElement("p");
+      walletText.innerHTML = `<strong>Wallet:</strong> ${provider}`;
+      const addressText = document.createElement("p");
+      addressText.innerHTML = `<strong>Address:</strong> ${address.slice(0, 6)}...${address.slice(-4)}`;
+      walletInfo.appendChild(walletText);
+      walletInfo.appendChild(addressText);
+
       const authButtons = document.getElementById("auth-buttons");
-      authButtons.querySelector("#header-login").outerHTML = '<button class="button" onclick="logout()">Logout</button>';
+      const logoutBtn = document.createElement("button");
+      logoutBtn.className = "button";
+      logoutBtn.textContent = "Logout";
+      logoutBtn.onclick = logout;
+      authButtons.replaceChild(logoutBtn, headerLogin);
       fetchNfts(address);
     }
 
@@ -235,10 +228,11 @@
       nftList.innerHTML = '<p>Loading NFTs...</p>';
       try {
         const response = await fetch(`https://api-mainnet.magiceden.dev/v2/wallets/${address}/ordinals?collectionSymbol=ord-owl`);
+        if (!response.ok) throw new Error("Failed to fetch NFTs");
         const data = await response.json();
         const nfts = data.results || data;
 
-        if (nfts.length === 0) {
+        if (!nfts.length) {
           nftList.innerHTML = '<p>No OWL NFTs found in wallet.</p>';
         } else {
           nftList.innerHTML = `<p><strong>OWL NFTs owned:</strong> ${nfts.length}</p>` +
@@ -255,8 +249,12 @@
       if (savedAddress && savedProvider) {
         updateUI(savedAddress, savedProvider);
       } else {
-        walletInfo.innerHTML = '<button class="button" id="connect-button">Login</button>';
-        document.getElementById("connect-button").addEventListener("click", openWalletModal);
+        walletInfo.textContent = "";
+        const connectBtn = document.createElement("button");
+        connectBtn.className = "button";
+        connectBtn.textContent = "Login";
+        connectBtn.onclick = openWalletModal;
+        walletInfo.appendChild(connectBtn);
         document.getElementById("header-login").addEventListener("click", openWalletModal);
       }
     };
