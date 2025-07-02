@@ -163,21 +163,30 @@
   <script type="module">
     import { Onboarding } from "https://unpkg.com/@btc-dapp/onboarding@latest";
 
-    const connectButton = document.getElementById("connect-button");
+    window.addEventListener("DOMContentLoaded", () => {
+      const connectButton = document.getElementById("connect-button");
 
-    connectButton.addEventListener("click", async () => {
-      const onboarding = new Onboarding();
-      const wallets = await onboarding.getAccounts();
+      if (connectButton) {
+        connectButton.addEventListener("click", async () => {
+          try {
+            const onboarding = new Onboarding();
+            const wallets = await onboarding.getAccounts();
 
-      if (wallets.length > 0) {
-        const wallet = wallets[0];
-        const walletInfo = document.getElementById("wallet-info");
-        walletInfo.innerHTML = `
-          <p><strong>Wallet:</strong> ${wallet.name}</p>
-          <p><strong>Address:</strong> ${wallet.address.slice(0, 6)}...${wallet.address.slice(-4)}</p>
-        `;
-      } else {
-        alert("No supported wallets found. Please install or open a wallet supporting Ordinals.");
+            if (wallets && wallets.length > 0) {
+              const wallet = wallets[0];
+              const walletInfo = document.getElementById("wallet-info");
+              walletInfo.innerHTML = `
+                <p><strong>Wallet:</strong> ${wallet.name}</p>
+                <p><strong>Address:</strong> ${wallet.address.slice(0, 6)}...${wallet.address.slice(-4)}</p>
+              `;
+            } else {
+              alert("No supported wallets found. Please install or open a wallet supporting Ordinals.");
+            }
+          } catch (e) {
+            alert("Failed to connect wallet.");
+            console.error(e);
+          }
+        });
       }
     });
   </script>
