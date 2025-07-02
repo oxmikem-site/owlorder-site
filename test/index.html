@@ -227,10 +227,12 @@
     async function fetchNfts(address) {
       nftList.innerHTML = '<p>Loading NFTs...</p>';
       try {
-        const response = await fetch(`https://api-mainnet.magiceden.dev/v2/wallets/${address}/ordinals?collectionSymbol=ord-owl`);
+        const response = await fetch(`https://api-mainnet.magiceden.dev/v2/wallets/${address}/ordinals`);
         if (!response.ok) throw new Error("Failed to fetch NFTs");
         const data = await response.json();
-        const nfts = data.results || data;
+        const nfts = (data.results || data).filter(nft =>
+          nft.collection?.symbol === "ord-owl" || nft.collectionSymbol === "ord-owl"
+        );
 
         if (!nfts.length) {
           nftList.innerHTML = '<p>No OWL NFTs found in wallet.</p>';
@@ -239,6 +241,7 @@
             nfts.map(nft => `<div style="margin: 10px 0;"><img src="${nft.image}" alt="NFT" style="max-width: 100px; border-radius: 8px;"><p>${nft.name}</p></div>`).join('');
         }
       } catch (e) {
+        console.error(e);
         nftList.innerHTML = '<p>Error loading NFTs.</p>';
       }
     }
