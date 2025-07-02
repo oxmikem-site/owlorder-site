@@ -154,7 +154,6 @@
     </div>
   </div>
 
-  <!-- Modal -->
   <div id="wallet-modal">
     <div class="modal-content">
       <h3 style="color:#fff; margin-bottom:20px;">Choose Wallet</h3>
@@ -230,15 +229,19 @@
         const response = await fetch(`https://api-mainnet.magiceden.dev/v2/wallets/${address}/ordinals`);
         if (!response.ok) throw new Error("Failed to fetch NFTs");
         const data = await response.json();
-        const nfts = (data.results || data).filter(nft =>
-          nft.collection?.symbol === "ord-owl" || nft.collectionSymbol === "ord-owl"
-        );
+        const userNFTs = data.results || data;
 
-        if (!nfts.length) {
+        const metaResponse = await fetch("https://raw.githubusercontent.com/oxmikem-site/owlorder-site/refs/heads/main/collection.json");
+        const metaList = await metaResponse.json();
+        const allowed = metaList.map(m => m.inscriptionId);
+
+        const filtered = userNFTs.filter(nft => allowed.includes(nft.inscriptionId));
+
+        if (!filtered.length) {
           nftList.innerHTML = '<p>No OWL NFTs found in wallet.</p>';
         } else {
-          nftList.innerHTML = `<p><strong>OWL NFTs owned:</strong> ${nfts.length}</p>` +
-            nfts.map(nft => `<div style="margin: 10px 0;"><img src="${nft.image}" alt="NFT" style="max-width: 100px; border-radius: 8px;"><p>${nft.name}</p></div>`).join('');
+          nftList.innerHTML = `<p><strong>OWL NFTs owned:</strong> ${filtered.length}</p>` +
+            filtered.map(nft => `<div style="margin: 10px 0;"><img src="${nft.image}" alt="NFT" style="max-width: 100px; border-radius: 8px;"><p>${nft.name}</p></div>`).join('');
         }
       } catch (e) {
         console.error(e);
