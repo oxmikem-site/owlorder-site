@@ -86,26 +86,6 @@
       border-radius: 50%;
       margin-right: 10px;
     }
-    #wallet-modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background-color: rgba(0, 0, 0, 0.6);
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-    }
-    #wallet-modal .modal-content {
-      background: #1a1a1a;
-      padding: 30px;
-      border-radius: 12px;
-      width: 300px;
-      box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-      text-align: center;
-    }
   </style>
   <script src="https://unpkg.com/@sats-connect/sdk"></script>
 </head>
@@ -150,18 +130,34 @@
       </div>
     </div>
   </div>
-  <div id="wallet-modal">
-    <div class="modal-content">
-      <h3 style="color:#fff; margin-bottom:20px;">Choose Wallet</h3>
-      <button class="button" onclick="connectUniSat()">🟡 UniSat</button>
-      <br><br>
-      <button class="button" onclick="connectXverse()">🔹 Xverse</button>
-      <br><br>
-      <button class="button" onclick="closeModal()" style="margin-top:10px;">Cancel</button>
-    </div>
-  </div>
+
   <script>
     let connected = false;
+
+    function createModal() {
+      const modal = document.createElement('div');
+      modal.id = 'wallet-modal';
+      modal.style.display = 'flex';
+      modal.style.position = 'fixed';
+      modal.style.top = '0';
+      modal.style.left = '0';
+      modal.style.width = '100vw';
+      modal.style.height = '100vh';
+      modal.style.backgroundColor = 'rgba(0, 0, 0, 0.6)';
+      modal.style.alignItems = 'center';
+      modal.style.justifyContent = 'center';
+      modal.style.zIndex = '1000';
+      modal.innerHTML = `
+        <div class="modal-content" style="background:#1a1a1a;padding:30px;border-radius:12px;width:300px;box-shadow:0 0 20px rgba(0,0,0,0.5);text-align:center;">
+          <h3 style="color:#fff;margin-bottom:20px;">Choose Wallet</h3>
+          <button class="button" onclick="connectUniSat()">🟡 UniSat</button>
+          <br><br>
+          <button class="button" onclick="connectXverse()">🔹 Xverse</button>
+          <br><br>
+          <button class="button" onclick="closeModal()" style="margin-top:10px;">Cancel</button>
+        </div>`;
+      document.body.appendChild(modal);
+    }
 
     function connectUniSat() {
       if (!window.unisat) {
@@ -179,56 +175,36 @@
     }
 
     async function connectXverse() {
-      const waitForSatsConnect = () =>
-        new Promise((resolve, reject) => {
-          let attempts = 0;
-          const interval = setInterval(() => {
-            if (window.satsConnect) {
-              clearInterval(interval);
-              resolve(window.satsConnect);
-            }
-            if (++attempts > 10) {
-              clearInterval(interval);
-              reject(new Error("SatsConnect not available after waiting"));
-            }
-          }, 300);
-        });
+      const payload = {
+        purposes: ["ordinals"],
+        message: "Connect to OWL Dashboard",
+        network: { type: "Mainnet" },
+        appDetails: {
+          name: "OWL Dashboard",
+          icon: "https://owlbtc.art/logo.png"
+        },
+        permissions: {
+          ordinals: {
+            address: true,
+            publicKey: true
+          }
+        }
+      };
+
+      if (!window.btc || typeof window.btc.request !== 'function') {
+        alert("Xverse or compatible wallet not found");
+        return;
+      }
 
       try {
-        const satsConnect = await waitForSatsConnect();
-
-        await satsConnect.connect({
-          payload: {
-            purposes: ["ordinals"],
-            message: "Connect to OWL Dashboard",
-            network: {
-              type: "Mainnet"
-            },
-            appDetails: {
-              name: "OWL Dashboard",
-              icon: "https://owlbtc.art/logo.png"
-            },
-            permissions: {
-              ordinals: {
-                address: true,
-                publicKey: true
-              }
-            }
-          },
-          onFinish: (response) => {
-            const address = response.addresses?.find(a => a.purpose === "ordinals")?.address;
-            if (!address) throw new Error("No ordinals address found");
-            updateUI('Xverse', address);
-            connected = true;
-            closeModal();
-          },
-          onCancel: () => {
-            alert("Xverse login cancelled");
-            closeModal();
-          }
-        });
+        const response = await window.btc.request("connect", payload);
+        const address = response.addresses?.find(a => a.purpose === "ordinals")?.address;
+        if (!address) throw new Error("No ordinals address found");
+        updateUI("Xverse", address);
+        connected = true;
+        closeModal();
       } catch (err) {
-        alert("❌ Xverse connection failed: " + err.message);
+        alert("❌ Wallet connection failed: " + err.message);
         closeModal();
       }
     }
@@ -242,21 +218,34 @@
 
     function updateUI(type, address) {
       const el = document.getElementById('wallet-display');
-      el.innerHTML = `
-        <p><strong>Wallet:</strong> ${type}</p>
-        <p><strong>Address:</strong> ${address.slice(0,6)}…${address.slice(-4)}</p>
-        <p><strong>NFT count:</strong> …</p>
-      `;
+      el.textContent = '';
+
+      const wallet = document.createElement('p');
+      wallet.innerHTML = `<strong>Wallet:</strong> ${type}`;
+      const addr = document.createElement('p');
+      addr.innerHTML = `<strong>Address:</strong> ${address.slice(0,6)}…${address.slice(-4)}`;
+      const nfts = document.createElement('p');
+      nfts.innerHTML = `<strong>NFT count:</strong> …`;
+
+      el.appendChild(wallet);
+      el.appendChild(addr);
+      el.appendChild(nfts);
+
       document.getElementById('login-btn-header').textContent = 'Logout';
       document.getElementById('login-btn-dashboard').textContent = 'Logout';
     }
 
     function openModal() {
-      document.getElementById('wallet-modal').style.display = 'flex';
+      if (!document.getElementById('wallet-modal')) {
+        createModal();
+      } else {
+        document.getElementById('wallet-modal').style.display = 'flex';
+      }
     }
 
     function closeModal() {
-      document.getElementById('wallet-modal').style.display = 'none';
+      const modal = document.getElementById('wallet-modal');
+      if (modal) modal.style.display = 'none';
     }
 
     function toggleLogin() {
@@ -269,4 +258,3 @@
   </script>
 </body>
 </html>
-
