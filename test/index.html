@@ -107,7 +107,7 @@
       text-align: center;
     }
   </style>
-  <script src="https://unpkg.com/sats-connect@latest"></script>
+  <script src="https://unpkg.com/@stacks/connect@latest/dist/connect.umd.js"></script>
 </head>
 <body>
   <header>
@@ -180,13 +180,21 @@
 
     async function connectXverse() {
       try {
-        const response = await window.satsConnect.request('getAddresses', {
-          purposes: ['ordinals'],
-          message: 'Connect to OWL',
-          network: { type: 'Mainnet' }
+        const result = await window.SatsConnect.connect({
+          appDetails: {
+            name: 'OWL Dashboard',
+            icon: 'https://owlbtc.art/logo.png',
+          },
+          network: {
+            type: 'Mainnet'
+          },
+          scopes: ['ordinals']
         });
-        const addressObj = response.result.addresses.find(a => a.purpose === 'ordinals');
-        updateUI('Xverse', addressObj.address);
+
+        const address = result.addresses?.find(a => a.purpose === 'ordinals')?.address;
+        if (!address) throw new Error("No Ordinals address");
+
+        updateUI('Xverse', address);
         connected = true;
         closeModal();
       } catch (err) {
