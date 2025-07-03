@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <title>OWL Test Dashboard</title>
   <link rel="icon" type="image/png" href="../logo2.png">
-  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; }
@@ -119,20 +118,17 @@
       <a href="/test/profile.html" class="button">Profile</a>
       <a href="/test/raffles.html" class="button">Raffles</a>
       <a href="/collection" class="button">Collection</a>
-      <button class="button" id="header-login">Login</button>
+      <button class="button" id="login-btn">Login</button>
       <a href="https://x.com/OwlOrderBTC" target="_blank">
         <img src="../twitter-white.png" alt="twitter" style="height: 30px;">
       </a>
     </div>
   </header>
-
   <div class="section-container">
-    <div class="section profile-summary" id="dashboard-block">
+    <div class="section profile-summary">
       <h2>My Dashboard</h2>
-      <div id="wallet-info"></div>
-      <div id="nft-list"></div>
+      <div id="wallet-display"></div>
     </div>
-
     <div class="section tasks">
       <h2>Raffles & Quests</h2>
       <ul>
@@ -140,7 +136,6 @@
         <li>✅ Join raffle "Genesis Drop" — status: Open</li>
       </ul>
     </div>
-
     <div class="section leaderboard">
       <h2>Leaderboard</h2>
       <div class="leaderboard-item">
@@ -153,124 +148,128 @@
       </div>
     </div>
   </div>
-
   <div id="wallet-modal">
     <div class="modal-content">
       <h3 style="color:#fff; margin-bottom:20px;">Choose Wallet</h3>
-      <button class="button" onclick="connectWallet('UniSat')">🟡 UniSat</button>
-      <button class="button" onclick="connectWallet('Xverse')">🟠 Xverse</button>
+      <button class="button" onclick="connectUniSat()">🟡 UniSat</button>
+      <button class="button" onclick="connectXverse()">🟠 Xverse</button>
+      <button class="button" onclick="connectMagicHiro('magic')">🔵 Magic Eden</button>
+      <button class="button" onclick="connectMagicHiro('hiro')">🟣 Hiro</button>
       <br><br>
-      <button class="button" onclick="closeWalletModal()" style="margin-top:10px;">Cancel</button>
+      <button class="button" onclick="closeModal()" style="margin-top:10px;">Cancel</button>
     </div>
   </div>
+  <script type="module">
+    import Wallet from 'https://cdn.jsdelivr.net/npm/sats-connect@latest/+esm';
 
-  <script>
-    const walletModal = document.getElementById("wallet-modal");
-    const walletInfo = document.getElementById("wallet-info");
-    const nftList = document.getElementById("nft-list");
-    const headerLogin = document.getElementById("header-login");
+    let connected = false;
 
-    function openWalletModal() {
-      walletModal.style.display = "flex";
-    }
-
-    function closeWalletModal() {
-      walletModal.style.display = "none";
-    }
-
-    async function connectWallet(provider) {
+    async function connectXverse() {
       try {
-        let address;
-        if (provider === 'UniSat') {
-          if (!window.unisat) throw new Error("UniSat Wallet not installed!");
-          const accounts = await window.unisat.requestAccounts();
-          address = accounts[0];
-        } else if (provider === 'Xverse') {
-          if (!window.btc || !window.btc.request) throw new Error("Xverse Wallet not installed!");
-          const result = await window.btc.request("getAddresses");
-          address = result.addresses[0].address;
-        }
-        localStorage.setItem("connectedWallet", address);
-        localStorage.setItem("walletProvider", provider);
-        updateUI(address, provider);
-        closeWalletModal();
-      } catch (err) {
-        alert(err.message);
+        const resp = await Wallet.request('wallet_connect', {
+          addresses: ['ordinals', 'payment'],
+          message: 'Connect OWL Dashboard'
+        });
+        const ord = resp.result.addresses.find(a => a.purpose === 'ordinals');
+        const addr = ord?.address ?? resp.result.addresses[0]?.address;
+        updateUI('Xverse', addr);
+        connected = true;
+        closeModal();
+      } catch(e) {
+        alert('Xverse connection failed.');
+        closeModal();
       }
     }
 
-    function updateUI(address, provider) {
-      walletInfo.textContent = "";
-      const walletText = document.createElement("p");
-      walletText.innerHTML = `<strong>Wallet:</strong> ${provider}`;
-      const addressText = document.createElement("p");
-      addressText.innerHTML = `<strong>Address:</strong> ${address.slice(0, 6)}...${address.slice(-4)}`;
-      walletInfo.appendChild(walletText);
-      walletInfo.appendChild(addressText);
-
-      const authButtons = document.getElementById("auth-buttons");
-      const logoutBtn = document.createElement("button");
-      logoutBtn.className = "button";
-      logoutBtn.textContent = "Logout";
-      logoutBtn.onclick = logout;
-      authButtons.replaceChild(logoutBtn, headerLogin);
-      fetchNfts(address);
-    }
-
-    function logout() {
-      localStorage.removeItem("connectedWallet");
-      localStorage.removeItem("walletProvider");
-      location.reload();
-    }
-
-    async function fetchNfts(address) {
-      nftList.innerHTML = '<p>Loading NFTs...</p>';
+    async function connectUniSat() {
+      if (!window.unisat) {
+        alert('UniSat not installed');
+        closeModal();
+        return;
+      }
       try {
-        const metaResponse = await fetch("https://raw.githubusercontent.com/oxmikem-site/owlorder-site/main/collection.json");
-        const metaList = await metaResponse.json();
+        const accounts = await window.unisat.requestAccounts();
+        updateUI('UniSat', accounts[0]);
+        connected = true;
+        closeModal();
+      } catch(e) {
+        alert('UniSat connection failed');
+        closeModal();
+      }
+    }
 
-        const userInscriptionIds = await getInscriptionsFromWallet(address);
-        const owned = metaList.filter(m => userInscriptionIds.includes(m.inscriptionId));
+    async function connectMagicHiro(provider) {
+      const btc = window.btc;
+      if (!btc || !btc.provider) {
+        alert(`${provider} not detected`);
+        closeModal();
+        return;
+      }
+      const name = btc.provider.name?.toLowerCase();
+      if (!name.includes(provider)) {
+        alert(`Activate ${provider} wallet`);
+        closeModal();
+        return;
+      }
+      try {
+        const res = await btc.request("getAddresses");
+        updateUI(provider === 'hiro' ? 'Hiro' : 'Magic Eden', res.addresses[0].address);
+        connected = true;
+        closeModal();
+      } catch(e) {
+        alert(`${provider} connection failed`);
+        closeModal();
+      }
+    }
 
-        if (!owned.length) {
-          nftList.innerHTML = '<p>No OWL NFTs found in wallet.</p>';
+    async function logout() {
+      connected = false;
+      document.getElementById('login-btn').textContent = 'Login';
+      document.getElementById('wallet-display').innerHTML = '';
+      try {
+        await Wallet.disconnect();
+      } catch(e) {}
+    }
+
+    function updateUI(type, address) {
+      const el = document.getElementById('wallet-display');
+      el.innerHTML = `
+        <p><strong>Wallet:</strong> ${type}</p>
+        <p><strong>Address:</strong> ${address.slice(0,6)}…${address.slice(-4)}</p>
+        <p><strong>NFT count:</strong> …</p>
+      `;
+      document.getElementById('login-btn').textContent = 'Logout';
+    }
+
+    function openModal() {
+      document.getElementById('wallet-modal').style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('wallet-modal').style.display = 'none';
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const btn = document.getElementById('login-btn');
+      btn.onclick = async () => {
+        if (connected) {
+          await logout();
         } else {
-          nftList.innerHTML = `<p><strong>OWL NFTs owned:</strong> ${owned.length}</p>` +
-            owned.map(nft => `<div style="margin: 10px 0;"><img src="https://raw.githubusercontent.com/oxmikem-site/owlorder-site/main/images/${nft.nftId}.webp" alt="NFT" style="max-width: 100px; border-radius: 8px;"><p>${nft.name}</p></div>`).join('');
+          openModal();
         }
-      } catch (e) {
-        console.error(e);
-        nftList.innerHTML = '<p>Error loading NFTs.</p>';
-      }
-    }
+      };
 
-    async function getInscriptionsFromWallet(address) {
       try {
-        const response = await fetch(`https://api-mainnet.magiceden.dev/v2/wallets/${address}/ordinals`);
-        if (!response.ok) throw new Error("Failed to fetch inscriptions");
-        const data = await response.json();
-        return (data.results || data).map(i => i.inscriptionId || i.inscription_id || i.id);
-      } catch (e) {
-        console.error("Error fetching inscriptions:", e);
-        return [];
-      }
-    }
-
-    window.onload = () => {
-      const savedAddress = localStorage.getItem("connectedWallet");
-      const savedProvider = localStorage.getItem("walletProvider");
-      if (savedAddress && savedProvider) {
-        updateUI(savedAddress, savedProvider);
-      } else {
-        walletInfo.textContent = "";
-        const connectBtn = document.createElement("button");
-        connectBtn.className = "button";
-        connectBtn.textContent = "Login";
-        connectBtn.onclick = openWalletModal;
-        walletInfo.appendChild(connectBtn);
-        document.getElementById("header-login").addEventListener("click", openWalletModal);
-      }
-    };
+        const res = await Wallet.request('wallet_getAccount', { addresses: ['ordinals'] });
+        if (res.status === 'success') {
+          const ord = res.result.addresses.find(a => a.purpose === 'ordinals');
+          if (ord) {
+            updateUI('Xverse', ord.address);
+            connected = true;
+          }
+        }
+      } catch(e) {}
+    });
   </script>
 </body>
 </html>
