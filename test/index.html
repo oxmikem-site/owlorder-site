@@ -226,26 +226,33 @@
     async function fetchNfts(address) {
       nftList.innerHTML = '<p>Loading NFTs...</p>';
       try {
-        const response = await fetch(`https://api-mainnet.magiceden.dev/v2/wallets/${address}/ordinals`);
-        if (!response.ok) throw new Error("Failed to fetch NFTs");
-        const data = await response.json();
-        const userNFTs = data.results || data;
-
-        const metaResponse = await fetch("https://raw.githubusercontent.com/oxmikem-site/owlorder-site/refs/heads/main/collection.json");
+        const metaResponse = await fetch("https://raw.githubusercontent.com/oxmikem-site/owlorder-site/main/collection.json");
         const metaList = await metaResponse.json();
-        const allowed = metaList.map(m => m.inscriptionId);
 
-        const filtered = userNFTs.filter(nft => allowed.includes(nft.inscriptionId));
+        const userInscriptionIds = await getInscriptionsFromWallet(address);
+        const owned = metaList.filter(m => userInscriptionIds.includes(m.inscriptionId));
 
-        if (!filtered.length) {
+        if (!owned.length) {
           nftList.innerHTML = '<p>No OWL NFTs found in wallet.</p>';
         } else {
-          nftList.innerHTML = `<p><strong>OWL NFTs owned:</strong> ${filtered.length}</p>` +
-            filtered.map(nft => `<div style="margin: 10px 0;"><img src="${nft.image}" alt="NFT" style="max-width: 100px; border-radius: 8px;"><p>${nft.name}</p></div>`).join('');
+          nftList.innerHTML = `<p><strong>OWL NFTs owned:</strong> ${owned.length}</p>` +
+            owned.map(nft => `<div style="margin: 10px 0;"><img src="https://raw.githubusercontent.com/oxmikem-site/owlorder-site/main/images/${nft.nftId}.webp" alt="NFT" style="max-width: 100px; border-radius: 8px;"><p>${nft.name}</p></div>`).join('');
         }
       } catch (e) {
         console.error(e);
         nftList.innerHTML = '<p>Error loading NFTs.</p>';
+      }
+    }
+
+    async function getInscriptionsFromWallet(address) {
+      try {
+        const response = await fetch(`https://api-mainnet.magiceden.dev/v2/wallets/${address}/ordinals`);
+        if (!response.ok) throw new Error("Failed to fetch inscriptions");
+        const data = await response.json();
+        return (data.results || data).map(i => i.inscriptionId);
+      } catch (e) {
+        console.error("Error fetching inscriptions:", e);
+        return [];
       }
     }
 
