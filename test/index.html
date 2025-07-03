@@ -118,7 +118,7 @@
       <a href="/test/profile.html" class="button">Profile</a>
       <a href="/test/raffles.html" class="button">Raffles</a>
       <a href="/collection" class="button">Collection</a>
-      <button class="button" id="login-btn" onclick="toggleLogin()">Login</button>
+      <button class="button" id="login-btn-header" onclick="toggleLogin()">Login</button>
       <a href="https://x.com/OwlOrderBTC" target="_blank">
         <img src="../twitter-white.png" alt="twitter" style="height: 30px;">
       </a>
@@ -128,7 +128,7 @@
     <div class="section profile-summary">
       <h2>My Dashboard</h2>
       <div id="wallet-display"></div>
-      <button class="button" id="login-btn-secondary" onclick="toggleLogin()">Login</button>
+      <button class="button" id="login-btn-dashboard" onclick="toggleLogin()">Login</button>
     </div>
     <div class="section tasks">
       <h2>Raffles & Quests</h2>
@@ -229,6 +229,8 @@
       try {
         await Wallet.disconnect();
       } catch(e) {}
+      document.getElementById('login-btn-header').textContent = 'Login';
+      document.getElementById('login-btn-dashboard').textContent = 'Login';
     }
 
     function updateUI(type, address) {
@@ -238,6 +240,8 @@
         <p><strong>Address:</strong> ${address.slice(0,6)}…${address.slice(-4)}</p>
         <p><strong>NFT count:</strong> …</p>
       `;
+      document.getElementById('login-btn-header').textContent = 'Logout';
+      document.getElementById('login-btn-dashboard').textContent = 'Logout';
     }
 
     function openModal() {
@@ -251,8 +255,6 @@
     function toggleLogin() {
       if (connected) {
         logout();
-        document.getElementById('login-btn').textContent = 'Login';
-        document.getElementById('login-btn-secondary').textContent = 'Login';
       } else {
         openModal();
       }
@@ -266,8 +268,6 @@
           if (ord) {
             updateUI('Xverse', ord.address);
             connected = true;
-            document.getElementById('login-btn').textContent = 'Logout';
-            document.getElementById('login-btn-secondary').textContent = 'Logout';
           }
         }
       } catch (e) {}
