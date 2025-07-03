@@ -134,99 +134,11 @@
   <script>
     let connected = false;
 
-    function createModal() {
-      if (document.getElementById('wallet-modal')) return;
-      const modal = document.createElement('div');
-      modal.id = 'wallet-modal';
-      modal.style.cssText = 'display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background-color:rgba(0,0,0,0.6);align-items:center;justify-content:center;z-index:1000';
-      const inner = document.createElement('div');
-      inner.className = 'modal-content';
-      inner.style.cssText = 'background:#1a1a1a;padding:30px;border-radius:12px;width:300px;box-shadow:0 0 20px rgba(0,0,0,0.5);text-align:center';
-
-      const title = document.createElement('h3');
-      title.textContent = 'Choose Wallet';
-      title.style.color = '#fff';
-      title.style.marginBottom = '20px';
-      inner.appendChild(title);
-
-      const uniBtn = document.createElement('button');
-      uniBtn.className = 'button';
-      uniBtn.textContent = '🟡 UniSat';
-      uniBtn.onclick = connectUniSat;
-      inner.appendChild(uniBtn);
-
-      inner.appendChild(document.createElement('br'));
-      inner.appendChild(document.createElement('br'));
-
-      const xverseBtn = document.createElement('button');
-      xverseBtn.className = 'button';
-      xverseBtn.textContent = '🔹 Xverse';
-      xverseBtn.onclick = connectXverse;
-      inner.appendChild(xverseBtn);
-
-      inner.appendChild(document.createElement('br'));
-      inner.appendChild(document.createElement('br'));
-
-      const cancelBtn = document.createElement('button');
-      cancelBtn.className = 'button';
-      cancelBtn.textContent = 'Cancel';
-      cancelBtn.style.marginTop = '10px';
-      cancelBtn.onclick = closeModal;
-      inner.appendChild(cancelBtn);
-
-      modal.appendChild(inner);
-      document.body.appendChild(modal);
-    }
-
-    function connectUniSat() {
-      if (!window.unisat) {
-        alert('UniSat not installed');
-        return;
-      }
-      window.unisat.requestAccounts().then(accounts => {
-        updateUI('UniSat', accounts[0]);
-        connected = true;
-        closeModal();
-      }).catch(() => {
-        alert('UniSat connection failed');
-        closeModal();
-      });
-    }
-
-    async function connectXverse() {
-      const payload = {
-        purposes: ["ordinals"],
-        message: "Connect to OWL Dashboard",
-        network: { type: "Mainnet" },
-        appDetails: {
-          name: "OWL Dashboard",
-          icon: "https://owlbtc.art/logo.png"
-        },
-        permissions: {
-          ordinals: {
-            address: true,
-            publicKey: true
-          }
-        }
-      };
-
-      if (!window.btc || typeof window.btc.request !== 'function') {
-        console.warn("Xverse wallet not available or 'window.btc.request' not supported");
-        alert("Xverse or compatible wallet not found");
-        return;
-      }
-
-      try {
-        const response = await window.btc.request("connect", payload);
-        const address = response.addresses?.find(a => a.purpose === "ordinals")?.address;
-        if (!address) throw new Error("No ordinals address found");
-        updateUI("Xverse", address);
-        connected = true;
-        closeModal();
-      } catch (err) {
-        console.error("Xverse connection error:", err);
-        alert("❌ Wallet connection failed: " + err.message);
-        closeModal();
+    function toggleLogin() {
+      if (connected) {
+        logout();
+      } else {
+        connectWithSatsConnect();
       }
     }
 
@@ -235,6 +147,37 @@
       document.getElementById('wallet-display').textContent = '';
       document.getElementById('login-btn-header').textContent = 'Login';
       document.getElementById('login-btn-dashboard').textContent = 'Login';
+    }
+
+    async function connectWithSatsConnect() {
+      const { connect } = window.SatsConnect;
+
+      if (!connect) {
+        alert("SatsConnect not available");
+        return;
+      }
+
+      try {
+        const response = await connect({
+          appDetails: {
+            name: "OWL Dashboard",
+            icon: "https://owlbtc.art/logo.png"
+          },
+          network: {
+            type: "Mainnet"
+          },
+          permissions: ["ordinals:read"]
+        });
+
+        const address = response.addresses?.find(addr => addr.purpose === "ordinals")?.address;
+        if (!address) throw new Error("Ordinals address not found");
+
+        updateUI("Xverse", address);
+        connected = true;
+      } catch (err) {
+        console.error("Wallet connection error:", err);
+        alert("❌ Wallet connection failed: " + err.message);
+      }
     }
 
     function updateUI(type, address) {
@@ -254,24 +197,6 @@
 
       document.getElementById('login-btn-header').textContent = 'Logout';
       document.getElementById('login-btn-dashboard').textContent = 'Logout';
-    }
-
-    function openModal() {
-      createModal();
-      document.getElementById('wallet-modal').style.display = 'flex';
-    }
-
-    function closeModal() {
-      const modal = document.getElementById('wallet-modal');
-      if (modal) modal.style.display = 'none';
-    }
-
-    function toggleLogin() {
-      if (connected) {
-        logout();
-      } else {
-        openModal();
-      }
     }
   </script>
 </body>
