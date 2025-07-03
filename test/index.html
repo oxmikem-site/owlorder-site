@@ -107,7 +107,7 @@
       text-align: center;
     }
   </style>
-  <script src="https://unpkg.com/@sats-connect/sdk/dist/sats-connect.min.js"></script>
+  <script src="https://unpkg.com/@sats-connect/sdk"></script>
 </head>
 <body>
   <header>
@@ -180,30 +180,33 @@
 
     async function connectXverse() {
       try {
-        const { showConnectModal } = window.SatsConnect;
-        await showConnectModal({
-          wallet: 'xverse',
-          network: {
-            type: 'Mainnet'
-          },
-          appMetadata: {
-            name: 'OWL Dashboard',
-            icon: 'https://unisat.io/static/media/logo.57e95738.png'
+        if (!window.satsConnect) {
+          alert('SatsConnect not available');
+          return;
+        }
+
+        await window.satsConnect.connect({
+          payload: {
+            purposes: ["ordinals"],
+            message: "Connect to OWL Dashboard",
+            network: {
+              type: "Mainnet"
+            },
           },
           onFinish: (response) => {
-            const address = response.addresses?.find(a => a.purpose === 'ordinals')?.address;
-            if (!address) throw new Error("No Ordinals address");
+            const address = response.addresses?.find(a => a.purpose === "ordinals")?.address;
+            if (!address) throw new Error("No ordinals address found");
             updateUI('Xverse', address);
             connected = true;
             closeModal();
           },
           onCancel: () => {
-            alert('Xverse login cancelled');
+            alert("Xverse login cancelled");
             closeModal();
           }
         });
       } catch (err) {
-        alert('Xverse connection failed');
+        alert("Xverse connection failed");
         closeModal();
       }
     }
