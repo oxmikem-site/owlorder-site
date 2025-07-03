@@ -153,80 +153,31 @@
     <div class="modal-content">
       <h3 style="color:#fff; margin-bottom:20px;">Choose Wallet</h3>
       <button class="button" onclick="connectUniSat()">🟡 UniSat</button>
-      <button class="button" onclick="connectXverse()">🔠 Xverse</button>
-      <button class="button" onclick="connectMagicHiro('magic')">🔹 Magic Eden</button>
-      <button class="button" onclick="connectMagicHiro('hiro')">🔹 Hiro</button>
       <br><br>
       <button class="button" onclick="closeModal()" style="margin-top:10px;">Cancel</button>
     </div>
   </div>
-  <script type="module">
-    import Wallet from 'https://cdn.jsdelivr.net/npm/sats-connect@latest/+esm';
-
+  <script>
     let connected = false;
 
-    async function connectXverse() {
-      try {
-        const resp = await Wallet.request('wallet_connect', {
-          addresses: ['ordinals', 'payment'],
-          message: 'Connect OWL Dashboard'
-        });
-        const ord = resp.result.addresses.find(a => a.purpose === 'ordinals');
-        const addr = ord?.address ?? resp.result.addresses[0]?.address;
-        updateUI('Xverse', addr);
-        connected = true;
-        closeModal();
-      } catch(e) {
-        alert('Xverse connection failed.');
-        closeModal();
-      }
-    }
-
-    async function connectUniSat() {
+    function connectUniSat() {
       if (!window.unisat) {
         alert('UniSat not installed');
-        closeModal();
         return;
       }
-      try {
-        const accounts = await window.unisat.requestAccounts();
+      window.unisat.requestAccounts().then(accounts => {
         updateUI('UniSat', accounts[0]);
         connected = true;
         closeModal();
-      } catch(e) {
+      }).catch(() => {
         alert('UniSat connection failed');
         closeModal();
-      }
+      });
     }
 
-    async function connectMagicHiro(provider) {
-      const btc = window.btc;
-      if (!btc || !btc.provider) {
-        alert(`${provider} not detected`);
-        closeModal();
-        return;
-      }
-      const name = btc.provider.name?.toLowerCase();
-      if (!name.includes(provider)) {
-        alert(`Activate ${provider} wallet`);
-        closeModal();
-        return;
-      }
-      try {
-        const res = await btc.request("getAddresses");
-        updateUI(provider === 'hiro' ? 'Hiro' : 'Magic Eden', res.addresses[0].address);
-        connected = true;
-        closeModal();
-      } catch(e) {
-        alert(`${provider} connection failed`);
-        closeModal();
-      }
-    }
-
-    async function logout() {
+    function logout() {
       connected = false;
       document.getElementById('wallet-display').innerHTML = '';
-      try { await Wallet.disconnect(); } catch(e) {}
       document.getElementById('login-btn-header').textContent = 'Login';
       document.getElementById('login-btn-dashboard').textContent = 'Login';
     }
@@ -257,19 +208,6 @@
         openModal();
       }
     }
-
-    document.addEventListener('DOMContentLoaded', async () => {
-      try {
-        const res = await Wallet.request('wallet_getAccount', { addresses: ['ordinals'] });
-        if (res.status === 'success') {
-          const ord = res.result.addresses.find(a => a.purpose === 'ordinals');
-          if (ord) {
-            updateUI('Xverse', ord.address);
-            connected = true;
-          }
-        }
-      } catch (e) {}
-    });
   </script>
 </body>
 </html>
