@@ -87,7 +87,6 @@
       margin-right: 10px;
     }
   </style>
-  <script src="https://unpkg.com/@sats-connect/sdk"></script>
 </head>
 <body>
   <header>
@@ -138,7 +137,7 @@
       if (connected) {
         logout();
       } else {
-        connectWithSatsConnect();
+        connectWithXverse();
       }
     }
 
@@ -149,24 +148,19 @@
       document.getElementById('login-btn-dashboard').textContent = 'Login';
     }
 
-    async function connectWithSatsConnect() {
-      const { connect } = window.SatsConnect;
-
-      if (!connect) {
-        alert("SatsConnect not available");
+    async function connectWithXverse() {
+      if (!window.btc || !window.btc.request) {
+        alert("Xverse Wallet не знайдено.");
         return;
       }
 
       try {
-        const response = await connect({
-          appDetails: {
-            name: "OWL Dashboard",
-            icon: "https://owlbtc.art/logo.png"
-          },
+        const response = await window.btc.request("connect", {
+          purposes: ["ordinals"],
+          message: "Connect to OWL dashboard",
           network: {
             type: "Mainnet"
-          },
-          permissions: ["ordinals:read"]
+          }
         });
 
         const address = response.addresses?.find(addr => addr.purpose === "ordinals")?.address;
@@ -176,7 +170,7 @@
         connected = true;
       } catch (err) {
         console.error("Wallet connection error:", err);
-        alert("❌ Wallet connection failed: " + err.message);
+        alert("❌ Помилка підключення: " + err.message);
       }
     }
 
