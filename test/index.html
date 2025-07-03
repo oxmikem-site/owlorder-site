@@ -107,6 +107,7 @@
       text-align: center;
     }
   </style>
+  <script src="https://unpkg.com/sats-connect@latest"></script>
 </head>
 <body>
   <header>
@@ -154,6 +155,8 @@
       <h3 style="color:#fff; margin-bottom:20px;">Choose Wallet</h3>
       <button class="button" onclick="connectUniSat()">🟡 UniSat</button>
       <br><br>
+      <button class="button" onclick="connectXverse()">🔹 Xverse</button>
+      <br><br>
       <button class="button" onclick="closeModal()" style="margin-top:10px;">Cancel</button>
     </div>
   </div>
@@ -173,6 +176,23 @@
         alert('UniSat connection failed');
         closeModal();
       });
+    }
+
+    async function connectXverse() {
+      try {
+        const response = await window.satsConnect.request('getAddresses', {
+          purposes: ['ordinals'],
+          message: 'Connect to OWL',
+          network: { type: 'Mainnet' }
+        });
+        const addressObj = response.result.addresses.find(a => a.purpose === 'ordinals');
+        updateUI('Xverse', addressObj.address);
+        connected = true;
+        closeModal();
+      } catch (err) {
+        alert('Xverse connection failed');
+        closeModal();
+      }
     }
 
     function logout() {
