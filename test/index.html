@@ -154,7 +154,7 @@
       <h3 style="color:#fff; margin-bottom:20px;">Choose Wallet</h3>
       <button class="button" onclick="connectUniSat()">🟡 UniSat</button>
       <button class="button" onclick="connectXverse()">🔠 Xverse</button>
-      <button class="button" onclick="connectMagicHiro('magic')">🔵 Magic Eden</button>
+      <button class="button" onclick="connectMagicHiro('magic')">🔹 Magic Eden</button>
       <button class="button" onclick="connectMagicHiro('hiro')">🔹 Hiro</button>
       <br><br>
       <button class="button" onclick="closeModal()" style="margin-top:10px;">Cancel</button>
@@ -226,9 +226,7 @@
     async function logout() {
       connected = false;
       document.getElementById('wallet-display').innerHTML = '';
-      try {
-        await Wallet.disconnect();
-      } catch(e) {}
+      try { await Wallet.disconnect(); } catch(e) {}
       document.getElementById('login-btn-header').textContent = 'Login';
       document.getElementById('login-btn-dashboard').textContent = 'Login';
     }
