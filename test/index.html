@@ -138,18 +138,42 @@
       if (document.getElementById('wallet-modal')) return;
       const modal = document.createElement('div');
       modal.id = 'wallet-modal';
-      modal.style.cssText = 'display:flex;position:fixed;top:0;left:0;width:100vw;height:100vh;background-color:rgba(0,0,0,0.6);align-items:center;justify-content:center;z-index:1000';
+      modal.style.cssText = 'display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background-color:rgba(0,0,0,0.6);align-items:center;justify-content:center;z-index:1000';
       const inner = document.createElement('div');
       inner.className = 'modal-content';
       inner.style.cssText = 'background:#1a1a1a;padding:30px;border-radius:12px;width:300px;box-shadow:0 0 20px rgba(0,0,0,0.5);text-align:center';
-      inner.innerHTML = `
-        <h3 style="color:#fff;margin-bottom:20px;">Choose Wallet</h3>
-        <button class="button" onclick="connectUniSat()">🟡 UniSat</button>
-        <br><br>
-        <button class="button" onclick="connectXverse()">🔹 Xverse</button>
-        <br><br>
-        <button class="button" onclick="closeModal()" style="margin-top:10px;">Cancel</button>
-      `;
+
+      const title = document.createElement('h3');
+      title.textContent = 'Choose Wallet';
+      title.style.color = '#fff';
+      title.style.marginBottom = '20px';
+      inner.appendChild(title);
+
+      const uniBtn = document.createElement('button');
+      uniBtn.className = 'button';
+      uniBtn.textContent = '🟡 UniSat';
+      uniBtn.onclick = connectUniSat;
+      inner.appendChild(uniBtn);
+
+      inner.appendChild(document.createElement('br'));
+      inner.appendChild(document.createElement('br'));
+
+      const xverseBtn = document.createElement('button');
+      xverseBtn.className = 'button';
+      xverseBtn.textContent = '🔹 Xverse';
+      xverseBtn.onclick = connectXverse;
+      inner.appendChild(xverseBtn);
+
+      inner.appendChild(document.createElement('br'));
+      inner.appendChild(document.createElement('br'));
+
+      const cancelBtn = document.createElement('button');
+      cancelBtn.className = 'button';
+      cancelBtn.textContent = 'Cancel';
+      cancelBtn.style.marginTop = '10px';
+      cancelBtn.onclick = closeModal;
+      inner.appendChild(cancelBtn);
+
       modal.appendChild(inner);
       document.body.appendChild(modal);
     }
@@ -215,7 +239,7 @@
 
     function updateUI(type, address) {
       const el = document.getElementById('wallet-display');
-      el.innerHTML = '';
+      el.textContent = '';
 
       const wallet = document.createElement('p');
       wallet.textContent = `Wallet: ${type}`;
