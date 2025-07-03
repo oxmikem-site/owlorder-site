@@ -107,7 +107,7 @@
       text-align: center;
     }
   </style>
-  <script src="https://unpkg.com/@stacks/connect@latest/dist/connect.umd.js"></script>
+  <script src="https://unpkg.com/@sats-connect/sdk/dist/sats-connect.min.js"></script>
 </head>
 <body>
   <header>
@@ -180,23 +180,28 @@
 
     async function connectXverse() {
       try {
-        const result = await window.SatsConnect.connect({
-          appDetails: {
-            name: 'OWL Dashboard',
-            icon: 'https://owlbtc.art/logo.png',
-          },
+        const { showConnectModal } = window.SatsConnect;
+        await showConnectModal({
+          wallet: 'xverse',
           network: {
             type: 'Mainnet'
           },
-          scopes: ['ordinals']
+          appMetadata: {
+            name: 'OWL Dashboard',
+            icon: 'https://owlbtc.art/logo.png'
+          },
+          onFinish: (response) => {
+            const address = response.addresses?.find(a => a.purpose === 'ordinals')?.address;
+            if (!address) throw new Error("No Ordinals address");
+            updateUI('Xverse', address);
+            connected = true;
+            closeModal();
+          },
+          onCancel: () => {
+            alert('Xverse login cancelled');
+            closeModal();
+          }
         });
-
-        const address = result.addresses?.find(a => a.purpose === 'ordinals')?.address;
-        if (!address) throw new Error("No Ordinals address");
-
-        updateUI('Xverse', address);
-        connected = true;
-        closeModal();
       } catch (err) {
         alert('Xverse connection failed');
         closeModal();
