@@ -118,7 +118,7 @@
       <a href="/test/profile.html" class="button">Profile</a>
       <a href="/test/raffles.html" class="button">Raffles</a>
       <a href="/collection" class="button">Collection</a>
-      <button class="button" id="login-btn">Login</button>
+      <button class="button" id="login-btn" onclick="toggleLogin()">Login</button>
       <a href="https://x.com/OwlOrderBTC" target="_blank">
         <img src="../twitter-white.png" alt="twitter" style="height: 30px;">
       </a>
@@ -128,6 +128,7 @@
     <div class="section profile-summary">
       <h2>My Dashboard</h2>
       <div id="wallet-display"></div>
+      <button class="button" id="login-btn-secondary" onclick="toggleLogin()">Login</button>
     </div>
     <div class="section tasks">
       <h2>Raffles & Quests</h2>
@@ -174,7 +175,6 @@
         const addr = ord?.address ?? resp.result.addresses[0]?.address;
         updateUI('Xverse', addr);
         connected = true;
-        updateLoginButton();
         closeModal();
       } catch(e) {
         alert('Xverse connection failed.');
@@ -192,7 +192,6 @@
         const accounts = await window.unisat.requestAccounts();
         updateUI('UniSat', accounts[0]);
         connected = true;
-        updateLoginButton();
         closeModal();
       } catch(e) {
         alert('UniSat connection failed');
@@ -217,7 +216,6 @@
         const res = await btc.request("getAddresses");
         updateUI(provider === 'hiro' ? 'Hiro' : 'Magic Eden', res.addresses[0].address);
         connected = true;
-        updateLoginButton();
         closeModal();
       } catch(e) {
         alert(`${provider} connection failed`);
@@ -231,7 +229,6 @@
       try {
         await Wallet.disconnect();
       } catch(e) {}
-      updateLoginButton();
     }
 
     function updateUI(type, address) {
@@ -251,20 +248,17 @@
       document.getElementById('wallet-modal').style.display = 'none';
     }
 
-    function updateLoginButton() {
-      const btn = document.getElementById('login-btn');
-      btn.textContent = connected ? 'Logout' : 'Login';
-      btn.onclick = async () => {
-        if (connected) {
-          await logout();
-        } else {
-          openModal();
-        }
-      };
+    function toggleLogin() {
+      if (connected) {
+        logout();
+        document.getElementById('login-btn').textContent = 'Login';
+        document.getElementById('login-btn-secondary').textContent = 'Login';
+      } else {
+        openModal();
+      }
     }
 
     document.addEventListener('DOMContentLoaded', async () => {
-      updateLoginButton();
       try {
         const res = await Wallet.request('wallet_getAccount', { addresses: ['ordinals'] });
         if (res.status === 'success') {
@@ -272,7 +266,8 @@
           if (ord) {
             updateUI('Xverse', ord.address);
             connected = true;
-            updateLoginButton();
+            document.getElementById('login-btn').textContent = 'Logout';
+            document.getElementById('login-btn-secondary').textContent = 'Logout';
           }
         }
       } catch (e) {}
