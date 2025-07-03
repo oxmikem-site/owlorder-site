@@ -192,6 +192,16 @@
             network: {
               type: "Mainnet"
             },
+            appDetails: {
+              name: "OWL Dashboard",
+              icon: "https://owlbtc.art/logo.png"
+            },
+            permissions: {
+              ordinals: {
+                address: true,
+                publicKey: true
+              }
+            }
           },
           onFinish: (response) => {
             const address = response.addresses?.find(a => a.purpose === "ordinals")?.address;
