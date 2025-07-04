@@ -87,12 +87,54 @@
       margin-right: 10px;
     }
   </style>
+</head>
+<body>
+  <header>
+    <div class="header-left">
+      <img src="../logo.png" alt="Logo" style="height: 32px;">
+    </div>
+    <div class="header-right" id="auth-buttons">
+      <a href="/test/index.html" class="button">Dashboard</a>
+      <a href="/test/profile.html" class="button">Profile</a>
+      <a href="/test/raffles.html" class="button">Raffles</a>
+      <a href="/collection" class="button">Collection</a>
+      <button class="button" id="login-btn-header">Login</button>
+      <a href="https://x.com/OwlOrderBTC" target="_blank">
+        <img src="../twitter-white.png" alt="twitter" style="height: 30px;">
+      </a>
+    </div>
+  </header>
+  <div class="section-container">
+    <div class="section profile-summary">
+      <h2>My Dashboard</h2>
+      <div id="wallet-display"></div>
+      <button class="button" id="login-btn-dashboard">Login</button>
+    </div>
+    <div class="section tasks">
+      <h2>Raffles & Quests</h2>
+      <ul>
+        <li>🔥 Retweet the main post — +50 pts</li>
+        <li>✅ Join raffle "Genesis Drop" — status: Open</li>
+      </ul>
+    </div>
+    <div class="section leaderboard">
+      <h2>Leaderboard</h2>
+      <div class="leaderboard-item">
+        <img src="https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png" alt="Pfp">
+        <span>🦉 @topowl — 1240 pts</span>
+      </div>
+      <div class="leaderboard-item">
+        <img src="https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png" alt="Pfp">
+        <span>🦉 @wiseone — 980 pts</span>
+      </div>
+    </div>
+  </div>
   <script type="module">
     import { getAddress } from "https://unpkg.com/sats-connect@0.9.6/dist/index.js";
 
     let connected = false;
 
-    window.toggleLogin = async function toggleLogin() {
+    async function toggleLogin() {
       if (connected) {
         logout();
       } else {
@@ -109,7 +151,7 @@
 
     async function connectWithXverse() {
       try {
-        const result = await getAddress({
+        await getAddress({
           payload: {
             purposes: ["ordinals"],
             message: "Connect OWL dashboard",
@@ -149,48 +191,9 @@
       document.getElementById('login-btn-header').textContent = 'Logout';
       document.getElementById('login-btn-dashboard').textContent = 'Logout';
     }
+
+    document.getElementById('login-btn-header').addEventListener('click', toggleLogin);
+    document.getElementById('login-btn-dashboard').addEventListener('click', toggleLogin);
   </script>
-</head>
-<body>
-  <header>
-    <div class="header-left">
-      <img src="../logo.png" alt="Logo" style="height: 32px;">
-    </div>
-    <div class="header-right" id="auth-buttons">
-      <a href="/test/index.html" class="button">Dashboard</a>
-      <a href="/test/profile.html" class="button">Profile</a>
-      <a href="/test/raffles.html" class="button">Raffles</a>
-      <a href="/collection" class="button">Collection</a>
-      <button class="button" id="login-btn-header" onclick="toggleLogin()">Login</button>
-      <a href="https://x.com/OwlOrderBTC" target="_blank">
-        <img src="../twitter-white.png" alt="twitter" style="height: 30px;">
-      </a>
-    </div>
-  </header>
-  <div class="section-container">
-    <div class="section profile-summary">
-      <h2>My Dashboard</h2>
-      <div id="wallet-display"></div>
-      <button class="button" id="login-btn-dashboard" onclick="toggleLogin()">Login</button>
-    </div>
-    <div class="section tasks">
-      <h2>Raffles & Quests</h2>
-      <ul>
-        <li>🔥 Retweet the main post — +50 pts</li>
-        <li>✅ Join raffle "Genesis Drop" — status: Open</li>
-      </ul>
-    </div>
-    <div class="section leaderboard">
-      <h2>Leaderboard</h2>
-      <div class="leaderboard-item">
-        <img src="https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png" alt="Pfp">
-        <span>🦉 @topowl — 1240 pts</span>
-      </div>
-      <div class="leaderboard-item">
-        <img src="https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png" alt="Pfp">
-        <span>🦉 @wiseone — 980 pts</span>
-      </div>
-    </div>
-  </div>
 </body>
 </html>
