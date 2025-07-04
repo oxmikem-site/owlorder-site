@@ -87,6 +87,69 @@
       margin-right: 10px;
     }
   </style>
+  <script type="module">
+    import { getAddress } from "https://unpkg.com/sats-connect@0.9.6/dist/index.js";
+
+    let connected = false;
+
+    window.toggleLogin = async function toggleLogin() {
+      if (connected) {
+        logout();
+      } else {
+        await connectWithXverse();
+      }
+    }
+
+    function logout() {
+      connected = false;
+      document.getElementById('wallet-display').textContent = '';
+      document.getElementById('login-btn-header').textContent = 'Login';
+      document.getElementById('login-btn-dashboard').textContent = 'Login';
+    }
+
+    async function connectWithXverse() {
+      try {
+        const result = await getAddress({
+          payload: {
+            purposes: ["ordinals"],
+            message: "Connect OWL dashboard",
+            network: { type: "Mainnet" },
+          },
+          onFinish: (response) => {
+            const ordinalsAddress = response.addresses.find(a => a.purpose === 'ordinals')?.address;
+            if (!ordinalsAddress) throw new Error("No ordinals address returned");
+            updateUI("Xverse", ordinalsAddress);
+            connected = true;
+          },
+          onCancel: () => {
+            alert("❌ Підключення скасовано користувачем");
+          },
+        });
+      } catch (err) {
+        console.error("Wallet connection error:", err);
+        alert("❌ Помилка підключення: " + err.message);
+      }
+    }
+
+    function updateUI(type, address) {
+      const el = document.getElementById('wallet-display');
+      el.textContent = '';
+
+      const wallet = document.createElement('p');
+      wallet.textContent = `Wallet: ${type}`;
+      const addr = document.createElement('p');
+      addr.textContent = `Address: ${address.slice(0,6)}…${address.slice(-4)}`;
+      const nfts = document.createElement('p');
+      nfts.textContent = 'NFT count: …';
+
+      el.appendChild(wallet);
+      el.appendChild(addr);
+      el.appendChild(nfts);
+
+      document.getElementById('login-btn-header').textContent = 'Logout';
+      document.getElementById('login-btn-dashboard').textContent = 'Logout';
+    }
+  </script>
 </head>
 <body>
   <header>
@@ -129,69 +192,5 @@
       </div>
     </div>
   </div>
-
-  <script>
-    let connected = false;
-
-    function toggleLogin() {
-      if (connected) {
-        logout();
-      } else {
-        connectWithXverse();
-      }
-    }
-
-    function logout() {
-      connected = false;
-      document.getElementById('wallet-display').textContent = '';
-      document.getElementById('login-btn-header').textContent = 'Login';
-      document.getElementById('login-btn-dashboard').textContent = 'Login';
-    }
-
-    async function connectWithXverse() {
-      if (!window.btc || !window.btc.request) {
-        alert("Xverse Wallet не знайдено.");
-        return;
-      }
-
-      try {
-        const response = await window.btc.request("connect", {
-          purposes: ["ordinals"],
-          message: "Connect to OWL dashboard",
-          network: {
-            type: "Mainnet"
-          }
-        });
-
-        const address = response.addresses?.find(addr => addr.purpose === "ordinals")?.address;
-        if (!address) throw new Error("Ordinals address not found");
-
-        updateUI("Xverse", address);
-        connected = true;
-      } catch (err) {
-        console.error("Wallet connection error:", err);
-        alert("❌ Помилка підключення: " + err.message);
-      }
-    }
-
-    function updateUI(type, address) {
-      const el = document.getElementById('wallet-display');
-      el.textContent = '';
-
-      const wallet = document.createElement('p');
-      wallet.textContent = `Wallet: ${type}`;
-      const addr = document.createElement('p');
-      addr.textContent = `Address: ${address.slice(0,6)}…${address.slice(-4)}`;
-      const nfts = document.createElement('p');
-      nfts.textContent = 'NFT count: …';
-
-      el.appendChild(wallet);
-      el.appendChild(addr);
-      el.appendChild(nfts);
-
-      document.getElementById('login-btn-header').textContent = 'Logout';
-      document.getElementById('login-btn-dashboard').textContent = 'Logout';
-    }
-  </script>
 </body>
 </html>
