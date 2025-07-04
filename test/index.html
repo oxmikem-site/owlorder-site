@@ -21,18 +21,19 @@
       overflow-x: hidden;
     }
     header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
       width: 100%;
       max-width: 1500px;
-      padding: 15px 40px;
-      background-color: rgba(13, 12, 10, 0.15);
+      height: 80px;
+      background: url("../header.png") no-repeat center center;
+      background-size: cover;
       box-sizing: border-box;
       border-bottom-left-radius: 20px;
       border-bottom-right-radius: 20px;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      padding: 15px 40px;
     }
-    .header-left { display: flex; align-items: center; gap: 10px; }
     .header-right { display: flex; align-items: center; gap: 16px; }
     .button {
       padding: 8px 14px;
@@ -90,9 +91,6 @@
 </head>
 <body>
   <header>
-    <div class="header-left">
-      <img src="../logo.png" alt="Logo" style="height: 32px;">
-    </div>
     <div class="header-right" id="auth-buttons">
       <a href="/test/index.html" class="button">Dashboard</a>
       <a href="/test/profile.html" class="button">Profile</a>
