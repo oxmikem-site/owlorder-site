@@ -107,15 +107,18 @@
       box-sizing: border-box;
     }
 
-    .frame {
-      position: relative;
-      width: 100%;
-      aspect-ratio: 1 / 1.4;
-      overflow: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
+   .frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1.4;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backface-visibility: hidden;   /* ✅ зменшує глітчі */
+  transform: translateZ(0);      /* ✅ ізолює 3D артефакти */
+  will-change: auto;             /* ✅ скидає 3D оптимізації */
+}
 
     model-viewer {
       position: absolute;
