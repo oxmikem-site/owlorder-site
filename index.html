@@ -53,6 +53,23 @@
       align-items: center;
       gap: 16px;
     }
+    .header {
+  position: relative;
+  height: 60px; /* або висота твого хедера */
+  background: url('header-bg.png') no-repeat center center;
+  background-size: cover;
+}
+
+/* Прозора кнопка поверх лого */
+.logo-overlay {
+  position: absolute;
+  left: 10px;   /* відступ від лівого краю */
+  top: 10px;    /* відступ від верху */
+  width: 60px;  /* ширина зони з логотипом */
+  height: 40px; /* висота зони з логотипом */
+  display: block;
+  z-index: 10;
+}
 
     .button {
       padding: 8px 14px;
@@ -157,6 +174,8 @@
 <body>
   <header>
     <div class="header-right">
+      <a href="index.html" class="logo-overlay"></a>
+      <div class="nav-buttons">
       <a href="/collection" class="button">Collection</a>
       <a href="https://x.com/OwlOrderBTC" target="_blank">
         <img src="../twitter-white.png" alt="twitter" style="height: 30px;">
