@@ -39,6 +39,24 @@
       align-items: center;
       padding: 15px 40px;
     }
+    <div class="nft-frame-background"></div>
+    .nft-frame-background {
+  position: absolute;
+  top: 120px; /* щоб не заїхало під хедер */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 1500px;
+  height: 2000px;
+  background: url("../background collection.png") no-repeat top center;
+  background-size: contain;
+  z-index: 0;
+  pointer-events: none;
+}
+.section-container {
+  position: relative;
+  z-index: 1;
+}
+
     .header-left {
       display: flex;
       align-items: center;
