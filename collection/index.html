@@ -10,7 +10,7 @@
       box-sizing: border-box;
     }
 
-     body {
+    body {
       margin: 0;
       background: #000000;
       color: white;
@@ -20,9 +20,10 @@
       align-items: center;
       max-width: 100vw;
       overflow-x: hidden;
+      padding-top: 100px; /* щоб контент не заїжджав під хедер */
     }
 
-       header {
+    header {
       position: fixed;
       top: 0;
       z-index: 1000;
@@ -39,23 +40,26 @@
       align-items: center;
       padding: 15px 40px;
     }
-    <div class="nft-frame-background"></div>
+
     .nft-frame-background {
-  position: absolute;
-  top: 120px; /* щоб не заїхало під хедер */
-  left: 50%;
-  transform: translateX(-50%);
-  width: 1500px;
-  height: 2000px;
-  background: url("../background collection.png") no-repeat top center;
-  background-size: contain;
-  z-index: 0;
-  pointer-events: none;
-}
-.section-container {
-  position: relative;
-  z-index: 1;
-}
+      position: absolute;
+      top: 120px; /* щоб не заїхало під хедер */
+      left: 50%;
+      transform: translateX(-50%);
+      width: 1500px;
+      height: 2000px;
+      background: url("../background-collection.png") no-repeat top center;
+      background-size: contain;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .section-container {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 1500px;
+    }
 
     .header-left {
       display: flex;
@@ -92,12 +96,10 @@
     }
 
     .grid {
-      margin-top: 100px;
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
       gap: 0px;
       padding: 0px;
-      max-width: 1500px;
       width: 100%;
       box-sizing: border-box;
     }
@@ -121,32 +123,14 @@
       outline: none !important;
       box-shadow: none !important;
       transform: none !important;
-    }
-
-    model-viewer:focus {
-      outline: none !important;
-      box-shadow: none !important;
-      transform: none !important;
-    }
-
-    model-viewer * {
-      transform: none !important;
-      transition: none !important;
-    }
-
-    model-viewer {
       display: block;
-      transform: translateZ(0);
       will-change: transform;
     }
 
-    model-viewer:focus {
+    model-viewer:focus,
+    model-viewer:active {
       outline: none;
       box-shadow: none;
-      transform: translateZ(0);
-    }
-
-    model-viewer:active {
       transform: translateZ(0);
     }
 
@@ -158,9 +142,8 @@
 <body>
 
   <header>
-    </div>
     <div class="header-right">
-       <a href="/collection" class="button">Collection</a>
+      <a href="/collection" class="button">Collection</a>
       <a href="https://x.com/OwlOrderBTC" target="_blank">
         <img src="../twitter-white.png" alt="twitter" style="height: 30px;">
       </a>
