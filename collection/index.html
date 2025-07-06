@@ -78,19 +78,21 @@
 
     .main-wrapper {
       position: relative;
-      width: 1200px;
+      width: 1500px;
+      overflow: hidden;
     }
 
     .background-strip {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 1200px;
-      height: 2000px; /* адаптуй при потребі */
-      background: url("../background-collection.png") no-repeat top center;
-      background-size: cover;
-      z-index: 0;
-      pointer-events: none;
+  position: fixed;
+  top: 100px; /* нижче хедера */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 1500px;
+  height: 800px; /* висота фону/рамки */
+  background: url("../background-collection.png") no-repeat top center;
+  background-size: cover;
+  z-index: 0;
+  pointer-events: none;
     }
 
     .grid {
