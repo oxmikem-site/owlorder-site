@@ -32,7 +32,8 @@
 <body>
   <h1>🌟 OWL Raffle Entry</h1>
 
-  <button id="connectWalletBtn">🔗 Connect Wallet</button>
+  <div id="walletOptions"></div>
+
   <button id="connectTwitterBtn">🕊️ Connect Twitter</button>
   <button id="joinBtn" disabled>✅ Join Raffle</button>
 
@@ -42,73 +43,102 @@
     let userAddress = null;
     let twitterUsername = null;
 
-    // 📍 Insert your whitelist here
     const whitelist = [
       "bc1pExampleAddress1...",
       "bc1pExampleAddress2..."
     ];
 
-    document.getElementById("connectWalletBtn").onclick = async () => {
-      try {
-        let address = null;
-        if (window.unisat) {
-          const accounts = await window.unisat.requestAccounts();
-          address = accounts[0];
-        } else if (window.btc) {
-          const accounts = await window.btc.requestAccounts();
-          address = accounts[0];
-        } else if (window.leather) {
-          const response = await window.leather.request('getAddresses');
-          address = response[0].address;
-        } else {
-          alert("No supported Taproot wallet detected.");
-          return;
-        }
-        userAddress = address;
-        document.getElementById("status").innerText = "Wallet connected: " + userAddress;
-        checkEligibility();
-      } catch (err) {
-        alert("Error connecting wallet: " + err.message);
-      }
-    };
-
-    document.getElementById("connectTwitterBtn").onclick = () => {
-      const oauthUrl = "https://api.twitter.com/oauth/authenticate?oauth_token=YOUR_OAUTH_TOKEN"; // 📍 Replace with actual token logic
-      const twitterWindow = window.open(oauthUrl, "Twitter Login", "width=600,height=600");
-
-      const pollTimer = window.setInterval(function () {
-        try {
-          if (twitterWindow.closed) {
-            window.clearInterval(pollTimer);
-            // 🗋 Simulated successful auth (replace with actual username extraction logic)
-            twitterUsername = "@ExampleUser";
-            document.getElementById("status").innerText += "\nTwitter connected: " + twitterUsername;
-            checkEligibility();
-          }
-        } catch (e) {}
-      }, 1000);
-    };
+    function updateStatus(message) {
+      document.getElementById("status").innerText = message;
+    }
 
     function checkEligibility() {
       if (!userAddress || !twitterUsername) return;
 
       const isWhitelisted = whitelist.includes(userAddress);
       if (!isWhitelisted) {
-        document.getElementById("status").innerText = "❌ You are not on the whitelist.";
+        updateStatus("\u274c You are not on the whitelist.");
         return;
       }
 
-      document.getElementById("status").innerText = "✅ All checks passed!";
+      updateStatus("\u2705 All checks passed!");
       document.getElementById("joinBtn").disabled = false;
     }
+
+    document.getElementById("connectTwitterBtn").onclick = () => {
+      const oauthUrl = "https://api.twitter.com/oauth/authenticate?oauth_token=YOUR_OAUTH_TOKEN";
+      const twitterWindow = window.open(oauthUrl, "Twitter Login", "width=600,height=600");
+
+      const pollTimer = window.setInterval(function () {
+        try {
+          if (twitterWindow.closed) {
+            window.clearInterval(pollTimer);
+            twitterUsername = "@ExampleUser"; // replace with actual username
+            updateStatus("Twitter connected: " + twitterUsername);
+            checkEligibility();
+          }
+        } catch (e) {}
+      }, 1000);
+    };
 
     document.getElementById("joinBtn").onclick = () => {
       console.log("User joined:", {
         address: userAddress,
         twitter: twitterUsername
       });
-      alert("🎉 You’ve successfully joined the raffle!");
+      alert("\ud83c\udf89 You’ve successfully joined the raffle!");
     };
+
+    function createWalletButtons() {
+      const container = document.getElementById("walletOptions");
+      if (window.unisat) {
+        const btn = document.createElement("button");
+        btn.innerText = "🔗 Connect UniSat";
+        btn.onclick = async () => {
+          try {
+            const accounts = await window.unisat.requestAccounts();
+            userAddress = accounts[0];
+            updateStatus("UniSat connected: " + userAddress);
+            checkEligibility();
+          } catch (err) {
+            alert("UniSat error: " + err.message);
+          }
+        };
+        container.appendChild(btn);
+      }
+      if (window.btc) {
+        const btn = document.createElement("button");
+        btn.innerText = "🔗 Connect Xverse";
+        btn.onclick = async () => {
+          try {
+            const accounts = await window.btc.requestAccounts();
+            userAddress = accounts[0];
+            updateStatus("Xverse connected: " + userAddress);
+            checkEligibility();
+          } catch (err) {
+            alert("Xverse error: " + err.message);
+          }
+        };
+        container.appendChild(btn);
+      }
+      if (window.leather) {
+        const btn = document.createElement("button");
+        btn.innerText = "🔗 Connect Leather";
+        btn.onclick = async () => {
+          try {
+            const response = await window.leather.request('getAddresses');
+            userAddress = response[0].address;
+            updateStatus("Leather connected: " + userAddress);
+            checkEligibility();
+          } catch (err) {
+            alert("Leather error: " + err.message);
+          }
+        };
+        container.appendChild(btn);
+      }
+    }
+
+    window.onload = createWalletButtons;
   </script>
 </body>
 </html>
