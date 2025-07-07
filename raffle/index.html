@@ -66,21 +66,16 @@
     }
 
     document.getElementById("connectTwitterBtn").onclick = () => {
-      const oauthUrl = "https://api.twitter.com/oauth/authenticate?oauth_token=YOUR_OAUTH_TOKEN";
-      const twitterWindow = window.open(oauthUrl, "Twitter Login", "width=600,height=600");
+  window.location.href = "https://owlbtc.art/login";
+};
 
-      const pollTimer = window.setInterval(function () {
-        try {
-          if (twitterWindow.closed) {
-            window.clearInterval(pollTimer);
-            twitterUsername = "@ExampleUser"; // replace with actual username
-            updateStatus("Twitter connected: " + twitterUsername);
-            checkEligibility();
-          }
-        } catch (e) {}
-      }, 1000);
-    };
-
+    const params = new URLSearchParams(window.location.search);
+if (params.has('twitter')) {
+  twitterUsername = params.get('twitter');
+  updateStatus("Twitter connected: @" + twitterUsername);
+  checkEligibility();
+}
+    
     document.getElementById("joinBtn").onclick = () => {
       console.log("User joined:", {
         address: userAddress,
