@@ -32,9 +32,9 @@
 <body>
   <h1>🐦 OWL Raffle Entry</h1>
 
-  <button id="connectWalletBtn">Connect Wallet</button>
-  <button id="connectTwitterBtn">Connect Twitter</button>
-  <button id="joinBtn" disabled>Join Raffle</button>
+  <button id="connectWalletBtn">🔗 Connect Wallet</button>
+  <button id="connectTwitterBtn">🐦 Connect Twitter</button>
+  <button id="joinBtn" disabled>✅ Join Raffle</button>
 
   <div id="status"></div>
 
@@ -44,38 +44,54 @@
 
     // 📍 ВСТАВ СЮДИ СВІЙ WHITELIST
     const whitelist = [
-      "bc1pj8kc3tkedann0nsuegmllqwhh96069qhs0uvha5syfuhfe30hxqsu20ndd",
+      "bc1pExampleAddress1...",
       "bc1pExampleAddress2...",
       "bc1pExampleAddress3..."
       // додай свої
     ];
 
     // ------------------------------
-    // 1️⃣ ПІДКЛЮЧЕННЯ TAPROOT-ГАМАНЦЯ
+    // 🔗 CONNECT WALLET (MULTI-SUPPORT)
     // ------------------------------
     document.getElementById("connectWalletBtn").onclick = async () => {
       try {
-        const addresses = await window.unisat.requestAccounts();
-        userAddress = addresses[0];
+        let address = null;
+
+        if (window.unisat) {
+          const accounts = await window.unisat.requestAccounts();
+          address = accounts[0];
+        } else if (window.btc) {
+          const accounts = await window.btc.requestAccounts();
+          address = accounts[0];
+        } else if (window.leather) {
+          const response = await window.leather.request('getAddresses');
+          address = response[0].address;
+        } else {
+          alert("No supported Taproot wallet detected.");
+          return;
+        }
+
+        userAddress = address;
         document.getElementById("status").innerText = "Wallet connected: " + userAddress;
         checkEligibility();
+
       } catch (err) {
         alert("Error connecting wallet: " + err.message);
       }
     };
 
     // ------------------------------
-    // 2️⃣ ПІДКЛЮЧЕННЯ TWITTER (OAuth)
+    // 🐦 CONNECT TWITTER (OAuth Placeholder)
     // ------------------------------
     document.getElementById("connectTwitterBtn").onclick = () => {
-      // 📍 СЮДИ ВСТАВ СВОЮ TWITTER-АВТОРИЗАЦІЮ
-      alert("Twitter connection placeholder. You’ll need Twitter OAuth here.");
-      twitterUsername = "@ExampleUser"; // Замінити на реального користувача після авторизації
+      // 📍 СЮДИ ДОДАЙ СВОЮ TWITTER-АВТОРИЗАЦІЮ
+      alert("Twitter connection placeholder. Replace with real OAuth flow.");
+      twitterUsername = "@ExampleUser"; // заміни на реального користувача після авторизації
       checkEligibility();
     };
 
     // ------------------------------
-    // 3️⃣ ПЕРЕВІРКА УМОВ
+    // ✅ ПЕРЕВІРКА УМОВ
     // ------------------------------
     function checkEligibility() {
       if (!userAddress || !twitterUsername) return;
@@ -86,20 +102,18 @@
         return;
       }
 
-      // 📍 ПЕРЕВІРКА TWITTER FOLLOW/RT/LIKE
-      // Використовуй Twitter API тут, наприклад:
-      // fetch(`/api/check-twitter?user=${twitterUsername}`)
-      //   .then(...)
+      // 📍 ДОДАЙ ПЕРЕВІРКУ TWITTER ЗАВДАНЬ (follow / like / RT)
+      // Через Twitter API
 
       document.getElementById("status").innerText = "✅ All checks passed!";
       document.getElementById("joinBtn").disabled = false;
     }
 
     // ------------------------------
-    // 4️⃣ JOIN RAFFLE
+    // 📝 JOIN RAFFLE
     // ------------------------------
     document.getElementById("joinBtn").onclick = () => {
-      // 📍 СЮДИ ВСТАВ ЛОГІКУ ЗБЕРЕЖЕННЯ (наприклад, Google Sheets або Firebase)
+      // 📍 ЗБЕРЕЖИ УЧАСТЬ — Google Sheets / Firebase / JSON
       console.log("User joined:", {
         address: userAddress,
         twitter: twitterUsername
