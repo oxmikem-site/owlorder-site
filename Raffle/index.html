@@ -30,10 +30,10 @@
   </style>
 </head>
 <body>
-  <h1>🐦 OWL Raffle Entry</h1>
+  <h1>🌟 OWL Raffle Entry</h1>
 
   <button id="connectWalletBtn">🔗 Connect Wallet</button>
-  <button id="connectTwitterBtn">🐦 Connect Twitter</button>
+  <button id="connectTwitterBtn">🕊️ Connect Twitter</button>
   <button id="joinBtn" disabled>✅ Join Raffle</button>
 
   <div id="status"></div>
@@ -42,21 +42,15 @@
     let userAddress = null;
     let twitterUsername = null;
 
-    // 📍 ВСТАВ СЮДИ СВІЙ WHITELIST
+    // 📍 Insert your whitelist here
     const whitelist = [
       "bc1pExampleAddress1...",
-      "bc1pExampleAddress2...",
-      "bc1pExampleAddress3..."
-      // додай свої
+      "bc1pExampleAddress2..."
     ];
 
-    // ------------------------------
-    // 🔗 CONNECT WALLET (MULTI-SUPPORT)
-    // ------------------------------
     document.getElementById("connectWalletBtn").onclick = async () => {
       try {
         let address = null;
-
         if (window.unisat) {
           const accounts = await window.unisat.requestAccounts();
           address = accounts[0];
@@ -70,29 +64,31 @@
           alert("No supported Taproot wallet detected.");
           return;
         }
-
         userAddress = address;
         document.getElementById("status").innerText = "Wallet connected: " + userAddress;
         checkEligibility();
-
       } catch (err) {
         alert("Error connecting wallet: " + err.message);
       }
     };
 
-    // ------------------------------
-    // 🐦 CONNECT TWITTER (OAuth Placeholder)
-    // ------------------------------
     document.getElementById("connectTwitterBtn").onclick = () => {
-      // 📍 СЮДИ ДОДАЙ СВОЮ TWITTER-АВТОРИЗАЦІЮ
-      alert("Twitter connection placeholder. Replace with real OAuth flow.");
-      twitterUsername = "@ExampleUser"; // заміни на реального користувача після авторизації
-      checkEligibility();
+      const oauthUrl = "https://api.twitter.com/oauth/authenticate?oauth_token=YOUR_OAUTH_TOKEN"; // 📍 Replace with actual token logic
+      const twitterWindow = window.open(oauthUrl, "Twitter Login", "width=600,height=600");
+
+      const pollTimer = window.setInterval(function () {
+        try {
+          if (twitterWindow.closed) {
+            window.clearInterval(pollTimer);
+            // 🗋 Simulated successful auth (replace with actual username extraction logic)
+            twitterUsername = "@ExampleUser";
+            document.getElementById("status").innerText += "\nTwitter connected: " + twitterUsername;
+            checkEligibility();
+          }
+        } catch (e) {}
+      }, 1000);
     };
 
-    // ------------------------------
-    // ✅ ПЕРЕВІРКА УМОВ
-    // ------------------------------
     function checkEligibility() {
       if (!userAddress || !twitterUsername) return;
 
@@ -102,18 +98,11 @@
         return;
       }
 
-      // 📍 ДОДАЙ ПЕРЕВІРКУ TWITTER ЗАВДАНЬ (follow / like / RT)
-      // Через Twitter API
-
       document.getElementById("status").innerText = "✅ All checks passed!";
       document.getElementById("joinBtn").disabled = false;
     }
 
-    // ------------------------------
-    // 📝 JOIN RAFFLE
-    // ------------------------------
     document.getElementById("joinBtn").onclick = () => {
-      // 📍 ЗБЕРЕЖИ УЧАСТЬ — Google Sheets / Firebase / JSON
       console.log("User joined:", {
         address: userAddress,
         twitter: twitterUsername
