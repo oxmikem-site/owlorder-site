@@ -12,7 +12,7 @@
 
     body {
       margin: 0;
-      background: #000000;
+      background: linear-gradient(180deg, #000000 0%, #0d0c0a 100%);
       color: white;
       font-family: 'Inter', sans-serif;
       display: flex;
@@ -26,15 +26,16 @@
       width: 100%;
       max-width: 1500px;
       height: 80px;
-      background: url("../header.png") no-repeat center center;
-      background-size: cover;
-      box-sizing: border-box;
-      border-bottom-left-radius: 20px;
-      border-bottom-right-radius: 20px;
+      background: rgba(255, 255, 255, 0.03);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
       display: flex;
       justify-content: flex-end;
       align-items: center;
       padding: 15px 40px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
 
     .header-right {
@@ -50,66 +51,83 @@
       color: white;
       text-decoration: none;
       font-weight: 500;
-      border-radius: 4px;
-      transition: background 0.2s, color 0.2s;
+      border-radius: 6px;
+      transition: all 0.2s;
     }
 
     .button:hover {
-      background-color: white;
+      background-color: #8affc1;
       color: #0d0c0a;
+      border-color: #8affc1;
     }
 
     .leaderboard-container {
       width: 100%;
       max-width: 900px;
-      margin-top: 40px;
+      margin-top: 60px;
       padding: 0 20px;
     }
 
     .leaderboard-title {
-      font-size: 28px;
-      font-weight: 600;
-      margin-bottom: 20px;
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 30px;
       color: #e7dbb8;
-      border-bottom: 1px solid #9f6625;
-      padding-bottom: 10px;
+      border-bottom: 2px solid #8affc1;
+      padding-bottom: 12px;
+      text-align: center;
+      text-shadow: 0 0 10px #8affc188;
     }
 
     .leaderboard-entry {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.05);
-      border-radius: 10px;
-      padding: 12px 20px;
-      margin-bottom: 10px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 14px 24px;
+      margin-bottom: 12px;
+      backdrop-filter: blur(6px);
+      transition: transform 0.2s ease;
+    }
+
+    .leaderboard-entry:hover {
+      transform: scale(1.01);
     }
 
     .entry-left {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 14px;
     }
 
     .entry-left img {
-      width: 40px;
-      height: 40px;
+      width: 42px;
+      height: 42px;
       border-radius: 50%;
+      border: 1px solid #8affc1;
     }
 
     .entry-left span {
       font-weight: 500;
+      color: #ffffff;
     }
 
     .entry-points {
-      font-weight: 600;
+      font-weight: 700;
+      font-size: 16px;
       color: #9f6625;
     }
 
+    .medal {
+      font-size: 20px;
+      margin-right: 8px;
+    }
+
     .twitter-icon {
-      width: 24px;
-      height: 24px;
+      width: 26px;
+      height: 26px;
     }
   </style>
 </head>
@@ -128,43 +146,51 @@
   </header>
 
   <div class="leaderboard-container">
-    <h1 class="leaderboard-title">Leaderboard</h1>
+    <h1 class="leaderboard-title">🦉 Owl Leaderboard</h1>
     <div id="leaderboard-list"></div>
   </div>
 
-<script>
-  async function loadLeaderboard() {
-    const url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?gid=1127131432&single=true&output=csv';
-    const response = await fetch(url);
-    const text = await response.text();
-    const rows = text.trim().split('\n').map(row => row.split(','));
+  <script>
+    async function loadLeaderboard() {
+      const url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?gid=1127131432&single=true&output=csv';
+      const response = await fetch(url);
+      const text = await response.text();
+      const rows = text.trim().split('\n').map(row => row.split(','));
 
-    const container = document.getElementById('leaderboard-list');
-    container.innerHTML = ''; // очистити перед оновленням
+      const container = document.getElementById('leaderboard-list');
+      container.innerHTML = '';
 
-    for (let i = 1; i < rows.length; i++) {
-      const row = rows[i];
-      const address = row[1];
-      const points = row[3];
-      const avatarUrl = `https://api.dicebear.com/7.x/identicon/svg?seed=${address}`;
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        const rank = parseInt(row[0]);
+        const address = row[1];
+        const points = row[3];
+        const shortAddr = address.slice(0, 6) + '...' + address.slice(-4);
+        const avatarUrl = `https://api.dicebear.com/7.x/identicon/svg?seed=${address}`;
+        let medal = '';
 
-      const entry = document.createElement('div');
-      entry.className = 'leaderboard-entry';
-      entry.innerHTML = `
-        <div class="entry-left">
-          <img src="${avatarUrl}" alt="Avatar">
-          <span>${address.slice(0, 6)}...${address.slice(-4)}</span>
-        </div>
-        <div class="entry-points">🦉 ${points} pts</div>
-      `;
+        if (rank === 1) medal = '🥇';
+        else if (rank === 2) medal = '🥈';
+        else if (rank === 3) medal = '🥉';
 
-      container.appendChild(entry);
+        const entry = document.createElement('div');
+        entry.className = 'leaderboard-entry';
+        entry.innerHTML = `
+          <div class="entry-left">
+            <div class="medal">${medal}</div>
+            <img src="${avatarUrl}" alt="Avatar">
+            <span>${shortAddr}</span>
+          </div>
+          <div class="entry-points">🦉 ${points} pts</div>
+        `;
+
+        container.appendChild(entry);
+      }
     }
-  }
 
-  loadLeaderboard();
-  setInterval(loadLeaderboard, 3600000); // оновлювати щогодини
-</script>
+    loadLeaderboard();
+    setInterval(loadLeaderboard, 3600000);
+  </script>
 
 </body>
 </html>
