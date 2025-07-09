@@ -6,231 +6,154 @@
   <link rel="icon" type="image/png" href="../logo2.png">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --bg-dark: #0b0b0b;
+      --bg-panel: #1a1a1a;
+      --text-primary: #e6e6e6;
+      --text-secondary: #9f9f9f;
+      --accent: #fff065;
+      --accent-muted: #8a7f5a;
+    }
+
     * {
       box-sizing: border-box;
     }
 
     body {
       margin: 0;
-      background: linear-gradient(180deg, #000000 0%, #0d0c0a 100%);
-      color: white;
+      background: var(--bg-dark);
+      color: var(--text-primary);
       font-family: 'Inter', sans-serif;
       display: flex;
       flex-direction: column;
       align-items: center;
-      max-width: 100vw;
-      overflow-x: hidden;
+      padding: 40px 20px;
     }
 
-    header {
+    .container {
       width: 100%;
-      max-width: 1500px;
-      height: 80px;
-      background: rgba(255, 255, 255, 0.03);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-      display: flex;
-      justify-content: flex-end;
-      align-items: center;
-      padding: 15px 40px;
-      position: sticky;
-      top: 0;
-      z-index: 100;
+      max-width: 1000px;
     }
-
-    .header-right {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-
-    .button {
-      padding: 8px 14px;
-      background-color: transparent;
-      border: 1px solid white;
-      color: white;
-      text-decoration: none;
-      font-weight: 500;
-      border-radius: 6px;
-      transition: all 0.2s;
-    }
-
-    .button:hover {
-      background-color: #8affc1;
-      color: #0d0c0a;
-      border-color: #8affc1;
-    }
-
-    .leaderboard-container {
-      width: 100%;
-      max-width: 900px;
-      margin-top: 60px;
-      padding: 0 20px;
-    }
-    .leaderboard-header {
-  display: grid;
-  grid-template-columns: 80px 1fr 100px 100px;
-  padding: 0 24px 12px 24px;
-  color: #8affc1;
-  font-weight: 600;
-  font-size: 14px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  opacity: 0.9;
-}
-
-.header-rank,
-.header-wallet,
-.header-nfts,
-.header-points {
-  display: flex;
-  align-items: center;
-}
 
     .leaderboard-title {
-  font-size: 32px;
-  font-weight: 700;
-  margin-bottom: 30px;
-  color: #e7dbb8;
-  border-bottom: 2px solid #8affc1;
-  padding-bottom: 12px;
-  text-align: center;
-  text-shadow: 0 0 10px #8affc188;
-}
-
-.leaderboard-entry {
-  display: grid;
-  grid-template-columns: 80px 1fr 100px 100px;
-  align-items: center;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
-  padding: 14px 24px;
-  margin-bottom: 12px;
-  backdrop-filter: blur(6px);
-  transition: transform 0.2s ease;
-}
-
-.leaderboard-entry:hover {
-  transform: scale(1.01);
-}
-
-.entry-left {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.entry-left img {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  border: 1px solid #8affc1;
-}
-
-.entry-left .rank {
-  width: 30px;
-  text-align: right;
-  font-weight: 600;
-  color: #ffffffcc;
-}
-
-.entry-left .address {
-  font-weight: 500;
-  color: #ffffff;
-}
-
-.entry-info {
-  display: flex;
-  gap: 40px;
-}
-
-.entry-info span {
-  font-weight: 600;
-  color: #e7dbb8;
-}
-    }
-
-    .entry-points {
+      font-size: 28px;
       font-weight: 700;
-      font-size: 16px;
-      color: #9f6625;
+      margin-bottom: 30px;
+      color: var(--accent);
+      text-align: center;
+      letter-spacing: 1px;
     }
 
-    .medal {
-      font-size: 20px;
-      margin-right: 8px;
+    .leaderboard-header, .leaderboard-entry {
+      display: grid;
+      grid-template-columns: 80px 1fr 100px 100px;
+      align-items: center;
+      padding: 16px 24px;
+      border-radius: 12px;
     }
 
-    .twitter-icon {
-      width: 26px;
-      height: 26px;
+    .leaderboard-header {
+      color: var(--accent-muted);
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .leaderboard-entry {
+      background-color: var(--bg-panel);
+      margin-bottom: 12px;
+      transition: transform 0.2s;
+    }
+
+    .leaderboard-entry:hover {
+      transform: scale(1.01);
+    }
+
+    .rank {
+      font-weight: 600;
+      color: var(--accent);
+      text-align: center;
+    }
+
+    .wallet {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--text-primary);
+    }
+
+    .wallet img {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 1px solid var(--accent-muted);
+    }
+
+    .wallet span {
+      font-weight: 500;
+      font-size: 15px;
+    }
+
+    .nfts, .points {
+      text-align: center;
+      font-weight: 600;
+      font-size: 15px;
+      color: var(--text-primary);
     }
   </style>
 </head>
 <body>
+  <div class="container">
+    <h1 class="leaderboard-title">LEADERBOARD</h1>
 
-  <header>
-    <div class="header-right">
-      <a href="/index.html" class="button">Dashboard</a>
-      <a href="/profile.html" class="button">Profile</a>
-      <a href="/raffles.html" class="button">Raffles</a>
-      <a href="/collection" class="button">Collection</a>
-      <a href="https://x.com/OwlOrderBTC" target="_blank">
-        <img src="../twitter-white.png" alt="twitter" class="twitter-icon">
-      </a>
-    </div>
-  </header>
-  
-  <div class="leaderboard-container">
-    <h1 class="leaderboard-title">🦉 Owl Leaderboard</h1>
     <div class="leaderboard-header">
-  <div class="header-rank">RANK</div>
-  <div class="header-wallet">WALLET</div>
-  <div class="header-nfts">NFTs</div>
-  <div class="header-points">POINTS</div>
+      <div>RANK</div>
+      <div>WALLET</div>
+      <div>NFTs</div>
+      <div>POINTS</div>
+    </div>
+
     <div id="leaderboard-list"></div>
   </div>
 
   <script>
-  async function loadLeaderboard() {
-    const url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?gid=1127131432&single=true&output=csv';
-    const response = await fetch(url);
-    const text = await response.text();
-    const rows = text.trim().split('\n').map(row => row.split(','));
+    async function loadLeaderboard() {
+      const url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?gid=1127131432&single=true&output=csv';
+      const response = await fetch(url);
+      const text = await response.text();
+      const rows = text.trim().split('\n').map(row => row.split(','));
 
-    const container = document.getElementById('leaderboard-list');
-    container.innerHTML = '';
+      const container = document.getElementById('leaderboard-list');
+      container.innerHTML = '';
 
-    for (let i = 1; i < rows.length; i++) {
-      const row = rows[i];
-      const rank = row[0];
-      const address = row[1];
-      const nftCount = row[2];
-      const points = row[3];
-      const shortAddr = address.slice(0, 6) + '...' + address.slice(-4);
-      const avatarUrl = `https://api.dicebear.com/7.x/identicon/svg?seed=${address}`;
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        const rank = row[0];
+        const address = row[1];
+        const nftCount = row[2];
+        const points = row[3];
+        const shortAddr = address.slice(0, 6) + '...' + address.slice(-4);
+        const avatarUrl = `https://api.dicebear.com/7.x/identicon/svg?seed=${address}`;
 
-      const entry = document.createElement('div');
-      entry.className = 'leaderboard-entry';
-      entry.innerHTML = `
-  <div class="rank">${rank}</div>
-  <div class="wallet">
-    <img src="${avatarUrl}" alt="Avatar" style="width: 32px; height: 32px; border-radius: 50%; margin-right: 10px; border: 1px solid #8affc1;">
-    <span>${shortAddr}</span>
-  </div>
-  <div class="nfts">${nftCount}</div>
-  <div class="points">${points}</div>
-`;
+        const entry = document.createElement('div');
+        entry.className = 'leaderboard-entry';
+        entry.innerHTML = `
+          <div class="rank">${rank}</div>
+          <div class="wallet">
+            <img src="${avatarUrl}" alt="Avatar">
+            <span>${shortAddr}</span>
+          </div>
+          <div class="nfts">${nftCount}</div>
+          <div class="points">${points}</div>
+        `;
 
-
-      container.appendChild(entry);
+        container.appendChild(entry);
+      }
     }
-  }
 
-  loadLeaderboard();
-  setInterval(loadLeaderboard, 3600000);
-</script>
-
+    loadLeaderboard();
+    setInterval(loadLeaderboard, 3600000);
+  </script>
 </body>
 </html>
