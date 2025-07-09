@@ -32,16 +32,38 @@
     }
 
     header {
-      max-width: 900px;
+      width: 100%;
+      max-width: 720px;
       margin-top: 20px;
       height: 64px;
       background: var(--header-bg);
       display: flex;
-      justify-content: flex-end;
+      justify-content: space-between;
       align-items: center;
-      padding: 0 30px;
-      border-radius: 16px;
+      padding: 0 20px;
+      border-radius: 20px;
       box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo img {
+      width: 30px;
+      height: 30px;
+    }
+
+    .logo span {
+      font-size: 15px;
+      color: var(--text-primary);
+    }
+
+    .nav-buttons {
+      display: flex;
+      align-items: center;
     }
 
     .button {
@@ -51,7 +73,7 @@
       color: var(--text-primary);
       text-decoration: none;
       font-weight: 500;
-      font-size: 15px;
+      font-size: 16px;
       transition: all 0.2s ease;
       margin-left: 20px;
     }
@@ -63,7 +85,7 @@
     .twitter-icon {
       width: 26px;
       height: 26px;
-      margin-left: 16px;
+      margin-left: 20px;
     }
 
     .container {
@@ -142,11 +164,17 @@
 <body>
 
   <header>
-    <a href="/collection" class="button">Collection</a>
-    <a href="/leaderboard" class="button">Leaderboard</a>
-    <a href="https://x.com/OwlOrderBTC" target="_blank">
-      <img src="../twitter-white.png" alt="twitter" class="twitter-icon">
-    </a>
+    <div class="logo">
+      <img src="../logo2.png" alt="logo">
+      <span>NAME</span>
+    </div>
+    <div class="nav-buttons">
+      <a href="/collection" class="button">Collection</a>
+      <a href="/leaderboard" class="button" style="color: var(--accent-muted)">Leaderboard</a>
+      <a href="https://x.com/OwlOrderBTC" target="_blank">
+        <img src="../twitter-white.png" alt="twitter" class="twitter-icon">
+      </a>
+    </div>
   </header>
 
   <div class="container">
