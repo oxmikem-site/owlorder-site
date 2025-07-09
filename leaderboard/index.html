@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>OWL Leaderboard</title>
-  <link rel="icon" type="image/png" href="../logo1.png">
+  <link rel="icon" type="image/png" href="../logo2.png">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -33,7 +33,7 @@
 
     header {
       width: 100%;
-      max-width: 720px;
+      max-width: 1000px;
       margin-top: 20px;
       height: 64px;
       background: var(--header-bg);
@@ -73,7 +73,7 @@
       color: var(--text-primary);
       text-decoration: none;
       font-weight: 500;
-      font-size: 16px;
+      font-size: 18px;
       transition: all 0.2s ease;
       margin-left: 20px;
     }
@@ -98,9 +98,22 @@
       font-size: 28px;
       font-weight: 700;
       margin-bottom: 30px;
-      color: var(--accent);
+      color: var(--accent-muted);
       text-align: center;
       letter-spacing: 1px;
+    }
+
+    .search-input {
+      margin: 0 auto 30px;
+      display: block;
+      padding: 12px 18px;
+      width: 100%;
+      max-width: 400px;
+      background-color: #1a1a1a;
+      border: 1px solid var(--accent-muted);
+      border-radius: 10px;
+      color: var(--text-primary);
+      font-size: 15px;
     }
 
     .leaderboard-header,
@@ -179,6 +192,7 @@
 
   <div class="container">
     <h1 class="leaderboard-title">LEADERBOARD</h1>
+    <input type="text" id="search" class="search-input" placeholder="Search wallet address...">
 
     <div class="leaderboard-header">
       <div>RANK</div>
@@ -191,21 +205,27 @@
   </div>
 
   <script>
+    let allEntries = [];
+
     async function loadLeaderboard() {
       const url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?gid=1127131432&single=true&output=csv';
       const response = await fetch(url);
       const text = await response.text();
       const rows = text.trim().split('\n').map(row => row.split(','));
 
+      allEntries = rows.slice(1).map(row => {
+        const [rank, address, nftCount, points] = row;
+        return { rank, address, nftCount, points };
+      });
+
+      renderEntries(allEntries);
+    }
+
+    function renderEntries(entries) {
       const container = document.getElementById('leaderboard-list');
       container.innerHTML = '';
 
-      for (let i = 1; i < rows.length; i++) {
-        const row = rows[i];
-        const rank = row[0];
-        const address = row[1];
-        const nftCount = row[2];
-        const points = row[3];
+      entries.forEach(({ rank, address, nftCount, points }) => {
         const shortAddr = address.slice(0, 6) + '...' + address.slice(-4);
         const avatarUrl = `https://api.dicebear.com/7.x/identicon/svg?seed=${address}`;
 
@@ -220,10 +240,15 @@
           <div class="nfts">${nftCount}</div>
           <div class="points">${points}</div>
         `;
-
         container.appendChild(entry);
-      }
+      });
     }
+
+    document.getElementById('search').addEventListener('input', (e) => {
+      const value = e.target.value.toLowerCase();
+      const filtered = allEntries.filter(entry => entry.address.toLowerCase().includes(value));
+      renderEntries(filtered);
+    });
 
     loadLeaderboard();
     setInterval(loadLeaderboard, 3600000);
