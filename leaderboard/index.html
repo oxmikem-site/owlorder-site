@@ -99,8 +99,8 @@
 }
 
 .leaderboard-entry {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 80px 1fr 100px 100px;
   align-items: center;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -214,16 +214,15 @@
       const entry = document.createElement('div');
       entry.className = 'leaderboard-entry';
       entry.innerHTML = `
-        <div class="entry-left">
-          <span class="rank">${rank}</span>
-          <img src="${avatarUrl}" alt="Avatar">
-          <span class="address">${shortAddr}</span>
-        </div>
-        <div class="entry-info">
-          <span class="nft-count">${nftCount}</span>
-          <span class="points">${points}</span>
-        </div>
-      `;
+  <div class="rank">${rank}</div>
+  <div class="wallet">
+    <img src="${avatarUrl}" alt="Avatar" style="width: 32px; height: 32px; border-radius: 50%; margin-right: 10px; border: 1px solid #8affc1;">
+    <span>${shortAddr}</span>
+  </div>
+  <div class="nfts">${nftCount}</div>
+  <div class="points">${points}</div>
+`;
+
 
       container.appendChild(entry);
     }
