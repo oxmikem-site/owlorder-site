@@ -80,12 +80,14 @@
       letter-spacing: 1px;
     }
 
-    .leaderboard-header, .leaderboard-entry {
+    .leaderboard-header,
+    .leaderboard-entry {
       display: grid;
       grid-template-columns: 80px 1fr 100px 100px;
       align-items: center;
       padding: 16px 24px;
       border-radius: 12px;
+      text-align: center;
     }
 
     .leaderboard-header {
@@ -107,15 +109,18 @@
       transform: scale(1.01);
     }
 
-    .rank {
+    .rank,
+    .nfts,
+    .points {
       font-weight: 600;
-      color: var(--accent);
-      text-align: center;
+      font-size: 15px;
+      color: var(--text-primary);
     }
 
     .wallet {
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 12px;
       color: var(--text-primary);
     }
@@ -130,13 +135,6 @@
     .wallet span {
       font-weight: 500;
       font-size: 15px;
-    }
-
-    .nfts, .points {
-      text-align: center;
-      font-weight: 600;
-      font-size: 15px;
-      color: var(--text-primary);
     }
   </style>
 </head>
@@ -203,3 +201,4 @@
   </script>
 </body>
 </html>
+
