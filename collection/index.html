@@ -2,115 +2,108 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>OWL</title>
+  <title>OWL Collection</title>
   <link rel="icon" type="image/png" href="../logo2.png">
-  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --bg-dark: #0b0b0b;
+      --bg-panel: linear-gradient(145deg, #141414, #0f0f0f);
+      --text-primary: #e6e6e6;
+      --text-secondary: #9f9f9f;
+      --accent: #fff065;
+      --accent-muted: #8a7f5a;
+      --header-bg: linear-gradient(145deg, #151515, #0d0d0d);
+    }
+
     * {
       box-sizing: border-box;
     }
 
     body {
       margin: 0;
-      background-color: black;
-      color: white;
+      background: var(--bg-dark);
+      color: var(--text-primary);
       font-family: 'Inter', sans-serif;
       display: flex;
       flex-direction: column;
       align-items: center;
-      max-width: 100vw;
-      overflow-x: hidden;
-      padding-top: 100px;
-      position: relative;
+      padding: 0;
     }
 
     header {
-      position: fixed;
-      top: 0;
-      z-index: 1000;
       width: 100%;
-      max-width: 1500px;
-      height: 80px;
-      background: url("../header.png") no-repeat center center;
-      background-size: cover;
-      box-sizing: border-box;
-      border-bottom-left-radius: 20px;
-      border-bottom-right-radius: 20px;
+      max-width: 1000px;
+      margin-top: 20px;
+      height: 64px;
+      background: var(--header-bg);
       display: flex;
-      justify-content: flex-end;
+      justify-content: space-between;
       align-items: center;
-      padding: 10px 40px;
+      padding: 0 20px;
+      border-radius: 20px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
     }
 
-    .header-left {
+    .logo {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
     }
 
-    .header-right {
+    .logo img {
+      width: 30px;
+      height: 30px;
+    }
+
+    .logo span {
+      font-size: 15px;
+      color: var(--text-primary);
+    }
+
+    .nav-buttons {
       display: flex;
       align-items: center;
-      gap: 16px;
     }
-    .header {
-  position: relative;
-  height: 60px; /* або висота твого хедера */
-  background: url('header-bg.png') no-repeat center center;
-  background-size: cover;
-}
-
-/* Прозора кнопка поверх лого */
-.logo-overlay {
-  position: absolute;
-  left: 10px;   /* відступ від лівого краю */
-  top: 10px;    /* відступ від верху */
-  width: 60px;  /* ширина зони з логотипом */
-  height: 40px; /* висота зони з логотипом */
-  display: block;
-  z-index: 10;
-}
-
 
     .button {
-      padding: 8px 14px;
+      padding: 10px 18px;
       background-color: transparent;
-      border: 1px solid white;
-      color: white;
+      border: none;
+      color: var(--text-primary);
       text-decoration: none;
       font-weight: 500;
-      border-radius: 4px;
-      transition: background 0.2s, color 0.2s;
+      font-size: 18px;
+      transition: all 0.2s ease;
+      margin-left: 20px;
     }
 
     .button:hover {
-      background-color: white;
-      color: #0d0c0a;
+      color: var(--accent);
     }
 
     .twitter-icon {
-      width: 20px;
-      height: 20px;
-      filter: invert(1);
+      width: 26px;
+      height: 26px;
+      margin-left: 20px;
     }
 
     .main-wrapper {
+      width: 100%;
+      max-width: 1000px;
+      padding: 40px 20px;
       position: relative;
-      width: 1500px;
-      overflow: hidden;
     }
 
     .background-strip {
-  position: fixed;
-  top: 100px; /* нижче хедера */
-  left: 50%;
-  transform: translateX(-50%);
-  width: 1500px;
-  height: 1000px; /* висота фону/рамки */
-  background: url("../background-collection.png") no-repeat top center;
-  background-size: cover;
-  z-index: 0;
-  pointer-events: none;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(145deg, #141414, #0f0f0f);
+      opacity: 0.12;
+      z-index: 0;
     }
 
     .grid {
@@ -118,68 +111,40 @@
       z-index: 1;
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 0px;
-      padding: 0px;
-      max-width: 1500px;
-      width: 100%;
+      gap: 20px;
       box-sizing: border-box;
     }
 
-   .frame {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 1 / 1.4;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  backface-visibility: hidden;   /* ✅ зменшує глітчі */
-  transform: translateZ(0);      /* ✅ ізолює 3D артефакти */
-  will-change: auto;             /* ✅ скидає 3D оптимізації */
-}
+    .frame {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1 / 1.4;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-panel);
+      border-radius: 12px;
+      padding: 10px;
+    }
 
     model-viewer {
-      position: absolute;
-      top: 0;
-      left: 0;
       width: 100%;
       height: 100%;
-      outline: none !important;
-      box-shadow: none !important;
-      transform: none !important;
-    }
-
-    model-viewer:focus,
-    model-viewer:active {
-      outline: none;
-      box-shadow: none;
-      transform: translateZ(0);
-    }
-
-    model-viewer * {
-      transform: none !important;
-      transition: none !important;
-    }
-
-    model-viewer {
-      display: block;
-      transform: translateZ(0);
-      will-change: transform;
-    }
-
-    model-viewer::part(default-progress-bar) {
-      display: none;
     }
   </style>
 </head>
 <body>
   <header>
-    <div class="header-right">
-      <a href="index.html" class="logo-overlay"></a>
-      <div class="nav-buttons">
-      <a href="/collection" class="button">Collection</a>
+    <div class="logo">
+      <img src="../logo2.png" alt="logo">
+      <span>NAME</span>
+    </div>
+    <div class="nav-buttons">
+      <a href="/collection" class="button" style="color: var(--accent-muted)">Collection</a>
+      <a href="/leaderboard" class="button">Leaderboard</a>
       <a href="https://x.com/OwlOrderBTC" target="_blank">
-        <img src="../twitter-white.png" alt="twitter" style="height: 30px;">
+        <img src="../twitter-white.png" alt="twitter" class="twitter-icon">
       </a>
     </div>
   </header>
