@@ -132,37 +132,39 @@
     <div id="leaderboard-list"></div>
   </div>
 
-  <script>
-    async function loadLeaderboard() {
-      const url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?gid=1127131432&single=true&output=csv';
-      const response = await fetch(url);
-      const text = await response.text();
-      const rows = text.trim().split('\n').map(row => row.split(','));
+<script>
+  async function loadLeaderboard() {
+    const url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?gid=1127131432&single=true&output=csv';
+    const response = await fetch(url);
+    const text = await response.text();
+    const rows = text.trim().split('\n').map(row => row.split(','));
 
-      const container = document.getElementById('leaderboard-list');
-      container.innerHTML = ''; // очистити перед оновленням
+    const container = document.getElementById('leaderboard-list');
+    container.innerHTML = ''; // очистити перед оновленням
 
-      for (let i = 1; i < rows.length; i++) {
-        const [rank, handle, points] = rows[i];
-        const avatarUrl = `https://unavatar.io/twitter/${handle.replace('@', '')}`;
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i];
+      const address = row[1];
+      const points = row[3];
+      const avatarUrl = `https://api.dicebear.com/7.x/identicon/svg?seed=${address}`;
 
-        const entry = document.createElement('div');
-        entry.className = 'leaderboard-entry';
-        entry.innerHTML = `
-          <div class="entry-left">
-            <img src="${avatarUrl}" alt="Avatar">
-            <span>${handle}</span>
-          </div>
-          <div class="entry-points">🦉 ${points} pts</div>
-        `;
+      const entry = document.createElement('div');
+      entry.className = 'leaderboard-entry';
+      entry.innerHTML = `
+        <div class="entry-left">
+          <img src="${avatarUrl}" alt="Avatar">
+          <span>${address.slice(0, 6)}...${address.slice(-4)}</span>
+        </div>
+        <div class="entry-points">🦉 ${points} pts</div>
+      `;
 
-        container.appendChild(entry);
-      }
+      container.appendChild(entry);
     }
+  }
 
-    loadLeaderboard();
-    setInterval(loadLeaderboard, 3600000); // оновлювати щогодини
-  </script>
+  loadLeaderboard();
+  setInterval(loadLeaderboard, 3600000); // оновлювати щогодини
+</script>
 
 </body>
 </html>
