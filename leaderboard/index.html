@@ -106,6 +106,11 @@
       font-weight: 600;
       color: #9f6625;
     }
+
+    .twitter-icon {
+      width: 24px;
+      height: 24px;
+    }
   </style>
 </head>
 <body>
@@ -124,33 +129,40 @@
 
   <div class="leaderboard-container">
     <h1 class="leaderboard-title">Leaderboard</h1>
-
-    <div class="leaderboard-entry">
-      <div class="entry-left">
-        <img src="https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png" alt="Avatar">
-        <span>@wiseowl</span>
-      </div>
-      <div class="entry-points">🦉 1250 pts</div>
-    </div>
-
-    <div class="leaderboard-entry">
-      <div class="entry-left">
-        <img src="https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png" alt="Avatar">
-        <span>@shadowkeeper</span>
-      </div>
-      <div class="entry-points">🦉 1110 pts</div>
-    </div>
-
-    <div class="leaderboard-entry">
-      <div class="entry-left">
-        <img src="https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png" alt="Avatar">
-        <span>@moonwatcher</span>
-      </div>
-      <div class="entry-points">🦉 990 pts</div>
-    </div>
-
+    <div id="leaderboard-list"></div>
   </div>
+
+  <script>
+    async function loadLeaderboard() {
+      const url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?gid=1127131432&single=true&output=csv';
+      const response = await fetch(url);
+      const text = await response.text();
+      const rows = text.trim().split('\n').map(row => row.split(','));
+
+      const container = document.getElementById('leaderboard-list');
+      container.innerHTML = ''; // очистити перед оновленням
+
+      for (let i = 1; i < rows.length; i++) {
+        const [rank, handle, points] = rows[i];
+        const avatarUrl = `https://unavatar.io/twitter/${handle.replace('@', '')}`;
+
+        const entry = document.createElement('div');
+        entry.className = 'leaderboard-entry';
+        entry.innerHTML = `
+          <div class="entry-left">
+            <img src="${avatarUrl}" alt="Avatar">
+            <span>${handle}</span>
+          </div>
+          <div class="entry-points">🦉 ${points} pts</div>
+        `;
+
+        container.appendChild(entry);
+      }
+    }
+
+    loadLeaderboard();
+    setInterval(loadLeaderboard, 3600000); // оновлювати щогодини
+  </script>
 
 </body>
 </html>
-
