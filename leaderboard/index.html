@@ -67,6 +67,25 @@
       margin-top: 60px;
       padding: 0 20px;
     }
+    .leaderboard-header {
+  display: grid;
+  grid-template-columns: 80px 1fr 100px 100px;
+  padding: 0 24px 12px 24px;
+  color: #8affc1;
+  font-weight: 600;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  opacity: 0.9;
+}
+
+.header-rank,
+.header-wallet,
+.header-nfts,
+.header-points {
+  display: flex;
+  align-items: center;
+}
 
     .leaderboard-title {
   font-size: 32px;
@@ -162,9 +181,14 @@
       </a>
     </div>
   </header>
-
+  
   <div class="leaderboard-container">
     <h1 class="leaderboard-title">🦉 Owl Leaderboard</h1>
+    <div class="leaderboard-header">
+  <div class="header-rank">RANK</div>
+  <div class="header-wallet">WALLET</div>
+  <div class="header-nfts">NFTs</div>
+  <div class="header-points">POINTS</div>
     <div id="leaderboard-list"></div>
   </div>
 
