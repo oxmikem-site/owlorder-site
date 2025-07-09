@@ -69,49 +69,67 @@
     }
 
     .leaderboard-title {
-      font-size: 32px;
-      font-weight: 700;
-      margin-bottom: 30px;
-      color: #e7dbb8;
-      border-bottom: 2px solid #8affc1;
-      padding-bottom: 12px;
-      text-align: center;
-      text-shadow: 0 0 10px #8affc188;
-    }
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 30px;
+  color: #e7dbb8;
+  border-bottom: 2px solid #8affc1;
+  padding-bottom: 12px;
+  text-align: center;
+  text-shadow: 0 0 10px #8affc188;
+}
 
-    .leaderboard-entry {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 12px;
-      padding: 14px 24px;
-      margin-bottom: 12px;
-      backdrop-filter: blur(6px);
-      transition: transform 0.2s ease;
-    }
+.leaderboard-entry {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 14px 24px;
+  margin-bottom: 12px;
+  backdrop-filter: blur(6px);
+  transition: transform 0.2s ease;
+}
 
-    .leaderboard-entry:hover {
-      transform: scale(1.01);
-    }
+.leaderboard-entry:hover {
+  transform: scale(1.01);
+}
 
-    .entry-left {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-    }
+.entry-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
 
-    .entry-left img {
-      width: 42px;
-      height: 42px;
-      border-radius: 50%;
-      border: 1px solid #8affc1;
-    }
+.entry-left img {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 1px solid #8affc1;
+}
 
-    .entry-left span {
-      font-weight: 500;
-      color: #ffffff;
+.entry-left .rank {
+  width: 30px;
+  text-align: right;
+  font-weight: 600;
+  color: #ffffffcc;
+}
+
+.entry-left .address {
+  font-weight: 500;
+  color: #ffffff;
+}
+
+.entry-info {
+  display: flex;
+  gap: 40px;
+}
+
+.entry-info span {
+  font-weight: 600;
+  color: #e7dbb8;
+}
     }
 
     .entry-points {
@@ -151,46 +169,45 @@
   </div>
 
   <script>
-    async function loadLeaderboard() {
-      const url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?gid=1127131432&single=true&output=csv';
-      const response = await fetch(url);
-      const text = await response.text();
-      const rows = text.trim().split('\n').map(row => row.split(','));
+  async function loadLeaderboard() {
+    const url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?gid=1127131432&single=true&output=csv';
+    const response = await fetch(url);
+    const text = await response.text();
+    const rows = text.trim().split('\n').map(row => row.split(','));
 
-      const container = document.getElementById('leaderboard-list');
-      container.innerHTML = '';
+    const container = document.getElementById('leaderboard-list');
+    container.innerHTML = '';
 
-      for (let i = 1; i < rows.length; i++) {
-        const row = rows[i];
-        const rank = parseInt(row[0]);
-        const address = row[1];
-        const points = row[3];
-        const shortAddr = address.slice(0, 6) + '...' + address.slice(-4);
-        const avatarUrl = `https://api.dicebear.com/7.x/identicon/svg?seed=${address}`;
-        let medal = '';
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i];
+      const rank = row[0];
+      const address = row[1];
+      const nftCount = row[2];
+      const points = row[3];
+      const shortAddr = address.slice(0, 6) + '...' + address.slice(-4);
+      const avatarUrl = `https://api.dicebear.com/7.x/identicon/svg?seed=${address}`;
 
-        if (rank === 1) medal = '🥇';
-        else if (rank === 2) medal = '🥈';
-        else if (rank === 3) medal = '🥉';
+      const entry = document.createElement('div');
+      entry.className = 'leaderboard-entry';
+      entry.innerHTML = `
+        <div class="entry-left">
+          <span class="rank">${rank}</span>
+          <img src="${avatarUrl}" alt="Avatar">
+          <span class="address">${shortAddr}</span>
+        </div>
+        <div class="entry-info">
+          <span class="nft-count">${nftCount}</span>
+          <span class="points">${points}</span>
+        </div>
+      `;
 
-        const entry = document.createElement('div');
-        entry.className = 'leaderboard-entry';
-        entry.innerHTML = `
-          <div class="entry-left">
-            <div class="medal">${medal}</div>
-            <img src="${avatarUrl}" alt="Avatar">
-            <span>${shortAddr}</span>
-          </div>
-          <div class="entry-points">🦉 ${points} pts</div>
-        `;
-
-        container.appendChild(entry);
-      }
+      container.appendChild(entry);
     }
+  }
 
-    loadLeaderboard();
-    setInterval(loadLeaderboard, 3600000);
-  </script>
+  loadLeaderboard();
+  setInterval(loadLeaderboard, 3600000);
+</script>
 
 </body>
 </html>
