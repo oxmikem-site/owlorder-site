@@ -237,7 +237,8 @@
 
       allEntries = rows.slice(1).map(row => {
         const [rank, address, pointsRaw] = row;
-       return { rank, address, nftCount, points };
+        const cleanPoints = pointsRaw.trim();
+        return { rank, address, points: cleanPoints };
       }).filter(entry => entry.address !== 'bc1pc7evznevnllyhduedcapfgklexkju43qhuxltr02c85pmdqzjp7qkdp9lt');
 
       renderEntries(allEntries);
@@ -250,6 +251,7 @@
       entries.forEach(({ rank, address, points }) => {
         const shortAddr = address.slice(0, 6) + '...' + address.slice(-4);
         const avatarUrl = `https://api.dicebear.com/7.x/identicon/svg?seed=${address}`;
+        const isTopTen = parseInt(rank) <= 10;
 
         const entry = document.createElement('div');
         entry.className = 'leaderboard-entry';
