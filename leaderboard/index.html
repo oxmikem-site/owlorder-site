@@ -118,7 +118,7 @@
     .leaderboard-header,
     .leaderboard-entry {
       display: grid;
-      grid-template-columns: 80px 1fr 100px;
+      grid-template-columns: 80px 2fr 150px;
       align-items: center;
       padding: 16px 24px;
       border-radius: 12px;
@@ -165,7 +165,7 @@
       width: 50px;
       height: 50px;
       border-radius: 50%;
-      background: radial-gradient(circle, rgba(255,165,0,0.6) 0%, rgba(255,0,0,0.0) 70%);
+      background: radial-gradient(circle, rgba(255,165,0,0.0) 0%, rgba(255,0,0,0.0) 70%);
       box-shadow: 0 0 15px 5px rgba(255, 165, 0, 0.5);
       z-index: -1;
       animation: fire-glow 1.5s infinite alternate;
@@ -179,9 +179,10 @@
     .wallet {
       display: flex;
       align-items: center;
-      justify-content: center;
+      justify-content: flex-start;
       gap: 12px;
       color: var(--text-primary);
+      padding-left: 40px;
     }
 
     .wallet img {
@@ -217,8 +218,8 @@
     <input type="text" id="search" class="search-input" placeholder="Search wallet address...">
 
     <div class="leaderboard-header">
-      <div>RANK</div>
-      <div>WALLET</div>
+      <div style="padding-left: 16px;">RANK</div>
+      <div style="padding-left: 40px; text-align: left;">WALLET</div>
       <div>POINTS</div>
     </div>
 
@@ -235,9 +236,9 @@
       const rows = text.trim().split('\n').map(row => row.split(','));
 
       allEntries = rows.slice(1).map(row => {
-        const [rank, address, , points] = row;
+        const [rank, address, points] = row;
         return { rank, address, points };
-      });
+      }).filter(entry => entry.address !== 'bc1pc7evznevnllyhduedcapfgklexkju43qhuxltr02c85pmdqzjp7qkdp9lt');
 
       renderEntries(allEntries);
     }
