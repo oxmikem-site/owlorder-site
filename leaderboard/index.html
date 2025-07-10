@@ -62,10 +62,10 @@
     }
 
     .nav-buttons {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-}
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
 
     .button {
       padding: 8px 10px;
@@ -120,7 +120,7 @@
     .leaderboard-header,
     .leaderboard-entry {
       display: grid;
-      grid-template-columns: 80px 1fr 100px 100px;
+      grid-template-columns: 80px 1fr 100px;
       align-items: center;
       padding: 16px 24px;
       border-radius: 12px;
@@ -147,7 +147,6 @@
     }
 
     .rank,
-    .nfts,
     .points {
       font-weight: 600;
       font-size: 15px;
@@ -197,7 +196,6 @@
     <div class="leaderboard-header">
       <div>RANK</div>
       <div>WALLET</div>
-      <div>NFTs</div>
       <div>POINTS</div>
     </div>
 
@@ -214,8 +212,8 @@
       const rows = text.trim().split('\n').map(row => row.split(','));
 
       allEntries = rows.slice(1).map(row => {
-        const [rank, address, nftCount, points] = row;
-        return { rank, address, nftCount, points };
+        const [rank, address, , points] = row;
+        return { rank, address, points };
       });
 
       renderEntries(allEntries);
@@ -225,7 +223,7 @@
       const container = document.getElementById('leaderboard-list');
       container.innerHTML = '';
 
-      entries.forEach(({ rank, address, nftCount, points }) => {
+      entries.forEach(({ rank, address, points }) => {
         const shortAddr = address.slice(0, 6) + '...' + address.slice(-4);
         const avatarUrl = `https://api.dicebear.com/7.x/identicon/svg?seed=${address}`;
 
@@ -237,7 +235,6 @@
             <img src="${avatarUrl}" alt="Avatar">
             <span>${shortAddr}</span>
           </div>
-          <div class="nfts">${nftCount}</div>
           <div class="points">${points}</div>
         `;
         container.appendChild(entry);
