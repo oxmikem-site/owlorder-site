@@ -182,7 +182,7 @@
       justify-content: flex-start;
       gap: 12px;
       color: var(--text-primary);
-      padding-left: 40px;
+      padding-left: 56px;
     }
 
     .wallet img {
@@ -219,7 +219,7 @@
 
     <div class="leaderboard-header">
       <div style="padding-left: 16px;">RANK</div>
-      <div style="padding-left: 40px; text-align: left;">WALLET</div>
+      <div style="padding-left: 56px; text-align: left;">WALLET</div>
       <div>POINTS</div>
     </div>
 
@@ -236,8 +236,9 @@
       const rows = text.trim().split('\n').map(row => row.split(','));
 
       allEntries = rows.slice(1).map(row => {
-        const [rank, address, points] = row;
-        return { rank, address, points };
+        const [rank, address, pointsRaw] = row;
+        const cleanPoints = pointsRaw.trim();
+        return { rank, address, points: cleanPoints };
       }).filter(entry => entry.address !== 'bc1pc7evznevnllyhduedcapfgklexkju43qhuxltr02c85pmdqzjp7qkdp9lt');
 
       renderEntries(allEntries);
@@ -248,7 +249,7 @@
       container.innerHTML = '';
 
       entries.forEach(({ rank, address, points }) => {
-        const shortAddr = address.slice(0, 8) + '.......' + address.slice(-4);
+        const shortAddr = address.slice(0, 6) + '...' + address.slice(-4);
         const avatarUrl = `https://api.dicebear.com/7.x/identicon/svg?seed=${address}`;
         const isTopTen = parseInt(rank) <= 10;
 
