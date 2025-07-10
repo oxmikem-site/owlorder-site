@@ -233,13 +233,17 @@
       const url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?gid=1127131432&single=true&output=csv';
       const response = await fetch(url);
       const text = await response.text();
-      const rows = text.trim().split('\n').map(row => row.split(','));
+
+      const rows = text.trim().split('\n').map(row => {
+        const match = row.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g);
+        return match.map(cell => cell.replace(/^"|"$/g, ''));
+      });
 
       allEntries = rows.slice(1).map(row => {
-        const [rank, address, pointsRaw] = row;
-        const cleanPoints = pointsRaw.trim().replace(/,/g, '');
+        const [rank, address, , pointsRaw] = row;
+        const cleanPoints = pointsRaw.replace(/,/g, '');
         return { rank, address, points: cleanPoints };
-      }).filter(entry => entry.address !== 'bc1pc7evznevnllyhduedcapfgklexkju43qhuxltr02c85pmdqzjp7qkdp9lt');
+      });
 
       renderEntries(allEntries);
     }
