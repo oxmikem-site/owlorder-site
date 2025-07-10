@@ -230,13 +230,14 @@
     let allEntries = [];
 
     async function loadLeaderboard() {
-      const url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqhttps://github.com/oxmikem-site/owlorder-site/blob/main/leaderboard/index.htmlj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?gid=1127131432&single=true&output=csv';
+      const url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?gid=1127131432&single=true&output=csv';
       const response = await fetch(url);
       const text = await response.text();
       const rows = text.trim().split('\n').map(row => row.split(','));
 
       allEntries = rows.slice(1).map(row => {
         const [rank, address, pointsRaw] = row;
+        const cleanPoints = pointsRaw.trim();
         return { rank, address, points: cleanPoints };
       }).filter(entry => entry.address !== 'bc1pc7evznevnllyhduedcapfgklexkju43qhuxltr02c85pmdqzjp7qkdp9lt');
 
@@ -248,7 +249,7 @@
       container.innerHTML = '';
 
       entries.forEach(({ rank, address, points }) => {
-        const shortAddr = address.slice(0, 6) + '.....' + address.slice(-4);
+        const shortAddr = address.slice(0, 6) + '...' + address.slice(-4);
         const avatarUrl = `https://api.dicebear.com/7.x/identicon/svg?seed=${address}`;
         const isTopTen = parseInt(rank) <= 10;
 
