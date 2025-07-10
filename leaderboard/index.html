@@ -243,7 +243,6 @@
         const [rank, address, , pointsRaw] = row;
         const cleanPoints = pointsRaw.replace(/,/g, '');
         return { rank, address, points: cleanPoints };
-      }).filter(entry => entry.address !== 'bc1pc7evznevnllyhduedcapfgklexkju43qhuxltr02c85pmdqzjp7qkdp9lt');
 
       renderEntries(allEntries);
     }
