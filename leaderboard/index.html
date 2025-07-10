@@ -237,8 +237,7 @@
 
       allEntries = rows.slice(1).map(row => {
         const [rank, address, pointsRaw] = row;
-        const cleanPoints = pointsRaw.trim();
-        return { rank, address, points: cleanPoints };
+       return { rank, address, nftCount, points };
       }).filter(entry => entry.address !== 'bc1pc7evznevnllyhduedcapfgklexkju43qhuxltr02c85pmdqzjp7qkdp9lt');
 
       renderEntries(allEntries);
