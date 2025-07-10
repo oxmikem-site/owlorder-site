@@ -64,7 +64,7 @@
     .nav-buttons {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 4px;
     }
 
     .button {
@@ -152,17 +152,27 @@
     }
 
     .rank.golden-ring {
-      border: 3px solid;
-      border-image: linear-gradient(45deg, gold, orange, red) 1;
-      border-radius: 50%;
-      padding: 8px;
       position: relative;
+    }
+
+    .rank.golden-ring::before {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      border: 3px solid transparent;
+      background: conic-gradient(gold, orange, red, gold);
+      z-index: -1;
       animation: fire-glow 1.5s infinite alternate;
     }
 
     @keyframes fire-glow {
-      0% { box-shadow: 0 0 8px rgba(255, 215, 0, 0.4); }
-      100% { box-shadow: 0 0 16px rgba(255, 140, 0, 0.8); }
+      0% { box-shadow: 0 0 10px rgba(255, 215, 0, 0.4); }
+      100% { box-shadow: 0 0 20px rgba(255, 140, 0, 0.8); }
     }
 
     .wallet {
