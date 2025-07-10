@@ -251,7 +251,6 @@
       entries.forEach(({ rank, address, points }) => {
         const shortAddr = address.slice(0, 6) + '...' + address.slice(-4);
         const avatarUrl = `https://api.dicebear.com/7.x/identicon/svg?seed=${address}`;
-        const isTopTen = parseInt(rank) <= 10;
 
         const entry = document.createElement('div');
         entry.className = 'leaderboard-entry';
