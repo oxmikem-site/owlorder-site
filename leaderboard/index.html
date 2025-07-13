@@ -87,10 +87,29 @@
       height: 26px;
     }
 
+    .side-image {
+      position: absolute;
+      top: 120px;
+      width: 200px;
+      opacity: 0.08;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .side-left {
+      left: 0;
+    }
+
+    .side-right {
+      right: 0;
+    }
+
     .container {
       width: 100%;
       max-width: 1000px;
       padding: 40px 20px;
+      position: relative;
+      z-index: 1;
     }
 
     .leaderboard-title {
@@ -212,6 +231,10 @@
       </a>
     </div>
   </header>
+
+  <!-- Декоративні зображення -->
+  <img src="LEFTSIDE2.png" alt="left side decor" class="side-image side-left">
+  <img src="RIGHTSIDE2.png" alt="right side decor" class="side-image side-right">
 
   <div class="container">
     <h1 class="leaderboard-title">LEADERBOARD</h1>
