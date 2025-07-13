@@ -12,12 +12,15 @@
       for (const btn of connectButtons) {
         btn.addEventListener('click', async () => {
           try {
-            if (!window.btc) {
+            const provider = window.btc || window.BitcoinProvider || window.xverse;
+
+            if (!provider || !provider.requestAccounts) {
               alert("Xverse Wallet not detected. Please install it.");
               return;
             }
 
-            const accounts = await window.btc.request("requestAccounts");
+            const accounts = await provider.requestAccounts();
+
             if (accounts && accounts.length > 0) {
               const shortAddress = `${accounts[0].slice(0, 6)}...${accounts[0].slice(-4)}`;
               btn.innerText = shortAddress;
@@ -177,17 +180,16 @@
 
     ul, ol {
       background: var(--bg-inner);
-      padding: 12px 20px;
+      padding: 12px 20px 12px 24px;
       border-radius: 12px;
-      word-wrap: break-word;
-      max-width: 100%;
       width: 100%;
-      overflow-wrap: break-word;
       min-height: 72px;
       display: flex;
       flex-direction: column;
       justify-content: center;
       list-style-position: inside;
+      overflow-wrap: break-word;
+      word-break: break-word;
     }
 
     .footer {
