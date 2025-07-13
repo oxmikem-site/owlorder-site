@@ -5,28 +5,41 @@
   <title>OWL Dashboard</title>
   <link rel="icon" type="image/png" href="../logo2.png">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-  <script>
+  <script type="module">
+    import { getProviders, request } from 'https://unpkg.com/sats-connect@0.0.1/dist/index.js';
+
     window.addEventListener('DOMContentLoaded', async () => {
       const connectButtons = document.querySelectorAll('.connect-wallet');
 
       for (const btn of connectButtons) {
         btn.addEventListener('click', async () => {
           try {
-            const provider = window.btc || window.BitcoinProvider || window.xverse;
+            const providers = getProviders();
+            const xverse = providers.find(p => p.name.toLowerCase().includes('xverse'));
 
-            if (!provider || !provider.requestAccounts) {
+            if (!xverse) {
               alert("Xverse Wallet not detected. Please install it.");
               return;
             }
 
-            const accounts = await provider.requestAccounts();
+            const res = await request('wallet_connect', {
+              addresses: ['ordinals', 'payment'],
+              message: 'Connect to OWL Dashboard',
+              network: 'Mainnet'
+            });
 
-            if (accounts && accounts.length > 0) {
-              const shortAddress = `${accounts[0].slice(0, 6)}...${accounts[0].slice(-4)}`;
-              btn.innerText = shortAddress;
+            const paymentAddr = res.result.addresses.find(a => a.purpose === 'payment')?.address || 'Connected';
+            const shortAddress = `${paymentAddr.slice(0, 6)}...${paymentAddr.slice(-4)}`;
+
+            for (const b of connectButtons) {
+              b.innerText = shortAddress;
+              b.disabled = true;
+              b.style.opacity = '0.85';
             }
+
           } catch (error) {
             console.error("Wallet connection failed:", error);
+            alert("Connection failed or cancelled.");
           }
         });
       }
