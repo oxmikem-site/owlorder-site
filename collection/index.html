@@ -32,7 +32,7 @@
 }
 
 
-    header {
+      header {
       width: 100%;
       max-width: 1000px;
       margin-top: 20px;
@@ -44,7 +44,6 @@
       padding: 0 20px;
       border-radius: 20px;
       box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
-      z-index: 10;
     }
 
     .logo {
@@ -86,15 +85,12 @@
       margin-left: 20px;
     }
 
-    .main-wrapper {
+      .main-wrapper {
       width: 100%;
       max-width: 1000px;
-      height: calc(100vh - 100px); /* 100vh мінус header + відступи */
-      overflow-y: scroll;
-      padding: 20px;
+      padding: 40px 20px;
       position: relative;
-      scrollbar-width: none; /* Firefox */
-      -ms-overflow-style: none; /* IE 10+ */
+      scrollbar-width: none; 
     }
 
     .main-wrapper::-webkit-scrollbar {
