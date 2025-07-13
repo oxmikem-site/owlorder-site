@@ -154,12 +154,17 @@
     }
 
     .scroll-area {
-      overflow-y: auto;
-      flex-grow: 1;
-      width: 100%;
-      max-height: calc(100vh - 300px); /* висота підлаштовується тут */
-      padding-right: 6px;
-    }
+  overflow-y: scroll;
+  flex-grow: 1;
+  width: 100%;
+  max-height: calc(100vh - 300px);
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scroll-area::-webkit-scrollbar {
+  display: none;
+}
 
     .leaderboard-entry {
       display: grid;
