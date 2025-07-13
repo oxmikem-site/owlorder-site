@@ -157,12 +157,17 @@
       border-radius: 12px;
       width: 100%;
       min-height: 72px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
       list-style-position: inside;
       overflow-wrap: break-word;
       word-break: break-word;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    ul li, ol li {
+      max-width: 100%;
+      white-space: normal;
     }
 
     .footer {
@@ -239,8 +244,8 @@
       const connectButtons = document.querySelectorAll('.connect-wallet');
       for (const btn of connectButtons) {
         btn.addEventListener('click', async () => {
-          if (!window.xverseBitcoinProvider) {
-            alert('Xverse Wallet not detected. Please install it.');
+          if (!window.xverseBitcoinProvider || !window.xverseBitcoinProvider.connect) {
+            alert('Xverse Wallet not detected. Please install it and refresh the page.');
             return;
           }
           try {
