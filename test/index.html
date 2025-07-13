@@ -9,8 +9,9 @@
     :root {
       --bg-dark: #0b0b0b;
       --bg-panel: linear-gradient(145deg, #141414, #0f0f0f);
-      --text-primary: #8a7f5a;
-      --text-secondary: #9f9f9f;
+      --bg-inner: rgba(255, 255, 255, 0.02);
+      --text-primary: #ffffff;
+      --text-secondary: #ffffff;
       --accent: linear-gradient(90deg, #a4976e, #8a7f5a);
       --accent-color: #8a7f5a;
       --accent-muted: #8a7f5a;
@@ -148,6 +149,12 @@
       background: var(--text-primary);
       color: #000;
       cursor: pointer;
+    }
+
+    ul, ol {
+      background-color: var(--bg-inner);
+      padding: 12px;
+      border-radius: 12px;
     }
 
     .footer {
