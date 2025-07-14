@@ -5,7 +5,7 @@
   <title>OWL Dashboard</title>
   <link rel="icon" type="image/png" href="../logo2.png">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-  <script src="https://unpkg.com/xverse-connect@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ord-connect@latest/dist/ord-connect.min.js"></script>
   <style>
     :root {
       --bg-dark: #0b0b0b;
@@ -243,31 +243,28 @@
   <script>
     window.addEventListener('DOMContentLoaded', () => {
       const connectButtons = document.querySelectorAll('.connect-wallet');
+      const walletManager = new OrdConnect.WalletManager();
 
-      for (const btn of connectButtons) {
-        btn.addEventListener('click', async () => {
-          if (!window.xverse) {
-            alert('Xverse Wallet not detected. Please install it and refresh the page.');
-            return;
-          }
-
+      connectButtons.forEach(button => {
+        button.addEventListener('click', async () => {
           try {
-            const accounts = await window.xverse.request('getAccounts');
-            if (accounts && accounts.result && accounts.result.length > 0) {
-              const address = accounts.result[0];
-              const shortAddress = `${address.slice(0, 6)}...${address.slice(-4)}`;
-              for (const b of connectButtons) {
-                b.innerText = shortAddress;
-                b.disabled = true;
-                b.style.opacity = '0.85';
-              }
-            }
-          } catch (error) {
-            console.error('Connection failed:', error);
-            alert('Failed to connect wallet.');
+            await walletManager.connect();
+            const address = await walletManager.getAddress();
+            const short = `${address.slice(0, 6)}...${address.slice(-4)}`;
+
+            connectButtons.forEach(b => {
+              b.textContent = short;
+              b.disabled = true;
+              b.style.opacity = '0.85';
+            });
+
+            localStorage.setItem('taproot_wallet', address);
+          } catch (err) {
+            console.error('Wallet connection failed:', err);
+            alert('❌ Failed to connect wallet.');
           }
         });
-      }
+      });
     });
 
     async function loadTop3() {
@@ -277,6 +274,7 @@
       const top3 = rows.slice(1, 4).map(r => `<li>${r[1].slice(0, 6)}...${r[1].slice(-4)} - ${r[3]}</li>`).join('');
       document.getElementById('leaderboard-top3').innerHTML = top3;
     }
+
     loadTop3();
   </script>
 </body>
