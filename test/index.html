@@ -100,12 +100,12 @@
     }
 
     .panel {
-  background: linear-gradient(145deg, #1d1d1d, #111111); /* прямо тут */
-  background-origin: border-box;
-  padding: 20px;
-  border-radius: 16px;
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
-}
+      background: var(--bg-panel);
+      background-origin: border-box;
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+    }
 
     .panel h2 {
       font-size: 18px;
@@ -241,28 +241,35 @@
     TWITTER · DISCORD · DOCS · TERMS
   </div>
 
-  <script src="https://unpkg.com/ordinal-connect@latest/dist/index.global.js"></script>
-<script>
-  window.addEventListener('DOMContentLoaded', () => {
-    const connectButtons = document.querySelectorAll('.connect-wallet');
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      const connectButtons = document.querySelectorAll('.connect-wallet');
 
-    connectButtons.forEach(button => {
-      button.addEventListener('click', async () => {
-        try {
-          const res = await window.OrdConnect.connect();
-          const address = res.address;
-          const short = `${address.slice(0, 6)}...${address.slice(-4)}`;
-
-          connectButtons.forEach(b => {
-            b.textContent = short;
-            b.disabled = true;
-            b.style.opacity = '0.85';
-          });
-
-          localStorage.setItem('taproot_wallet', address);
-
-          // ⬇️ Зберігаємо в Google Sheets через backend
+      connectButtons.forEach(button => {
+        button.addEventListener('click', async () => {
           try {
+            if (!window.OrdConnect || typeof window.OrdConnect.connect !== 'function') {
+              throw new Error('OrdinalConnect not loaded properly');
+            }
+
+            const result = await window.OrdConnect.connect();
+
+            if (!result || !result.address) {
+              throw new Error('No address returned');
+            }
+
+            const address = result.address;
+            const short = `${address.slice(0, 6)}...${address.slice(-4)}`;
+
+            connectButtons.forEach(b => {
+              b.textContent = short;
+              b.disabled = true;
+              b.style.opacity = '0.85';
+            });
+
+            localStorage.setItem('taproot_wallet', address);
+
+            // Зберігаємо в бекенд
             const res = await fetch('https://owl-backend-plkm.onrender.com/api/save-wallet', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -270,36 +277,32 @@
             });
 
             const data = await res.json();
-
-            if (data.success) {
-              console.log('✅ Wallet saved');
+            if (!data.success) {
+              console.warn('⚠️ Wallet not saved:', data.error);
             } else {
-              console.warn('⚠️ Failed to save wallet:', data.error);
+              console.log('✅ Wallet saved');
             }
           } catch (err) {
-            console.error('❌ API error:', err);
+            console.error('❌ Wallet connection failed:', err);
+            alert('❌ Failed to connect wallet.');
           }
-
-        } catch (err) {
-          console.error('❌ Wallet connection failed:', err);
-          alert('❌ Failed to connect wallet.');
-        }
+        });
       });
     });
-  });
 
-  // Завантаження топ-3 гравців з Google Sheets
-  async function loadTop3() {
-    try {
-      const res = await fetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?gid=1127131432&single=true&output=csv');
-      const text = await res.text();
-      const rows = text.trim().split('\n').map(r => r.split(','));
-      const top3 = rows.slice(1, 4).map(r => `<li>${r[1].slice(0, 6)}...${r[1].slice(-4)} - ${r[3]}</li>`).join('');
-      document.getElementById('leaderboard-top3').innerHTML = top3;
-    } catch (err) {
-      console.error('❌ Failed to load leaderboard:', err);
+    async function loadTop3() {
+      try {
+        const res = await fetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?gid=1127131432&single=true&output=csv');
+        const text = await res.text();
+        const rows = text.trim().split('\n').map(r => r.split(','));
+        const top3 = rows.slice(1, 4).map(r => `<li>${r[1].slice(0, 6)}...${r[1].slice(-4)} - ${r[3]}</li>`).join('');
+        document.getElementById('leaderboard-top3').innerHTML = top3;
+      } catch (err) {
+        console.error('❌ Failed to load leaderboard:', err);
+      }
     }
-  }
 
-  loadTop3();
-</script>
+    loadTop3();
+  </script>
+</body>
+</html>
