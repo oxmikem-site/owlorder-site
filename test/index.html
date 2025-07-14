@@ -5,6 +5,7 @@
   <title>OWL Dashboard</title>
   <link rel="icon" type="image/png" href="../logo2.png">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/@stacks/connect@latest/dist/index.umd.js"></script>
   <style>
     :root {
       --bg-dark: #0b0b0b;
@@ -244,24 +245,23 @@
       const connectButtons = document.querySelectorAll('.connect-wallet');
       for (const btn of connectButtons) {
         btn.addEventListener('click', async () => {
-          const provider = window.btc || window.xverseBitcoinProvider;
-          if (!provider || !provider.request) {
-            alert('Xverse Wallet not detected. Please install it and refresh the page.');
-            return;
-          }
-          try {
-            const response = await provider.request({ method: 'getAccounts' });
-            const address = response.result?.[0]?.address?.address || response.result?.[0] || 'Connected';
-            const shortAddress = `${address.slice(0, 6)}...${address.slice(-4)}`;
-            for (const b of connectButtons) {
-              b.innerText = shortAddress;
-              b.disabled = true;
-              b.style.opacity = '0.85';
-            }
-          } catch (err) {
-            console.error('Connection failed:', err);
-            alert('Wallet connection failed or cancelled.');
-          }
+          const { showConnect } = window.stacksConnect;
+          showConnect({
+            appDetails: {
+              name: 'OWL BTC',
+              icon: window.location.origin + '/logo1.png',
+            },
+            onFinish: ({ userSession }) => {
+              const address = userSession.loadUserData().profile.stxAddress.mainnet;
+              const shortAddress = `${address.slice(0, 6)}...${address.slice(-4)}`;
+              for (const b of connectButtons) {
+                b.innerText = shortAddress;
+                b.disabled = true;
+                b.style.opacity = '0.85';
+              }
+            },
+            onCancel: () => alert('User canceled'),
+          });
         });
       }
     });
