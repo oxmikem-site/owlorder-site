@@ -241,57 +241,71 @@
     TWITTER · DISCORD · DOCS · TERMS
   </div>
 
-  <script>
-    window.addEventListener('DOMContentLoaded', () => {
-  const connectButtons = document.querySelectorAll('.connect-wallet');
+ <script src="https://cdn.jsdelivr.net/npm/ord-connect@latest"></script>
+<script>
+  window.addEventListener('DOMContentLoaded', () => {
+    const connectButtons = document.querySelectorAll('.connect-wallet');
+    const walletManager = new OrdConnect.WalletManager();
 
-  connectButtons.forEach(button => {
-    button.addEventListener('click', async () => {
-      if (!window.OrdConnect || !window.OrdConnect.connect) {
-        console.error('❌ OrdinalConnect not loaded properly');
-        alert('OrdinalConnect not loaded. Please refresh the page.');
-        return;
-      }
-
-      try {
-        const res = await window.OrdConnect.connect();
-        const address = res.address;
-        const short = `${address.slice(0, 6)}...${address.slice(-4)}`;
-
-        connectButtons.forEach(b => {
-          b.textContent = short;
-          b.disabled = true;
-          b.style.opacity = '0.85';
-        });
-
-        localStorage.setItem('taproot_wallet', address);
-
-        // зберігаємо у backend
+    connectButtons.forEach(button => {
+      button.addEventListener('click', async () => {
         try {
-          const saveRes = await fetch('https://owl-backend-plkm.onrender.com/api/save-wallet', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ wallet: address })
+          const wallet = await walletManager.connect(); // відкриває вибір гаманця
+          const address = await wallet.getAddress();
+          const short = `${address.slice(0, 6)}...${address.slice(-4)}`;
+
+          connectButtons.forEach(b => {
+            b.textContent = short;
+            b.disabled = true;
+            b.style.opacity = '0.85';
           });
 
-          const data = await saveRes.json();
+          localStorage.setItem('taproot_wallet', address);
+          console.log('✅ Wallet connected:', address);
 
-          if (data.success) {
-            console.log('✅ Wallet saved');
-          } else {
-            console.warn('⚠️ Failed to save wallet:', data.error);
+          // Зберігаємо адресу на сервері
+          try {
+            const saveRes = await fetch('https://owl-backend-plkm.onrender.com/api/save-wallet', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ wallet: address })
+            });
+
+            const data = await saveRes.json();
+            if (data.success) {
+              console.log('✅ Wallet saved');
+            } else {
+              console.warn('⚠️ Failed to save wallet:', data.error);
+            }
+          } catch (err) {
+            console.error('❌ API error:', err);
           }
-        } catch (err) {
-          console.error('❌ API error:', err);
-        }
 
-      } catch (err) {
-        console.error('❌ Wallet connection failed:', err);
-        alert('❌ Failed to connect wallet.');
+        } catch (err) {
+          console.error('❌ Wallet connection failed:', err);
+          alert('❌ Failed to connect wallet.');
+        }
+      });
+    });
+
+    // Автозавантаження top 3
+    async function loadTop3() {
+      const el = document.getElementById('leaderboard-top3');
+      try {
+        const res = await fetch('https://owl-backend-plkm.onrender.com/api/leaderboard-top3');
+        const data = await res.json();
+        el.innerHTML = '';
+        data.forEach(item => {
+          el.innerHTML += `<li>${item.address} - ${item.points}</li>`;
+        });
+      } catch (e) {
+        el.innerHTML = '<li>⚠️ Failed to load leaderboard</li>';
       }
     }
 
-    loadTop3();
-  </script>
+    loadTop3(); // викликаємо після завантаження
+  });
+</script>
+
 </body>
 </html>
