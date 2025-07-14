@@ -1,1 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>OWL Dashboard</title>
+  <link rel="icon" type="image/png" href="../logo2.png">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/@sats-connect/sdk@latest/dist/sdk.umd.js"></script>
+  <style>
+    :root {
+      --bg-dark: #0b0b0b;
+      --bg-panel: linear-gradient(145deg, #1d1d1d, #111111);
+      --bg-inner: linear-gradient(145deg, #1d1d1d, #111111);
+      --text-primary: #ffffff;
+      --text-secondary: #ffffff;
+      --accent: linear-gradient(90deg, #a4976e, #8a7f5a);
+      --accent-color: #8a7f5a;
+      --accent-muted: #8a7f5a;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg-dark);
+      color: var(--text-primary);
+      font-family: 'Inter', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0;
+    }
+
+    header {
+      width: 100%;
+      max-width: 1000px;
+      margin-top: 20px;
+      height: 64px;
+      background: linear-gradient(145deg, #151515, #0d0d0d);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 20px;
+      border-radius: 20px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo img {
+      width: 50px;
+      height: 50px;
+    }
+
+    .nav-buttons {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .button {
+      padding: 8px 10px;
+      background-color: transparent;
+      border: none;
+      color: var(--text-primary);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 18px;
+      transition: all 0.2s ease;
+    }
+
+    .button:hover {
+      color: var(--accent-color);
+    }
+
+    .connect-wallet {
+      padding: 6px 14px;
+      border-radius: 12px;
+      border: none;
+      font-weight: 600;
+      font-size: 15px;
+      background: var(--accent);
+      color: black;
+      cursor: pointer;
+    }
+
+    .main {
+      width: 100%;
+      max-width: 1200px;
+      padding: 40px 20px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+    }
+
+    .panel {
+      background: var(--bg-panel);
+      background-origin: border-box;
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+    }
+
+    .panel h2 {
+      font-size: 18px;
+      margin-bottom: 16px;
+      color: var(--accent-color);
+    }
+
+    .user-panel .avatar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .avatar img {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+    }
+
+    .featured-nft img {
+      width: 100%;
+      border-radius: 12px;
+      margin-bottom: 10px;
+    }
+
+    .nft-title {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .nft-traits {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 10px;
+    }
+
+    .nft-buttons button {
+      margin-right: 8px;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 8px;
+      background: var(--text-primary);
+      color: #000;
+      cursor: pointer;
+    }
+
+    ul, ol {
+      background: var(--bg-inner);
+      padding: 12px 20px 12px 24px;
+      border-radius: 12px;
+      width: 100%;
+      min-height: 72px;
+      list-style-position: inside;
+      overflow-wrap: break-word;
+      word-break: break-word;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    ul li, ol li {
+      max-width: 100%;
+      white-space: normal;
+    }
+
+    .footer {
+      margin-top: 40px;
+      text-align: center;
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+<script>
+  window.addEventListener('DOMContentLoaded', async () => {
+    const connectButtons = document.querySelectorAll('.connect-wallet');
+
+    connectButtons.forEach(button => {
+      button.addEventListener('click', async () => {
+        if (!window.satsConnect || !window.satsConnect.getAddresses) {
+          alert('❌ Wallet SDK not loaded yet. Try again shortly.');
+          return;
+        }
+
+        try {
+          const response = await window.satsConnect.getAddresses({
+            payload: {
+              purposes: ['ordinals', 'payment'],
+              network: { type: 'Mainnet' },
+              appInfo: {
+                name: 'OWL',
+                icon: 'https://owlbtc.art/logo.png'
+              }
+            }
+          });
+
+          const ordinalsAddress = response.addresses.find(addr => addr.purpose === 'ordinals')?.address;
+
+          if (!ordinalsAddress) {
+            alert('❌ No ordinals address found');
+            return;
+          }
+
+          const short = `${ordinalsAddress.slice(0, 6)}...${ordinalsAddress.slice(-4)}`;
+
+          connectButtons.forEach(b => {
+            b.textContent = short;
+            b.disabled = true;
+            b.style.opacity = '0.85';
+          });
+
+          localStorage.setItem('taproot_wallet', ordinalsAddress);
+          console.log('✅ Wallet connected:', ordinalsAddress);
+
+          try {
+            const saveRes = await fetch('https://owl-backend-plkm.onrender.com/api/save-wallet', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ wallet: ordinalsAddress })
+            });
+            const data = await saveRes.json();
+            if (data.success) {
+              console.log('✅ Wallet saved');
+            } else {
+              console.warn('⚠️ Failed to save wallet:', data.error);
+            }
+          } catch (err) {
+            console.error('❌ API error:', err);
+          }
+
+        } catch (e) {
+          console.error('❌ Failed to connect wallet:', e);
+          alert('❌ Wallet connection failed');
+        }
+      });
+    });
+  });
+</script>
+
+</body>
+</html>
 
