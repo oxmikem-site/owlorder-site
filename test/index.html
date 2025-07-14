@@ -240,62 +240,65 @@
     TWITTER · DISCORD · DOCS · TERMS
   </div>
 
-  <script>
-    window.addEventListener('DOMContentLoaded', () => {
-      const connectButtons = document.querySelectorAll('.connect-wallet');
-      const walletManager = new window.OrdinalConnect();
+  <script src="https://unpkg.com/ordinal-connect@latest/dist/index.global.js"></script>
+<script>
+  window.addEventListener('DOMContentLoaded', () => {
+    const connectButtons = document.querySelectorAll('.connect-wallet');
 
-      connectButtons.forEach(button => {
-        button.addEventListener('click', async () => {
+    connectButtons.forEach(button => {
+      button.addEventListener('click', async () => {
+        try {
+          const res = await window.OrdConnect.connect();
+          const address = res.address;
+          const short = `${address.slice(0, 6)}...${address.slice(-4)}`;
+
+          connectButtons.forEach(b => {
+            b.textContent = short;
+            b.disabled = true;
+            b.style.opacity = '0.85';
+          });
+
+          localStorage.setItem('taproot_wallet', address);
+
+          // ⬇️ Зберігаємо в Google Sheets через backend
           try {
-            await walletManager.connect();
-            const address = await walletManager.getAddress();
-            const short = `${address.slice(0, 6)}...${address.slice(-4)}`;
-
-            connectButtons.forEach(b => {
-              b.textContent = short;
-              b.disabled = true;
-              b.style.opacity = '0.85';
+            const res = await fetch('https://owl-backend-plkm.onrender.com/api/save-wallet', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ wallet: address })
             });
 
-            localStorage.setItem('taproot_wallet', address);
+            const data = await res.json();
 
-            // ⬇️ Зберігаємо в Google Sheets через backend
-            try {
-              const res = await fetch('https://owl-backend-plkm.onrender.com/api/save-wallet', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ wallet: address })
-              });
-
-              const data = await res.json();
-
-              if (data.success) {
-                console.log('✅ Wallet saved');
-              } else {
-                console.warn('⚠️ Failed to save wallet:', data.error);
-              }
-            } catch (err) {
-              console.error('❌ API error:', err);
+            if (data.success) {
+              console.log('✅ Wallet saved');
+            } else {
+              console.warn('⚠️ Failed to save wallet:', data.error);
             }
-
           } catch (err) {
-            console.error('Wallet connection failed:', err);
-            alert('❌ Failed to connect wallet.');
+            console.error('❌ API error:', err);
           }
-        });
+
+        } catch (err) {
+          console.error('❌ Wallet connection failed:', err);
+          alert('❌ Failed to connect wallet.');
+        }
       });
     });
+  });
 
-    async function loadTop3() {
+  // Завантаження топ-3 гравців з Google Sheets
+  async function loadTop3() {
+    try {
       const res = await fetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?gid=1127131432&single=true&output=csv');
       const text = await res.text();
       const rows = text.trim().split('\n').map(r => r.split(','));
       const top3 = rows.slice(1, 4).map(r => `<li>${r[1].slice(0, 6)}...${r[1].slice(-4)} - ${r[3]}</li>`).join('');
       document.getElementById('leaderboard-top3').innerHTML = top3;
+    } catch (err) {
+      console.error('❌ Failed to load leaderboard:', err);
     }
+  }
 
-    loadTop3();
-  </script>
-</body>
-</html>
+  loadTop3();
+</script>
