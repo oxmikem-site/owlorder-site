@@ -5,11 +5,11 @@
   <title>OWL Dashboard</title>
   <link rel="icon" type="image/png" href="../logo2.png">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-  <script src="https://unpkg.com/@stacks/connect@latest/dist/index.umd.js"></script>
+  <script src="https://unpkg.com/xverse-connect@latest"></script>
   <style>
     :root {
       --bg-dark: #0b0b0b;
-      --bg-panel: linear-gradient(145deg, #1d1d1d, #111111);
+      --bg-panel: linear-gradient(145deg, #141414, #0f0f0f);
       --bg-inner: linear-gradient(145deg, #1a2734, #0f1b2a);
       --text-primary: #ffffff;
       --text-secondary: #ffffff;
@@ -243,25 +243,29 @@
   <script>
     window.addEventListener('DOMContentLoaded', () => {
       const connectButtons = document.querySelectorAll('.connect-wallet');
+
       for (const btn of connectButtons) {
         btn.addEventListener('click', async () => {
-          const { showConnect } = window.stacksConnect;
-          showConnect({
-            appDetails: {
-              name: 'OWL BTC',
-              icon: window.location.origin + '/logo1.png',
-            },
-            onFinish: ({ userSession }) => {
-              const address = userSession.loadUserData().profile.stxAddress.mainnet;
+          if (!window.xverse) {
+            alert('Xverse Wallet not detected. Please install it and refresh the page.');
+            return;
+          }
+
+          try {
+            const accounts = await window.xverse.request('getAccounts');
+            if (accounts && accounts.result && accounts.result.length > 0) {
+              const address = accounts.result[0];
               const shortAddress = `${address.slice(0, 6)}...${address.slice(-4)}`;
               for (const b of connectButtons) {
                 b.innerText = shortAddress;
                 b.disabled = true;
                 b.style.opacity = '0.85';
               }
-            },
-            onCancel: () => alert('User canceled'),
-          });
+            }
+          } catch (error) {
+            console.error('Connection failed:', error);
+            alert('Failed to connect wallet.');
+          }
         });
       }
     });
