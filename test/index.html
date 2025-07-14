@@ -244,13 +244,14 @@
       const connectButtons = document.querySelectorAll('.connect-wallet');
       for (const btn of connectButtons) {
         btn.addEventListener('click', async () => {
-          if (!window.xverseBitcoinProvider || !window.xverseBitcoinProvider.connect) {
+          const provider = window.btc || window.xverseBitcoinProvider;
+          if (!provider || !provider.request) {
             alert('Xverse Wallet not detected. Please install it and refresh the page.');
             return;
           }
           try {
-            const response = await window.xverseBitcoinProvider.connect();
-            const address = response.address || 'Connected';
+            const response = await provider.request({ method: 'getAccounts' });
+            const address = response.result?.[0]?.address?.address || response.result?.[0] || 'Connected';
             const shortAddress = `${address.slice(0, 6)}...${address.slice(-4)}`;
             for (const b of connectButtons) {
               b.innerText = shortAddress;
