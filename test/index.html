@@ -243,7 +243,7 @@
   <script>
     window.addEventListener('DOMContentLoaded', () => {
       const connectButtons = document.querySelectorAll('.connect-wallet');
-      const walletManager = new OrdConnect.WalletManager();
+      const walletManager = new window.OrdinalConnect();
 
       connectButtons.forEach(button => {
         button.addEventListener('click', async () => {
