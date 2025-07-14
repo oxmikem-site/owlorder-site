@@ -243,62 +243,51 @@
 
   <script>
     window.addEventListener('DOMContentLoaded', () => {
-      const connectButtons = document.querySelectorAll('.connect-wallet');
+  const connectButtons = document.querySelectorAll('.connect-wallet');
 
-      connectButtons.forEach(button => {
-        button.addEventListener('click', async () => {
-          try {
-            if (!window.OrdConnect || typeof window.OrdConnect.connect !== 'function') {
-              throw new Error('OrdinalConnect not loaded properly');
-            }
+  connectButtons.forEach(button => {
+    button.addEventListener('click', async () => {
+      if (!window.OrdConnect || !window.OrdConnect.connect) {
+        console.error('❌ OrdinalConnect not loaded properly');
+        alert('OrdinalConnect not loaded. Please refresh the page.');
+        return;
+      }
 
-            const result = await window.OrdConnect.connect();
-
-            if (!result || !result.address) {
-              throw new Error('No address returned');
-            }
-
-            const address = result.address;
-            const short = `${address.slice(0, 6)}...${address.slice(-4)}`;
-
-            connectButtons.forEach(b => {
-              b.textContent = short;
-              b.disabled = true;
-              b.style.opacity = '0.85';
-            });
-
-            localStorage.setItem('taproot_wallet', address);
-
-            // Зберігаємо в бекенд
-            const res = await fetch('https://owl-backend-plkm.onrender.com/api/save-wallet', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ wallet: address })
-            });
-
-            const data = await res.json();
-            if (!data.success) {
-              console.warn('⚠️ Wallet not saved:', data.error);
-            } else {
-              console.log('✅ Wallet saved');
-            }
-          } catch (err) {
-            console.error('❌ Wallet connection failed:', err);
-            alert('❌ Failed to connect wallet.');
-          }
-        });
-      });
-    });
-
-    async function loadTop3() {
       try {
-        const res = await fetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?gid=1127131432&single=true&output=csv');
-        const text = await res.text();
-        const rows = text.trim().split('\n').map(r => r.split(','));
-        const top3 = rows.slice(1, 4).map(r => `<li>${r[1].slice(0, 6)}...${r[1].slice(-4)} - ${r[3]}</li>`).join('');
-        document.getElementById('leaderboard-top3').innerHTML = top3;
+        const res = await window.OrdConnect.connect();
+        const address = res.address;
+        const short = `${address.slice(0, 6)}...${address.slice(-4)}`;
+
+        connectButtons.forEach(b => {
+          b.textContent = short;
+          b.disabled = true;
+          b.style.opacity = '0.85';
+        });
+
+        localStorage.setItem('taproot_wallet', address);
+
+        // зберігаємо у backend
+        try {
+          const saveRes = await fetch('https://owl-backend-plkm.onrender.com/api/save-wallet', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ wallet: address })
+          });
+
+          const data = await saveRes.json();
+
+          if (data.success) {
+            console.log('✅ Wallet saved');
+          } else {
+            console.warn('⚠️ Failed to save wallet:', data.error);
+          }
+        } catch (err) {
+          console.error('❌ API error:', err);
+        }
+
       } catch (err) {
-        console.error('❌ Failed to load leaderboard:', err);
+        console.error('❌ Wallet connection failed:', err);
+        alert('❌ Failed to connect wallet.');
       }
     }
 
