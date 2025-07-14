@@ -259,6 +259,26 @@
             });
 
             localStorage.setItem('taproot_wallet', address);
+
+            // ⬇️ Зберігаємо в Google Sheets через backend
+            try {
+              const res = await fetch('https://owl-backend-plkm.onrender.com/api/save-wallet', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ wallet: address })
+              });
+
+              const data = await res.json();
+
+              if (data.success) {
+                console.log('✅ Wallet saved');
+              } else {
+                console.warn('⚠️ Failed to save wallet:', data.error);
+              }
+            } catch (err) {
+              console.error('❌ API error:', err);
+            }
+
           } catch (err) {
             console.error('Wallet connection failed:', err);
             alert('❌ Failed to connect wallet.');
