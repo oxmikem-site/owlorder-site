@@ -3,33 +3,29 @@
 <head>
   <meta charset="UTF-8" />
   <title>Connect Wallet</title>
-  <script type="module">
-    import { showConnect } from "https://unpkg.com/@sats-connect/core@0.10.7";
-
-    window.connectWallet = async () => {
-      try {
-        const response = await showConnect({
-          payload: {
-            purposes: ['ordinals', 'payment'],
-            message: 'Connect to OWL',
-            network: {
-              type: 'Mainnet',
-            },
-          },
-          onFinish: (response) => {
-            console.log('Connected:', response);
-            alert('Wallet connected: ' + response.address);
-          },
-          onCancel: () => {
-            console.log('User cancelled connection');
-            alert('Connection cancelled');
-          },
-        });
-      } catch (error) {
-        console.error('Connection error:', error);
-        alert('Error connecting to wallet.');
+  <script src="https://wallet.xverse.app/sats-connect.js"></script>
+  <script>
+    async function connectWallet() {
+      if (!window.SatsConnect) {
+        alert("SatsConnect не знайдено. Переконайся, що Xverse/Unisat активні.");
+        return;
       }
-    };
+
+      window.SatsConnect.showConnect({
+        payload: {
+          purposes: ['ordinals', 'payment'],
+          message: 'Connect to OWL',
+          network: { type: 'Mainnet' },
+        },
+        onFinish: (response) => {
+          console.log('Connected:', response);
+          alert('Підключено: ' + response.address);
+        },
+        onCancel: () => {
+          alert('Користувач скасував підключення');
+        },
+      });
+    }
   </script>
 </head>
 <body style="background: black; color: white; text-align: center;">
