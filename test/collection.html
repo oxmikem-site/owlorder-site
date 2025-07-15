@@ -1,41 +1,61 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>SatsConnect Wallet Test</title>
+    <title>Connect Taproot Wallet</title>
+    <meta charset="UTF-8" />
+    <style>
+      body {
+        background: black;
+        color: white;
+        font-family: sans-serif;
+        text-align: center;
+        margin-top: 100px;
+      }
+
+      button {
+        background: #fff065;
+        color: black;
+        padding: 10px 20px;
+        font-weight: bold;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Connect Taproot Wallet</h1>
+    <button id="connectWallet">Connect Wallet</button>
+    <p id="address"></p>
+
     <script>
-      async function connectWallet() {
+      document.getElementById("connectWallet").addEventListener("click", async () => {
         if (!window.SatsConnect) {
           alert("SatsConnect не знайдено. Перевірте, чи встановлено Xverse або Unisat.");
           return;
         }
 
         try {
-          await window.SatsConnect.showConnect({
+          const response = await window.SatsConnect.request("getAddresses", {
             payload: {
-              purposes: ['ordinals', 'payment'],
-              message: 'Connect to OWL',
+              purposes: ["payment"],
               network: {
-                type: 'Mainnet'
-              }
+                type: "Mainnet",
+              },
             },
             onFinish: (response) => {
-              console.log('✅ Connected:', response);
-              document.getElementById("wallet").innerText =
-                "Connected: " + response.address;
+              console.log("Addresses:", response);
+              document.getElementById("address").innerText =
+                "Connected: " + response.addresses[0].address;
             },
             onCancel: () => {
-              console.warn('❌ User cancelled connection');
-            }
+              alert("Підключення скасовано.");
+            },
           });
-        } catch (e) {
-          console.error("Error:", e);
+        } catch (err) {
+          console.error("Помилка при запиті адрес:", err);
         }
-      }
+      });
     </script>
-  </head>
-  <body style="background:black; color:white; text-align:center; padding-top:100px;">
-    <h1>Connect Taproot Wallet</h1>
-    <button onclick="connectWallet()">Connect Wallet</button>
-    <p id="wallet"></p>
   </body>
 </html>
