@@ -5,6 +5,7 @@
   <title>OWL Dashboard</title>
   <link rel="icon" type="image/png" href="../logo2.png">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/@ordzaar/ord-connect@latest/dist/umd/index.js"></script>
   <style>
     :root {
       --bg-dark: #0b0b0b;
@@ -210,80 +211,52 @@
   </div>
 
   <script>
-    window.addEventListener('DOMContentLoaded', () => {
-      const connectButtons = [
+    document.addEventListener('DOMContentLoaded', () => {
+      const { OrdConnectProvider, OrdConnectKit } = window.OrdConnect;
+
+      const provider = new OrdConnectProvider({
+        network: 'mainnet',
+        chain: 'bitcoin',
+      });
+
+      const walletButtons = [
         document.getElementById('wallet-header'),
         document.getElementById('wallet-panel')
       ];
 
-      const savedWallet = localStorage.getItem('taproot_wallet');
-      if (savedWallet) {
-        const short = `${savedWallet.slice(0, 6)}...${savedWallet.slice(-4)}`;
-        connectButtons.forEach(b => {
-          b.textContent = short;
+      const kit = new OrdConnectKit({
+        provider,
+        element: walletButtons[0],
+        onConnect: (address) => {
+          localStorage.setItem('taproot_wallet', address);
+          walletButtons.forEach(b => {
+            b.textContent = `${address.slice(0, 6)}...${address.slice(-4)}`;
+            b.disabled = true;
+            b.style.opacity = '0.85';
+          });
+        },
+        onDisconnect: () => {
+          localStorage.removeItem('taproot_wallet');
+          walletButtons.forEach(b => {
+            b.textContent = 'CONNECT WALLET';
+            b.disabled = false;
+            b.style.opacity = '1';
+          });
+        }
+      });
+
+      walletButtons[1].addEventListener('click', () => {
+        kit.connect(); // запускає підключення зі своєї кнопки
+      });
+
+      const saved = localStorage.getItem('taproot_wallet');
+      if (saved) {
+        walletButtons.forEach(b => {
+          b.textContent = `${saved.slice(0, 6)}...${saved.slice(-4)}`;
           b.disabled = true;
           b.style.opacity = '0.85';
         });
       }
-
-      async function connectWallet() {
-        if (!window.SatsConnect) {
-          console.error('❌ SatsConnect SDK not loaded');
-          return;
-        }
-
-        window.SatsConnect.request('getAddresses', {
-          payload: {
-            purposes: ['ordinals', 'payment'],
-            network: { type: 'Mainnet' },
-            appInfo: {
-              name: 'OWL',
-              icon: 'https://owlbtc.art/logo.png'
-            }
-          },
-          onFinish: async (response) => {
-            const ordinalsAddress = response.addresses.find(addr => addr.purpose === 'ordinals')?.address;
-
-            if (!ordinalsAddress) {
-              console.warn("⚠️ No ordinals address found");
-              return;
-            }
-
-            const short = `${ordinalsAddress.slice(0, 6)}...${ordinalsAddress.slice(-4)}`;
-            connectButtons.forEach(b => {
-              b.textContent = short;
-              b.disabled = true;
-              b.style.opacity = '0.85';
-            });
-
-            localStorage.setItem('taproot_wallet', ordinalsAddress);
-            console.log('✅ Wallet connected:', ordinalsAddress);
-
-            try {
-              const saveRes = await fetch('https://owl-backend-plkm.onrender.com/api/save-wallet', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ wallet: ordinalsAddress })
-              });
-              const data = await saveRes.json();
-              if (data.success) {
-                console.log('✅ Wallet saved');
-              } else {
-                console.warn('⚠️ Failed to save wallet:', data.error);
-              }
-            } catch (err) {
-              console.error('❌ API error:', err);
-            }
-          },
-          onCancel: () => {
-            console.warn('⚠️ Wallet connection cancelled');
-          }
-        });
-      }
-
-      connectButtons.forEach(button => {
-        button.addEventListener('click', connectWallet);
-      });
 
       async function loadTop3() {
         try {
