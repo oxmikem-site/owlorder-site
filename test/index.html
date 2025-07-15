@@ -226,7 +226,7 @@
 
       const kit = new OrdConnectKit({
         provider,
-        element: walletButtons[0],
+        element: walletButtons[0], // елемент для автоматичного відкриття модального
         onConnect: (address) => {
           localStorage.setItem('taproot_wallet', address);
           walletButtons.forEach(b => {
@@ -245,10 +245,12 @@
         }
       });
 
+      // Додаткове підключення з іншої кнопки
       walletButtons[1].addEventListener('click', () => {
-        kit.connect(); // запускає підключення зі своєї кнопки
+        kit.connect();
       });
 
+      // Перевірка локального збереження
       const saved = localStorage.getItem('taproot_wallet');
       if (saved) {
         walletButtons.forEach(b => {
