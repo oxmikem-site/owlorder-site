@@ -5,7 +5,10 @@
   <title>OWL Dashboard</title>
   <link rel="icon" type="image/png" href="../logo2.png">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-  <script src="https://unpkg.com/@sats-connect/sdk@latest/dist/sdk.umd.js"></script>
+  <script type="module">
+    import { SatsConnect } from "https://unpkg.com/@sats-connect/sdk@latest/dist/sdk.module.js";
+    window.SatsConnect = SatsConnect;
+  </script>
   <style>
     :root {
       --bg-dark: #0b0b0b;
@@ -34,16 +37,19 @@
     }
 
     header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
       width: 100%;
       max-width: 1000px;
-      margin-top: 20px;
+      margin-top: 0;
       height: 64px;
       background: linear-gradient(145deg, #151515, #0d0d0d);
       display: flex;
       justify-content: space-between;
       align-items: center;
       padding: 0 20px;
-      border-radius: 20px;
+      border-radius: 0 0 20px 20px;
       box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
     }
 
@@ -156,14 +162,14 @@
     <div class="nav-buttons">
       <a href="https://owlbtc.art/leaderboard/" class="button">LEADERBOARD</a>
       <a href="https://owlbtc.art/collection/" class="button">COLLECTION</a>
-      <button class="connect-wallet" id="wallet-header">CONNECT WALLET</button>
+      <button class="connect-wallet" id="wallet-header" type="button">CONNECT WALLET</button>
     </div>
   </header>
 
   <div class="main">
     <div class="panel user-panel">
       <h2>USER PANEL</h2>
-      <button class="connect-wallet" id="wallet-panel">CONNECT WALLET</button>
+      <button class="connect-wallet" id="wallet-panel" type="button">CONNECT WALLET</button>
     </div>
 
     <div class="panel featured-nft">
@@ -268,33 +274,20 @@
         });
       });
 
-      async function loadTop3FromLeaderboardPage() {
+      async function loadTop3() {
         try {
-          const res = await fetch('https://owlbtc.art/leaderboard/');
-          const html = await res.text();
-          const match = html.match(/<div class="leaderboard-entry">([\s\S]*?)<\/div>/g);
-
-          const el = document.getElementById('leaderboard-top3');
-          el.innerHTML = '';
-
-          match?.slice(0, 3).forEach(entry => {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(entry, 'text/html');
-            const rank = doc.querySelector('.rank')?.textContent;
-            const wallet = doc.querySelector('.wallet span')?.textContent;
-            const points = doc.querySelector('.points')?.textContent;
-            if (rank && wallet && points) {
-              el.innerHTML += `<li>${wallet} - ${points}</li>`;
-            }
-          });
+          const res = await fetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?gid=1127131432&single=true&output=csv');
+          const text = await res.text();
+          const rows = text.trim().split('\n').map(r => r.split(','));
+          const top3 = rows.slice(1, 4).map(r => `<li>${r[1].slice(0, 6)}...${r[1].slice(-4)} - ${r[3]}</li>`).join('');
+          document.getElementById('leaderboard-top3').innerHTML = top3;
         } catch (e) {
           document.getElementById('leaderboard-top3').innerHTML = '<li>⚠️ Failed to load leaderboard</li>';
         }
       }
 
-      loadTop3FromLeaderboardPage();
+      loadTop3();
     });
   </script>
-
 </body>
 </html>
