@@ -1,32 +1,127 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Connect UniSat Wallet</title>
-</head>
-<body style="background:black; color:white; font-family:sans-serif; text-align:center; padding-top:100px;">
-  <h1>Connect UniSat Wallet</h1>
-  <button onclick="connect()">Connect Wallet</button>
-  <p id="address"></p>
-
-  <script>
-    async function connect() {
-      if (!window.unisat) {
-        alert("UniSat Wallet is not installed!");
-        return;
-      }
-
-      try {
-        const accounts = await window.unisat.requestAccounts();
-        const address = accounts[0];
-        document.getElementById("address").innerText = `Connected: ${address}`;
-        console.log("Connected address:", address);
-        localStorage.setItem("taproot_wallet", address);
-      } catch (e) {
-        console.error("Connection error", e);
-        alert("Failed to connect: " + e.message);
-      }
+  <title>Connect Wallet</title>
+  <style>
+    body {
+      margin: 0;
+      background: #0e0e0e;
+      font-family: sans-serif;
+      color: white;
     }
-  </script>
+
+    .overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 10;
+    }
+
+    .wallet-modal {
+      background: #1c1c1c;
+      padding: 20px 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+      text-align: center;
+    }
+
+    .wallet-modal h2 {
+      margin-bottom: 20px;
+    }
+
+    .wallet-btn {
+      background: #2c2c2c;
+      color: white;
+      border: 1px solid #444;
+      padding: 10px 20px;
+      margin: 10px 0;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s;
+      width: 100%;
+    }
+
+    .wallet-btn:hover {
+      background: #444;
+    }
+  </style>
+</head>
+<body>
+
+<div class="overlay" id="walletOverlay">
+  <div class="wallet-modal">
+    <h2>Select Wallet</h2>
+    <button class="wallet-btn" onclick="connectXverse()">Xverse</button>
+    <button class="wallet-btn" onclick="connectUnisat()">Unisat</button>
+    <button class="wallet-btn" onclick="connectLeather()">Leather</button>
+    <button class="wallet-btn" onclick="connectOKX()">OKX</button>
+    <button class="wallet-btn" onclick="connectMagicEden()">Magic Eden</button>
+    <button class="wallet-btn" onclick="connectOyl()">Oyl</button>
+  </div>
+</div>
+
+<script>
+  async function connectXverse() {
+    if (!window.BitcoinProvider) return alert("Xverse not installed");
+    const res = await window.BitcoinProvider.request('getAddresses', {
+      network: { type: 'Mainnet' }
+    });
+    console.log("Xverse:", res.addresses[0].address);
+    closeOverlay();
+  }
+
+  async function connectUnisat() {
+    if (!window.unisat) return alert("Unisat not installed");
+    const acc = await window.unisat.requestAccounts();
+    console.log("Unisat:", acc[0]);
+    closeOverlay();
+  }
+
+  async function connectLeather() {
+    if (!window.leather) return alert("Leather not installed");
+    const res = await window.leather.request("getAddresses", {
+      network: { type: "Mainnet" }
+    });
+    console.log("Leather:", res.addresses[0].address);
+    closeOverlay();
+  }
+
+  async function connectOKX() {
+    if (!window.okxwallet) return alert("OKX Wallet not installed");
+    const acc = await window.okxwallet.bitcoin.requestAccounts();
+    console.log("OKX:", acc[0]);
+    closeOverlay();
+  }
+
+  async function connectMagicEden() {
+    if (!window.magicEdenWallet) return alert("Magic Eden Wallet not installed");
+    const res = await window.magicEdenWallet.request("getAddresses", {
+      network: { type: "Mainnet" }
+    });
+    console.log("Magic Eden:", res.addresses[0].address);
+    closeOverlay();
+  }
+
+  async function connectOyl() {
+    if (!window.oylwallet) return alert("Oyl Wallet not installed");
+    const res = await window.oylwallet.request("getAddresses", {
+      network: { type: "Mainnet" }
+    });
+    console.log("Oyl:", res.addresses[0].address);
+    closeOverlay();
+  }
+
+  function closeOverlay() {
+    document.getElementById("walletOverlay").style.display = "none";
+  }
+</script>
+
 </body>
 </html>
