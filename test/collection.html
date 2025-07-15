@@ -1,125 +1,99 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Connect Wallet</title>
   <style>
     body {
       margin: 0;
-      background: #0e0e0e;
+      background-color: #0d0d0d;
+      color: #ffffff;
       font-family: sans-serif;
-      color: white;
     }
 
     .overlay {
       position: fixed;
       top: 0; left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(0, 0, 0, 0.7);
+      width: 100vw; height: 100vh;
+      background: rgba(0, 0, 0, 0.6);
       display: flex;
       justify-content: center;
       align-items: center;
-      z-index: 10;
+      z-index: 9999;
     }
 
-    .wallet-modal {
-      background: #1c1c1c;
-      padding: 20px 30px;
+    .modal {
+      background-color: #1a1a1a;
+      padding: 30px;
       border-radius: 12px;
-      box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
       text-align: center;
+      width: 300px;
     }
 
-    .wallet-modal h2 {
-      margin-bottom: 20px;
-    }
-
-    .wallet-btn {
-      background: #2c2c2c;
-      color: white;
-      border: 1px solid #444;
+    .wallet-button {
+      background-color: #fff065;
+      color: black;
       padding: 10px 20px;
-      margin: 10px 0;
+      border: none;
       border-radius: 8px;
-      cursor: pointer;
-      transition: background 0.3s;
+      margin: 10px 0;
       width: 100%;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.2s;
     }
 
-    .wallet-btn:hover {
-      background: #444;
+    .wallet-button:hover {
+      background-color: #ffea38;
     }
   </style>
 </head>
 <body>
 
-<div class="overlay" id="walletOverlay">
-  <div class="wallet-modal">
-    <h2>Select Wallet</h2>
-    <button class="wallet-btn" onclick="connectXverse()">Xverse</button>
-    <button class="wallet-btn" onclick="connectUnisat()">Unisat</button>
-    <button class="wallet-btn" onclick="connectLeather()">Leather</button>
-    <button class="wallet-btn" onclick="connectOKX()">OKX</button>
-    <button class="wallet-btn" onclick="connectMagicEden()">Magic Eden</button>
-    <button class="wallet-btn" onclick="connectOyl()">Oyl</button>
+<!-- Modal -->
+<div class="overlay" id="walletModal">
+  <div class="modal">
+    <h2>Connect your wallet</h2>
+    <button class="wallet-button" onclick="connectUnisat()">Unisat</button>
+    <button class="wallet-button" onclick="connectXverse()">Xverse</button>
   </div>
 </div>
 
+<!-- JS Logic -->
 <script>
-  async function connectXverse() {
-    if (!window.BitcoinProvider) return alert("Xverse not installed");
-    const res = await window.BitcoinProvider.request('getAddresses', {
-      network: { type: 'Mainnet' }
-    });
-    console.log("Xverse:", res.addresses[0].address);
-    closeOverlay();
+  function connectUnisat() {
+    if (window.unisat) {
+      window.unisat.requestAccounts()
+        .then(accounts => {
+          alert("Connected Unisat: " + accounts[0]);
+          document.getElementById("walletModal").style.display = "none";
+        })
+        .catch(err => alert("Unisat Error: " + err));
+    } else {
+      alert("Unisat wallet not found");
+    }
   }
 
-  async function connectUnisat() {
-    if (!window.unisat) return alert("Unisat not installed");
-    const acc = await window.unisat.requestAccounts();
-    console.log("Unisat:", acc[0]);
-    closeOverlay();
-  }
+  function connectXverse() {
+    if (window.BitcoinProvider) {
+      const request = {
+        method: 'getAddresses',
+        params: {
+          purposes: ['ordinals'],
+          network: 'Mainnet',
+        }
+      };
 
-  async function connectLeather() {
-    if (!window.leather) return alert("Leather not installed");
-    const res = await window.leather.request("getAddresses", {
-      network: { type: "Mainnet" }
-    });
-    console.log("Leather:", res.addresses[0].address);
-    closeOverlay();
-  }
-
-  async function connectOKX() {
-    if (!window.okxwallet) return alert("OKX Wallet not installed");
-    const acc = await window.okxwallet.bitcoin.requestAccounts();
-    console.log("OKX:", acc[0]);
-    closeOverlay();
-  }
-
-  async function connectMagicEden() {
-    if (!window.magicEdenWallet) return alert("Magic Eden Wallet not installed");
-    const res = await window.magicEdenWallet.request("getAddresses", {
-      network: { type: "Mainnet" }
-    });
-    console.log("Magic Eden:", res.addresses[0].address);
-    closeOverlay();
-  }
-
-  async function connectOyl() {
-    if (!window.oylwallet) return alert("Oyl Wallet not installed");
-    const res = await window.oylwallet.request("getAddresses", {
-      network: { type: "Mainnet" }
-    });
-    console.log("Oyl:", res.addresses[0].address);
-    closeOverlay();
-  }
-
-  function closeOverlay() {
-    document.getElementById("walletOverlay").style.display = "none";
+      window.BitcoinProvider.request(request)
+        .then(response => {
+          const address = response.addresses[0]?.address;
+          alert("Connected Xverse: " + address);
+          document.getElementById("walletModal").style.display = "none";
+        })
+        .catch(error => alert("Xverse Error: " + error));
+    } else {
+      alert("Xverse wallet not found");
+    }
   }
 </script>
 
