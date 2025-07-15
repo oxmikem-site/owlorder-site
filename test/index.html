@@ -95,7 +95,7 @@
       max-width: 1200px;
       padding: 40px 20px;
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      grid-template-columns: repeat(3, 1fr);
       gap: 24px;
     }
 
@@ -132,6 +132,14 @@
       white-space: normal;
     }
 
+    .featured-nft img {
+      width: 100%;
+      height: auto;
+      border-radius: 12px;
+      max-height: 400px;
+      object-fit: contain;
+    }
+
     .footer {
       margin-top: 40px;
       text-align: center;
@@ -148,14 +156,14 @@
     <div class="nav-buttons">
       <a href="https://owlbtc.art/leaderboard/" class="button">LEADERBOARD</a>
       <a href="https://owlbtc.art/collection/" class="button">COLLECTION</a>
-      <button class="connect-wallet">CONNECT WALLET</button>
+      <button class="connect-wallet" id="wallet-header">CONNECT WALLET</button>
     </div>
   </header>
 
   <div class="main">
     <div class="panel user-panel">
       <h2>USER PANEL</h2>
-      <button class="connect-wallet">CONNECT WALLET</button>
+      <button class="connect-wallet" id="wallet-panel">CONNECT WALLET</button>
     </div>
 
     <div class="panel featured-nft">
@@ -203,7 +211,10 @@
 
   <script>
     window.addEventListener('DOMContentLoaded', () => {
-      const connectButtons = document.querySelectorAll('.connect-wallet');
+      const connectButtons = [
+        document.getElementById('wallet-header'),
+        document.getElementById('wallet-panel')
+      ];
 
       connectButtons.forEach(button => {
         button.addEventListener('click', async () => {
