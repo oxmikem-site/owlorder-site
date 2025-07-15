@@ -1,61 +1,47 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <title>Connect Taproot Wallet</title>
-    <meta charset="UTF-8" />
-    <style>
-      body {
-        background: black;
-        color: white;
-        font-family: sans-serif;
-        text-align: center;
-        margin-top: 100px;
-      }
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Connect Taproot Wallet</title>
+  <script src="https://unpkg.com/@sats-connect/sdk@latest/dist/index.umd.js"></script>
+</head>
+<body style="background:black; color:white; text-align:center; font-family:sans-serif;">
+  <h1>Connect Wallet</h1>
+  <button id="connectBtn">Connect Wallet</button>
+  <p id="result"></p>
 
-      button {
-        background: #fff065;
-        color: black;
-        padding: 10px 20px;
-        font-weight: bold;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-      }
-    </style>
-  </head>
-  <body>
-    <h1>Connect Taproot Wallet</h1>
-    <button id="connectWallet">Connect Wallet</button>
-    <p id="address"></p>
+  <script>
+    const connectButton = document.getElementById("connectBtn");
+    const result = document.getElementById("result");
 
-    <script>
-      document.getElementById("connectWallet").addEventListener("click", async () => {
-        if (!window.SatsConnect) {
-          alert("SatsConnect не знайдено. Перевірте, чи встановлено Xverse або Unisat.");
+    connectButton.onclick = async () => {
+      try {
+        if (!window.satsConnect) {
+          alert("SatsConnect не знайдено. Переконайтесь, що гаманець Xverse/Unisat активний.");
           return;
         }
 
-        try {
-          const response = await window.SatsConnect.request("getAddresses", {
-            payload: {
-              purposes: ["payment"],
-              network: {
-                type: "Mainnet",
-              },
-            },
-            onFinish: (response) => {
-              console.log("Addresses:", response);
-              document.getElementById("address").innerText =
-                "Connected: " + response.addresses[0].address;
-            },
-            onCancel: () => {
-              alert("Підключення скасовано.");
-            },
-          });
-        } catch (err) {
-          console.error("Помилка при запиті адрес:", err);
-        }
-      });
-    </script>
-  </body>
+        const getAddressResponse = await window.satsConnect.getAddress({
+          payload: {
+            purposes: ["payment"],
+            message: "Connect to OWL Dashboard",
+            network: {
+              type: "Mainnet"
+            }
+          },
+          onFinish: (response) => {
+            console.log("Address response:", response);
+            result.innerText = `Connected Taproot Address:\n${response.addresses[0].address}`;
+          },
+          onCancel: () => {
+            result.innerText = "❌ Підключення скасовано користувачем.";
+          }
+        });
+      } catch (error) {
+        console.error("Connection error:", error);
+        result.innerText = `❌ Помилка: ${error.message}`;
+      }
+    };
+  </script>
+</body>
 </html>
