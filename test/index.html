@@ -113,46 +113,6 @@
       color: var(--accent-color);
     }
 
-    .user-panel .avatar {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 10px;
-    }
-
-    .avatar img {
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-    }
-
-    .featured-nft img {
-      width: 100%;
-      border-radius: 12px;
-      margin-bottom: 10px;
-    }
-
-    .nft-title {
-      font-weight: 600;
-      margin-bottom: 4px;
-    }
-
-    .nft-traits {
-      font-size: 14px;
-      color: var(--text-secondary);
-      margin-bottom: 10px;
-    }
-
-    .nft-buttons button {
-      margin-right: 8px;
-      padding: 8px 16px;
-      border: none;
-      border-radius: 8px;
-      background: var(--text-primary);
-      color: #000;
-      cursor: pointer;
-    }
-
     ul, ol {
       background: var(--bg-inner);
       padding: 12px 20px 12px 24px;
@@ -241,79 +201,89 @@
     TWITTER · DISCORD · DOCS · TERMS
   </div>
 
-<script>
-  window.addEventListener('DOMContentLoaded', () => {
-    const connectButtons = document.querySelectorAll('.connect-wallet');
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      const connectButtons = document.querySelectorAll('.connect-wallet');
 
-    connectButtons.forEach(button => {
-      button.addEventListener('click', async () => {
-        if (!window.SatsConnect) {
-          console.error('❌ SatsConnect SDK not loaded');
-          return;
-        }
-
-        window.SatsConnect.request('getAddresses', {
-          payload: {
-            purposes: ['ordinals', 'payment'],
-            network: { type: 'Mainnet' },
-            appInfo: {
-              name: 'OWL',
-              icon: 'https://owlbtc.art/logo.png'
-            }
-          },
-          onFinish: async (response) => {
-            const ordinalsAddress = response.addresses.find(addr => addr.purpose === 'ordinals')?.address;
-            const short = `${ordinalsAddress.slice(0, 6)}...${ordinalsAddress.slice(-4)}`;
-
-            connectButtons.forEach(b => {
-              b.textContent = short;
-              b.disabled = true;
-              b.style.opacity = '0.85';
-            });
-
-            localStorage.setItem('taproot_wallet', ordinalsAddress);
-            console.log('✅ Wallet connected:', ordinalsAddress);
-
-            try {
-              const saveRes = await fetch('https://owl-backend-plkm.onrender.com/api/save-wallet', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ wallet: ordinalsAddress })
-              });
-              const data = await saveRes.json();
-              if (data.success) {
-                console.log('✅ Wallet saved');
-              } else {
-                console.warn('⚠️ Failed to save wallet:', data.error);
-              }
-            } catch (err) {
-              console.error('❌ API error:', err);
-            }
-          },
-          onCancel: () => {
-            console.warn('⚠️ Wallet connection cancelled');
+      connectButtons.forEach(button => {
+        button.addEventListener('click', async () => {
+          if (!window.SatsConnect) {
+            console.error('❌ SatsConnect SDK not loaded');
+            return;
           }
+
+          window.SatsConnect.request('getAddresses', {
+            payload: {
+              purposes: ['ordinals', 'payment'],
+              network: { type: 'Mainnet' },
+              appInfo: {
+                name: 'OWL',
+                icon: 'https://owlbtc.art/logo.png'
+              }
+            },
+            onFinish: async (response) => {
+              const ordinalsAddress = response.addresses.find(addr => addr.purpose === 'ordinals')?.address;
+              const short = `${ordinalsAddress.slice(0, 6)}...${ordinalsAddress.slice(-4)}`;
+
+              connectButtons.forEach(b => {
+                b.textContent = short;
+                b.disabled = true;
+                b.style.opacity = '0.85';
+              });
+
+              localStorage.setItem('taproot_wallet', ordinalsAddress);
+              console.log('✅ Wallet connected:', ordinalsAddress);
+
+              try {
+                const saveRes = await fetch('https://owl-backend-plkm.onrender.com/api/save-wallet', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ wallet: ordinalsAddress })
+                });
+                const data = await saveRes.json();
+                if (data.success) {
+                  console.log('✅ Wallet saved');
+                } else {
+                  console.warn('⚠️ Failed to save wallet:', data.error);
+                }
+              } catch (err) {
+                console.error('❌ API error:', err);
+              }
+            },
+            onCancel: () => {
+              console.warn('⚠️ Wallet connection cancelled');
+            }
+          });
         });
       });
-    });
 
-    async function loadTop3() {
-      const el = document.getElementById('leaderboard-top3');
-      try {
-        const res = await fetch('https://owl-backend-plkm.onrender.com/api/leaderboard-top3');
-        const data = await res.json();
-        el.innerHTML = '';
-        data.forEach(item => {
-          el.innerHTML += `<li>${item.address} - ${item.points}</li>`;
-        });
-      } catch (e) {
-        el.innerHTML = '<li>⚠️ Failed to load leaderboard</li>';
+      async function loadTop3FromLeaderboardPage() {
+        try {
+          const res = await fetch('https://owlbtc.art/leaderboard/');
+          const html = await res.text();
+          const match = html.match(/<div class="leaderboard-entry">([\s\S]*?)<\/div>/g);
+
+          const el = document.getElementById('leaderboard-top3');
+          el.innerHTML = '';
+
+          match?.slice(0, 3).forEach(entry => {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(entry, 'text/html');
+            const rank = doc.querySelector('.rank')?.textContent;
+            const wallet = doc.querySelector('.wallet span')?.textContent;
+            const points = doc.querySelector('.points')?.textContent;
+            if (rank && wallet && points) {
+              el.innerHTML += `<li>${wallet} - ${points}</li>`;
+            }
+          });
+        } catch (e) {
+          document.getElementById('leaderboard-top3').innerHTML = '<li>⚠️ Failed to load leaderboard</li>';
+        }
       }
-    }
 
-    loadTop3();
-  });
-</script>
+      loadTop3FromLeaderboardPage();
+    });
+  </script>
 
 </body>
 </html>
