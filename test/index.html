@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>OWL Dashboard</title>
-  <link rel="icon" type="image/png" href="../logo2.png">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="../logo2.png" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
   <style>
     :root {
       --bg-dark: #0b0b0b;
@@ -14,9 +14,12 @@
       --text-secondary: #ffffff;
       --accent: linear-gradient(90deg, #a4976e, #8a7f5a);
       --accent-color: #8a7f5a;
+      --accent-muted: #8a7f5a;
     }
 
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
 
     body {
       margin: 0;
@@ -45,8 +48,16 @@
       box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
     }
 
-    .logo { display: flex; align-items: center; gap: 12px; }
-    .logo img { width: 50px; height: 50px; }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo img {
+      width: 50px;
+      height: 50px;
+    }
 
     .nav-buttons {
       display: flex;
@@ -65,7 +76,9 @@
       transition: all 0.2s ease;
     }
 
-    .button:hover { color: var(--accent-color); }
+    .button:hover {
+      color: var(--accent-color);
+    }
 
     .connect-wallet {
       padding: 6px 14px;
@@ -100,11 +113,25 @@
       color: var(--accent-color);
     }
 
-    ul, ol {
+    ul,
+    ol {
       background: var(--bg-inner);
-      padding: 12px 20px;
+      padding: 12px 20px 12px 24px;
       border-radius: 12px;
+      width: 100%;
+      min-height: 72px;
       list-style-position: inside;
+      overflow-wrap: break-word;
+      word-break: break-word;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    ul li,
+    ol li {
+      max-width: 100%;
+      white-space: normal;
     }
 
     .featured-nft img {
@@ -126,24 +153,24 @@
 <body>
   <header>
     <div class="logo">
-      <img src="../logo1.png" alt="logo">
+      <img src="../logo1.png" alt="logo" />
     </div>
     <div class="nav-buttons">
       <a href="https://owlbtc.art/leaderboard/" class="button">LEADERBOARD</a>
       <a href="https://owlbtc.art/collection/" class="button">COLLECTION</a>
-      <button class="connect-wallet" id="wallet-header">CONNECT WALLET</button>
+      <button class="connect-wallet" id="wallet-header" type="button">CONNECT WALLET</button>
     </div>
   </header>
 
   <div class="main">
     <div class="panel user-panel">
       <h2>USER PANEL</h2>
-      <button class="connect-wallet" id="wallet-panel">CONNECT WALLET</button>
+      <button class="connect-wallet" id="wallet-panel" type="button">CONNECT WALLET</button>
     </div>
 
     <div class="panel featured-nft">
       <h2>FEATURED NFT</h2>
-      <img src="../images/117.webp" alt="nft">
+      <img src="../images/117.webp" alt="nft" />
       <div class="nft-title">1/1 ANIMATED OWL #117</div>
       <div class="nft-traits">Traits: Gold Beak, Robe...</div>
       <div class="nft-buttons">
@@ -180,9 +207,7 @@
     </div>
   </div>
 
-  <div class="footer">
-    TWITTER · DISCORD · DOCS · TERMS
-  </div>
+  <div class="footer">TWITTER · DISCORD · DOCS · TERMS</div>
 
   <script>
     const walletButtons = [
@@ -192,45 +217,40 @@
 
     async function connectWallet() {
       if (!window.SatsConnect) {
-        alert("Please open this site inside a supported wallet like Xverse or Unisat.");
+        alert("Please open this site in a compatible wallet (Xverse, Unisat).");
         return;
       }
 
-      try {
-        window.SatsConnect.request('getAddresses', {
-          payload: {
-            purposes: ['ordinals', 'payment'],
-            network: { type: 'Mainnet' },
-            appInfo: {
-              name: 'OWL',
-              icon: 'https://owlbtc.art/logo.png'
-            }
-          },
-          onFinish: (res) => {
-            const ord = res.addresses.find(a => a.purpose === 'ordinals')?.address;
-            if (ord) {
-              localStorage.setItem('taproot_wallet', ord);
-              walletButtons.forEach(b => {
-                b.textContent = `${ord.slice(0, 6)}...${ord.slice(-4)}`;
-                b.disabled = true;
-                b.style.opacity = '0.85';
-              });
-            } else {
-              alert("No ordinals address found.");
-            }
-          },
-          onCancel: () => {
-            console.log("Wallet connection cancelled");
+      window.SatsConnect.request('getAddresses', {
+        payload: {
+          purposes: ['ordinals', 'payment'],
+          network: { type: 'Mainnet' },
+          appInfo: {
+            name: 'OWL',
+            icon: 'https://owlbtc.art/logo.png'
           }
-        });
-      } catch (err) {
-        alert("Wallet connection failed: " + err.message);
-      }
+        },
+        onFinish: (res) => {
+          const address = res.addresses.find(a => a.purpose === 'ordinals')?.address;
+          if (address) {
+            localStorage.setItem('taproot_wallet', address);
+            walletButtons.forEach(btn => {
+              btn.textContent = `${address.slice(0, 6)}...${address.slice(-4)}`;
+              btn.disabled = true;
+              btn.style.opacity = '0.85';
+            });
+          }
+        },
+        onCancel: () => {
+          console.warn('Wallet connection cancelled');
+        }
+      });
     }
 
-    walletButtons.forEach(b => b.addEventListener('click', connectWallet));
+    walletButtons.forEach(btn => {
+      btn.addEventListener('click', connectWallet);
+    });
 
-    // Відновлення з localStorage
     const saved = localStorage.getItem('taproot_wallet');
     if (saved) {
       walletButtons.forEach(b => {
@@ -240,7 +260,6 @@
       });
     }
 
-    // Завантажити лідерборд
     async function loadTop3() {
       try {
         const res = await fetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?gid=1127131432&single=true&output=csv');
