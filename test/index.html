@@ -5,10 +5,6 @@
   <title>OWL Dashboard</title>
   <link rel="icon" type="image/png" href="../logo2.png">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-  <script type="module">
-    import { SatsConnect } from "https://unpkg.com/@sats-connect/sdk@latest/dist/sdk.module.js";
-    window.SatsConnect = SatsConnect;
-  </script>
   <style>
     :root {
       --bg-dark: #0b0b0b;
@@ -42,7 +38,6 @@
       z-index: 10;
       width: 100%;
       max-width: 1000px;
-      margin-top: 0;
       height: 64px;
       background: linear-gradient(145deg, #151515, #0d0d0d);
       display: flex;
@@ -107,7 +102,6 @@
 
     .panel {
       background: var(--bg-panel);
-      background-origin: border-box;
       padding: 20px;
       border-radius: 16px;
       box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
@@ -222,122 +216,73 @@
         document.getElementById('wallet-panel')
       ];
 
-     async function connectWallet() {
-  if (!window.SatsConnect) {
-    console.error('❌ SatsConnect SDK not loaded');
-    return;
-  }
-
-  window.SatsConnect.request('getAddresses', {
-    payload: {
-      purposes: ['ordinals', 'payment'],
-      network: { type: 'Mainnet' },
-      appInfo: {
-        name: 'OWL',
-        icon: 'https://owlbtc.art/logo.png'
-      }
-    },
-    onFinish: async (response) => {
-      const ordinalsAddress = response.addresses.find(addr => addr.purpose === 'ordinals')?.address;
-
-      if (!ordinalsAddress) {
-        console.warn("⚠️ No ordinals address found");
-        return;
-      }
-
-      const short = `${ordinalsAddress.slice(0, 6)}...${ordinalsAddress.slice(-4)}`;
-      connectButtons.forEach(b => {
-        b.textContent = short;
-        b.disabled = true;
-        b.style.opacity = '0.85';
-      });
-
-      localStorage.setItem('taproot_wallet', ordinalsAddress);
-      console.log('✅ Wallet connected:', ordinalsAddress);
-
-      try {
-        const saveRes = await fetch('https://owl-backend-plkm.onrender.com/api/save-wallet', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ wallet: ordinalsAddress })
+      const savedWallet = localStorage.getItem('taproot_wallet');
+      if (savedWallet) {
+        const short = `${savedWallet.slice(0, 6)}...${savedWallet.slice(-4)}`;
+        connectButtons.forEach(b => {
+          b.textContent = short;
+          b.disabled = true;
+          b.style.opacity = '0.85';
         });
-        const data = await saveRes.json();
-        if (data.success) {
-          console.log('✅ Wallet saved');
-        } else {
-          console.warn('⚠️ Failed to save wallet:', data.error);
+      }
+
+      async function connectWallet() {
+        if (!window.SatsConnect) {
+          console.error('❌ SatsConnect SDK not loaded');
+          return;
         }
-      } catch (err) {
-        console.error('❌ API error:', err);
-      }
-    },
-    onCancel: () => {
-      console.warn('⚠️ Wallet connection cancelled');
-    }
-  });
-}
 
-connectButtons.forEach(button => {
-  button.addEventListener('click', connectWallet);
-});
-
-          const savedWallet = localStorage.getItem('taproot_wallet');
-if (savedWallet) {
-  const short = `${savedWallet.slice(0, 6)}...${savedWallet.slice(-4)}`;
-  connectButtons.forEach(b => {
-    b.textContent = short;
-    b.disabled = true;
-    b.style.opacity = '0.85';
-  });
-}
-
-          window.SatsConnect.request('getAddresses', {
-            payload: {
-              purposes: ['ordinals', 'payment'],
-              network: { type: 'Mainnet' },
-              appInfo: {
-                name: 'OWL',
-                icon: 'https://owlbtc.art/logo.png'
-              }
-            },
-            onFinish: async (response) => {
-              const ordinalsAddress = response.addresses.find(addr => addr.purpose === 'ordinals')?.address;
-
-if (!ordinalsAddress) {
-  console.warn("⚠️ No ordinals address found");
-  return;
-              const short = `${ordinalsAddress.slice(0, 6)}...${ordinalsAddress.slice(-4)}`;
-
-              connectButtons.forEach(b => {
-                b.textContent = short;
-                b.disabled = true;
-                b.style.opacity = '0.85';
-              });
-
-              localStorage.setItem('taproot_wallet', ordinalsAddress);
-              console.log('✅ Wallet connected:', ordinalsAddress);
-
-              try {
-                const saveRes = await fetch('https://owl-backend-plkm.onrender.com/api/save-wallet', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ wallet: ordinalsAddress })
-                });
-                const data = await saveRes.json();
-                if (data.success) {
-                  console.log('✅ Wallet saved');
-                } else {
-                  console.warn('⚠️ Failed to save wallet:', data.error);
-                }
-              } catch (err) {
-                console.error('❌ API error:', err);
-              }
-            },
-            onCancel: () => {
-              console.warn('⚠️ Wallet connection cancelled');
+        window.SatsConnect.request('getAddresses', {
+          payload: {
+            purposes: ['ordinals', 'payment'],
+            network: { type: 'Mainnet' },
+            appInfo: {
+              name: 'OWL',
+              icon: 'https://owlbtc.art/logo.png'
             }
-          });
+          },
+          onFinish: async (response) => {
+            const ordinalsAddress = response.addresses.find(addr => addr.purpose === 'ordinals')?.address;
+
+            if (!ordinalsAddress) {
+              console.warn("⚠️ No ordinals address found");
+              return;
+            }
+
+            const short = `${ordinalsAddress.slice(0, 6)}...${ordinalsAddress.slice(-4)}`;
+            connectButtons.forEach(b => {
+              b.textContent = short;
+              b.disabled = true;
+              b.style.opacity = '0.85';
+            });
+
+            localStorage.setItem('taproot_wallet', ordinalsAddress);
+            console.log('✅ Wallet connected:', ordinalsAddress);
+
+            try {
+              const saveRes = await fetch('https://owl-backend-plkm.onrender.com/api/save-wallet', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ wallet: ordinalsAddress })
+              });
+              const data = await saveRes.json();
+              if (data.success) {
+                console.log('✅ Wallet saved');
+              } else {
+                console.warn('⚠️ Failed to save wallet:', data.error);
+              }
+            } catch (err) {
+              console.error('❌ API error:', err);
+            }
+          },
+          onCancel: () => {
+            console.warn('⚠️ Wallet connection cancelled');
+          }
         });
+      }
+
+      connectButtons.forEach(button => {
+        button.addEventListener('click', connectWallet);
       });
 
       async function loadTop3() {
@@ -346,11 +291,11 @@ if (!ordinalsAddress) {
           const text = await res.text();
           const rows = text.trim().split('\n').map(r => r.split(','));
           const top3 = rows.slice(1, 4).map(r => {
-  if (r[1] && r[3]) {
-    return `<li>${r[1].slice(0, 6)}...${r[1].slice(-4)} - ${r[3]}</li>`;
-  }
-  return '<li>⚠️ Invalid data</li>';
-}).join('');
+            if (r[1] && r[3]) {
+              return `<li>${r[1].slice(0, 6)}...${r[1].slice(-4)} - ${r[3]}</li>`;
+            }
+            return '<li>⚠️ Invalid data</li>';
+          }).join('');
           document.getElementById('leaderboard-top3').innerHTML = top3;
         } catch (e) {
           document.getElementById('leaderboard-top3').innerHTML = '<li>⚠️ Failed to load leaderboard</li>';
