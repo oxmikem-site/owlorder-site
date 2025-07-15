@@ -2,46 +2,38 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Connect Taproot Wallet</title>
-  <script src="https://unpkg.com/@sats-connect/sdk@latest/dist/index.umd.js"></script>
-</head>
-<body style="background:black; color:white; text-align:center; font-family:sans-serif;">
-  <h1>Connect Wallet</h1>
-  <button id="connectBtn">Connect Wallet</button>
-  <p id="result"></p>
+  <title>Connect Wallet</title>
+  <script type="module">
+    import { showConnect } from "https://unpkg.com/@sats-connect/core@0.10.7";
 
-  <script>
-    const connectButton = document.getElementById("connectBtn");
-    const result = document.getElementById("result");
-
-    connectButton.onclick = async () => {
+    window.connectWallet = async () => {
       try {
-        if (!window.satsConnect) {
-          alert("SatsConnect не знайдено. Переконайтесь, що гаманець Xverse/Unisat активний.");
-          return;
-        }
-
-        const getAddressResponse = await window.satsConnect.getAddress({
+        const response = await showConnect({
           payload: {
-            purposes: ["payment"],
-            message: "Connect to OWL Dashboard",
+            purposes: ['ordinals', 'payment'],
+            message: 'Connect to OWL',
             network: {
-              type: "Mainnet"
-            }
+              type: 'Mainnet',
+            },
           },
           onFinish: (response) => {
-            console.log("Address response:", response);
-            result.innerText = `Connected Taproot Address:\n${response.addresses[0].address}`;
+            console.log('Connected:', response);
+            alert('Wallet connected: ' + response.address);
           },
           onCancel: () => {
-            result.innerText = "❌ Підключення скасовано користувачем.";
-          }
+            console.log('User cancelled connection');
+            alert('Connection cancelled');
+          },
         });
       } catch (error) {
-        console.error("Connection error:", error);
-        result.innerText = `❌ Помилка: ${error.message}`;
+        console.error('Connection error:', error);
+        alert('Error connecting to wallet.');
       }
     };
   </script>
+</head>
+<body style="background: black; color: white; text-align: center;">
+  <h1>Connect Wallet</h1>
+  <button onclick="connectWallet()">Connect Wallet</button>
 </body>
 </html>
