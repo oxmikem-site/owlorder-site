@@ -67,26 +67,25 @@
       }
     }
 
-    async function connectXverse() {
-      if (!window.xverse) {
-        setStatus("Please install Xverse Wallet", true);
-        return;
-      }
-      try {
-        setStatus("Connecting to Xverse...");
-        const accounts = await window.xverse.requestAccounts();
-        if (!accounts.length) throw new Error("No accounts found");
-        const address = accounts[0];
-        setStatus(`Connected: ${address}. Checking NFT...`);
-        const owns = await checkNFT(address);
-        if (owns) {
-          setStatus("✅ NFT verified! Redirecting...");
-          setTimeout(() => window.location.href = "/dashboard.html", 1500);
-        } else {
-          setStatus("❌ NFT not found in your wallet", true);
-        }
-      } catch (e) {
-        setStatus(e.message || e, true);
+   async function connectXverse() {
+  if (!window.xverse) {
+    try {
+      setStatus("Waiting for Xverse wallet to initialize...");
+      await waitForXverse();
+    } catch (e) {
+      setStatus("Please install Xverse Wallet", true);
+      return;
+    }
+  }
+  try {
+    setStatus("Connecting to Xverse...");
+    const accounts = await window.xverse.requestAccounts();
+    if (!accounts.length) throw new Error("No accounts found");
+    const address = accounts[0];
+    setStatus(`Connected: ${address}. Checking NFT...`);
+    // Подальша логіка
+  } catch (e) {
+    setStatus(e.message || e, true);
       }
     }
 
