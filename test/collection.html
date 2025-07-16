@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>OWL Wallet Connect</title>
+  <title>OWL Wallet Connect + Auth</title>
   <style>
     body {
       margin: 0; padding: 0;
@@ -35,24 +35,26 @@
     }
     #status {
       margin-top: 20px;
-      min-height: 24px;
+      min-height: 30px;
       font-weight: 600;
+      text-align: center;
+      max-width: 400px;
     }
   </style>
 </head>
 <body>
 
-<h1>Connect Your Wallet</h1>
+<h1>Connect and Authenticate Your Wallet</h1>
 
 <button id="btn-unisat">Connect Unisat</button>
 <button id="btn-xverse">Connect Xverse</button>
 
-<div id="status"></div>
+<div id="status">Status messages will appear here...</div>
 
 <script>
-  const COLLECTION_TICK = "OWL"; // твій тикер
+  const API_BASE = 'http://localhost:3000/api';  // Зміни на свій бекенд, якщо потрібно
+  const COLLECTION_TICK = "OWL"; // твій тикер NFT колекції
 
-  // Базовий клас гаманця
   class BaseWallet {
     constructor(name) {
       this.name = name;
@@ -66,7 +68,6 @@
     }
   }
 
-  // Unisat
   class UnisatWallet extends BaseWallet {
     constructor() {
       super('unisat');
@@ -76,15 +77,15 @@
       this.accounts = await window.unisat.requestAccounts();
       if (!this.accounts.length) throw new Error('No accounts found in Unisat');
     }
+    async signMessage(msg) {
+      return window.unisat.signMessage(msg);
+    }
   }
 
-  // Xverse
   class XverseWallet extends BaseWallet {
     constructor() {
       super('xverse');
     }
-
-    // Очікуємо появи window.xverse до 5 сек
     async waitForXverse(timeout = 5000) {
       return new Promise((resolve, reject) => {
         if (window.xverse) resolve(window.xverse);
@@ -102,15 +103,16 @@
         }
       });
     }
-
     async connect() {
       await this.waitForXverse();
       this.accounts = await window.xverse.requestAccounts();
       if (!this.accounts.length) throw new Error('No accounts found in Xverse');
     }
+    async signMessage(msg) {
+      return window.xverse.signMessage(msg);
+    }
   }
 
-  // Менеджер гаманців
   class WalletManager {
     constructor() {
       this.wallets = {
@@ -118,7 +120,6 @@
         xverse: new XverseWallet(),
       };
     }
-
     async connect(providerName) {
       const wallet = this.wallets[providerName];
       if (!wallet) throw new Error(`Wallet provider '${providerName}' is not supported`);
@@ -127,14 +128,33 @@
     }
   }
 
-  // Статус
   const statusEl = document.getElementById('status');
   function setStatus(msg, error = false) {
     statusEl.textContent = msg;
     statusEl.style.color = error ? 'tomato' : 'lightgreen';
   }
 
-  // Перевірка NFT через API Unisat
+  async function fetchNonce(address) {
+    const res = await fetch(`${API_BASE}/auth/nonce?address=${encodeURIComponent(address)}`);
+    if (!res.ok) throw new Error(`Failed to fetch nonce: ${res.status}`);
+    const data = await res.json();
+    return data.nonce;
+  }
+
+  async function verifySignature(address, signature) {
+    const res = await fetch(`${API_BASE}/auth/verify`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({address, signature}),
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Verification failed');
+    }
+    const data = await res.json();
+    return data.token;
+  }
+
   async function checkNFT(address) {
     try {
       const res = await fetch(`https://open-api.unisat.io/v1/indexer/address/${address}/inscriptions`);
@@ -150,18 +170,31 @@
     }
   }
 
-  // Обробка підключення
-  async function connectAndCheck(provider) {
+  async function connectAndAuthenticate(provider) {
     setStatus(`Connecting to ${provider}...`);
     const manager = new WalletManager();
     try {
       const wallet = await manager.connect(provider);
       const accounts = await wallet.getAccounts();
       const address = accounts[0];
-      setStatus(`Connected: ${address}. Checking NFT ownership...`);
+      setStatus(`Connected: ${address}. Fetching nonce...`);
+
+      const nonce = await fetchNonce(address);
+      setStatus(`Please sign the authentication message...`);
+
+      const signature = await wallet.signMessage(nonce);
+
+      setStatus(`Verifying signature...`);
+
+      const token = await verifySignature(address, signature);
+
+      setStatus('Authentication successful! Checking NFT ownership...');
+
       const ownsNFT = await checkNFT(address);
+
       if (ownsNFT) {
         setStatus('✅ NFT verified! Redirecting...');
+        localStorage.setItem('authToken', token);
         setTimeout(() => window.location.href = "/dashboard.html", 1500);
       } else {
         setStatus('❌ NFT not found in your wallet', true);
@@ -171,24 +204,8 @@
     }
   }
 
-  // Очікуємо, поки браузер завантажить усі розширення, і оновлюємо стани кнопок
-  window.addEventListener('load', () => {
-    const btnUnisat = document.getElementById('btn-unisat');
-    const btnXverse = document.getElementById('btn-xverse');
-
-    if (!window.unisat) {
-      btnUnisat.disabled = true;
-      btnUnisat.textContent = 'Install Unisat Wallet';
-    }
-
-    if (!window.xverse) {
-      btnXverse.disabled = true;
-      btnXverse.textContent = 'Install Xverse Wallet';
-    }
-
-    btnUnisat.onclick = () => connectAndCheck('unisat');
-    btnXverse.onclick = () => connectAndCheck('xverse');
-  });
+  document.getElementById('btn-unisat').onclick = () => connectAndAuthenticate('unisat');
+  document.getElementById('btn-xverse').onclick = () => connectAndAuthenticate('xverse');
 </script>
 
 </body>
