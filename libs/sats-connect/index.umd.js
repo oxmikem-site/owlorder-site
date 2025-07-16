@@ -55,4 +55,15 @@ window.checkNFTAccessAndProceed = async function(address) {
     // TODO: Optionally restrict access or redirect
   }
 }
-window.satsConnect = exports;
+
+// Ось тут виводимо об'єкт глобально (UMD-експорт)
+window.satsConnect = {
+  WalletSelectModal,
+  WalletManager,
+  getAddress,
+  getNetwork,
+  sendBtcTransaction,
+  signMessage,
+  checkNFTAccessAndProceed
+};
+
