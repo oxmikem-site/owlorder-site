@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -57,8 +56,8 @@
 
 <script>
   const walletSources = {
-    xverse: window.XverseProviders?.bitcoin,
     unisat: window.unisat,
+    xverse: window.bitcoin || window.xverseProviders?.bitcoin,
     leather: window.BitcoinProvider,
     magicEden: window.magicEden?.bitcoin,
     okx: window.okxwallet?.bitcoin,
@@ -73,18 +72,41 @@
     }
 
     try {
-      const result = await provider.request({
-        method: 'getAddresses',
-        params: { network: 'Mainnet' },
-      });
-      alert(`Connected: ${JSON.stringify(result)}`);
-      console.log(result);
+      let address = null;
+
+      if (provider.request) {
+        try {
+          // Unisat or wallets that support getAddresses
+          const result = await provider.request({
+            method: 'getAddresses',
+            params: { network: 'Mainnet' },
+          });
+          address = result?.addresses?.[0]?.address || JSON.stringify(result);
+        } catch (e) {
+          // Fallback to requestAccounts
+          if (typeof provider.requestAccounts === 'function') {
+            const result = await provider.requestAccounts();
+            address = result?.[0] || 'Connected';
+          } else {
+            throw e;
+          }
+        }
+      } else if (provider.connect) {
+        const result = await provider.connect();
+        address = result?.accounts?.[0]?.address || 'Connected';
+      }
+
+      if (!address) address = "Connected";
+
+      alert(`Connected: ${address}`);
+      console.log("Connected wallet:", walletId, address);
     } catch (err) {
       console.error(err);
-      alert("Connection failed");
+      alert("Connection failed: " + err.message);
     }
   }
 </script>
 
 </body>
 </html>
+
