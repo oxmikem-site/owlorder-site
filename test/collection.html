@@ -4,149 +4,94 @@
   <meta charset="UTF-8" />
   <title>OWL Wallet Connect</title>
   <style>
-    body {
-      margin: 0;
-      padding: 0;
-      background-color: #000;
-      color: #fff;
-      font-family: 'Inter', sans-serif;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-    }
-    .modal {
-      background: rgba(0, 0, 0, 0.85);
-      border-radius: 12px;
-      padding: 30px;
-      box-shadow: 0 0 20px #222;
-      max-width: 360px;
-      width: 100%;
-      text-align: center;
-    }
-    .modal h2 {
-      margin-bottom: 20px;
-      font-weight: 600;
-    }
-    .wallet-button {
-      display: block;
-      width: 100%;
-      padding: 14px;
-      margin: 10px 0;
-      border: none;
-      border-radius: 8px;
-      background-color: #111;
-      color: #fff;
-      font-size: 16px;
-      cursor: pointer;
-      transition: background 0.25s ease;
-    }
-    .wallet-button:hover:not(:disabled) {
-      background-color: #222;
-    }
-    .wallet-button:disabled {
-      cursor: not-allowed;
-      opacity: 0.5;
-    }
-    #status {
-      margin-top: 20px;
-      min-height: 20px;
-      font-weight: 600;
-    }
+    body { background: #000; color: #fff; font-family: Arial,sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin:0; }
+    button { margin: 10px; padding: 14px 24px; font-size: 18px; border-radius: 8px; background: #111; color: #fff; border:none; cursor:pointer; }
+    button:hover { background: #222; }
+    #status { margin-top: 20px; font-weight: 600; min-height: 20px; }
   </style>
 </head>
 <body>
 
-  <div class="modal" id="connect-modal">
-    <h2>Select Wallet to Connect</h2>
-    <button class="wallet-button" id="btn-unisat">Unisat</button>
-    <button class="wallet-button" id="btn-xverse">Xverse</button>
-    <button class="wallet-button" id="btn-leather" disabled>Leather (coming soon)</button>
-    <button class="wallet-button" id="btn-magiceden" disabled>Magic Eden (coming soon)</button>
-    <button class="wallet-button" id="btn-okx" disabled>OKX (coming soon)</button>
-    <button class="wallet-button" id="btn-oyl" disabled>Oyl (coming soon)</button>
+  <h1>Connect Your Wallet</h1>
 
-    <div id="status"></div>
-  </div>
+  <button id="btn-unisat">Connect Unisat</button>
+  <button id="btn-xverse">Connect Xverse</button>
 
-  <!-- Підключаємо офіційну бібліотеку ord-connect UMD -->
-  <script src="https://cdn.jsdelivr.net/npm/ord-connect@0.2.0/dist/ord-connect.umd.min.js"></script>
+  <div id="status"></div>
 
   <script>
-    (function() {
-      const COLLECTION_TICK = "OWL"; // Задайте тут ваш реальний тикер NFT колекції
-      const statusEl = document.getElementById('status');
+    const COLLECTION_TICK = "OWL"; // твій тикер
 
-      // Ініціалізуємо WalletManager з ord-connect
-      const walletManager = new window.OrdConnect.WalletManager();
+    const statusEl = document.getElementById('status');
 
-      // Оновлення статусу підключення/повідомлень
-      function setStatus(message, isError = false) {
-        statusEl.textContent = message;
-        statusEl.style.color = isError ? 'tomato' : 'lightgreen';
+    function setStatus(msg, error = false) {
+      statusEl.textContent = msg;
+      statusEl.style.color = error ? 'tomato' : 'lightgreen';
+    }
+
+    async function checkNFT(address) {
+      try {
+        const res = await fetch(`https://open-api.unisat.io/v1/indexer/address/${address}/inscriptions`);
+        if (!res.ok) throw new Error(`API error: ${res.status}`);
+        const data = await res.json();
+        return data.data.some(inscription => {
+          const tick = inscription.meta?.tick || inscription.meta?.ticker || inscription.meta?.collectionTick;
+          return tick && tick.toUpperCase() === COLLECTION_TICK;
+        });
+      } catch(e) {
+        console.error(e);
+        return false;
       }
+    }
 
-      // Перевірка наявності NFT за адресою через Unisat API
-      async function hasNFT(address) {
-        try {
-          const response = await fetch(`https://open-api.unisat.io/v1/indexer/address/${address}/inscriptions`);
-          if (!response.ok) throw new Error(`API error: ${response.status}`);
-          const data = await response.json();
-
-          if (!data || !data.data) return false;
-
-          // Перевіряємо, чи є інскрипції з тикером вашої колекції
-          return data.data.some(inscription => {
-            if (!inscription.meta) return false;
-            const tick = inscription.meta.tick || inscription.meta.ticker || inscription.meta.collectionTick;
-            if (!tick) return false;
-            return tick.toUpperCase() === COLLECTION_TICK.toUpperCase();
-          });
-        } catch (err) {
-          console.error("Error fetching NFT data:", err);
-          return false;
+    async function connectUnisat() {
+      if (!window.unisat) {
+        setStatus("Please install Unisat Wallet", true);
+        return;
+      }
+      try {
+        setStatus("Connecting to Unisat...");
+        const accounts = await window.unisat.requestAccounts();
+        if (!accounts.length) throw new Error("No accounts found");
+        const address = accounts[0];
+        setStatus(`Connected: ${address}. Checking NFT...`);
+        const owns = await checkNFT(address);
+        if (owns) {
+          setStatus("✅ NFT verified! Redirecting...");
+          setTimeout(() => window.location.href = "/dashboard.html", 1500);
+        } else {
+          setStatus("❌ NFT not found in your wallet", true);
         }
+      } catch (e) {
+        setStatus(e.message || e, true);
       }
+    }
 
-      // Підключення обраного гаманця
-      async function connectWallet(providerName) {
-        setStatus("Connecting to wallet...");
-        try {
-          const wallet = await walletManager.connect(providerName);
-          if (!wallet) {
-            setStatus("Wallet not connected or user cancelled.", true);
-            return;
-          }
-
-          const accounts = await wallet.getAccounts();
-          if (!accounts || accounts.length === 0) {
-            setStatus("No accounts found in wallet.", true);
-            return;
-          }
-
-          const address = accounts[0];
-          console.log("Connected address:", address);
-          setStatus("Connected! Checking NFT ownership...");
-
-          const ownsNFT = await hasNFT(address);
-          if (ownsNFT) {
-            setStatus("✅ Access granted! Redirecting...");
-            setTimeout(() => {
-              window.location.href = "/dashboard.html"; // Замініть на вашу сторінку
-            }, 1500);
-          } else {
-            setStatus("❌ You don't own any NFTs from our collection.", true);
-          }
-        } catch (error) {
-          console.error(error);
-          setStatus("Error: " + (error.message || error), true);
+    async function connectXverse() {
+      if (!window.xverse) {
+        setStatus("Please install Xverse Wallet", true);
+        return;
+      }
+      try {
+        setStatus("Connecting to Xverse...");
+        const accounts = await window.xverse.requestAccounts();
+        if (!accounts.length) throw new Error("No accounts found");
+        const address = accounts[0];
+        setStatus(`Connected: ${address}. Checking NFT...`);
+        const owns = await checkNFT(address);
+        if (owns) {
+          setStatus("✅ NFT verified! Redirecting...");
+          setTimeout(() => window.location.href = "/dashboard.html", 1500);
+        } else {
+          setStatus("❌ NFT not found in your wallet", true);
         }
+      } catch (e) {
+        setStatus(e.message || e, true);
       }
+    }
 
-      // Прив'язуємо кнопки
-      document.getElementById('btn-unisat').addEventListener('click', () => connectWallet('unisat'));
-      document.getElementById('btn-xverse').addEventListener('click', () => connectWallet('xverse'));
-    })();
+    document.getElementById('btn-unisat').onclick = connectUnisat;
+    document.getElementById('btn-xverse').onclick = connectXverse;
   </script>
 </body>
 </html>
