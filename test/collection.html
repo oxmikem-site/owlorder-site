@@ -4,24 +4,73 @@
   <meta charset="UTF-8" />
   <title>OWL Wallet Connect</title>
   <style>
-    body { background: #000; color: #fff; font-family: Arial,sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin:0; }
-    button { margin: 10px; padding: 14px 24px; font-size: 18px; border-radius: 8px; background: #111; color: #fff; border:none; cursor:pointer; }
-    button:hover { background: #222; }
-    #status { margin-top: 20px; font-weight: 600; min-height: 20px; }
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #000;
+      color: #fff;
+      font-family: 'Inter', sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+    .modal {
+      background: rgba(0, 0, 0, 0.85);
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 0 20px #222;
+      max-width: 360px;
+      width: 100%;
+      text-align: center;
+    }
+    .modal h2 {
+      margin-bottom: 20px;
+      font-weight: 600;
+    }
+    .wallet-button {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      margin: 10px 0;
+      border: none;
+      border-radius: 8px;
+      background-color: #111;
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.25s ease;
+    }
+    .wallet-button:hover:not(:disabled) {
+      background-color: #222;
+    }
+    .wallet-button:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+    #status {
+      margin-top: 20px;
+      min-height: 20px;
+      font-weight: 600;
+    }
   </style>
 </head>
 <body>
 
-  <h1>Connect Your Wallet</h1>
+  <div class="modal" id="connect-modal">
+    <h2>Select Wallet to Connect</h2>
+    <button class="wallet-button" id="btn-unisat">Connect Unisat</button>
+    <button class="wallet-button" id="btn-xverse">Connect Xverse</button>
+    <button class="wallet-button" id="btn-leather" disabled>Leather (coming soon)</button>
+    <button class="wallet-button" id="btn-magiceden" disabled>Magic Eden (coming soon)</button>
+    <button class="wallet-button" id="btn-okx" disabled>OKX (coming soon)</button>
+    <button class="wallet-button" id="btn-oyl" disabled>Oyl (coming soon)</button>
 
-  <button id="btn-unisat">Connect Unisat</button>
-  <button id="btn-xverse">Connect Xverse</button>
-
-  <div id="status"></div>
+    <div id="status"></div>
+  </div>
 
   <script>
-    const COLLECTION_TICK = "OWL"; // твій тикер
-
+    const COLLECTION_TICK = "OWL"; // твій тикер NFT колекції
     const statusEl = document.getElementById('status');
 
     function setStatus(msg, error = false) {
@@ -67,25 +116,48 @@
       }
     }
 
-   async function connectXverse() {
-  if (!window.xverse) {
-    try {
-      setStatus("Waiting for Xverse wallet to initialize...");
-      await waitForXverse();
-    } catch (e) {
-      setStatus("Please install Xverse Wallet", true);
-      return;
+    // Функція очікування появи window.xverse (максимум 5 сек)
+    function waitForXverse(timeout = 5000) {
+      return new Promise((resolve, reject) => {
+        const interval = 100;
+        let waited = 0;
+        const timer = setInterval(() => {
+          if (window.xverse) {
+            clearInterval(timer);
+            resolve(window.xverse);
+          }
+          waited += interval;
+          if (waited >= timeout) {
+            clearInterval(timer);
+            reject(new Error("Xverse Wallet not found"));
+          }
+        }, interval);
+      });
     }
-  }
-  try {
-    setStatus("Connecting to Xverse...");
-    const accounts = await window.xverse.requestAccounts();
-    if (!accounts.length) throw new Error("No accounts found");
-    const address = accounts[0];
-    setStatus(`Connected: ${address}. Checking NFT...`);
-    // Подальша логіка
-  } catch (e) {
-    setStatus(e.message || e, true);
+
+    async function connectXverse() {
+      try {
+        setStatus("Waiting for Xverse wallet to initialize...");
+        await waitForXverse();
+      } catch (e) {
+        setStatus("Please install Xverse Wallet", true);
+        return;
+      }
+      try {
+        setStatus("Connecting to Xverse...");
+        const accounts = await window.xverse.requestAccounts();
+        if (!accounts.length) throw new Error("No accounts found");
+        const address = accounts[0];
+        setStatus(`Connected: ${address}. Checking NFT...`);
+        const owns = await checkNFT(address);
+        if (owns) {
+          setStatus("✅ NFT verified! Redirecting...");
+          setTimeout(() => window.location.href = "/dashboard.html", 1500);
+        } else {
+          setStatus("❌ NFT not found in your wallet", true);
+        }
+      } catch (e) {
+        setStatus(e.message || e, true);
       }
     }
 
