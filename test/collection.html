@@ -70,24 +70,23 @@
   </div>
 
   <!-- Підключаємо офіційну бібліотеку ord-connect UMD -->
-  <script src="https://cdn.jsdelivr.net/npm/ord-connect/dist/ord-connect.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ord-connect@0.2.0/dist/ord-connect.umd.min.js"></script>
 
   <script>
     (function() {
-      const COLLECTION_TICK = "OWL"; // Ваш ticker колекції
+      const COLLECTION_TICK = "OWL"; // Задайте тут ваш реальний тикер NFT колекції
       const statusEl = document.getElementById('status');
-      const connectModal = document.getElementById('connect-modal');
 
       // Ініціалізуємо WalletManager з ord-connect
       const walletManager = new window.OrdConnect.WalletManager();
 
-      // Функція оновлення статусу
+      // Оновлення статусу підключення/повідомлень
       function setStatus(message, isError = false) {
         statusEl.textContent = message;
         statusEl.style.color = isError ? 'tomato' : 'lightgreen';
       }
 
-      // Перевірка наявності NFT у власника через API Unisat
+      // Перевірка наявності NFT за адресою через Unisat API
       async function hasNFT(address) {
         try {
           const response = await fetch(`https://open-api.unisat.io/v1/indexer/address/${address}/inscriptions`);
@@ -96,10 +95,9 @@
 
           if (!data || !data.data) return false;
 
-          // Перевіряємо чи є NFT з ticker COLLECTION_TICK
-          // Тут припускаємо, що в метаданих inscription є поле "tick" (можна адаптувати під ваш API)
+          // Перевіряємо, чи є інскрипції з тикером вашої колекції
           return data.data.some(inscription => {
-            if (!inscription?.meta) return false;
+            if (!inscription.meta) return false;
             const tick = inscription.meta.tick || inscription.meta.ticker || inscription.meta.collectionTick;
             if (!tick) return false;
             return tick.toUpperCase() === COLLECTION_TICK.toUpperCase();
@@ -110,13 +108,11 @@
         }
       }
 
-      // Обробка підключення гаманця
+      // Підключення обраного гаманця
       async function connectWallet(providerName) {
         setStatus("Connecting to wallet...");
         try {
-          // Вибираємо гаманець (xverse, unisat, leather, magiceden, okx, oyl)
           const wallet = await walletManager.connect(providerName);
-
           if (!wallet) {
             setStatus("Wallet not connected or user cancelled.", true);
             return;
@@ -132,11 +128,9 @@
           console.log("Connected address:", address);
           setStatus("Connected! Checking NFT ownership...");
 
-          // Перевіряємо NFT
           const ownsNFT = await hasNFT(address);
           if (ownsNFT) {
             setStatus("✅ Access granted! Redirecting...");
-            // Перенаправляємо на основну сторінку
             setTimeout(() => {
               window.location.href = "/dashboard.html"; // Замініть на вашу сторінку
             }, 1500);
@@ -149,11 +143,9 @@
         }
       }
 
-      // Прив’язуємо кнопки
+      // Прив'язуємо кнопки
       document.getElementById('btn-unisat').addEventListener('click', () => connectWallet('unisat'));
       document.getElementById('btn-xverse').addEventListener('click', () => connectWallet('xverse'));
-      // Для інших поки що кнопки disabled
-
     })();
   </script>
 </body>
