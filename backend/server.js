@@ -14,6 +14,10 @@ function generateNonce() {
   return crypto.randomBytes(16).toString('hex'); // випадковий 32-символьний код
 }
 
+app.get('/', (req, res) => {
+  res.send('Wallet Auth Backend is running');
+});
+
 // 1. Ендпоінт видачі nonce
 app.get('/api/auth/nonce', (req, res) => {
   const address = req.query.address;
