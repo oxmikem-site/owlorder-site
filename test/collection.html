@@ -2,50 +2,58 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Connect Wallet</title>
+  <title>OWL Wallet Connect</title>
+  <script src="https://unpkg.com/@sats-connect/core@latest/dist/index.umd.js"></script>
   <style>
     body {
-      background-color: #0e0e0e;
-      color: #fff;
-      font-family: sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
       margin: 0;
+      padding: 0;
+      background-color: #000;
+      color: #fff;
+      font-family: 'Inter', sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
     }
 
-    #modal {
-      background: rgba(30, 30, 30, 0.95);
+    .modal {
+      background: rgba(0, 0, 0, 0.8);
+      border-radius: 12px;
       padding: 30px;
-      border-radius: 16px;
-      box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      width: 300px;
+      box-shadow: 0 0 20px #222;
+      max-width: 320px;
+      width: 100%;
+    }
+
+    .modal h2 {
+      text-align: center;
+      margin-bottom: 20px;
     }
 
     .wallet-button {
+      display: block;
+      width: 100%;
       padding: 12px;
+      margin: 8px 0;
       border: none;
       border-radius: 8px;
-      background-color: #202020;
+      background-color: #111;
       color: #fff;
-      cursor: pointer;
       font-size: 16px;
-      transition: 0.3s;
+      cursor: pointer;
+      transition: background 0.2s ease;
     }
 
     .wallet-button:hover {
-      background-color: #333;
+      background-color: #222;
     }
   </style>
 </head>
 <body>
 
-<div id="modal">
-  <h3>Select Wallet</h3>
+<div class="modal">
+  <h2>Select Wallet</h2>
   <button class="wallet-button" onclick="connectWallet('unisat')">Unisat</button>
   <button class="wallet-button" onclick="connectWallet('xverse')">Xverse</button>
   <button class="wallet-button" onclick="connectWallet('leather')">Leather</button>
@@ -55,58 +63,42 @@
 </div>
 
 <script>
-  const walletSources = {
-    unisat: window.unisat,
-    xverse: window.bitcoin || window.xverseProviders?.bitcoin,
-    leather: window.BitcoinProvider,
-    magicEden: window.magicEden?.bitcoin,
-    okx: window.okxwallet?.bitcoin,
-    oyl: window.oylwallet?.bitcoin,
-  };
-
-  async function connectWallet(walletId) {
-    const provider = walletSources[walletId];
-    if (!provider) {
-      alert("Wallet not available: " + walletId);
+  async function connectWallet(provider) {
+    if (!window.satsConnect) {
+      alert("SatsConnect is not loaded.");
       return;
     }
 
-    try {
-      let address = null;
+    const { selectWallet, getAccounts } = window.satsConnect;
 
-      if (provider.request) {
-        try {
-          // Unisat or wallets that support getAddresses
-          const result = await provider.request({
-            method: 'getAddresses',
-            params: { network: 'Mainnet' },
-          });
-          address = result?.addresses?.[0]?.address || JSON.stringify(result);
-        } catch (e) {
-          // Fallback to requestAccounts
-          if (typeof provider.requestAccounts === 'function') {
-            const result = await provider.requestAccounts();
-            address = result?.[0] || 'Connected';
-          } else {
-            throw e;
-          }
+    try {
+      const selected = await selectWallet({
+        provider,
+        network: {
+          type: 'Mainnet'
         }
-      } else if (provider.connect) {
-        const result = await provider.connect();
-        address = result?.accounts?.[0]?.address || 'Connected';
+      });
+
+      if (!selected) {
+        alert("Wallet not selected or not available.");
+        return;
       }
 
-      if (!address) address = "Connected";
+      const accounts = await getAccounts();
 
-      alert(`Connected: ${address}`);
-      console.log("Connected wallet:", walletId, address);
-    } catch (err) {
-      console.error(err);
-      alert("Connection failed: " + err.message);
+      if (!accounts || accounts.length === 0) {
+        alert("No accounts found.");
+        return;
+      }
+
+      alert("Connected address: " + accounts[0].address);
+      console.log("Accounts:", accounts);
+    } catch (error) {
+      console.error("Connection error:", error);
+      alert("Error: " + error.message);
     }
   }
 </script>
 
 </body>
 </html>
-
