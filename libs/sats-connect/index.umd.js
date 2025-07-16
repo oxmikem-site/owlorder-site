@@ -55,3 +55,4 @@ window.checkNFTAccessAndProceed = async function(address) {
     // TODO: Optionally restrict access or redirect
   }
 }
+window.satsConnect = exports;
