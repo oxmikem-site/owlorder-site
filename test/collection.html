@@ -171,8 +171,24 @@
     }
   }
 
-  document.getElementById('btn-unisat').onclick = () => connectAndCheck('unisat');
-  document.getElementById('btn-xverse').onclick = () => connectAndCheck('xverse');
+  // Очікуємо, поки браузер завантажить усі розширення, і оновлюємо стани кнопок
+  window.addEventListener('load', () => {
+    const btnUnisat = document.getElementById('btn-unisat');
+    const btnXverse = document.getElementById('btn-xverse');
+
+    if (!window.unisat) {
+      btnUnisat.disabled = true;
+      btnUnisat.textContent = 'Install Unisat Wallet';
+    }
+
+    if (!window.xverse) {
+      btnXverse.disabled = true;
+      btnXverse.textContent = 'Install Xverse Wallet';
+    }
+
+    btnUnisat.onclick = () => connectAndCheck('unisat');
+    btnXverse.onclick = () => connectAndCheck('xverse');
+  });
 </script>
 
 </body>
