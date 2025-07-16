@@ -52,8 +52,10 @@
 <div id="status">Status messages will appear here...</div>
 
 <script>
-  const API_BASE = 'http://localhost:3000/api';  // Зміни на свій бекенд, якщо потрібно
-  const COLLECTION_TICK = "OWL"; // твій тикер NFT колекції
+  // Вкажіть тут URL вашого бекенду, який розгорнули (Render, Heroku і т.д.)
+  const API_BASE = 'https://wallet-auth-backend-mer0.onrender.com/api';
+
+  const COLLECTION_TICK = "OWL"; // Тикер вашої NFT колекції
 
   class BaseWallet {
     constructor(name) {
@@ -65,6 +67,9 @@
     }
     async getAccounts() {
       return this.accounts;
+    }
+    async signMessage(msg) {
+      throw new Error('Method signMessage() must be implemented');
     }
   }
 
@@ -134,6 +139,7 @@
     statusEl.style.color = error ? 'tomato' : 'lightgreen';
   }
 
+  // Запит nonce у бекенду
   async function fetchNonce(address) {
     const res = await fetch(`${API_BASE}/auth/nonce?address=${encodeURIComponent(address)}`);
     if (!res.ok) throw new Error(`Failed to fetch nonce: ${res.status}`);
@@ -141,6 +147,7 @@
     return data.nonce;
   }
 
+  // Перевірка підпису на бекенді, отримання токена
   async function verifySignature(address, signature) {
     const res = await fetch(`${API_BASE}/auth/verify`, {
       method: 'POST',
@@ -155,6 +162,7 @@
     return data.token;
   }
 
+  // Перевірка наявності NFT через Unisat API
   async function checkNFT(address) {
     try {
       const res = await fetch(`https://open-api.unisat.io/v1/indexer/address/${address}/inscriptions`);
@@ -170,6 +178,7 @@
     }
   }
 
+  // Основний процес підключення, аутентифікації і перевірки NFT
   async function connectAndAuthenticate(provider) {
     setStatus(`Connecting to ${provider}...`);
     const manager = new WalletManager();
@@ -204,6 +213,7 @@
     }
   }
 
+  // Прив’язка кнопок
   document.getElementById('btn-unisat').onclick = () => connectAndAuthenticate('unisat');
   document.getElementById('btn-xverse').onclick = () => connectAndAuthenticate('xverse');
 </script>
