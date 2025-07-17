@@ -209,8 +209,8 @@
 
   <div class="footer">TWITTER · DISCORD · DOCS · TERMS</div>
 
-  <script>
-    const walletButtons = [
+ <script>
+  const walletButtons = [
     document.getElementById('wallet-header'),
     document.getElementById('wallet-panel')
   ];
@@ -224,7 +224,7 @@
     }
 
     try {
-      await window.unisat.requestAccounts(); // Explicit connect
+      await window.unisat.requestAccounts();
       const accounts = await window.unisat.getAccounts();
       const address = accounts[0];
       localStorage.setItem('taproot_wallet', address);
@@ -293,54 +293,46 @@
   if (saved) {
     handleWalletConnected(saved);
   }
-      const existingInfo = userPanel.querySelector(".wallet-info");
-      if (existingInfo) existingInfo.remove();
 
-      if (result.found) {
-        const info = document.createElement("div");
-        info.className = "wallet-info";
-        info.style.cssText = "margin-top: 16px; font-size: 15px; line-height: 1.6;";
-        info.innerHTML = `
-          <strong>Connected:</strong> ${address}<br/>
-          <strong>Total Points:</strong> ${result.points}
-        `;
-        userPanel.appendChild(info);
-      } else {
-        alert("You don’t own any OWLs yet!");
-        const getOwlBtn = document.createElement("a");
-        getOwlBtn.href = "https://magiceden.io/ordinals/marketplace/owl";
-        getOwlBtn.textContent = "Get your OWL on Magic Eden";
-        getOwlBtn.style.cssText = "margin-top: 12px; display: inline-block; padding: 10px 14px; background: var(--accent); color: black; border-radius: 10px; text-decoration: none;";
-        userPanel.appendChild(getOwlBtn);
-      }
-
-    walletButtons.forEach(btn => {
-      btn.addEventListener('click', connectUniSatWallet);
-    });
-
-    const saved = localStorage.getItem('taproot_wallet');
-    if (saved) {
-      handleWalletConnected(saved);
+  async function loadTop3() {
+    try {
+      const res = await fetch(sheetURL);
+      const text = await res.text();
+      const rows = text.trim().split('\n').map(r => r.split(','));
+      const top3 = rows.slice(1, 4).map(r => {
+        if (r[1] && r[3]) {
+          return `<li>${r[1].slice(0, 6)}...${r[1].slice(-4)} - ${r[3]}</li>`;
+        }
+        return '<li>⚠️ Invalid data</li>';
+      }).join('');
+      document.getElementById('leaderboard-top3').innerHTML = top3;
+    } catch (e) {
+      document.getElementById('leaderboard-top3').innerHTML = '<li>⚠️ Failed to load leaderboard</li>';
     }
+  }
 
-    async function loadTop3() {
-      try {
-        const res = await fetch(sheetURL);
-        const text = await res.text();
-        const rows = text.trim().split('\n').map(r => r.split(','));
-        const top3 = rows.slice(1, 4).map(r => {
-          if (r[1] && r[3]) {
-            return `<li>${r[1].slice(0, 6)}...${r[1].slice(-4)} - ${r[3]}</li>`;
-          }
-          return '<li>⚠️ Invalid data</li>';
-        }).join('');
-        document.getElementById('leaderboard-top3').innerHTML = top3;
-      } catch (e) {
-        document.getElementById('leaderboard-top3').innerHTML = '<li>⚠️ Failed to load leaderboard</li>';
-      }
-    }
+  loadTop3();
 
-    loadTop3();
-  </script>
-</body>
-</html>
+  // NFT ROTATION LOGIC
+  const nftImages = [
+    { src: "../images/117.webp", title: "1/1 ANIMATED OWL #117" },
+    { src: "../images/23.webp", title: "RARE OWL #23" },
+    { src: "../images/42.webp", title: "MYTHIC OWL #42" }
+  ];
+
+  let currentIndex = 0;
+  function rotateNFT() {
+    const img = document.querySelector(".featured-nft img");
+    const title = document.querySelector(".nft-title");
+    const traits = document.querySelector(".nft-traits");
+
+    const nft = nftImages[currentIndex];
+    img.src = nft.src;
+    title.textContent = nft.title;
+    traits.textContent = `Traits: ${nft.traits}`;
+
+    currentIndex = (currentIndex + 1) % nftImages.length;
+  }
+
+  setInterval(rotateNFT, 5000); // Rotate every 5 seconds
+</script>
