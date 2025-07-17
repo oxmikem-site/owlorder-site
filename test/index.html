@@ -193,7 +193,7 @@
       const container = document.getElementById("me-listed-grid");
       container.innerHTML = "Loading...";
       try {
-        const res = await fetch("/api/listed");
+        const res = await fetch("https://owl-backend-addw.onrender.com/api/listed");
         const data = await res.json();
 
         if (!Array.isArray(data) || data.length === 0) {
