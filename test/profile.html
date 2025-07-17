@@ -66,6 +66,53 @@
         log('❌ Signing failed.', 'red');
       }
     };
+    <!-- Продовження сторінки -->
+<button id="check-nft">🧿 Check NFT Ownership</button>
+
+<script>
+  const INSCRIPTION_ID_TO_CHECK = "INSERT_YOUR_INSCRIPTION_ID_HERE"; // заміни на свій
+
+  document.getElementById('check-nft').onclick = async () => {
+    try {
+      if (!window.xverse?.bitcoin) {
+        log('❌ Xverse не підключено.', 'red');
+        return;
+      }
+
+      // 1. Отримуємо адресу
+      const addrRes = await window.xverse.bitcoin.request('getAddresses');
+      const address = addrRes.addresses.find(a => a.type === 'p2tr')?.address;
+      if (!address) {
+        log('⚠️ Не вдалося отримати Taproot-адресу.', 'orange');
+        return;
+      }
+
+      log(`📮 Перевіряємо інскрипції адреси: ${address}`);
+
+      // 2. Запит до UniSat API
+      const unisatRes = await fetch(`https://open-api.unisat.io/v1/indexer/address/${address}/inscriptions?start=0&limit=100`);
+      const json = await unisatRes.json();
+
+      if (!json?.data?.list?.length) {
+        log('🙅‍♂️ Інскрипцій не знайдено.', 'orange');
+        return;
+      }
+
+      // 3. Пошук інскрипції
+      const owned = json.data.list.some(item => item.inscriptionId === INSCRIPTION_ID_TO_CHECK);
+      if (owned) {
+        log(`✅ Власник NFT з ID: ${INSCRIPTION_ID_TO_CHECK}`, 'lime');
+      } else {
+        log(`❌ Ця адреса не володіє вказаною NFT.`, 'red');
+      }
+
+    } catch (err) {
+      console.error(err);
+      log('🚨 Помилка при перевірці NFT.', 'red');
+    }
+  };
+</script>
+
   </script>
 </body>
 </html>
