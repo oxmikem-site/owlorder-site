@@ -134,14 +134,6 @@
       white-space: normal;
     }
 
-    .featured-nft img {
-      width: 100%;
-      height: auto;
-      border-radius: 12px;
-      max-height: 400px;
-      object-fit: contain;
-    }
-
     .footer {
       margin-top: 40px;
       text-align: center;
@@ -168,15 +160,9 @@
       <button class="connect-wallet" id="wallet-panel" type="button">CONNECT WALLET</button>
     </div>
 
-    <div class="panel featured-nft">
-      <h2>FEATURED NFT</h2>
-      <img src="../images/117.webp" alt="nft" />
-      <div class="nft-title">1/1 ANIMATED OWL #117</div>
-      <div class="nft-traits">Traits: Gold Beak, Robe...</div>
-      <div class="nft-buttons">
-        <button>VIEW DETAILS</button>
-        <button>MINT NOW</button>
-      </div>
+    <div class="panel" id="listed-nfts">
+      <h2>LISTED ON MAGIC EDEN</h2>
+      <div id="me-listed-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px;"></div>
     </div>
 
     <div class="panel">
@@ -209,130 +195,146 @@
 
   <div class="footer">TWITTER · DISCORD · DOCS · TERMS</div>
 
- <script>
-  const walletButtons = [
-    document.getElementById('wallet-header'),
-    document.getElementById('wallet-panel')
-  ];
+  <script>
+    const walletButtons = [
+      document.getElementById('wallet-header'),
+      document.getElementById('wallet-panel')
+    ];
 
-  const sheetURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?gid=1127131432&single=true&output=csv';
+    const sheetURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?gid=1127131432&single=true&output=csv';
 
-  async function connectUniSatWallet() {
-    if (!window.unisat) {
-      alert("UniSat Wallet not found. Please install the UniSat extension.");
-      return;
+    async function connectUniSatWallet() {
+      if (!window.unisat) {
+        alert("UniSat Wallet not found. Please install the UniSat extension.");
+        return;
+      }
+
+      try {
+        await window.unisat.requestAccounts();
+        const accounts = await window.unisat.getAccounts();
+        const address = accounts[0];
+        localStorage.setItem('taproot_wallet', address);
+        handleWalletConnected(address);
+      } catch (err) {
+        console.error("Connection error:", err);
+        alert("Failed to connect wallet.");
+      }
     }
 
-    try {
-      await window.unisat.requestAccounts();
-      const accounts = await window.unisat.getAccounts();
-      const address = accounts[0];
-      localStorage.setItem('taproot_wallet', address);
-      handleWalletConnected(address);
-    } catch (err) {
-      console.error("Connection error:", err);
-      alert("Failed to connect wallet.");
-    }
-  }
-
-  async function checkHolderInSheet(address) {
-    const res = await fetch(sheetURL);
-    const text = await res.text();
-    const rows = text.trim().split('\n').map(r => r.split(','));
-    const headers = rows[0];
-    const addrIndex = headers.indexOf("Holder Address");
-    const pointsIndex = headers.indexOf("Total Points");
-
-    const row = rows.find(r => r[addrIndex] === address);
-    if (row) {
-      return {
-        found: true,
-        address,
-        points: row[pointsIndex]
-      };
-    }
-    return { found: false };
-  }
-
-  async function handleWalletConnected(address) {
-    const result = await checkHolderInSheet(address);
-    const userPanel = document.querySelector(".user-panel");
-
-    walletButtons.forEach(btn => {
-      btn.textContent = `${address.slice(0, 6)}...${address.slice(-4)}`;
-      btn.disabled = true;
-      btn.style.opacity = '0.85';
-    });
-
-    const existingInfo = userPanel.querySelector(".wallet-info");
-    if (existingInfo) existingInfo.remove();
-
-    if (result.found) {
-      const info = document.createElement("div");
-      info.className = "wallet-info";
-      info.style.cssText = "margin-top: 16px; font-size: 15px; line-height: 1.6;";
-      info.innerHTML = `
-        <strong>Connected:</strong> ${address}<br/>
-        <strong>Total Points:</strong> ${result.points}
-      `;
-      userPanel.appendChild(info);
-    } else {
-      const getOwlBtn = document.createElement("a");
-      getOwlBtn.href = "https://magiceden.io/ordinals/marketplace/owl";
-      getOwlBtn.textContent = "Get your OWL on Magic Eden";
-      getOwlBtn.style.cssText = "margin-top: 12px; display: inline-block; padding: 10px 14px; background: var(--accent); color: black; border-radius: 10px; text-decoration: none;";
-      userPanel.appendChild(getOwlBtn);
-    }
-  }
-
-  walletButtons.forEach(btn => {
-    btn.addEventListener('click', connectUniSatWallet);
-  });
-
-  const saved = localStorage.getItem('taproot_wallet');
-  if (saved) {
-    handleWalletConnected(saved);
-  }
-
-  async function loadTop3() {
-    try {
+    async function checkHolderInSheet(address) {
       const res = await fetch(sheetURL);
       const text = await res.text();
       const rows = text.trim().split('\n').map(r => r.split(','));
-      const top3 = rows.slice(1, 4).map(r => {
-        if (r[1] && r[3]) {
-          return `<li>${r[1].slice(0, 6)}...${r[1].slice(-4)} - ${r[3]}</li>`;
-        }
-        return '<li>⚠️ Invalid data</li>';
-      }).join('');
-      document.getElementById('leaderboard-top3').innerHTML = top3;
-    } catch (e) {
-      document.getElementById('leaderboard-top3').innerHTML = '<li>⚠️ Failed to load leaderboard</li>';
+      const headers = rows[0];
+      const addrIndex = headers.indexOf("Holder Address");
+      const pointsIndex = headers.indexOf("Total Points");
+
+      const row = rows.find(r => r[addrIndex] === address);
+      if (row) {
+        return {
+          found: true,
+          address,
+          points: row[pointsIndex]
+        };
+      }
+      return { found: false };
     }
-  }
 
-  loadTop3();
+    async function handleWalletConnected(address) {
+      const result = await checkHolderInSheet(address);
+      const userPanel = document.querySelector(".user-panel");
 
-  // NFT ROTATION LOGIC
-  const nftImages = [
-    { src: "../images/117.webp", title: "1/1 ANIMATED OWL #117" },
-    { src: "../images/23.webp", title: "RARE OWL #23" },
-    { src: "../images/42.webp", title: "MYTHIC OWL #42" }
-  ];
+      walletButtons.forEach(btn => {
+        btn.textContent = `${address.slice(0, 6)}...${address.slice(-4)}`;
+        btn.disabled = true;
+        btn.style.opacity = '0.85';
+      });
 
-  let currentIndex = 0;
-  function rotateNFT() {
-    const img = document.querySelector(".featured-nft img");
-    const title = document.querySelector(".nft-title");
-    const traits = document.querySelector(".nft-traits");
+      const existingInfo = userPanel.querySelector(".wallet-info");
+      if (existingInfo) existingInfo.remove();
 
-    const nft = nftImages[currentIndex];
-    img.src = nft.src;
-    title.textContent = nft.title;
-    traits.textContent = `Traits: ${nft.traits}`;
+      if (result.found) {
+        const info = document.createElement("div");
+        info.className = "wallet-info";
+        info.style.cssText = "margin-top: 16px; font-size: 15px; line-height: 1.6;";
+        info.innerHTML = `
+          <strong>Connected:</strong> ${address}<br/>
+          <strong>Total Points:</strong> ${result.points}
+        `;
+        userPanel.appendChild(info);
+      } else {
+        const getOwlBtn = document.createElement("a");
+        getOwlBtn.href = "https://magiceden.io/ordinals/marketplace/owl";
+        getOwlBtn.textContent = "Get your OWL on Magic Eden";
+        getOwlBtn.style.cssText = "margin-top: 12px; display: inline-block; padding: 10px 14px; background: var(--accent); color: black; border-radius: 10px; text-decoration: none;";
+        userPanel.appendChild(getOwlBtn);
+      }
+    }
 
-    currentIndex = (currentIndex + 1) % nftImages.length;
-  }
+    walletButtons.forEach(btn => {
+      btn.addEventListener('click', connectUniSatWallet);
+    });
 
-  setInterval(rotateNFT, 5000); // Rotate every 5 seconds
-</script>
+    const saved = localStorage.getItem('taproot_wallet');
+    if (saved) {
+      handleWalletConnected(saved);
+    }
+
+    async function loadTop3() {
+      try {
+        const res = await fetch(sheetURL);
+        const text = await res.text();
+        const rows = text.trim().split('\n').map(r => r.split(','));
+        const top3 = rows.slice(1, 4).map(r => {
+          if (r[1] && r[3]) {
+            return `<li>${r[1].slice(0, 6)}...${r[1].slice(-4)} - ${r[3]}</li>`;
+          }
+          return '<li>⚠️ Invalid data</li>';
+        }).join('');
+        document.getElementById('leaderboard-top3').innerHTML = top3;
+      } catch (e) {
+        document.getElementById('leaderboard-top3').innerHTML = '<li>⚠️ Failed to load leaderboard</li>';
+      }
+    }
+
+    loadTop3();
+
+    async function loadListedNFTs() {
+      const container = document.getElementById("me-listed-grid");
+      container.innerHTML = "Loading...";
+
+      try {
+        const res = await fetch("https://api-mainnet.magiceden.io/ordinals/v1/collections/owl/listings");
+        const data = await res.json();
+
+        if (!Array.isArray(data) || data.length === 0) {
+          container.innerHTML = "<p>No NFTs currently listed.</p>";
+          return;
+        }
+
+        const itemsHTML = data.slice(0, 6).map(item => {
+          const id = item.inscriptionNumber;
+          const price = (item.price / 100000000).toFixed(4) + " BTC";
+          const img = item?.content?.links?.image || "../logo2.png";
+          const link = `https://magiceden.io/ordinals/item-details/${item.inscriptionId}`;
+
+          return `
+            <div style="background: var(--bg-inner); padding: 10px; border-radius: 12px; text-align: center;">
+              <img src="${img}" alt="Owl #${id}" style="width: 100%; border-radius: 10px; object-fit: cover;" />
+              <div style="margin-top: 8px; font-size: 14px;">OWL #${id}</div>
+              <div style="color: var(--accent-color); font-weight: bold;">${price}</div>
+              <a href="${link}" target="_blank" style="margin-top: 6px; display: inline-block; padding: 6px 10px; background: var(--accent); color: black; border-radius: 8px; text-decoration: none;">BUY</a>
+            </div>
+          `;
+        }).join('');
+
+        container.innerHTML = itemsHTML;
+      } catch (e) {
+        container.innerHTML = "<p style='color: red;'>Failed to load listings.</p>";
+      }
+    }
+
+    loadListedNFTs();
+  </script>
+</body>
+</html>
