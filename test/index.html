@@ -211,57 +211,88 @@
 
   <script>
     const walletButtons = [
-      document.getElementById('wallet-header'),
-      document.getElementById('wallet-panel')
-    ];
+    document.getElementById('wallet-header'),
+    document.getElementById('wallet-panel')
+  ];
 
-    const sheetURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?gid=1127131432&single=true&output=csv';
+  const sheetURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?gid=1127131432&single=true&output=csv';
 
-    async function connectUniSatWallet() {
-      if (!window.unisat) {
-        alert("Please install UniSat Wallet");
-        return;
-      }
-
-      try {
-        const accounts = await window.unisat.requestAccounts();
-        const address = accounts[0];
-        localStorage.setItem('taproot_wallet', address);
-        handleWalletConnected(address);
-      } catch (err) {
-        console.error("Wallet connection failed", err);
-      }
+  async function connectUniSatWallet() {
+    if (!window.unisat) {
+      alert("UniSat Wallet not found. Please install the UniSat extension.");
+      return;
     }
 
-    async function checkHolderInSheet(address) {
-      const res = await fetch(sheetURL);
-      const text = await res.text();
-      const rows = text.trim().split('\n').map(r => r.split(','));
-      const headers = rows[0];
-      const addrIndex = headers.indexOf("Holder Address");
-      const pointsIndex = headers.indexOf("Total Points");
-
-      const row = rows.find(r => r[addrIndex] === address);
-      if (row) {
-        return {
-          found: true,
-          address,
-          points: row[pointsIndex]
-        };
-      }
-      return { found: false };
+    try {
+      await window.unisat.requestAccounts(); // Explicit connect
+      const accounts = await window.unisat.getAccounts();
+      const address = accounts[0];
+      localStorage.setItem('taproot_wallet', address);
+      handleWalletConnected(address);
+    } catch (err) {
+      console.error("Connection error:", err);
+      alert("Failed to connect wallet.");
     }
+  }
 
-    async function handleWalletConnected(address) {
-      const result = await checkHolderInSheet(address);
-      const userPanel = document.querySelector(".user-panel");
+  async function checkHolderInSheet(address) {
+    const res = await fetch(sheetURL);
+    const text = await res.text();
+    const rows = text.trim().split('\n').map(r => r.split(','));
+    const headers = rows[0];
+    const addrIndex = headers.indexOf("Holder Address");
+    const pointsIndex = headers.indexOf("Total Points");
 
-      walletButtons.forEach(btn => {
-        btn.textContent = `${address.slice(0, 6)}...${address.slice(-4)}`;
-        btn.disabled = true;
-        btn.style.opacity = '0.85';
-      });
+    const row = rows.find(r => r[addrIndex] === address);
+    if (row) {
+      return {
+        found: true,
+        address,
+        points: row[pointsIndex]
+      };
+    }
+    return { found: false };
+  }
 
+  async function handleWalletConnected(address) {
+    const result = await checkHolderInSheet(address);
+    const userPanel = document.querySelector(".user-panel");
+
+    walletButtons.forEach(btn => {
+      btn.textContent = `${address.slice(0, 6)}...${address.slice(-4)}`;
+      btn.disabled = true;
+      btn.style.opacity = '0.85';
+    });
+
+    const existingInfo = userPanel.querySelector(".wallet-info");
+    if (existingInfo) existingInfo.remove();
+
+    if (result.found) {
+      const info = document.createElement("div");
+      info.className = "wallet-info";
+      info.style.cssText = "margin-top: 16px; font-size: 15px; line-height: 1.6;";
+      info.innerHTML = `
+        <strong>Connected:</strong> ${address}<br/>
+        <strong>Total Points:</strong> ${result.points}
+      `;
+      userPanel.appendChild(info);
+    } else {
+      const getOwlBtn = document.createElement("a");
+      getOwlBtn.href = "https://magiceden.io/ordinals/marketplace/owl";
+      getOwlBtn.textContent = "Get your OWL on Magic Eden";
+      getOwlBtn.style.cssText = "margin-top: 12px; display: inline-block; padding: 10px 14px; background: var(--accent); color: black; border-radius: 10px; text-decoration: none;";
+      userPanel.appendChild(getOwlBtn);
+    }
+  }
+
+  walletButtons.forEach(btn => {
+    btn.addEventListener('click', connectUniSatWallet);
+  });
+
+  const saved = localStorage.getItem('taproot_wallet');
+  if (saved) {
+    handleWalletConnected(saved);
+  }
       const existingInfo = userPanel.querySelector(".wallet-info");
       if (existingInfo) existingInfo.remove();
 
