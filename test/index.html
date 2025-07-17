@@ -62,10 +62,13 @@
   <header>
     <div class="logo"><img src="../logo1.png" alt="logo" /></div>
     <div class="nav-buttons">
-      <a href="#" class="button">LEADERBOARD</a>
-      <a href="#" class="button">COLLECTION</a>
+      <a href="/leaderboard" class="button">LEADERBOARD</a>
+      <a href="/collection" class="button">COLLECTION</a>
       <button class="connect-wallet" id="wallet-header">CONNECT WALLET</button>
-      <button class="connect-wallet" onclick="window.location.href='/auth/twitter'">CONNECT TWITTER</button>
+      <button class="connect-wallet" id="twitter-header" style="display:none" onclick="window.location.href='/auth/twitter'">CONNECT TWITTER</button>
+      <a id="buy-me-header" href="https://magiceden.io/ordinals/marketplace/owl" target="_blank" style="display:none">
+        <button class="connect-wallet">Get your OWL on ME</button>
+      </a>
     </div>
   </header>
 
@@ -107,10 +110,12 @@
 
   <script>
     const SNAPSHOT_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?output=csv&gid=0";
+    const HOLDERS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?output=csv&gid=1127131432";
     const imageBaseURL = "https://raw.githubusercontent.com/oxmikem-site/owlorder-site/main/images/";
 
     let currentIndex = 0;
     let listed = [];
+    let userWallet = null;
 
     async function fetchListedNFTsGrid() {
       const res = await fetch(SNAPSHOT_CSV_URL);
@@ -123,16 +128,12 @@
     function showNextNFT() {
       const container = document.getElementById("me-listed-grid");
       container.innerHTML = "";
-
       if (!listed.length) return;
-
       const cols = listed[currentIndex % listed.length];
-      const nftNumber = cols[9]?.trim(); // column J
+      const nftNumber = cols[9]?.trim();
       const inscriptionId = cols[0]?.trim();
-
       const imageURL = `${imageBaseURL}${nftNumber}.webp`;
       const meURL = `https://magiceden.io/ordinals/item-details/${inscriptionId}`;
-
       const nftDiv = document.createElement("div");
       nftDiv.style.textAlign = "center";
       nftDiv.innerHTML = `
@@ -144,12 +145,32 @@
           </button>
         </a>
       `;
-
       container.appendChild(nftDiv);
-
       currentIndex++;
       setTimeout(showNextNFT, 3000);
     }
+
+    async function checkWalletInHolders(wallet) {
+      const res = await fetch(HOLDERS_CSV_URL);
+      const csv = await res.text();
+      const rows = csv.split("\n").slice(1);
+      return rows.some(row => row.split(",")[0].trim().toLowerCase() === wallet.toLowerCase());
+    }
+
+    document.getElementById("wallet-header").addEventListener("click", async () => {
+      const wallet = prompt("Enter your wallet address:");
+      if (!wallet) return;
+      userWallet = wallet;
+      const isHolder = await checkWalletInHolders(wallet);
+      document.getElementById("wallet-panel").innerText = wallet.slice(0, 6) + "..." + wallet.slice(-4);
+      if (isHolder) {
+        document.getElementById("twitter-header").style.display = "inline-block";
+        document.getElementById("buy-me-header").style.display = "none";
+      } else {
+        document.getElementById("twitter-header").style.display = "none";
+        document.getElementById("buy-me-header").style.display = "inline-block";
+      }
+    });
 
     window.addEventListener("DOMContentLoaded", fetchListedNFTsGrid);
   </script>
