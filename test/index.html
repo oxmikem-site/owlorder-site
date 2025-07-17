@@ -189,41 +189,42 @@
 
     loadTop3();
 
-    async function loadListedNFTs() {
+    const SNAPSHOT_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?output=csv&gid=0";
+    const imageBaseURL = "https://raw.githubusercontent.com/oxmikem-site/owlorder-site/main/images/";
+
+    async function fetchListedNFTs() {
+      const res = await fetch(SNAPSHOT_CSV_URL);
+      const csv = await res.text();
+
+      const rows = csv.split("\n").slice(1);
+      const listed = rows
+        .map(r => r.split(","))
+        .filter(cols => cols[3]?.toLowerCase().trim() === "yes");
+
       const container = document.getElementById("me-listed-grid");
-      container.innerHTML = "Loading...";
-      try {
-        const res = await fetch("/api/listed");
-        const data = await res.json();
+      container.innerHTML = "";
 
-        if (!Array.isArray(data) || data.length === 0) {
-          container.innerHTML = "<p>No NFTs currently listed.</p>";
-          return;
-        }
+      listed.forEach(cols => {
+        const nftId = cols[0].trim();
+        const imageURL = `${imageBaseURL}${nftId}.webp`;
+        const meURL = `https://magiceden.io/ordinals/item-details/${nftId}`;
 
-        const html = data.slice(0, 6).map(item => {
-          const img = item.image || "../logo2.png";
-          const name = item.name || "OWL";
-          const price = (item.price / 1e8).toFixed(4);
-          const link = item.url || "https://magiceden.io/ordinals";
-
-          return `
-            <div style="background: var(--bg-inner); padding: 10px; border-radius: 12px; text-align: center;">
-              <img src="${img}" alt="${name}" style="width: 100%; border-radius: 10px;" />
-              <div style="margin-top: 8px;">${name}</div>
-              <div style="color: var(--accent-color); font-weight: bold;">${price} BTC</div>
-              <a href="${link}" target="_blank" style="margin-top: 6px; display: inline-block; padding: 6px 10px; background: var(--accent); color: black; border-radius: 8px; text-decoration: none;">BUY</a>
-            </div>
-          `;
-        }).join('');
-
-        container.innerHTML = html;
-      } catch (err) {
-        container.innerHTML = "<p style='color: red;'>Failed to load listings.</p>";
-      }
+        const nftDiv = document.createElement("div");
+        nftDiv.style.textAlign = "center";
+        nftDiv.innerHTML = `
+          <img src="${imageURL}" alt="Owl ${nftId}" style="width:100%; border-radius:12px;" />
+          <p style="margin: 6px 0; font-weight: bold;">Owl #${nftId}</p>
+          <a href="${meURL}" target="_blank">
+            <button style="padding:6px 10px; background: #8a7f5a; border:none; color:#fff; border-radius:8px; cursor:pointer;">
+              Buy on ME
+            </button>
+          </a>
+        `;
+        container.appendChild(nftDiv);
+      });
     }
 
-    loadListedNFTs();
+    window.addEventListener("DOMContentLoaded", fetchListedNFTs);
   </script>
 </body>
 </html>
