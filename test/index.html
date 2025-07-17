@@ -215,54 +215,87 @@
       document.getElementById('wallet-panel')
     ];
 
-    async function connectWallet() {
-      if (!window.SatsConnect) {
-        alert("Please open this site in a compatible wallet (Xverse, Unisat).");
+    const sheetURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?gid=1127131432&single=true&output=csv';
+
+    async function connectUniSatWallet() {
+      if (!window.unisat) {
+        alert("Please install UniSat Wallet");
         return;
       }
 
-      window.SatsConnect.request('getAddresses', {
-        payload: {
-          purposes: ['ordinals', 'payment'],
-          network: { type: 'Mainnet' },
-          appInfo: {
-            name: 'OWL',
-            icon: 'https://owlbtc.art/logo.png'
-          }
-        },
-        onFinish: (res) => {
-          const address = res.addresses.find(a => a.purpose === 'ordinals')?.address;
-          if (address) {
-            localStorage.setItem('taproot_wallet', address);
-            walletButtons.forEach(btn => {
-              btn.textContent = `${address.slice(0, 6)}...${address.slice(-4)}`;
-              btn.disabled = true;
-              btn.style.opacity = '0.85';
-            });
-          }
-        },
-        onCancel: () => {
-          console.warn('Wallet connection cancelled');
-        }
+      try {
+        const accounts = await window.unisat.requestAccounts();
+        const address = accounts[0];
+        localStorage.setItem('taproot_wallet', address);
+        handleWalletConnected(address);
+      } catch (err) {
+        console.error("Wallet connection failed", err);
+      }
+    }
+
+    async function checkHolderInSheet(address) {
+      const res = await fetch(sheetURL);
+      const text = await res.text();
+      const rows = text.trim().split('\n').map(r => r.split(','));
+      const headers = rows[0];
+      const addrIndex = headers.indexOf("Holder Address");
+      const pointsIndex = headers.indexOf("Total Points");
+
+      const row = rows.find(r => r[addrIndex] === address);
+      if (row) {
+        return {
+          found: true,
+          address,
+          points: row[pointsIndex]
+        };
+      }
+      return { found: false };
+    }
+
+    async function handleWalletConnected(address) {
+      const result = await checkHolderInSheet(address);
+      const userPanel = document.querySelector(".user-panel");
+
+      walletButtons.forEach(btn => {
+        btn.textContent = `${address.slice(0, 6)}...${address.slice(-4)}`;
+        btn.disabled = true;
+        btn.style.opacity = '0.85';
       });
+
+      const existingInfo = userPanel.querySelector(".wallet-info");
+      if (existingInfo) existingInfo.remove();
+
+      if (result.found) {
+        const info = document.createElement("div");
+        info.className = "wallet-info";
+        info.style.cssText = "margin-top: 16px; font-size: 15px; line-height: 1.6;";
+        info.innerHTML = `
+          <strong>Connected:</strong> ${address}<br/>
+          <strong>Total Points:</strong> ${result.points}
+        `;
+        userPanel.appendChild(info);
+      } else {
+        alert("You don’t own any OWLs yet!");
+        const getOwlBtn = document.createElement("a");
+        getOwlBtn.href = "https://magiceden.io/ordinals/marketplace/owl";
+        getOwlBtn.textContent = "Get your OWL on Magic Eden";
+        getOwlBtn.style.cssText = "margin-top: 12px; display: inline-block; padding: 10px 14px; background: var(--accent); color: black; border-radius: 10px; text-decoration: none;";
+        userPanel.appendChild(getOwlBtn);
+      }
     }
 
     walletButtons.forEach(btn => {
-      btn.addEventListener('click', connectWallet);
+      btn.addEventListener('click', connectUniSatWallet);
     });
 
     const saved = localStorage.getItem('taproot_wallet');
     if (saved) {
-      walletButtons.forEach(b => {
-        b.textContent = `${saved.slice(0, 6)}...${saved.slice(-4)}`;
-        b.disabled = true;
-        b.style.opacity = '0.85';
-      });
+      handleWalletConnected(saved);
     }
 
     async function loadTop3() {
       try {
-        const res = await fetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?gid=1127131432&single=true&output=csv');
+        const res = await fetch(sheetURL);
         const text = await res.text();
         const rows = text.trim().split('\n').map(r => r.split(','));
         const top3 = rows.slice(1, 4).map(r => {
