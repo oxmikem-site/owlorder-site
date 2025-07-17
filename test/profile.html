@@ -2,51 +2,70 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Check Xverse Wallet</title>
+  <title>Connect Xverse Wallet</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    body {
-      background-color: #000;
-      color: #fff;
-      font-family: Arial, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      margin: 0;
-    }
-    button {
-      padding: 10px 20px;
-      font-size: 18px;
-      cursor: pointer;
-      border-radius: 6px;
-      border: none;
-      background-color: #222;
-      color: #fff;
-      transition: background-color 0.3s ease;
-    }
-    button:hover {
-      background-color: #555;
-    }
-    #result {
-      margin-top: 20px;
-      font-size: 20px;
-      font-weight: bold;
-    }
+    body { background-color: #000; color: #fff; font-family: sans-serif; padding: 2rem; }
+    button { padding: 12px 24px; font-size: 16px; margin: 10px 0; cursor: pointer; }
+    #result { margin-top: 20px; }
   </style>
 </head>
 <body>
+  <h1>🦉 OWL + Xverse Wallet</h1>
 
-  <button id="btn-check">Check Xverse</button>
+  <button id="check">🔍 Check Xverse</button>
+  <button id="connect">🔗 Connect Wallet</button>
+  <button id="sign">✍️ Sign Message</button>
+
   <div id="result"></div>
 
   <script>
-    document.getElementById('btn-check').addEventListener('click', () => {
-      const res = window.xverse ? 'Xverse detected!' : 'Xverse NOT found!';
-      document.getElementById('result').textContent = res;
-      console.log('window.xverse:', window.xverse);
-    });
-  </script>
+    const result = document.getElementById('result');
 
+    function log(msg, color = 'white') {
+      result.innerHTML += `<div style="color:${color}; margin:4px 0;">${msg}</div>`;
+    }
+
+    // ✅ Перевірка наявності Xverse
+    document.getElementById('check').onclick = () => {
+      if (window.xverse?.bitcoin) {
+        log('✅ Xverse wallet is available.');
+        console.log('window.xverse:', window.xverse);
+      } else {
+        log('❌ Xverse not found. Please install it.', 'red');
+      }
+    };
+
+    // ✅ Підключення гаманця
+    document.getElementById('connect').onclick = async () => {
+      try {
+        const response = await window.xverse.bitcoin.request('getAddresses');
+        const address = response.addresses.find(addr => addr.type === 'p2tr')?.address;
+        if (address) {
+          log(`🎯 Connected Taproot address: <b>${address}</b>`, 'lime');
+        } else {
+          log('⚠️ No Taproot address found.', 'orange');
+        }
+      } catch (err) {
+        console.error(err);
+        log('❌ Failed to connect wallet.', 'red');
+      }
+    };
+
+    // ✅ Підписання повідомлення
+    document.getElementById('sign').onclick = async () => {
+      try {
+        const msg = "I am verifying my identity with OWL.";
+        const res = await window.xverse.bitcoin.request('signMessage', {
+          address: '', // залиш порожнім — він сам вибере
+          message: msg,
+        });
+        log(`✅ Message signed: <small>${res.signature}</small>`, 'cyan');
+      } catch (err) {
+        console.error(err);
+        log('❌ Signing failed.', 'red');
+      }
+    };
+  </script>
 </body>
 </html>
