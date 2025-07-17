@@ -83,6 +83,23 @@
       <h2>LEADERBOARD</h2>
       <ol id="leaderboard-top3"><li>Loading...</li></ol>
     </div>
+
+    <div class="panel">
+      <h2>ACTIVE RAFFLES</h2>
+      <ul>
+        <li>🔥 Retweet & Earn 20 Points</li>
+        <li>Hold Owl #100+ to enter raffle #2</li>
+      </ul>
+    </div>
+
+    <div class="panel">
+      <h2>ANNOUNCEMENTS</h2>
+      <ul>
+        <li>Mint Phase 2 starts July 10</li>
+        <li>Magic Eden Partnership Live</li>
+        <li>Claim WL now - only 30 left!</li>
+      </ul>
+    </div>
   </div>
 
   <div class="footer">TWITTER · DISCORD · DOCS · TERMS</div>
@@ -102,6 +119,9 @@
         const address = (await window.unisat.getAccounts())[0];
         localStorage.setItem('taproot_wallet', address);
         handleWalletConnected(address);
+        setTimeout(() => {
+          window.location.href = `/profile/?address=${address}`;
+        }, 1000);
       } catch (err) {
         console.error("Connection error:", err);
         alert("Failed to connect wallet.");
@@ -115,7 +135,6 @@
       const headers = rows[0].map(h => h.trim());
       const addrIndex = headers.indexOf("Holder Address");
       const pointsIndex = headers.indexOf("Total Points");
-
       const row = rows.find(r => r[addrIndex]?.trim() === address.trim());
       if (row) return { found: true, address, points: row[pointsIndex] };
       return { found: false };
@@ -146,7 +165,7 @@
         const twitterBtn = document.createElement("button");
         twitterBtn.textContent = "Connect Twitter";
         twitterBtn.style.cssText = "margin-top: 10px; padding: 8px 12px; background: var(--accent); color: black; border: none; border-radius: 10px; cursor: pointer; font-weight: 600;";
-        twitterBtn.onclick = () => window.location.href = "/auth/twitter"; // заміни на свій маршрут
+        twitterBtn.onclick = () => window.location.href = "/auth/twitter";
         wrapper.appendChild(twitterBtn);
       }
 
@@ -164,11 +183,7 @@
       const headers = rows[0];
       const addrIndex = headers.indexOf("Holder Address");
       const pointsIndex = headers.indexOf("Total Points");
-
-      const top3 = rows.slice(1).sort((a, b) => +b[pointsIndex] - +a[pointsIndex]).slice(0, 3).map(r => {
-        return `<li>${r[addrIndex].slice(0, 6)}...${r[addrIndex].slice(-4)} - ${r[pointsIndex]}</li>`;
-      }).join('');
-
+      const top3 = rows.slice(1).sort((a, b) => +b[pointsIndex] - +a[pointsIndex]).slice(0, 3).map(r => `<li>${r[addrIndex].slice(0, 6)}...${r[addrIndex].slice(-4)} - ${r[pointsIndex]}</li>`).join('');
       document.getElementById('leaderboard-top3').innerHTML = top3;
     }
 
