@@ -65,6 +65,7 @@
       <a href="#" class="button">LEADERBOARD</a>
       <a href="#" class="button">COLLECTION</a>
       <button class="connect-wallet" id="wallet-header">CONNECT WALLET</button>
+      <button class="connect-wallet" onclick="window.location.href='/auth/twitter2'">CONNECT TWITTER</button>
     </div>
   </header>
 
@@ -76,7 +77,7 @@
 
     <div class="panel" id="listed-nfts">
       <h2>LISTED ON MAGIC EDEN</h2>
-      <div id="me-listed-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px;"></div>
+      <div id="me-listed-grid" style="display: flex; flex-direction: column; align-items: center; gap: 16px;"></div>
     </div>
 
     <div class="panel">
@@ -105,6 +106,9 @@
   <div class="footer">TWITTER · DISCORD · DOCS · TERMS</div>
 
   <script>
+    const SNAPSHOT_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?output=csv&gid=0";
+    const imageBaseURL = "https://raw.githubusercontent.com/oxmikem-site/owlorder-site/main/images/";
+
     const walletButtons = [
       document.getElementById('wallet-header'),
       document.getElementById('wallet-panel')
@@ -165,7 +169,7 @@
         const twitterBtn = document.createElement("button");
         twitterBtn.textContent = "Connect Twitter";
         twitterBtn.style.cssText = "margin-top: 10px; padding: 8px 12px; background: var(--accent); color: black; border: none; border-radius: 10px; cursor: pointer; font-weight: 600;";
-        twitterBtn.onclick = () => window.location.href = "/auth/twitter";
+        twitterBtn.onclick = () => window.location.href = "/auth/twitter2";
         wrapper.appendChild(twitterBtn);
       }
 
@@ -189,35 +193,44 @@
 
     loadTop3();
 
-    const SNAPSHOT_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?output=csv&gid=0";
-    const imageBaseURL = "https://raw.githubusercontent.com/oxmikem-site/owlorder-site/main/images/";
+    let currentIndex = 0;
+    let listed = [];
 
     async function fetchListedNFTsGrid() {
       const res = await fetch(SNAPSHOT_CSV_URL);
       const csv = await res.text();
       const rows = csv.split("\n").slice(1);
-      const listed = rows.map(r => r.split(",")).filter(cols => cols[3]?.toLowerCase().trim() === "yes");
+      listed = rows.map(r => r.split(",")).filter(cols => cols[3]?.toLowerCase().trim() === "yes");
+      showNextNFT();
+    }
+
+    function showNextNFT() {
       const container = document.getElementById("me-listed-grid");
       container.innerHTML = "";
 
-      listed.forEach(cols => {
-        const nftId = cols[0].trim();
-        const imageURL = `${imageBaseURL}${nftId}.webp`;
-        const meURL = `https://magiceden.io/ordinals/item-details/${nftId}`;
+      if (!listed.length) return;
 
-        const nftDiv = document.createElement("div");
-        nftDiv.style.textAlign = "center";
-        nftDiv.innerHTML = `
-          <img src="${imageURL}" alt="Owl ${nftId}" style="width:100%; border-radius:12px;" />
-          <p style="margin: 6px 0; font-weight: bold;">Owl #${nftId}</p>
-          <a href="${meURL}" target="_blank">
-            <button style="padding:6px 10px; background: #8a7f5a; border:none; color:#fff; border-radius:8px; cursor:pointer;">
-              Buy on ME
-            </button>
-          </a>
-        `;
-        container.appendChild(nftDiv);
-      });
+      const cols = listed[currentIndex % listed.length];
+      const nftId = cols[0].trim();
+      const imageURL = `${imageBaseURL}${nftId}.webp`;
+      const meURL = `https://magiceden.io/ordinals/item-details/${nftId}`;
+
+      const nftDiv = document.createElement("div");
+      nftDiv.style.textAlign = "center";
+      nftDiv.innerHTML = `
+        <img src="${imageURL}" alt="Owl ${nftId}" style="width:100%; max-width:300px; border-radius:12px;" />
+        <p style="margin: 6px 0; font-weight: bold;">Owl #${nftId}</p>
+        <a href="${meURL}" target="_blank">
+          <button style="padding:6px 10px; background: #8a7f5a; border:none; color:#fff; border-radius:8px; cursor:pointer;">
+            Buy on ME
+          </button>
+        </a>
+      `;
+
+      container.appendChild(nftDiv);
+
+      currentIndex++;
+      setTimeout(showNextNFT, 3000);
     }
 
     window.addEventListener("DOMContentLoaded", fetchListedNFTsGrid);
