@@ -193,7 +193,7 @@
       const container = document.getElementById("me-listed-grid");
       container.innerHTML = "Loading...";
       try {
-        const res = await fetch("https://owl-backend-addw.onrender.com/api/listed");
+        const res = await fetch("/api/listed");
         const data = await res.json();
 
         if (!Array.isArray(data) || data.length === 0) {
@@ -202,15 +202,15 @@
         }
 
         const html = data.slice(0, 6).map(item => {
-          const img = item.content?.links?.image || "../logo2.png";
-          const id = item.inscriptionNumber || item.name;
+          const img = item.image || "../logo2.png";
+          const name = item.name || "OWL";
           const price = (item.price / 1e8).toFixed(4);
-          const link = `https://magiceden.io/ordinals/item-details/${item.inscriptionId}`;
+          const link = item.url || "https://magiceden.io/ordinals";
 
           return `
             <div style="background: var(--bg-inner); padding: 10px; border-radius: 12px; text-align: center;">
-              <img src="${img}" alt="Owl #${id}" style="width: 100%; border-radius: 10px;" />
-              <div style="margin-top: 8px;">OWL #${id}</div>
+              <img src="${img}" alt="${name}" style="width: 100%; border-radius: 10px;" />
+              <div style="margin-top: 8px;">${name}</div>
               <div style="color: var(--accent-color); font-weight: bold;">${price} BTC</div>
               <a href="${link}" target="_blank" style="margin-top: 6px; display: inline-block; padding: 6px 10px; background: var(--accent); color: black; border-radius: 8px; text-decoration: none;">BUY</a>
             </div>
