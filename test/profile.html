@@ -1,118 +1,87 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Connect Xverse Wallet</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8">
+  <title>OWL Wallet Connect</title>
+  <script src="./owl-bundle.umd.js" defer></script> <!-- Вставити сюди зібраний скрипт -->
   <style>
-    body { background-color: #000; color: #fff; font-family: sans-serif; padding: 2rem; }
-    button { padding: 12px 24px; font-size: 16px; margin: 10px 0; cursor: pointer; }
-    #result { margin-top: 20px; }
+    body {
+      background-color: #000;
+      color: white;
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      padding: 20px;
+    }
+
+    select, button {
+      padding: 10px;
+      margin: 10px;
+      font-size: 16px;
+    }
+
+    #result {
+      margin-top: 20px;
+    }
   </style>
 </head>
 <body>
-  <h1>🦉 OWL + Xverse Wallet</h1>
 
-  <button id="check">🔍 Check Xverse</button>
-  <button id="connect">🔗 Connect Wallet</button>
-  <button id="sign">✍️ Sign Message</button>
+  <h2>🦉 Connect to Wallet</h2>
 
-  <div id="result"></div>
+  <label for="walletSelect">Choose Wallet:</label>
+  <select id="walletSelect">
+    <option value="xverse">Xverse</option>
+    <option value="unisat">Unisat</option>
+    <option value="hiro">Hiro</option>
+    <option value="leather">Leather</option>
+    <option value="okx">OKX</option>
+    <option value="bitget">Bitget</option>
+  </select>
+
+  <button id="connectBtn">Connect</button>
+
+  <div id="result">Not connected</div>
 
   <script>
-    const result = document.getElementById('result');
+    document.getElementById("connectBtn").onclick = async () => {
+      const wallet = document.getElementById("walletSelect").value;
+      let provider;
 
-    function log(msg, color = 'white') {
-      result.innerHTML += `<div style="color:${color}; margin:4px 0;">${msg}</div>`;
-    }
-
-    // ✅ Перевірка наявності Xverse
-    document.getElementById('check').onclick = () => {
-      if (window.xverse?.bitcoin) {
-        log('✅ Xverse wallet is available.');
-        console.log('window.xverse:', window.xverse);
-      } else {
-        log('❌ Xverse not found. Please install it.', 'red');
+      if (wallet === "xverse" && window.xverse?.bitcoin) provider = window.xverse.bitcoin;
+      else if (wallet === "unisat" && window.unisat) provider = window.unisat;
+      else if (wallet === "hiro" && window.btc) provider = window.btc;
+      else if (wallet === "leather" && window.leather?.bitcoin) provider = window.leather.bitcoin;
+      else if (wallet === "okx" && window.okxwallet?.bitcoin) provider = window.okxwallet.bitcoin;
+      else if (wallet === "bitget" && window.bitkeep?.bitcoin) provider = window.bitkeep.bitcoin;
+      else {
+        document.getElementById("result").textContent = "❌ Wallet not found";
+        return;
       }
-    };
 
-    // ✅ Підключення гаманця
-    document.getElementById('connect').onclick = async () => {
       try {
-        const response = await window.xverse.bitcoin.request('getAddresses');
-        const address = response.addresses.find(addr => addr.type === 'p2tr')?.address;
-        if (address) {
-          log(`🎯 Connected Taproot address: <b>${address}</b>`, 'lime');
-        } else {
-          log('⚠️ No Taproot address found.', 'orange');
-        }
+        const response = await provider.request('getAddresses');
+        const taprootAddress = response.addresses?.find(a => a.type === 'p2tr')?.address;
+
+        if (!taprootAddress) throw new Error("Taproot address not found");
+
+        document.getElementById("result").textContent = `✅ Connected: ${taprootAddress}`;
+        console.log("Address:", taprootAddress);
+
+        const relayUrl = createWebSocketURL("wss://relay.damus.io");
+        const relay = connectToRelay(relayUrl);
+        const signed = await signMessage(provider, taprootAddress, "Sign this message to login", relay);
+
+        console.log("Signature OK", signed);
       } catch (err) {
         console.error(err);
-        log('❌ Failed to connect wallet.', 'red');
+        document.getElementById("result").textContent = `❌ Error: ${err.message}`;
       }
     };
-
-    // ✅ Підписання повідомлення
-    document.getElementById('sign').onclick = async () => {
-      try {
-        const msg = "I am verifying my identity with OWL.";
-        const res = await window.xverse.bitcoin.request('signMessage', {
-          address: '', // залиш порожнім — він сам вибере
-          message: msg,
-        });
-        log(`✅ Message signed: <small>${res.signature}</small>`, 'cyan');
-      } catch (err) {
-        console.error(err);
-        log('❌ Signing failed.', 'red');
-      }
-    };
-    <!-- Продовження сторінки -->
-<button id="check-nft">🧿 Check NFT Ownership</button>
-
-<script>
-  const INSCRIPTION_ID_TO_CHECK = "INSERT_YOUR_INSCRIPTION_ID_HERE"; // заміни на свій
-
-  document.getElementById('check-nft').onclick = async () => {
-    try {
-      if (!window.xverse?.bitcoin) {
-        log('❌ Xverse не підключено.', 'red');
-        return;
-      }
-
-      // 1. Отримуємо адресу
-      const addrRes = await window.xverse.bitcoin.request('getAddresses');
-      const address = addrRes.addresses.find(a => a.type === 'p2tr')?.address;
-      if (!address) {
-        log('⚠️ Не вдалося отримати Taproot-адресу.', 'orange');
-        return;
-      }
-
-      log(`📮 Перевіряємо інскрипції адреси: ${address}`);
-
-      // 2. Запит до UniSat API
-      const unisatRes = await fetch(`https://open-api.unisat.io/v1/indexer/address/${address}/inscriptions?start=0&limit=100`);
-      const json = await unisatRes.json();
-
-      if (!json?.data?.list?.length) {
-        log('🙅‍♂️ Інскрипцій не знайдено.', 'orange');
-        return;
-      }
-
-      // 3. Пошук інскрипції
-      const owned = json.data.list.some(item => item.inscriptionId === INSCRIPTION_ID_TO_CHECK);
-      if (owned) {
-        log(`✅ Власник NFT з ID: ${INSCRIPTION_ID_TO_CHECK}`, 'lime');
-      } else {
-        log(`❌ Ця адреса не володіє вказаною NFT.`, 'red');
-      }
-
-    } catch (err) {
-      console.error(err);
-      log('🚨 Помилка при перевірці NFT.', 'red');
-    }
-  };
-</script>
-
   </script>
+
 </body>
 </html>
