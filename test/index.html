@@ -65,7 +65,7 @@
       <a href="#" class="button">LEADERBOARD</a>
       <a href="#" class="button">COLLECTION</a>
       <button class="connect-wallet" id="wallet-header">CONNECT WALLET</button>
-      <button class="connect-wallet" onclick="window.location.href='/auth/twitter2'">CONNECT TWITTER</button>
+      <button class="connect-wallet" onclick="window.location.href='/auth/twitter'">CONNECT TWITTER</button>
     </div>
   </header>
 
@@ -109,90 +109,6 @@
     const SNAPSHOT_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?output=csv&gid=0";
     const imageBaseURL = "https://raw.githubusercontent.com/oxmikem-site/owlorder-site/main/images/";
 
-    const walletButtons = [
-      document.getElementById('wallet-header'),
-      document.getElementById('wallet-panel')
-    ];
-
-    const sheetURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?gid=1127131432&single=true&output=csv';
-
-    async function connectUniSatWallet() {
-      if (!window.unisat) return alert("UniSat Wallet not found.");
-      try {
-        await window.unisat.requestAccounts();
-        const address = (await window.unisat.getAccounts())[0];
-        localStorage.setItem('taproot_wallet', address);
-        handleWalletConnected(address);
-        setTimeout(() => {
-          window.location.href = `/profile/?address=${address}`;
-        }, 1000);
-      } catch (err) {
-        console.error("Connection error:", err);
-        alert("Failed to connect wallet.");
-      }
-    }
-
-    async function checkHolderInSheet(address) {
-      const res = await fetch(sheetURL);
-      const text = await res.text();
-      const rows = text.trim().split('\n').map(r => r.split(','));
-      const headers = rows[0].map(h => h.trim());
-      const addrIndex = headers.indexOf("Holder Address");
-      const pointsIndex = headers.indexOf("Total Points");
-      const row = rows.find(r => r[addrIndex]?.trim() === address.trim());
-      if (row) return { found: true, address, points: row[pointsIndex] };
-      return { found: false };
-    }
-
-    async function handleWalletConnected(address) {
-      const result = await checkHolderInSheet(address);
-      const userPanel = document.querySelector(".user-panel");
-
-      walletButtons.forEach(btn => {
-        btn.textContent = `${address.slice(0, 6)}...${address.slice(-4)}`;
-        btn.disabled = true;
-        btn.style.opacity = '0.85';
-      });
-
-      const existingInfo = userPanel.querySelector(".wallet-info");
-      if (existingInfo) existingInfo.remove();
-
-      const wrapper = document.createElement("div");
-      wrapper.className = "wallet-info";
-      wrapper.style.cssText = "margin-top: 16px; font-size: 15px; line-height: 1.6;";
-      wrapper.innerHTML = `
-        <strong>Connected:</strong> ${address.slice(0, 6)}...${address.slice(-4)}<br/>
-        <strong>Total Points:</strong> ${result.found ? result.points : 'Not found'}
-      `;
-
-      if (result.found) {
-        const twitterBtn = document.createElement("button");
-        twitterBtn.textContent = "Connect Twitter";
-        twitterBtn.style.cssText = "margin-top: 10px; padding: 8px 12px; background: var(--accent); color: black; border: none; border-radius: 10px; cursor: pointer; font-weight: 600;";
-        twitterBtn.onclick = () => window.location.href = "/auth/twitter2";
-        wrapper.appendChild(twitterBtn);
-      }
-
-      userPanel.appendChild(wrapper);
-    }
-
-    walletButtons.forEach(btn => btn.addEventListener('click', connectUniSatWallet));
-    const saved = localStorage.getItem('taproot_wallet');
-    if (saved) handleWalletConnected(saved);
-
-    async function loadTop3() {
-      const res = await fetch(sheetURL);
-      const text = await res.text();
-      const rows = text.trim().split('\n').map(r => r.split(','));
-      const headers = rows[0];
-      const addrIndex = headers.indexOf("Holder Address");
-      const pointsIndex = headers.indexOf("Total Points");
-      const top3 = rows.slice(1).sort((a, b) => +b[pointsIndex] - +a[pointsIndex]).slice(0, 3).map(r => `<li>${r[addrIndex].slice(0, 6)}...${r[addrIndex].slice(-4)} - ${r[pointsIndex]}</li>`).join('');
-      document.getElementById('leaderboard-top3').innerHTML = top3;
-    }
-
-    loadTop3();
-
     let currentIndex = 0;
     let listed = [];
 
@@ -211,15 +127,17 @@
       if (!listed.length) return;
 
       const cols = listed[currentIndex % listed.length];
-      const nftId = cols[0].trim();
-      const imageURL = `${imageBaseURL}${nftId}.webp`;
-      const meURL = `https://magiceden.io/ordinals/item-details/${nftId}`;
+      const nftNumber = cols[9]?.trim(); // column J
+      const inscriptionId = cols[0]?.trim();
+
+      const imageURL = `${imageBaseURL}${nftNumber}.webp`;
+      const meURL = `https://magiceden.io/ordinals/item-details/${inscriptionId}`;
 
       const nftDiv = document.createElement("div");
       nftDiv.style.textAlign = "center";
       nftDiv.innerHTML = `
-        <img src="${imageURL}" alt="Owl ${nftId}" style="width:100%; max-width:300px; border-radius:12px;" />
-        <p style="margin: 6px 0; font-weight: bold;">Owl #${nftId}</p>
+        <img src="${imageURL}" alt="Owl #${nftNumber}" style="width:100%; max-width:300px; border-radius:12px;" />
+        <p style="margin: 6px 0; font-weight: bold;">Owl #${nftNumber}</p>
         <a href="${meURL}" target="_blank">
           <button style="padding:6px 10px; background: #8a7f5a; border:none; color:#fff; border-radius:8px; cursor:pointer;">
             Buy on ME
