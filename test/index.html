@@ -27,6 +27,7 @@
       background: linear-gradient(145deg, #151515, #0d0d0d);
       display: flex; justify-content: space-between; align-items: center;
       padding: 0 20px; border-radius: 0 0 20px 20px;
+      box-sizing: border-box;
     }
     .logo img { width: 50px; height: 50px; }
     .nav-buttons { display: flex; gap: 4px; }
@@ -44,38 +45,54 @@
     .main {
       width: 100%; max-width: 1200px;
       padding: 40px 20px;
-      display: grid; grid-template-columns: repeat(3, 1fr);
+      display: grid;
+      grid-template-columns: 320px 1fr 320px;
       gap: 24px;
+      box-sizing: border-box;
     }
-    .panel {
-      background: var(--bg-panel); padding: 20px;
+    .user-panel, .leaderboard-panel {
+      max-width: 1000px;
+      width: 320px;
+      background: var(--bg-panel);
+      padding: 20px;
       border-radius: 16px;
       min-height: 220px;
       display: flex;
       flex-direction: column;
       justify-content: flex-start;
+      box-sizing: border-box;
     }
-    .panel h2 { color: var(--accent-color); margin-bottom: 16px; }
+    .panel {
+      background: var(--bg-panel);
+      padding: 20px;
+      border-radius: 16px;
+      min-height: 220px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      box-sizing: border-box;
+    }
+    .panel h2 {
+      color: var(--accent-color);
+      margin-bottom: 16px;
+    }
     .footer {
       margin-top: 40px; text-align: center;
       color: var(--text-secondary); font-size: 14px;
     }
-
-    /* Оновлений стиль для блоку NFT-слайдера */
     #me-listed-grid {
       display: flex;
       overflow: hidden;
-      width: 300px; /* ширина саме одного NFT */
+      width: 300px;
       gap: 16px;
       scroll-behavior: smooth;
       padding-bottom: 10px;
       height: 370px;
       align-items: flex-start;
     }
-
     #me-listed-grid > div {
       flex-shrink: 0;
-      width: 300px; /* фіксована ширина NFT */
+      width: 300px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -86,7 +103,6 @@
       box-sizing: border-box;
       height: 100%;
     }
-
     #me-listed-grid img {
       width: 100%;
       border-radius: 12px;
@@ -95,7 +111,6 @@
       display: block;
       user-select: none;
     }
-
     #me-listed-grid p {
       margin: 12px 0 0 0;
       font-weight: bold;
@@ -104,7 +119,6 @@
       width: 100%;
       user-select: none;
     }
-
     #me-listed-grid button {
       margin-top: auto;
       padding: 6px 10px;
@@ -117,6 +131,11 @@
       font-weight: 600;
       user-select: none;
     }
+    .active-raffles li::before {
+      content: "🔥 ";
+      margin-right: 6px;
+      user-select: none;
+    }
   </style>
 </head>
 <body>
@@ -126,32 +145,30 @@
       <a href="#" class="button">LEADERBOARD</a>
       <a href="#" class="button">COLLECTION</a>
       <button class="connect-wallet" id="wallet-header">CONNECT WALLET</button>
-      <!-- Кнопку Connect Twitter прибрано -->
     </div>
   </header>
 
   <div class="main">
-    <div class="panel user-panel">
+    <div class="user-panel">
       <h2>USER PANEL</h2>
       <button class="connect-wallet" id="wallet-panel">CONNECT WALLET</button>
     </div>
 
     <div class="panel" id="listed-nfts">
-      <!-- Заголовок прибрано згідно з побажанням -->
       <div id="me-listed-grid"></div>
     </div>
 
-    <div class="panel">
-      <h2>LEADERBOARD</h2>
-      <ol id="leaderboard-top3"><li>Loading...</li></ol>
-    </div>
-
-    <div class="panel">
+    <div class="panel active-raffles">
       <h2>ACTIVE RAFFLES</h2>
       <ul>
-        <li>🔥 Retweet & Earn 20 Points</li>
+        <li>Retweet & Earn 20 Points</li>
         <li>Hold Owl #100+ to enter raffle #2</li>
       </ul>
+    </div>
+
+    <div class="leaderboard-panel">
+      <h2>LEADERBOARD</h2>
+      <ol id="leaderboard-top3"><li>Loading...</li></ol>
     </div>
 
     <div class="panel">
@@ -221,7 +238,7 @@
       const wrapper = document.createElement("div");
       wrapper.className = "wallet-info";
       wrapper.style.cssText = "margin-top: 16px; font-size: 15px; line-height: 1.6;";
-      wrapper.innerHTML = 
+      wrapper.innerHTML =
         `<strong>Connected:</strong> ${address.slice(0, 6)}...${address.slice(-4)}<br/>
          <strong>Total Points:</strong> ${result.found ? result.points : 'Not found'}`;
 
