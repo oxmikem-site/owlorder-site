@@ -50,6 +50,10 @@
     .panel {
       background: var(--bg-panel); padding: 20px;
       border-radius: 16px;
+      min-height: 220px; /* фіксована мінімальна висота */
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
     }
     .panel h2 { color: var(--accent-color); margin-bottom: 16px; }
     .footer {
@@ -124,7 +128,7 @@
         localStorage.setItem('taproot_wallet', address);
         handleWalletConnected(address);
         setTimeout(() => {
-          window.location.href = /profile/?address=${address};
+          window.location.href = `/profile/?address=${address}`;
         }, 1000);
       } catch (err) {
         console.error("Connection error:", err);
@@ -149,7 +153,7 @@
       const userPanel = document.querySelector(".user-panel");
 
       walletButtons.forEach(btn => {
-        btn.textContent = ${address.slice(0, 6)}...${address.slice(-4)};
+        btn.textContent = `${address.slice(0, 6)}...${address.slice(-4)}`;
         btn.disabled = true;
         btn.style.opacity = '0.85';
       });
@@ -161,9 +165,8 @@
       wrapper.className = "wallet-info";
       wrapper.style.cssText = "margin-top: 16px; font-size: 15px; line-height: 1.6;";
       wrapper.innerHTML = 
-        <strong>Connected:</strong> ${address.slice(0, 6)}...${address.slice(-4)}<br/>
-        <strong>Total Points:</strong> ${result.found ? result.points : 'Not found'}
-      ;
+        `<strong>Connected:</strong> ${address.slice(0, 6)}...${address.slice(-4)}<br/>
+         <strong>Total Points:</strong> ${result.found ? result.points : 'Not found'}`;
 
       if (result.found) {
         const twitterBtn = document.createElement("button");
@@ -187,15 +190,18 @@
       const headers = rows[0];
       const addrIndex = headers.indexOf("Holder Address");
       const pointsIndex = headers.indexOf("Total Points");
-      const top3 = rows.slice(1).sort((a, b) => +b[pointsIndex] - +a[pointsIndex]).slice(0, 3).map(r => <li>${r[addrIndex].slice(0, 6)}...${r[addrIndex].slice(-4)} - ${r[pointsIndex]}</li>).join('');
+      const top3 = rows.slice(1)
+        .sort((a, b) => +b[pointsIndex] - +a[pointsIndex])
+        .slice(0, 3)
+        .map(r => `<li>${r[addrIndex].slice(0, 6)}...${r[addrIndex].slice(-4)} - ${r[pointsIndex]}</li>`)
+        .join('');
       document.getElementById('leaderboard-top3').innerHTML = top3;
     }
 
     loadTop3();
 
-     let currentIndex = 0;
+    let currentIndex = 0;
     let listed = [];
-    let userWallet = null;
 
     async function fetchListedNFTsGrid() {
       const res = await fetch(SNAPSHOT_CSV_URL);
