@@ -138,11 +138,30 @@
   display: block;
 }
 
-    .active-raffles li::before {
-      content: "🔥 ";
-      margin-right: 6px;
-      user-select: none;
-    }
+   .active-raffles {
+  position: relative;
+  padding-top: 40px; /* щоб не заважати печатці */
+}
+
+.active-raffles::before {
+  content: "SOON";
+  position: absolute;
+  top: 10px;
+  right: 20px;
+  background: linear-gradient(90deg, #bfa758, #d4c87c);
+  color: #3b2e00;
+  font-weight: 700;
+  font-size: 14px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  box-shadow: 0 0 8px rgba(191, 167, 88, 0.7);
+  user-select: none;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  font-family: 'Inter', sans-serif;
+  pointer-events: none;
+  z-index: 10;
+}
   </style>
 </head>
 <body>
@@ -167,10 +186,6 @@
 
     <div class="panel active-raffles">
       <h2>ACTIVE RAFFLES</h2>
-      <ul>
-        <li>Retweet & Earn 20 Points</li>
-        <li>Hold Owl #100+ to enter raffle #2</li>
-      </ul>
     </div>
 
     <div class="leaderboard-panel">
