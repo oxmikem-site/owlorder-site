@@ -23,27 +23,63 @@
     }
     header {
       position: sticky; top: 0; z-index: 10;
-      width: 100%; max-width: 1000px; height: 64px;
+      width: 100%;
+      max-width: 1000px;
+      height: 64px;
       background: linear-gradient(145deg, #1d1d1d, #111111);
       display: flex; justify-content: space-between; align-items: center;
-      padding: 0 20px; border-radius: 0 0 20px 20px;
+      padding: 0 20px;
+      margin: 0 auto;
+      border-radius: 0 0 20px 20px;
       box-sizing: border-box;
     }
     .logo img { width: 50px; height: 50px; }
     .nav-buttons { display: flex; gap: 4px; }
     .button {
-      padding: 8px 10px; background: transparent; border: none;
-      color: var(--text-primary); text-decoration: none;
-      font-weight: 500; font-size: 18px;
+      padding: 8px 10px;
+      background: transparent;
+      border: none;
+      color: var(--text-primary);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 18px;
+      cursor: pointer;
+      /* Додаємо стиль печатки */
+      background: linear-gradient(90deg, #bfa758, #d4c87c);
+      color: #3b2e00;
+      font-weight: 700;
+      border-radius: 12px;
+      box-shadow: 0 0 8px rgba(191, 167, 88, 0.7);
+      letter-spacing: 1.5px;
+      user-select: none;
+      transition: filter 0.3s ease;
     }
-    .button:hover { color: var(--accent-color); }
+    .button:hover {
+      filter: brightness(1.15);
+      color: #3b2e00;
+    }
     .connect-wallet {
-      padding: 6px 14px; border-radius: 12px; border: none;
-      font-weight: 600; font-size: 15px;
-      background: var(--accent); color: black; cursor: pointer;
+      padding: 6px 14px;
+      border-radius: 12px;
+      border: none;
+      font-weight: 700;
+      font-size: 15px;
+      cursor: pointer;
+      background: linear-gradient(90deg, #bfa758, #d4c87c);
+      color: #3b2e00;
+      box-shadow: 0 0 8px rgba(191, 167, 88, 0.7);
+      letter-spacing: 1.5px;
+      user-select: none;
+      transition: filter 0.3s ease;
+    }
+    .connect-wallet:hover {
+      filter: brightness(1.15);
+      color: #3b2e00;
     }
     .main {
-      width: 100%; max-width: 1000px;
+      width: 100%;
+      max-width: 1000px;
+      margin: 0 auto;
       padding: 20px 20px;
       display: grid;
       grid-template-columns: 320px 1fr 320px;
@@ -77,8 +113,10 @@
       margin-bottom: 16px;
     }
     .footer {
-      margin-top: 40px; text-align: center;
-      color: var(--text-secondary); font-size: 14px;
+      margin-top: 40px;
+      text-align: center;
+      color: var(--text-secondary);
+      font-size: 14px;
     }
     #me-listed-grid {
       display: flex;
@@ -91,77 +129,80 @@
       align-items: flex-start;
     }
     #me-listed-grid > div {
-  flex-shrink: 0;
-  width: 300px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;      /* Центруємо горизонтально */
-  justify-content: center;  /* Центруємо вертикально */
-  border-radius: 16px;
-  padding: 0;               /* прибираємо падінги для зникнення світлого фону */
-  box-sizing: border-box;
-  height: 100%;
-  background: transparent;  /* прибираємо фон */
-  overflow: hidden;         /* щоб радіуси працювали */
-}
-
-#me-listed-grid img {
-  width: 100%;
-  height: auto;
-  max-height: 320px;        /* збільшене зображення */
-  border-top-left-radius: 16px;
-  border-top-right-radius: 16px;
-  object-fit: cover;
-  display: block;
-  user-select: none;
-}
-
-#me-listed-grid p {
-  margin: 12px 0 4px 0;
-  font-weight: bold;
-  color: var(--accent-color);
-  text-align: center;
-  width: 100%;
-  user-select: none;
-}
-
-#me-listed-grid button {
-  margin: 0 auto 12px auto;
-  padding: 8px 16px;
-  background: #8a7f5a;
-  border: none;
-  color: #fff;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-  user-select: none;
-  display: block;
-}
-
-   .active-raffles {
-  position: relative;
-  padding-top: 40px; /* щоб не заважати печатці */
-}
-
-.active-raffles::before {
-  content: "SOON";
-  position: absolute;
-  top: 10px;
-  right: 20px;
-  background: linear-gradient(90deg, #bfa758, #d4c87c);
-  color: #3b2e00;
-  font-weight: 700;
-  font-size: 14px;
-  padding: 4px 10px;
-  border-radius: 12px;
-  box-shadow: 0 0 8px rgba(191, 167, 88, 0.7);
-  user-select: none;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  font-family: 'Inter', sans-serif;
-  pointer-events: none;
-  z-index: 10;
-}
+      flex-shrink: 0;
+      width: 300px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-radius: 16px;
+      padding: 0;
+      box-sizing: border-box;
+      height: 100%;
+      background: transparent;
+      overflow: hidden;
+    }
+    #me-listed-grid img {
+      width: 100%;
+      height: auto;
+      max-height: 320px;
+      border-top-left-radius: 16px;
+      border-top-right-radius: 16px;
+      object-fit: cover;
+      display: block;
+      user-select: none;
+    }
+    #me-listed-grid p {
+      margin: 12px 0 4px 0;
+      font-weight: bold;
+      color: var(--accent-color);
+      text-align: center;
+      width: 100%;
+      user-select: none;
+    }
+    #me-listed-grid button {
+      margin: 0 auto 12px auto;
+      padding: 8px 16px;
+      background: transparent;
+      border: 2px solid;
+      border-image-slice: 1;
+      border-width: 2px;
+      border-image-source: linear-gradient(90deg, #bfa758, #d4c87c);
+      color: #bfa758;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      user-select: none;
+      display: block;
+      transition: filter 0.3s ease;
+    }
+    #me-listed-grid button:hover {
+      filter: brightness(1.3);
+    }
+    .active-raffles {
+      position: relative;
+      padding-top: 40px;
+    }
+    .active-raffles::before {
+      content: "SOON";
+      position: absolute;
+      top: 10px;
+      right: 20px;
+      background: linear-gradient(90deg, #bfa758, #d4c87c);
+      color: #3b2e00;
+      font-weight: 700;
+      font-size: 14px;
+      padding: 4px 10px;
+      border-radius: 12px;
+      box-shadow: 0 0 8px rgba(191, 167, 88, 0.7);
+      user-select: none;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      font-family: 'Inter', sans-serif;
+      pointer-events: none;
+      z-index: 10;
+    }
   </style>
 </head>
 <body>
@@ -186,6 +227,10 @@
 
     <div class="panel active-raffles">
       <h2>ACTIVE RAFFLES</h2>
+      <ul>
+        <li>Retweet & Earn 20 Points</li>
+        <li>Hold Owl #100+ to enter raffle #2</li>
+      </ul>
     </div>
 
     <div class="leaderboard-panel">
@@ -298,6 +343,7 @@
 
     let listed = [];
     let currentIndex = 0;
+    let direction = 1; // 1 - вперед, -1 - назад
 
     async function fetchListedNFTsGrid() {
       const res = await fetch(SNAPSHOT_CSV_URL);
@@ -328,8 +374,11 @@
       });
 
       setInterval(() => {
-        currentIndex++;
-        if (currentIndex >= listed.length) currentIndex = 0;
+        if (currentIndex === listed.length - 1) direction = -1;
+        else if (currentIndex === 0) direction = 1;
+
+        currentIndex += direction;
+
         container.scrollTo({
           left: currentIndex * (300 + 16),
           behavior: 'smooth'
