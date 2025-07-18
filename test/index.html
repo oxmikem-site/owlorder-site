@@ -60,6 +60,16 @@
       margin-top: 40px; text-align: center;
       color: var(--text-secondary); font-size: 14px;
     }
+
+    /* Оновлений стиль для слайдера */
+    #me-listed-grid {
+      display: flex;
+      overflow-x: hidden;
+      gap: 16px;
+      scroll-behavior: smooth;
+      max-width: 100%;
+      padding-bottom: 10px;
+    }
   </style>
 </head>
 <body>
@@ -81,7 +91,7 @@
 
     <div class="panel" id="listed-nfts">
       <h2>LISTED ON MAGIC EDEN</h2>
-      <div id="me-listed-grid" style="display: flex; flex-direction: column; align-items: center; gap: 16px;"></div>
+      <div id="me-listed-grid"></div>
     </div>
 
     <div class="panel">
@@ -200,7 +210,6 @@
 
     loadTop3();
 
-    let currentIndex = 0;
     let listed = [];
 
     async function fetchListedNFTsGrid() {
@@ -208,32 +217,44 @@
       const csv = await res.text();
       const rows = csv.split("\n").slice(1);
       listed = rows.map(r => r.split(",")).filter(cols => cols[3]?.toLowerCase().trim() === "yes");
-      showNextNFT();
-    }
 
-    function showNextNFT() {
       const container = document.getElementById("me-listed-grid");
-      container.innerHTML = "";
-      if (!listed.length) return;
-      const cols = listed[currentIndex % listed.length];
-      const nftNumber = cols[9]?.trim();
-      const inscriptionId = cols[0]?.trim();
-      const imageURL = `${imageBaseURL}${nftNumber}.webp`;
-      const meURL = `https://magiceden.io/ordinals/item-details/${inscriptionId}`;
-      const nftDiv = document.createElement("div");
-      nftDiv.style.textAlign = "center";
-      nftDiv.innerHTML = `
-        <img src="${imageURL}" alt="Owl #${nftNumber}" style="width:100%; max-width:300px; border-radius:12px;" />
-        <p style="margin: 6px 0; font-weight: bold;">Owl #${nftNumber}</p>
-        <a href="${meURL}" target="_blank">
-          <button style="padding:6px 10px; background: #8a7f5a; border:none; color:#fff; border-radius:8px; cursor:pointer;">
-            Buy on ME
-          </button>
-        </a>
-      `;
-      container.appendChild(nftDiv);
-      currentIndex++;
-      setTimeout(showNextNFT, 15000);
+      container.innerHTML = ""; // очистити
+
+      listed.forEach(cols => {
+        const nftNumber = cols[9]?.trim();
+        const inscriptionId = cols[0]?.trim();
+        const imageURL = `${imageBaseURL}${nftNumber}.webp`;
+        const meURL = `https://magiceden.io/ordinals/item-details/${inscriptionId}`;
+
+        const nftDiv = document.createElement("div");
+        nftDiv.style.textAlign = "center";
+        nftDiv.style.minWidth = "300px"; // фіксована ширина картинок
+        nftDiv.innerHTML = `
+          <img src="${imageURL}" alt="Owl #${nftNumber}" style="width:100%; border-radius:12px;" />
+          <p style="margin: 6px 0; font-weight: bold;">Owl #${nftNumber}</p>
+          <a href="${meURL}" target="_blank">
+            <button style="padding:6px 10px; background: #8a7f5a; border:none; color:#fff; border-radius:8px; cursor:pointer;">
+              Buy on ME
+            </button>
+          </a>
+        `;
+        container.appendChild(nftDiv);
+      });
+
+      // Запускаємо автоскролл
+      let scrollPos = 0;
+      const scrollSpeed = 1; // пікселів за інтервал (регулюй для швидкості)
+      const maxScrollLeft = container.scrollWidth - container.clientWidth;
+
+      setInterval(() => {
+        scrollPos += scrollSpeed;
+        if(scrollPos > maxScrollLeft) scrollPos = 0; // зациклити
+        container.scrollTo({
+          left: scrollPos,
+          behavior: 'smooth'
+        });
+      }, 30); // інтервал, можна коригувати
     }
 
     window.addEventListener("DOMContentLoaded", fetchListedNFTsGrid);
