@@ -91,46 +91,53 @@
       align-items: flex-start;
     }
     #me-listed-grid > div {
-      flex-shrink: 0;
-      width: 300px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-      background: #222;
-      border-radius: 12px;
-      padding: 10px;
-      box-sizing: border-box;
-      height: 100%;
-    }
-    #me-listed-grid img {
-      width: 100%;
-      border-radius: 12px;
-      max-height: 250px;
-      object-fit: contain;
-      display: block;
-      user-select: none;
-    }
-    #me-listed-grid p {
-      margin: 12px 0 0 0;
-      font-weight: bold;
-      color: var(--accent-color);
-      text-align: center;
-      width: 100%;
-      user-select: none;
-    }
-    #me-listed-grid button {
-      margin-top: auto;
-      padding: 6px 10px;
-      background: #8a7f5a;
-      border: none;
-      color: #fff;
-      border-radius: 8px;
-      cursor: pointer;
-      width: 100%;
-      font-weight: 600;
-      user-select: none;
-    }
+  flex-shrink: 0;
+  width: 300px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;      /* Центруємо горизонтально */
+  justify-content: center;  /* Центруємо вертикально */
+  border-radius: 16px;
+  padding: 0;               /* прибираємо падінги для зникнення світлого фону */
+  box-sizing: border-box;
+  height: 100%;
+  background: transparent;  /* прибираємо фон */
+  overflow: hidden;         /* щоб радіуси працювали */
+}
+
+#me-listed-grid img {
+  width: 100%;
+  height: auto;
+  max-height: 320px;        /* збільшене зображення */
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+  object-fit: cover;
+  display: block;
+  user-select: none;
+}
+
+#me-listed-grid p {
+  margin: 12px 0 4px 0;
+  font-weight: bold;
+  color: var(--accent-color);
+  text-align: center;
+  width: 100%;
+  user-select: none;
+}
+
+#me-listed-grid button {
+  margin: 0 auto 12px auto;
+  padding: 8px 16px;
+  background: #8a7f5a;
+  border: none;
+  color: #fff;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  user-select: none;
+  display: block;
+}
+
     .active-raffles li::before {
       content: "🔥 ";
       margin-right: 6px;
