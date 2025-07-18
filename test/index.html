@@ -16,11 +16,15 @@
       --accent-color: #8a7f5a;
     }
     * { box-sizing: border-box; }
-    body {
-      margin: 0; background: var(--bg-dark); color: var(--text-primary);
-      font-family: 'Inter', sans-serif;
-      display: flex; flex-direction: column; align-items: center;
-    }
+   body {
+  margin: 0; 
+  background: var(--bg-dark); 
+  color: var(--text-primary);
+  font-family: 'Inter', sans-serif;
+  display: flex; 
+  justify-content: center; 
+  min-height: 100vh; /* щоб body займав всю висоту */
+}
     header {
   position: sticky; top: 0; z-index: 10;
   width: 100%;
@@ -68,11 +72,10 @@
 }
     .main {
   width: 100%;
-  max-width: 1000px; /* обмежує ширину тіла, як і хедер */
-  margin: 0 auto; /* центроване */
+  max-width: 1000px;
   padding: 20px;
   display: grid;
-  grid-template-columns: 300px 1fr 300px; /* крайні панелі вужчі, середня ширша */
+  grid-template-columns: 320px 1fr 320px;
   gap: 24px;
   box-sizing: border-box;
 }
