@@ -50,7 +50,7 @@
     .panel {
       background: var(--bg-panel); padding: 20px;
       border-radius: 16px;
-      min-height: 220px; /* фіксована мінімальна висота */
+      min-height: 220px;
       display: flex;
       flex-direction: column;
       justify-content: flex-start;
@@ -61,26 +61,26 @@
       color: var(--text-secondary); font-size: 14px;
     }
 
-    /* Слайдер */
+    /* Оновлений стиль для блоку NFT-слайдера */
     #me-listed-grid {
       display: flex;
-      overflow-x: hidden;
+      overflow: hidden;
+      width: 300px; /* ширина саме одного NFT */
       gap: 16px;
       scroll-behavior: smooth;
-      max-width: 100%;
       padding-bottom: 10px;
-      height: 370px; /* фіксована висота щоб не змінювалася */
+      height: 370px;
       align-items: flex-start;
     }
 
     #me-listed-grid > div {
       flex-shrink: 0;
-      min-width: 300px;
+      width: 300px; /* фіксована ширина NFT */
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: flex-start;
-      background: #222; /* щоб контент не "плив" */
+      background: #222;
       border-radius: 12px;
       padding: 10px;
       box-sizing: border-box;
@@ -90,20 +90,18 @@
     #me-listed-grid img {
       width: 100%;
       border-radius: 12px;
-      flex-shrink: 0;
       max-height: 250px;
       object-fit: contain;
       display: block;
+      user-select: none;
     }
 
     #me-listed-grid p {
       margin: 12px 0 0 0;
       font-weight: bold;
       color: var(--accent-color);
-      flex-shrink: 0;
       text-align: center;
       width: 100%;
-      box-sizing: border-box;
       user-select: none;
     }
 
@@ -117,6 +115,7 @@
       cursor: pointer;
       width: 100%;
       font-weight: 600;
+      user-select: none;
     }
   </style>
 </head>
@@ -259,6 +258,7 @@
     loadTop3();
 
     let listed = [];
+    let currentIndex = 0;
 
     async function fetchListedNFTsGrid() {
       const res = await fetch(SNAPSHOT_CSV_URL);
@@ -267,7 +267,7 @@
       listed = rows.map(r => r.split(",")).filter(cols => cols[3]?.toLowerCase().trim() === "yes");
 
       const container = document.getElementById("me-listed-grid");
-      container.innerHTML = ""; // очистити
+      container.innerHTML = "";
 
       listed.forEach(cols => {
         const nftNumber = cols[9]?.trim();
@@ -277,7 +277,7 @@
 
         const nftDiv = document.createElement("div");
         nftDiv.style.textAlign = "center";
-        nftDiv.style.minWidth = "300px"; // фіксована ширина картинок
+        nftDiv.style.width = "300px";
         nftDiv.innerHTML = `
           <img src="${imageURL}" alt="Owl #${nftNumber}" />
           <p>Owl #${nftNumber}</p>
@@ -288,19 +288,14 @@
         container.appendChild(nftDiv);
       });
 
-      // Запускаємо автоскролл
-      let scrollPos = 0;
-      const scrollSpeed = 1; // пікселів за інтервал (регулюй для швидкості)
-      const maxScrollLeft = container.scrollWidth - container.clientWidth;
-
       setInterval(() => {
-        scrollPos += scrollSpeed;
-        if(scrollPos > maxScrollLeft) scrollPos = 0; // зациклити
+        currentIndex++;
+        if (currentIndex >= listed.length) currentIndex = 0;
         container.scrollTo({
-          left: scrollPos,
+          left: currentIndex * (300 + 16),
           behavior: 'smooth'
         });
-      }, 30);
+      }, 3000);
     }
 
     window.addEventListener("DOMContentLoaded", fetchListedNFTsGrid);
