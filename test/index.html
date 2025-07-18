@@ -196,7 +196,6 @@
       z-index: 10;
     }
 
-    /* Нові стилі для USER PANEL */
     #wallet-address {
       background: var(--accent-color);
       padding: 8px 12px;
@@ -323,7 +322,7 @@
       const userPanel = document.querySelector(".user-panel");
 
       walletButtons.forEach(btn => {
-        btn.textContent = `${address.slice(0, 6)}...${address.slice(-4)}`;
+        btn.textContent = '';
         btn.disabled = true;
         btn.style.opacity = '0.85';
       });
