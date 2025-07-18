@@ -262,7 +262,7 @@
     localStorage.setItem('taproot_wallet', address);
     handleWalletConnected(address);
     setTimeout(() => {
-      window.location.href = /profile/?address=${address};
+      window.location.href = `/profile/?address=${address}`;
     }, 1000);
   } catch (err) {
     console.error("Connection error:", err);
@@ -287,7 +287,7 @@ async function handleWalletConnected(address) {
   const userPanel = document.querySelector(".user-panel");
 
   walletButtons.forEach(btn => {
-    btn.textContent = ${address.slice(0, 6)}...${address.slice(-4)};
+    btn.textContent = `${address.slice(0, 6)}...${address.slice(-4)}`;
     btn.disabled = true;
     btn.style.opacity = '0.85';
   });
@@ -298,10 +298,10 @@ async function handleWalletConnected(address) {
   const wrapper = document.createElement("div");
   wrapper.className = "wallet-info";
   wrapper.style.cssText = "margin-top: 16px; font-size: 15px; line-height: 1.6;";
-  wrapper.innerHTML = 
+  wrapper.innerHTML = `
     <strong>Connected:</strong> ${address.slice(0, 6)}...${address.slice(-4)}<br/>
     <strong>Total Points:</strong> ${result.found ? result.points : 'Not found'}
-  ;
+  `;
 
   if (result.found) {
     const twitterBtn = document.createElement("button");
@@ -328,7 +328,7 @@ async function loadTop3() {
   const top3 = rows.slice(1)
     .sort((a, b) => +b[pointsIndex] - +a[pointsIndex])
     .slice(0, 3)
-    .map(r => <li>${r[addrIndex].slice(0, 6)}...${r[addrIndex].slice(-4)} - ${r[pointsIndex]}</li>)
+    .map(r => `<li>${r[addrIndex].slice(0, 6)}...${r[addrIndex].slice(-4)} - ${r[pointsIndex]}</li>`)
     .join('');
   document.getElementById('leaderboard-top3').innerHTML = top3;
 }
@@ -351,19 +351,19 @@ async function fetchListedNFTsGrid() {
   listed.forEach(cols => {
     const nftNumber = cols[9]?.trim();
     const inscriptionId = cols[0]?.trim();
-    const imageURL = ${imageBaseURL}${nftNumber}.webp;
-    const meURL = https://magiceden.io/ordinals/item-details/${inscriptionId};
+    const imageURL = `${imageBaseURL}${nftNumber}.webp`;
+    const meURL = `https://magiceden.io/ordinals/item-details/${inscriptionId}`;
 
     const nftDiv = document.createElement("div");
     nftDiv.style.textAlign = "center";
     nftDiv.style.width = "300px";
-    nftDiv.innerHTML = 
+    nftDiv.innerHTML = `
       <img src="${imageURL}" alt="Owl #${nftNumber}" />
       <p>Owl #${nftNumber}</p>
       <a href="${meURL}" target="_blank">
         <button>Buy on ME</button>
       </a>
-    ;
+    `;
     container.appendChild(nftDiv);
   });
 
