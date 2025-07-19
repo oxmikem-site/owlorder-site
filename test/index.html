@@ -21,19 +21,32 @@
       font-family: 'Inter', sans-serif;
       display: flex; flex-direction: column; align-items: center;
     }
-    header {
-  position: sticky; top: 0; z-index: 10;
-  width: 100%;
-  max-width: 1000px;
-  height: 64px;
-  background: linear-gradient(145deg, #1d1d1d, #111111);
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 0 20px;
-  margin: 0 auto;
-  border-radius: 0 0 20px 20px;
-  box-sizing: border-box;
-}
-    .logo img { width: 50px; height: 50px; }
+     header {
+      width: 100%;
+      max-width: 1000px;
+      margin: 20px auto 0;
+      height: 64px;
+      min-height: 64px;
+      background: var(--bg-panel);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 20px;
+      border-radius: 20px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+      z-index: 10;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo img {
+      width: 50px;
+      height: 50px;
+    }
     .nav-buttons {
   display: flex; gap: 8px;
 }
@@ -69,8 +82,8 @@
     .main {
   width: 100%;
   max-width: 1000px; /* обмежує ширину тіла, як і хедер */
-  margin: 0 auto; /* центроване */
-  padding: 20px;
+  margin: -10 auto; /* центроване */
+  padding: 40px;
   display: grid;
   grid-template-columns: 300px 1fr 300px; /* крайні панелі вужчі, середня ширша */
   gap: 24px;
@@ -80,7 +93,7 @@
       max-width: 1000px;
       width: 300px;
       background: var(--bg-panel);
-      padding: 20px;
+      padding: 40px;
       border-radius: 16px;
       min-height: 220px;
       display: flex;
@@ -90,7 +103,7 @@
     }
     .panel {
       background: var(--bg-panel);
-      padding: 20px;
+      padding: 40px;
       border-radius: 16px;
       min-height: 220px;
       display: flex;
