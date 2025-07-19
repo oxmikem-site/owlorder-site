@@ -103,7 +103,7 @@
 
     .user-panel, .leaderboard-panel, .panel {
       background: var(--bg-panel);
-      padding: 10px;
+      padding: 10px 16px;
       border-radius: 16px;
       min-height: 220px;
       display: flex;
@@ -114,6 +114,7 @@
 
     .panel h2 {
       color: var(--accent-color);
+      margin-top: 10px;
       margin-bottom: 16px;
     }
 
@@ -193,9 +194,9 @@
       const headers = rows[0].map(h => h.trim());
       const addrIndex = headers.indexOf("Holder Address");
       const nftIndex = headers.indexOf("Owl #");
-      const row = rows.find(r => r[addrIndex]?.trim() === wallet);
-      if (row) {
-        const nftNumber = row[nftIndex]?.trim();
+      const owned = rows.filter(r => r[addrIndex]?.trim() === wallet);
+      if (owned.length > 0) {
+        const nftNumber = owned[0][nftIndex]?.trim();
         const img = document.getElementById("profile-image");
         img.src = `${imageBaseURL}${nftNumber}.webp`;
         img.style.display = "block";
