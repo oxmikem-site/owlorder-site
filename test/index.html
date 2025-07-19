@@ -217,6 +217,15 @@
       }
     }
 
+    async function handleWalletConnected(address) {
+      const buttons = [document.getElementById('wallet-header'), document.getElementById('wallet-panel')];
+      buttons.forEach(btn => {
+        btn.textContent = `${address.slice(0, 6)}...${address.slice(-4)}`;
+        btn.disabled = true;
+        btn.style.opacity = '0.85';
+      });
+    }
+
     const walletButtons = [
       document.getElementById('wallet-header'),
       document.getElementById('wallet-panel')
@@ -225,7 +234,8 @@
 
     const saved = localStorage.getItem('taproot_wallet');
     if (saved) {
-      connectUniSatWallet(saved);
+      handleWalletConnected(saved);
+      fetchProfileImage(saved);
     }
   </script>
 </body>
