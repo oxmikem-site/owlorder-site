@@ -122,17 +122,22 @@
       color: var(--text-secondary);
       font-size: 14px;
     }
+    #listed-nfts {
+  overflow-x: auto;
+  width: 100%;
+}
 
-    #me-listed-grid {
-      display: flex;
-      overflow: hidden;
-      width: 100%;
-      gap: 16px;
-      scroll-behavior: smooth;
-      padding-bottom: 10px;
-      height: 370px;
-      align-items: flex-start;
-    }
+#me-listed-grid {
+  display: flex;
+  gap: 16px;
+  scroll-behavior: smooth;
+  padding-bottom: 10px;
+  height: 370px;
+  align-items: flex-start;
+  min-width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+}
 
     #me-listed-grid > div {
       flex-shrink: 0;
