@@ -329,21 +329,17 @@ const saved = localStorage.getItem('taproot_wallet');
 if (saved) handleWalletConnected(saved);
 
 async function loadTop3() {
-  const res = await fetch(sheetURL);
-  const text = await res.text();
-  const rows = text.trim().split('\n').map(r => r.split(','));
-  const headers = rows[0];
-  const addrIndex = headers.indexOf("Holder Address");
-  const pointsIndex = headers.indexOf("Total Points");
-  const top3 = rows.slice(1)
-    .sort((a, b) => +b[pointsIndex] - +a[pointsIndex])
-    .slice(0, 3)
-    .map(r => `<li>${r[addrIndex].slice(0, 6)}...${r[addrIndex].slice(-4)} - ${r[pointsIndex]}</li>`)
-    .join('');
-  document.getElementById('leaderboard-top3').innerHTML = top3;
-}
+      const res = await fetch(sheetURL);
+      const text = await res.text();
+      const rows = text.trim().split('\n').map(r => r.split(','));
+      const headers = rows[0];
+      const addrIndex = headers.indexOf("Holder Address");
+      const pointsIndex = headers.indexOf("Total Points");
+      const top3 = rows.slice(1).sort((a, b) => +b[pointsIndex] - +a[pointsIndex]).slice(0, 3).map(r => `<li>${r[addrIndex].slice(0, 6)}...${r[addrIndex].slice(-4)} - ${r[pointsIndex]}</li>`).join('');
+      document.getElementById('leaderboard-top3').innerHTML = top3;
+    }
 
-loadTop3();
+    loadTop3();
 
 let listed = [];
 let currentIndex = 0;
