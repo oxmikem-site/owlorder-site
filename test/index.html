@@ -340,23 +340,31 @@
     const saved = localStorage.getItem('taproot_wallet');
     if (saved) handleWalletConnected(saved);
 
-    async function loadTop3() {
-      const res = await fetch(sheetURL);
-      const text = await res.text();
-      const rows = text.trim().split('\n').map(r => r.split(','));
-      const headers = rows[0];
-      const addrIndex = headers.indexOf("Holder Address");
-      const pointsIndex = headers.indexOf("Total Points");
-      const top3 = rows.slice(1)
-        .filter(r => r[addrIndex] && r[pointsIndex])
-        .sort((a, b) => +b[pointsIndex] - +a[pointsIndex])
-        .slice(0, 3)
-        .map(r => `<li>${r[addrIndex].slice(0, 6)}...${r[addrIndex].slice(-4)} - ${r[pointsIndex]}</li>`)
-        .join('');
-      document.getElementById('leaderboard-top3').innerHTML = top3;
-    }
+    async function loadTop5() {
+  const url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?output=csv&gid=1127131432';
+  const res = await fetch(url);
+  const text = await res.text();
 
-    loadTop3();
+  const rows = text.trim().split('\n').map(row => {
+    const match = row.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g);
+    return match ? match.map(cell => cell.replace(/^"|"$/g, '')) : [];
+  });
+
+  const entries = rows.slice(1).map(row => {
+    const [rank, address, , pointsRaw] = row;
+    const cleanPoints = (pointsRaw || '0').replace(/,/g, '');
+    return { rank, address, points: cleanPoints };
+  });
+
+  const top5 = entries.slice(0, 5).map(({ rank, address, points }) => {
+    const shortAddr = address.slice(0, 6) + '...' + address.slice(-4);
+    return `<li><strong>#${rank}</strong> ${shortAddr} – ${points}</li>`;
+  }).join('');
+
+  document.getElementById('leaderboard-top3').innerHTML = top5;
+}
+
+loadTop5();
 
     let listed = [];
     let currentIndex = 0;
