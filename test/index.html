@@ -239,8 +239,8 @@
     }
     #me-listed-grid > div {
   flex-shrink: 0;
-  width: 280px;
-  max-width: 280px;
+  width: 325px;
+  max-width: 325px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -600,7 +600,7 @@ const meURL = `https://magiceden.io/ordinals/item-details/${inscriptionId}`;
           currentIndex += direction;
 
           container.scrollTo({
-            left: currentIndex * (280 + 16),
+            left: currentIndex * (325 + 16),
             behavior: 'smooth'
           });
         }, 3000);
