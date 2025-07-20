@@ -303,28 +303,33 @@
   const headers = rows[0].map(h => h.trim());
 
   const addrIndex = headers.indexOf("Holder Address");
-  const nftIndex = headers.indexOf("№"); // ← Виправлено
+  const numberIndex = headers.indexOf("№");
 
-  if (addrIndex === -1 || nftIndex === -1) {
+  if (addrIndex === -1 || numberIndex === -1) {
     console.error("Column headers not found in sheet.");
     return;
   }
 
-  const owned = rows.filter(r => r[addrIndex]?.trim() === wallet);
-  if (owned.length === 0) {
+  // Знаходимо перший збіг адреси
+  const ownedRow = rows.find((r, i) => i > 0 && r[addrIndex]?.trim() === wallet);
+
+  if (!ownedRow) {
     console.warn("No NFT owned by wallet:", wallet);
     return;
   }
 
-  const nftNumber = owned[0][nftIndex]?.trim();
-
+  const nftNumber = ownedRow[numberIndex]?.trim();
   if (!nftNumber) {
-    console.warn("NFT number is empty for address:", wallet);
+    console.warn("NFT number is empty or invalid:", ownedRow);
     return;
   }
 
   const img = document.getElementById("profile-image");
-  img.src = `${imageBaseURL}${nftNumber}.webp`;
+  const imageURL = `${imageBaseURL}${nftNumber}.webp`;
+
+  console.log("Setting profile image to:", imageURL);
+
+  img.src = imageURL;
   img.onerror = () => {
     console.warn("Profile image not found. Falling back.");
     img.src = "../logo1.png";
