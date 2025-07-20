@@ -80,6 +80,9 @@
     }
 
     .connect-wallet, #connect-twitter-btn {
+      width: 100px;           /* ← фіксована ширина, можна ще менше */
+      text-align: center;
+      margin: 6px auto;
       padding: 6px 14px;
       border-radius: 12px;
       border: none;
@@ -89,8 +92,7 @@
       color: black;
       cursor: pointer;
       transition: filter 0.3s ease;
-      min-width: 50px;
-text-align: center;
+      
     }
 
     .connect-wallet:hover, #connect-twitter-btn:hover {
@@ -220,6 +222,10 @@ text-align: center;
   margin-left: 10px;
   background: linear-gradient(90deg, #bfa758, #d4c87c);
   color: #3b2e00;
+  width: 100px;      
+  text-align: center;
+  display: inline-block;
+  margin: 10px auto; 
   font-weight: 70;
   font-size: 14px;
   padding: 4px 10px;
@@ -228,10 +234,6 @@ text-align: center;
   letter-spacing: 2px;
   text-transform: uppercase;
   font-family: 'Inter', sans-serif;
-      min-width: 60px;
-  text-align: center;
-  display: inline-flex;
-  justify-content: center;
 }
 
   </style>
@@ -293,18 +295,18 @@ text-align: center;
     ];
 
     async function fetchProfileImage(wallet) {
-  const img = document.getElementById("profile-image"); // ← ВАЖЛИВО: перенесено сюди першим!
+  const img = document.getElementById("profile-image"); 
 
   const res = await fetch(SNAPSHOT_CSV_URL);
   const csv = await res.text();
-  const rows = csv.split("\n").slice(1); // Пропускаємо заголовок
+  const rows = csv.split("\n").slice(1); 
 
   let match = null;
 
   for (const row of rows) {
     const cols = row.split(",");
-    const address = cols[1]?.trim();    // ← bc1... адреса в колонці [1]
-    const nftNumber = cols[9]?.trim();  // ← nft # в колонці [9]
+    const address = cols[1]?.trim();   
+    const nftNumber = cols[9]?.trim();  
 
     if (address === wallet && nftNumber) {
       match = nftNumber;
