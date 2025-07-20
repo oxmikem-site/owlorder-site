@@ -303,8 +303,6 @@
     }
   }
 
-  const img = document.getElementById("profile-image");
-
   if (!match) {
     console.warn("Wallet not found or NFT number missing:", wallet);
     img.src = "../logo1.png"; // fallback
@@ -348,43 +346,45 @@
     }
 
     async function handleWalletConnected(address) {
-      const result = await checkHolderInSheet(address);
-     const userPanel = document.querySelector(".panel h2")?.textContent === "USER PANEL"
-  ? document.querySelector(".panel")
-  : document.querySelectorAll(".panel")[0];
+  const result = await checkHolderInSheet(address);
 
-      walletButtons.forEach(btn => {
-        if (btn) {
-          btn.textContent = `${address.slice(0, 6)}...${address.slice(-4)}`;
-          btn.disabled = true;
-          btn.style.opacity = '0.85';
-        }
-      });
+  const userPanel = document.querySelector(".panel h2")?.textContent === "USER PANEL"
+    ? document.querySelector(".panel")
+    : document.querySelectorAll(".panel")[0];
 
-      const existingInfo = userPanel.querySelector(".wallet-info");
-      if (existingInfo) existingInfo.remove();
+  const img = document.getElementById("profile-image"); // ← ПЕРЕНЕСЕНО СЮДИ
 
-      const wrapper = document.createElement("div");
-      wrapper.className = "wallet-info";
-      wrapper.style.cssText = "margin-top: 16px; font-size: 15px; line-height: 1.6;";
-      if (result.found) {
-  const twitterBtn = document.createElement("button");
-  twitterBtn.textContent = "Connect Twitter";
-  twitterBtn.className = "connect-wallet";
-  twitterBtn.style.marginTop = "10px";
-  twitterBtn.onclick = () => window.location.href = "/auth/twitter2";
-  img.insertAdjacentElement('afterend', twitterBtn);
-}
-
-const totalPointsEl = document.createElement("div");
-totalPointsEl.style.cssText = "margin-top: 10px; font-size: 15px;";
-totalPointsEl.innerHTML = `<strong>Total Points:</strong> ${result.found ? result.points : 'Not found'}`;
-img.insertAdjacentElement('afterend', totalPointsEl);
-
-
-     const img = document.getElementById("profile-image");
-img.insertAdjacentElement('afterend', wrapper);
+  walletButtons.forEach(btn => {
+    if (btn) {
+      btn.textContent = `${address.slice(0, 6)}...${address.slice(-4)}`;
+      btn.disabled = true;
+      btn.style.opacity = '0.85';
     }
+  });
+
+  const existingInfo = userPanel.querySelector(".wallet-info");
+  if (existingInfo) existingInfo.remove();
+
+  const wrapper = document.createElement("div");
+  wrapper.className = "wallet-info";
+  wrapper.style.cssText = "margin-top: 16px; font-size: 15px; line-height: 1.6;";
+
+  if (result.found) {
+    const twitterBtn = document.createElement("button");
+    twitterBtn.textContent = "Connect Twitter";
+    twitterBtn.className = "connect-wallet";
+    twitterBtn.style.marginTop = "10px";
+    twitterBtn.onclick = () => window.location.href = "/auth/twitter2";
+    img.insertAdjacentElement('afterend', twitterBtn);
+  }
+
+  const totalPointsEl = document.createElement("div");
+  totalPointsEl.style.cssText = "margin-top: 10px; font-size: 15px;";
+  totalPointsEl.innerHTML = `<strong>Total Points:</strong> ${result.found ? result.points : 'Not found'}`;
+  img.insertAdjacentElement('afterend', totalPointsEl);
+
+  img.insertAdjacentElement('afterend', wrapper);
+}
 
     walletButtons.forEach(btn => {
       if (btn) btn.addEventListener('click', connectUniSatWallet);
