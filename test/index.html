@@ -388,7 +388,7 @@
 
   const top5 = entries.slice(0, 5).map(({ rank, address, points }) => {
     const shortAddr = address.slice(0, 6) + '...' + address.slice(-4);
-    return <li><strong>#${rank}</strong> ${shortAddr} – ${points}</li>;
+    return `<li><strong>#${rank}</strong> ${shortAddr} – ${points}</li>`;
   }).join('');
 
   document.getElementById('leaderboard-top3').innerHTML = top5;
@@ -417,13 +417,13 @@ loadTop5();
 
         const nftDiv = document.createElement("div");
         nftDiv.style.textAlign = "center";
-        nftDiv.innerHTML = 
-          <img src="${imageURL}" alt="Owl #${nftNumber}" />
-          <p>Owl #${nftNumber}</p>
-          <a href="${meURL}" target="_blank">
-            <button>Buy on ME</button>
-          </a>
-        ;
+       nftDiv.innerHTML = `
+  <img src="${imageURL}" alt="Owl #${nftNumber}" />
+  <p>Owl #${nftNumber}</p>
+  <a href="${meURL}" target="_blank">
+    <button>Buy on ME</button>
+  </a>
+`;
         container.appendChild(nftDiv);
       });
 
