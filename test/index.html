@@ -290,7 +290,7 @@
       filter: brightness(1.3);
     }
 
-    #leaderboard-top10 {
+    #leaderboard-top7 {
   list-style: none;
   padding: 0;
   margin: 0;
@@ -375,7 +375,7 @@
 
   <div class="panel" style="grid-column: 1; grid-row: 2 / span 2;">
     <h2>LEADERBOARD</h2>
-    <ol id="leaderboard-top10"><li>Loading...</li></ol>
+    <ol id="leaderboard-top7"><li>Loading...</li></ol>
   </div>
 
   <!-- CENTER COLUMN -->
@@ -526,7 +526,7 @@
     userPanel.appendChild(wrapper);
   }
 
-  async function loadTop10() {
+  async function loadTop7() {
     const res = await fetch(sheetURL);
     const text = await res.text();
     const rows = text.trim().split('\n').map(row => row.split(','));
@@ -536,8 +536,8 @@
       return { address, points: cleanPoints };
     });
 
-    const top10 = entries
-      .slice(0, 10)
+    const top7 = entries
+      .slice(0, 7)
       .map(({ address, points }, index) => {
         const shortAddr = address.slice(0, 6) + '...' + address.slice(-4);
         return `
@@ -549,7 +549,7 @@
         `;
       }).join('');
 
-    document.getElementById('leaderboard-top10').innerHTML = top10;
+    document.getElementById('leaderboard-top7').innerHTML = top7;
   }
 
   async function fetchListedNFTsGrid() {
@@ -613,7 +613,7 @@
       mainWalletBtn.addEventListener('click', connectUniSatWallet);
     }
 
-    loadTop10();
+    loadTop7();
     fetchListedNFTsGrid();
   });
 </script>
