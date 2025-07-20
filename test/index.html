@@ -341,7 +341,7 @@
 
       walletButtons.forEach(btn => {
         if (btn) {
-          btn.textContent = ${address.slice(0, 6)}...${address.slice(-4)};
+          btn.textContent = `${address.slice(0, 6)}...${address.slice(-4)}`;
           btn.disabled = true;
           btn.style.opacity = '0.85';
         }
@@ -353,10 +353,10 @@
       const wrapper = document.createElement("div");
       wrapper.className = "wallet-info";
       wrapper.style.cssText = "margin-top: 16px; font-size: 15px; line-height: 1.6;";
-      wrapper.innerHTML = 
-        <strong>Connected:</strong> ${address.slice(0, 6)}...${address.slice(-4)}<br/>
-        <strong>Total Points:</strong> ${result.found ? result.points : 'Not found'}
-      ;
+      wrapper.innerHTML = `
+  <strong>Connected:</strong> ${address.slice(0, 6)}...${address.slice(-4)}<br/>
+  <strong>Total Points:</strong> ${result.found ? result.points : 'Not found'}
+`;
 
       if (result.found) {
         const twitterBtn = document.createElement("button");
@@ -421,13 +421,13 @@
 
         const nftDiv = document.createElement("div");
         nftDiv.style.textAlign = "center";
-        nftDiv.innerHTML = 
-          <img src="${imageURL}" alt="Owl #${nftNumber}" />
-          <p>Owl #${nftNumber}</p>
-          <a href="${meURL}" target="_blank">
-            <button>Buy on ME</button>
-          </a>
-        ;
+        nftDiv.innerHTML = `
+  <img src="${imageURL}" alt="Owl #${nftNumber}" />
+  <p>Owl #${nftNumber}</p>
+  <a href="${meURL}" target="_blank">
+    <button>Buy on ME</button>
+  </a>
+`;
         container.appendChild(nftDiv);
       });
 
