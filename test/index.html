@@ -514,59 +514,56 @@
   }
 
   async function handleWalletConnected(address) {
-    const result = await checkHolderInSheet(address);
+  const result = await checkHolderInSheet(address);
 
-    const userPanel = document.querySelector(".panel h2")?.textContent === "USER PANEL"
-      ? document.querySelector(".panel")
-      : document.querySelectorAll(".panel")[0];
+  const userPanel = document.querySelector(".panel h2")?.textContent === "USER PANEL"
+    ? document.querySelector(".panel")
+    : document.querySelectorAll(".panel")[0];
 
-    const img = document.getElementById("profile-image");
+  const img = document.getElementById("profile-image");
 
-    // Оновити основну кнопку
-    const mainWalletBtn = document.getElementById("wallet-connect-button");
-    if (mainWalletBtn) {
-      mainWalletBtn.textContent = `${address.slice(0, 6)}...${address.slice(-4)}`;
-      mainWalletBtn.disabled = true;
-      mainWalletBtn.style.opacity = '0.85';
-      mainWalletBtn.style.marginTop = '8px';
-    }
+  const mainWalletBtn = document.getElementById("wallet-connect-button");
+  if (mainWalletBtn) {
+    mainWalletBtn.textContent = `${address.slice(0, 6)}...${address.slice(-4)}`;
+    mainWalletBtn.disabled = true;
+    mainWalletBtn.style.opacity = '0.85';
+    mainWalletBtn.style.marginTop = '8px';
+  }
 
-    // Видалити стару інфу
-    const existingInfo = userPanel.querySelector(".wallet-info");
-    if (existingInfo) existingInfo.remove();
+  const existingInfo = userPanel.querySelector(".wallet-info");
+  if (existingInfo) existingInfo.remove();
 
-    const wrapper = document.createElement("div");
-    wrapper.className = "wallet-info";
-    wrapper.style.cssText = "margin-top: 16px; font-size: 15px; line-height: 1.6;";
+  const wrapper = document.createElement("div");
+  wrapper.className = "wallet-info";
+  wrapper.style.cssText = "margin-top: 16px; font-size: 15px; line-height: 1.6;";
 
-    if (result.found) {
-      img.style.display = "block";
+  if (result.found) {
+    img.style.display = "block";
 
-    if (result.found) {
-  img.style.display = "block";
+    const totalPointsEl = document.createElement("div");
+    totalPointsEl.style.cssText = "margin-top: 10px; font-size: 15px;";
+    totalPointsEl.innerHTML = `<strong>Total Points:</strong> ${result.points}`;
+    wrapper.appendChild(totalPointsEl);
 
-  const totalPointsEl = document.createElement("div");
-  totalPointsEl.style.cssText = "margin-top: 10px; font-size: 15px;";
-  totalPointsEl.innerHTML = `<strong>Total Points:</strong> ${result.points}`;
-  userPanel.appendChild(totalPointsEl);
-  userPanel.appendChild(wrapper);
+    const twitterBtn = document.createElement("button");
+    twitterBtn.textContent = "Connect Twitter";
+    twitterBtn.className = "connect-wallet";
+    twitterBtn.style.marginTop = "10px";
+    twitterBtn.onclick = () => window.location.href = "/auth/twitter2";
+    wrapper.appendChild(twitterBtn);
 
-  const twitterBtn = document.createElement("button");
-  twitterBtn.textContent = "Connect Twitter";
-  twitterBtn.className = "connect-wallet";
-  twitterBtn.style.marginTop = "10px";
-  twitterBtn.onclick = () => window.location.href = "/auth/twitter2";
-  img.insertAdjacentElement('afterend', twitterBtn);
+    img.insertAdjacentElement('afterend', wrapper);
 
-} else {
-  img.style.display = "none";
+  } else {
+    img.style.display = "none";
 
-  const getOwlBtn = document.createElement("button");
-  getOwlBtn.textContent = "Get your OWL";
-  getOwlBtn.className = "connect-wallet";
-  getOwlBtn.style.marginTop = "10px";
-  getOwlBtn.onclick = () => window.open("https://owlbtc.art/collection", "_blank");
-  userPanel.appendChild(getOwlBtn);
+    const getOwlBtn = document.createElement("button");
+    getOwlBtn.textContent = "Get your OWL";
+    getOwlBtn.className = "connect-wallet";
+    getOwlBtn.style.marginTop = "10px";
+    getOwlBtn.onclick = () => window.open("https://owlbtc.art/collection", "_blank");
+    userPanel.appendChild(getOwlBtn);
+  }
 }
 
   async function loadTop7() {
