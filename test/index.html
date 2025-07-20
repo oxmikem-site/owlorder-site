@@ -303,6 +303,7 @@
         img.style.display = "block";
       }
     }
+    console.log("Looking for NFT image:", `${imageBaseURL}${nftNumber}.webp`);
 
     async function connectUniSatWallet() {
       if (!window.unisat) return alert("UniSat Wallet not found.");
