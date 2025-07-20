@@ -135,28 +135,27 @@
       object-fit: cover;
     }
 
-    #listed-nfts {
-      overflow-x: auto;
-      width: 100%;
-    }
+     #listed-nfts {
+  overflow-x: auto;
+  width: 100%;
+}
 
-    #me-listed-grid {
-      display: flex;
-      gap: 16px;
-      scroll-behavior: smooth;
-      padding-bottom: 10px;
-      height: 370px;
-      align-items: flex-start;
-      min-width: 100%;
-      max-width: 100%;
-      overflow-x: auto;
-      scrollbar-width: none;
-      -ms-overflow-style: none;
-    }
-    #me-listed-grid::-webkit-scrollbar {
-      display: none;
-    }
-
+#me-listed-grid {
+  display: flex;
+  gap: 16px;
+  scroll-behavior: smooth;
+  padding-bottom: 10px;
+  height: 370px;
+  align-items: flex-start;
+  min-width: 100%;
+  max-width: 100%;
+  overflow-x: auto;  
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE & Edge */
+}
+#me-listed-grid::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
     #me-listed-grid > div {
       flex-shrink: 0;
       width: 300px;
@@ -172,6 +171,7 @@
 
     #me-listed-grid img {
       width: 100%;
+      height: auto;
       max-height: 320px;
       border-top-left-radius: 16px;
       border-top-right-radius: 16px;
