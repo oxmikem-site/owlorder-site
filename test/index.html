@@ -367,18 +367,20 @@
       const wrapper = document.createElement("div");
       wrapper.className = "wallet-info";
       wrapper.style.cssText = "margin-top: 16px; font-size: 15px; line-height: 1.6;";
-      wrapper.innerHTML = `
-  <strong>Total Points:</strong> ${result.found ? result.points : 'Not found'}
-`;
-
       if (result.found) {
-        const twitterBtn = document.createElement("button");
-        twitterBtn.textContent = "Connect Twitter";
-        twitterBtn.className = "connect-wallet";
-        twitterBtn.style.marginTop = "10px";
-        twitterBtn.onclick = () => window.location.href = "/auth/twitter2";
-        wrapper.appendChild(twitterBtn);
-      }
+  const twitterBtn = document.createElement("button");
+  twitterBtn.textContent = "Connect Twitter";
+  twitterBtn.className = "connect-wallet";
+  twitterBtn.style.marginTop = "10px";
+  twitterBtn.onclick = () => window.location.href = "/auth/twitter2";
+  img.insertAdjacentElement('afterend', twitterBtn);
+}
+
+const totalPointsEl = document.createElement("div");
+totalPointsEl.style.cssText = "margin-top: 10px; font-size: 15px;";
+totalPointsEl.innerHTML = `<strong>Total Points:</strong> ${result.found ? result.points : 'Not found'}`;
+img.insertAdjacentElement('afterend', totalPointsEl);
+
 
      const img = document.getElementById("profile-image");
 img.insertAdjacentElement('afterend', wrapper);
