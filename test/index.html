@@ -40,6 +40,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      height: 64px;
       padding: 0 20px;
       border-radius: 20px;
       box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
@@ -286,6 +287,8 @@
     <ol id="leaderboard-top5"><li>Loading...</li></ol>
   </div>
 
+      <div class="panel" style="grid-column: 1; grid-row: 3; visibility: hidden;"></div>
+
   <!-- CENTER COLUMN -->
   <div class="panel" id="listed-nfts" style="grid-column: 2; grid-row: 1 / span 2;">
     <div id="me-listed-grid"></div>
@@ -306,7 +309,7 @@
     </ul>
   </div>
      
-    <div class="footer" style="grid-column: 2; grid-row: 3;">
+    <div class="footer" style="grid-column: 2 / span 2; grid-row: 3;">
   <a href="https://x.com/OwlOrderBTC" target="_blank" class="footer-button">TWITTER</a>
   <a href="https://magiceden.io/ordinals/marketplace/owl" target="_blank" class="footer-button">MAGIC EDEN</a>
   <a href="https://yourdomain.com/collab-request" target="_blank" class="footer-button">COLLABS REQUEST</a>
