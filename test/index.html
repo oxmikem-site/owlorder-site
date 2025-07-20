@@ -495,11 +495,15 @@
   });
 
   const top10 = entries.slice(0, 10).map(({ address, points }) => {
-    const shortAddr = address.slice(0, 6) + '...' + address.slice(-4);
-    return `<li>${shortAddr}<br>${points}</li>`;
-  }).join('');
-
-  document.getElementById('leaderboard-top10').innerHTML = top10;
+  const shortAddr = address.slice(0, 6) + '...' + address.slice(-4);
+  return `
+    <li class="leaderboard-entry">
+      <span class="addr">${shortAddr}</span>
+      <span class="pts">${points}</span>
+    </li>
+  `;
+}).join('');
+document.getElementById('leaderboard-top5').innerHTML = top10;
 }
 
     loadTop10();
