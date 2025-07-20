@@ -213,25 +213,21 @@
       padding-top: 40px;
     }
 
-    .active-raffles::before {
-      content: "SOON";
-      position: absolute;
-      top: 10px;
-      right: 20px;
-      background: linear-gradient(90deg, #bfa758, #d4c87c);
-      color: #3b2e00;
-      font-weight: 700;
-      font-size: 14px;
-      padding: 4px 10px;
-      border-radius: 12px;
-      box-shadow: 0 0 8px rgba(191, 167, 88, 0.7);
-      user-select: none;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      font-family: 'Inter', sans-serif;
-      pointer-events: none;
-      z-index: 10;
-    }
+    .soon-badge {
+  display: inline-block;
+  margin-left: 10px;
+  background: linear-gradient(90deg, #bfa758, #d4c87c);
+  color: #3b2e00;
+  font-weight: 700;
+  font-size: 14px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  box-shadow: 0 0 8px rgba(191, 167, 88, 0.7);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  font-family: 'Inter', sans-serif;
+}
+
   </style>
 </head>
 <body>
@@ -258,6 +254,7 @@
 
       <div class="panel">
         <h2>ACTIVE RAFFLES</h2>
+        <span class="soon-badge">SOON</span>
       </div>
 
       <div class="panel">
