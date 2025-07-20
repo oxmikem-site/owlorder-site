@@ -126,19 +126,27 @@
     }
 
 
-    .footer {
+   .footer {
   background: var(--bg-panel);
   border-radius: 16px;
   margin-top: 40px;
   padding: 16px 20px;
-  text-align: center;
-  color: var(--text-secondary);
-  font-size: 14px;
   display: flex;
   justify-content: center;
-  gap: 32px;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
+.footer-button {
+  background: var(--accent);
+  color: black;
+  font-weight: 600;
+  font-size: 14px;
+  padding: 8px 18px;
+  border-radius: 12px;
+  text-decoration: none;
+  transition: filter 0.3s ease;
+}
     .profile-picture {
       width: 100px;
       height: 100px;
@@ -147,6 +155,9 @@
       border: 2px solid var(--accent-color);
       object-fit: cover;
     }
+.profile-picture:hover {
+  filter: brightness(1.2);
+}
 
      #listed-nfts {
   overflow-x: auto;
