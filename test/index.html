@@ -302,6 +302,9 @@
         console.log("Looking for NFT image:", `${imageBaseURL}${nftNumber}.webp`);
         const img = document.getElementById("profile-image");
         img.src = `${imageBaseURL}${nftNumber}.webp`;
+        img.onerror = () => {
+  img.style.display = "../logo2.png"; // або заміни на дефолтний аватар
+};
         img.style.display = "block";
       }
     }
