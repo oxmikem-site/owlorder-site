@@ -297,41 +297,36 @@
     ];
 
     async function fetchProfileImage(wallet) {
-  const res = await fetch(sheetURL);
-  const text = await res.text();
-  const rows = text.trim().split('\n').map(r => r.split(','));
-  const headers = rows[0].map(h => h.trim());
+  const res = await fetch(SNAPSHOT_CSV_URL); // ← ми використовуємо ту саму таблицю!
+  const csv = await res.text();
+  const rows = csv.split("\n").slice(1); // Пропускаємо заголовок
 
-  const addrIndex = headers.indexOf("Holder Address");
-  const numberIndex = headers.indexOf("№");
+  let match = null;
 
-  if (addrIndex === -1 || numberIndex === -1) {
-    console.error("Column headers not found in sheet.");
-    return;
-  }
+  for (const row of rows) {
+    const cols = row.split(",");
+    const address = cols[1]?.trim();    // ← bc1... адреса в колонці [1]
+    const nftNumber = cols[9]?.trim();  // ← nft # в колонці [9]
 
-  // Знаходимо перший збіг адреси
-  const ownedRow = rows.find((r, i) => i > 0 && r[addrIndex]?.trim() === wallet);
-
-  if (!ownedRow) {
-    console.warn("No NFT owned by wallet:", wallet);
-    return;
-  }
-
-  const nftNumber = ownedRow[numberIndex]?.trim();
-  if (!nftNumber) {
-    console.warn("NFT number is empty or invalid:", ownedRow);
-    return;
+    if (address === wallet && nftNumber) {
+      match = nftNumber;
+      break;
+    }
   }
 
   const img = document.getElementById("profile-image");
-  const imageURL = `${imageBaseURL}${nftNumber}.webp`;
 
-  console.log("Setting profile image to:", imageURL);
+  if (!match) {
+    console.warn("Wallet not found or NFT number missing:", wallet);
+    img.src = "../logo1.png"; // fallback
+    img.style.display = "block";
+    return;
+  }
 
+  const imageURL = `${imageBaseURL}${match}.webp`;
   img.src = imageURL;
   img.onerror = () => {
-    console.warn("Profile image not found. Falling back.");
+    console.warn("Image failed to load, falling back.");
     img.src = "../logo1.png";
   };
   img.style.display = "block";
