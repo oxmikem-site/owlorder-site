@@ -99,6 +99,7 @@
       display: grid;
       grid-template-columns: 300px minmax(0, 1fr) 300px;
       gap: 24px;
+      flex-wrap: wrap;
     }
 
     .user-panel, .leaderboard-panel, .panel {
@@ -112,10 +113,10 @@
     }
 
     .panel h2 {
-  color: var(--accent-color);
-  margin-top: 0px;
-  margin-bottom: 12px;
-}
+      color: var(--accent-color);
+      margin-top: 0px;
+      margin-bottom: 12px;
+    }
 
     .footer {
       margin-top: 40px;
@@ -125,35 +126,36 @@
     }
 
     .profile-picture {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  margin-top: 12px;
-  border: 2px solid var(--accent-color);
-  object-fit: cover;
-}
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      margin-top: 12px;
+      border: 2px solid var(--accent-color);
+      object-fit: cover;
+    }
 
     #listed-nfts {
-  overflow-x: auto;
-  width: 100%;
-}
+      overflow-x: auto;
+      width: 100%;
+    }
 
-#me-listed-grid {
-  display: flex;
-  gap: 16px;
-  scroll-behavior: smooth;
-  padding-bottom: 10px;
-  height: 370px;
-  align-items: flex-start;
-  min-width: 100%;
-  max-width: 100%;
-  overflow-x: auto;  
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE & Edge */
-}
-#me-listed-grid::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
-}
+    #me-listed-grid {
+      display: flex;
+      gap: 16px;
+      scroll-behavior: smooth;
+      padding-bottom: 10px;
+      height: 370px;
+      align-items: flex-start;
+      min-width: 100%;
+      max-width: 100%;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    #me-listed-grid::-webkit-scrollbar {
+      display: none;
+    }
+
     #me-listed-grid > div {
       flex-shrink: 0;
       width: 300px;
@@ -169,7 +171,6 @@
 
     #me-listed-grid img {
       width: 100%;
-      height: auto;
       max-height: 320px;
       border-top-left-radius: 16px;
       border-top-right-radius: 16px;
@@ -244,7 +245,7 @@
       <div class="user-panel">
         <h2>USER PANEL</h2>
         <button class="connect-wallet" id="wallet-panel">CONNECT WALLET</button>
-          <img id="profile-image" class="profile-picture" src="" alt="Profile Picture" style="display: none;" />
+        <img id="profile-image" class="profile-picture" src="" alt="Profile Picture" style="display: none;" />
       </div>
 
       <div class="panel" id="listed-nfts">
@@ -288,35 +289,34 @@
     ];
 
     async function fetchProfileImage(wallet) {
-  const res = await fetch(sheetURL);
-  const text = await res.text();
-  const rows = text.trim().split('\n').map(r => r.split(','));
-  const headers = rows[0].map(h => h.trim());
-  const addrIndex = headers.indexOf("Holder Address");
-  const nftIndex = headers.indexOf("Owl #");
-  const owned = rows.filter(r => r[addrIndex]?.trim() === wallet);
-  if (owned.length > 0) {
-    const nftNumber = owned[0][nftIndex]?.trim();
-    const img = document.getElementById("profile-image");
-    img.src = `${imageBaseURL}${nftNumber}.webp`;
-    img.style.display = "block";
-  }
-}
+      const res = await fetch(sheetURL);
+      const text = await res.text();
+      const rows = text.trim().split('\n').map(r => r.split(','));
+      const headers = rows[0].map(h => h.trim());
+      const addrIndex = headers.indexOf("Holder Address");
+      const nftIndex = headers.indexOf("Owl #");
+      const owned = rows.filter(r => r[addrIndex]?.trim() === wallet);
+      if (owned.length > 0) {
+        const nftNumber = owned[0][nftIndex]?.trim();
+        const img = document.getElementById("profile-image");
+        img.src = `${imageBaseURL}${nftNumber}.webp`;
+        img.style.display = "block";
+      }
+    }
 
     async function connectUniSatWallet() {
-  if (!window.unisat) return alert("UniSat Wallet not found.");
-  try {
-    await window.unisat.requestAccounts();
-    const address = (await window.unisat.getAccounts())[0];
-    localStorage.setItem('taproot_wallet', address);
-    await handleWalletConnected(address);
-    await fetchProfileImage(address);
-  } catch (err) {
-    console.error("Connection error:", err);
-    alert("Failed to connect wallet.");
-  }
-}
-
+      if (!window.unisat) return alert("UniSat Wallet not found.");
+      try {
+        await window.unisat.requestAccounts();
+        const address = (await window.unisat.getAccounts())[0];
+        localStorage.setItem('taproot_wallet', address);
+        await handleWalletConnected(address);
+        await fetchProfileImage(address);
+      } catch (err) {
+        console.error("Connection error:", err);
+        alert("Failed to connect wallet.");
+      }
+    }
 
     async function checkHolderInSheet(address) {
       const res = await fetch(sheetURL);
@@ -335,9 +335,11 @@
       const userPanel = document.querySelector(".user-panel");
 
       walletButtons.forEach(btn => {
-        btn.textContent = `${address.slice(0, 6)}...${address.slice(-4)}`;
-        btn.disabled = true;
-        btn.style.opacity = '0.85';
+        if (btn) {
+          btn.textContent = `${address.slice(0, 6)}...${address.slice(-4)}`;
+          btn.disabled = true;
+          btn.style.opacity = '0.85';
+        }
       });
 
       const existingInfo = userPanel.querySelector(".wallet-info");
@@ -347,9 +349,9 @@
       wrapper.className = "wallet-info";
       wrapper.style.cssText = "margin-top: 16px; font-size: 15px; line-height: 1.6;";
       wrapper.innerHTML = `
-  <strong>Connected:</strong> ${address.slice(0, 6)}...${address.slice(-4)}<br/>
-  <strong>Total Points:</strong> ${result.found ? result.points : 'Not found'}
-`;
+        <strong>Connected:</strong> ${address.slice(0, 6)}...${address.slice(-4)}<br/>
+        <strong>Total Points:</strong> ${result.found ? result.points : 'Not found'}
+      `;
 
       if (result.found) {
         const twitterBtn = document.createElement("button");
@@ -363,38 +365,35 @@
       userPanel.appendChild(wrapper);
     }
 
-    walletButtons.forEach(btn => btn.addEventListener('click', connectUniSatWallet));
+    walletButtons.forEach(btn => {
+      if (btn) btn.addEventListener('click', connectUniSatWallet);
+    });
+
     const saved = localStorage.getItem('taproot_wallet');
-   if (saved) {
-  handleWalletConnected(saved);
-  fetchProfileImage(saved);
-}
+    if (saved) {
+      handleWalletConnected(saved);
+      fetchProfileImage(saved);
+    }
 
     async function loadTop5() {
-  const url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?output=csv&gid=1127131432';
-  const res = await fetch(url);
-  const text = await res.text();
+      const res = await fetch(sheetURL);
+      const text = await res.text();
+      const rows = text.trim().split('\n').map(row => row.split(','));
+      const entries = rows.slice(1).map(row => {
+        const [rank, address, , pointsRaw] = row;
+        const cleanPoints = (pointsRaw || '0').replace(/,/g, '');
+        return { rank, address, points: cleanPoints };
+      });
 
-  const rows = text.trim().split('\n').map(row => {
-    const match = row.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g);
-    return match ? match.map(cell => cell.replace(/^"|"$/g, '')) : [];
-  });
+      const top5 = entries.slice(0, 5).map(({ rank, address, points }) => {
+        const shortAddr = address.slice(0, 6) + '...' + address.slice(-4);
+        return `<li><strong>#${rank}</strong> ${shortAddr} – ${points}</li>`;
+      }).join('');
 
-  const entries = rows.slice(1).map(row => {
-    const [rank, address, , pointsRaw] = row;
-    const cleanPoints = (pointsRaw || '0').replace(/,/g, '');
-    return { rank, address, points: cleanPoints };
-  });
+      document.getElementById('leaderboard-top3').innerHTML = top5;
+    }
 
-  const top5 = entries.slice(0, 5).map(({ rank, address, points }) => {
-    const shortAddr = address.slice(0, 6) + '...' + address.slice(-4);
-    return `<li><strong>#${rank}</strong> ${shortAddr} – ${points}</li>`;
-  }).join('');
-
-  document.getElementById('leaderboard-top3').innerHTML = top5;
-}
-
-loadTop5();
+    loadTop5();
 
     let listed = [];
     let currentIndex = 0;
@@ -404,7 +403,7 @@ loadTop5();
       const res = await fetch(SNAPSHOT_CSV_URL);
       const csv = await res.text();
       const rows = csv.split("\n").slice(1);
-      listed = rows.map(r => r.split(",")).filter(cols => cols[3]?.toLowerCase().trim() === "yes");
+      listed = rows.map(r => r.split(",")).filter(cols => cols[3] && cols[3].toLowerCase().trim() === "yes");
 
       const container = document.getElementById("me-listed-grid");
       container.innerHTML = "";
@@ -412,32 +411,34 @@ loadTop5();
       listed.forEach(cols => {
         const nftNumber = cols[9]?.trim();
         const inscriptionId = cols[0]?.trim();
-        const imageURL = ${imageBaseURL}${nftNumber}.webp;
-        const meURL = https://magiceden.io/ordinals/item-details/${inscriptionId};
+        const imageURL = `${imageBaseURL}${nftNumber}.webp`;
+        const meURL = `https://magiceden.io/ordinals/item-details/${inscriptionId}`;
 
         const nftDiv = document.createElement("div");
         nftDiv.style.textAlign = "center";
-       nftDiv.innerHTML = `
-  <img src="${imageURL}" alt="Owl #${nftNumber}" />
-  <p>Owl #${nftNumber}</p>
-  <a href="${meURL}" target="_blank">
-    <button>Buy on ME</button>
-  </a>
-`;
+        nftDiv.innerHTML = `
+          <img src="${imageURL}" alt="Owl #${nftNumber}" />
+          <p>Owl #${nftNumber}</p>
+          <a href="${meURL}" target="_blank">
+            <button>Buy on ME</button>
+          </a>
+        `;
         container.appendChild(nftDiv);
       });
 
-      setInterval(() => {
-        if (currentIndex === listed.length - 1) direction = -1;
-        else if (currentIndex === 0) direction = 1;
+      if (listed.length > 1) {
+        setInterval(() => {
+          if (currentIndex === listed.length - 1) direction = -1;
+          else if (currentIndex === 0) direction = 1;
 
-        currentIndex += direction;
+          currentIndex += direction;
 
-        container.scrollTo({
-          left: currentIndex * (300 + 16),
-          behavior: 'smooth'
-        });
-      }, 3000);
+          container.scrollTo({
+            left: currentIndex * (300 + 16),
+            behavior: 'smooth'
+          });
+        }, 3000);
+      }
     }
 
     window.addEventListener("DOMContentLoaded", fetchListedNFTsGrid);
