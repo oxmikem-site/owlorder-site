@@ -185,8 +185,23 @@
   border: 1px solid rgba(255, 255, 255, 0.05); /* ледь помітний контур */
 }
 
+    .view-more-button {
+  display: inline-block;
+  margin-top: 12px;
+  font-size: 14px; /* трохи менший шрифт */
+  font-weight: 500;
+  color: var(--text-primary);
+  text-decoration: none;
+  background: transparent;
+  border: none;
+  padding: 6px 0;
+  cursor: pointer;
+  transition: color 0.3s ease;
 }
 
+.view-more-button:hover {
+  color: var(--accent-color);
+}
 
   .footer {
   background: var(--bg-panel);
@@ -394,11 +409,13 @@
 
   <div class="panel" style="grid-column: 1; grid-row: 2 / span 2;">
   <h2>LEADERBOARD</h2>
+
   <div class="leaderboard-overlay">
     <ol id="leaderboard-top7" class="leaderboard-list"><li>Loading...</li></ol>
   </div>
-</div>
 
+  <a href="https://owlbtc.art/leaderboard/" target="_blank" class="view-more-button">View More</a>
+</div>
 
   <!-- CENTER COLUMN -->
   <div class="panel" id="listed-nfts" style="grid-column: 2; grid-row: 1 / span 2;">
