@@ -335,7 +335,7 @@
       const userPanel = document.querySelector(".user-panel");
 
       walletButtons.forEach(btn => {
-        btn.textContent = ${address.slice(0, 6)}...${address.slice(-4)};
+        btn.textContent = `${address.slice(0, 6)}...${address.slice(-4)}`;
         btn.disabled = true;
         btn.style.opacity = '0.85';
       });
@@ -346,10 +346,10 @@
       const wrapper = document.createElement("div");
       wrapper.className = "wallet-info";
       wrapper.style.cssText = "margin-top: 16px; font-size: 15px; line-height: 1.6;";
-      wrapper.innerHTML = 
-        <strong>Connected:</strong> ${address.slice(0, 6)}...${address.slice(-4)}<br/>
-        <strong>Total Points:</strong> ${result.found ? result.points : 'Not found'}
-      ;
+      wrapper.innerHTML = `
+  <strong>Connected:</strong> ${address.slice(0, 6)}...${address.slice(-4)}<br/>
+  <strong>Total Points:</strong> ${result.found ? result.points : 'Not found'}
+`;
 
       if (result.found) {
         const twitterBtn = document.createElement("button");
