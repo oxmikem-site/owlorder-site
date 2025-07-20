@@ -248,8 +248,8 @@
     <div class="main">
       <div class="user-panel">
         <h2>USER PANEL</h2>
-        <button class="connect-wallet" id="wallet-panel">CONNECT WALLET</button>
         <img id="profile-image" class="profile-picture" src="" alt="Profile Picture" style="display: none;" />
+        <button class="connect-wallet" id="wallet-panel">CONNECT WALLET</button>
       </div>
 
       <div class="panel" id="listed-nfts">
@@ -373,7 +373,6 @@
       wrapper.className = "wallet-info";
       wrapper.style.cssText = "margin-top: 16px; font-size: 15px; line-height: 1.6;";
       wrapper.innerHTML = `
-  <strong>Connected:</strong> ${address.slice(0, 6)}...${address.slice(-4)}<br/>
   <strong>Total Points:</strong> ${result.found ? result.points : 'Not found'}
 `;
 
