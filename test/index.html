@@ -112,9 +112,10 @@
     }
 
     .panel h2 {
-      color: var(--accent-color);
-      margin-bottom: 16px;
-    }
+  color: var(--accent-color);
+  margin-top: 0px;
+  margin-bottom: 12px;
+}
 
     .footer {
       margin-top: 40px;
@@ -122,6 +123,16 @@
       color: var(--text-secondary);
       font-size: 14px;
     }
+
+    .profile-picture {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  margin-top: 12px;
+  border: 2px solid var(--accent-color);
+  object-fit: cover;
+}
+
     #listed-nfts {
   overflow-x: auto;
   width: 100%;
@@ -233,6 +244,7 @@
       <div class="user-panel">
         <h2>USER PANEL</h2>
         <button class="connect-wallet" id="wallet-panel">CONNECT WALLET</button>
+          <img id="profile-image" class="profile-picture" src="" alt="Profile Picture" style="display: none;" />
       </div>
 
       <div class="panel" id="listed-nfts">
@@ -275,21 +287,36 @@
       document.getElementById('wallet-panel')
     ];
 
+    async function fetchProfileImage(wallet) {
+  const res = await fetch(sheetURL);
+  const text = await res.text();
+  const rows = text.trim().split('\n').map(r => r.split(','));
+  const headers = rows[0].map(h => h.trim());
+  const addrIndex = headers.indexOf("Holder Address");
+  const nftIndex = headers.indexOf("Owl #");
+  const owned = rows.filter(r => r[addrIndex]?.trim() === wallet);
+  if (owned.length > 0) {
+    const nftNumber = owned[0][nftIndex]?.trim();
+    const img = document.getElementById("profile-image");
+    img.src = `${imageBaseURL}${nftNumber}.webp`;
+    img.style.display = "block";
+  }
+}
+
     async function connectUniSatWallet() {
-      if (!window.unisat) return alert("UniSat Wallet not found.");
-      try {
-        await window.unisat.requestAccounts();
-        const address = (await window.unisat.getAccounts())[0];
-        localStorage.setItem('taproot_wallet', address);
-        handleWalletConnected(address);
-        setTimeout(() => {
-          window.location.href = /profile/?address=${address};
-        }, 1000);
-      } catch (err) {
-        console.error("Connection error:", err);
-        alert("Failed to connect wallet.");
-      }
-    }
+  if (!window.unisat) return alert("UniSat Wallet not found.");
+  try {
+    await window.unisat.requestAccounts();
+    const address = (await window.unisat.getAccounts())[0];
+    localStorage.setItem('taproot_wallet', address);
+    await handleWalletConnected(address);
+    await fetchProfileImage(address);
+  } catch (err) {
+    console.error("Connection error:", err);
+    alert("Failed to connect wallet.");
+  }
+}
+
 
     async function checkHolderInSheet(address) {
       const res = await fetch(sheetURL);
@@ -338,7 +365,10 @@
 
     walletButtons.forEach(btn => btn.addEventListener('click', connectUniSatWallet));
     const saved = localStorage.getItem('taproot_wallet');
-    if (saved) handleWalletConnected(saved);
+   if (saved) {
+  handleWalletConnected(saved);
+  fetchProfileImage(saved);
+}
 
     async function loadTop5() {
   const url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?output=csv&gid=1127131432';
