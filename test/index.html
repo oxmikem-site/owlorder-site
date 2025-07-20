@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>OWL Dashboard</title>
-  <link rel="icon" type="image/png" href="../logo2.png" />
+  <link rel="icon" type="image/png" href="../logo1.png" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
   <style>
     :root {
@@ -236,8 +236,8 @@
     <header>
       <div class="logo"><img src="../logo1.png" alt="logo" /></div>
       <div class="nav-buttons">
-        <a href="#" class="button">LEADERBOARD</a>
-        <a href="#" class="button">COLLECTION</a>
+        <a href="https://owlbtc.art/leaderboard/" class="button" target="_blank">LEADERBOARD</a>
+        <a href="https://owlbtc.art/collection/" class="button" target="_blank">COLLECTION</a>
         <button class="connect-wallet" id="wallet-header">CONNECT WALLET</button>
       </div>
     </header>
@@ -297,14 +297,17 @@
       const addrIndex = headers.indexOf("Holder Address");
       const nftIndex = headers.indexOf("Owl #");
       const owned = rows.filter(r => r[addrIndex]?.trim() === wallet);
-      if (owned.length > 0) {
-        const nftNumber = owned[0][nftIndex]?.trim();
-        const img = document.getElementById("profile-image");
-        img.src = ${imageBaseURL}${nftNumber}.webp;
-        img.style.display = "block";
-      }
-    }
-    console.log("Looking for NFT image:", ${imageBaseURL}${nftNumber}.webp);
+    if (owned.length > 0) {
+  const nftNumber = owned[0][nftIndex]?.trim();
+  console.log("Looking for NFT image:", `${imageBaseURL}${nftNumber}.webp`);
+  const img = document.getElementById("profile-image");
+  img.src = `${imageBaseURL}${nftNumber}.webp`;
+  img.onerror = () => {
+    console.warn("Image not found, hiding profile.");
+    img.style.display = "../logo1.png";
+  };
+  img.style.display = "block";
+}
 
     async function connectUniSatWallet() {
       if (!window.unisat) return alert("UniSat Wallet not found.");
