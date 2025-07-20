@@ -303,7 +303,7 @@
 
   <div class="panel" style="grid-column: 1; grid-row: 2 / span 2;">
     <h2>LEADERBOARD</h2>
-    <ol id="leaderboard-top5"><li>Loading...</li></ol>
+    <ol id="leaderboard-top10"><li>Loading...</li></ol>
   </div>
 
   <!-- CENTER COLUMN -->
@@ -459,7 +459,7 @@
       fetchProfileImage(saved);
     }
 
-    async function loadTop5() {
+    async function loadTop10() {
       const res = await fetch(sheetURL);
       const text = await res.text();
       const rows = text.trim().split('\n').map(row => row.split(','));
@@ -469,15 +469,15 @@
         return { rank, address, points: cleanPoints };
       });
 
-      const top5 = entries.slice(0, 5).map(({ rank, address, points }) => {
+      const top10 = entries.slice(0, 10).map(({ rank, address, points }) => {
         const shortAddr = address.slice(0, 6) + '...' + address.slice(-4);
         return `<li><strong>#${rank}</strong> ${shortAddr} – ${points}</li>`;
       }).join('');
 
-      document.getElementById('leaderboard-top5').innerHTML = top5;
+      document.getElementById('leaderboard-top10').innerHTML = top10;
     }
 
-    loadTop5();
+    loadTop10();
 
     let listed = [];
     let currentIndex = 0;
