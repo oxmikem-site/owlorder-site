@@ -325,7 +325,7 @@
       filter: brightness(1.3);
     }
 
-    #leaderboard-top7 {
+    #leaderboard-top6 {
   list-style: none;
   padding: 0;
   margin: 0;
@@ -412,7 +412,7 @@
   <h2>LEADERBOARD</h2>
 
   <div class="leaderboard-overlay">
-    <ol id="leaderboard-top7" class="leaderboard-list"><li>Loading...</li></ol>
+    <ol id="leaderboard-top6" class="leaderboard-list"><li>Loading...</li></ol>
   </div>
 
   <a href="https://owlbtc.art/leaderboard/" target="_blank" class="view-more-button">View More</a>
@@ -566,7 +566,7 @@
   }
 }
 
-  async function loadTop7() {
+  async function loadtop6() {
     const res = await fetch(sheetURL);
     const text = await res.text();
     const rows = text.trim().split('\n').map(row => row.split(','));
@@ -576,8 +576,8 @@
       return { address, points: cleanPoints };
     });
 
-    const top7 = entries
-      .slice(0, 7)
+    const top6 = entries
+      .slice(0, 6)
       .map(({ address, points }, index) => {
         const shortAddr = address.slice(0, 6) + '...' + address.slice(-4);
         return `
@@ -589,7 +589,7 @@
         `;
       }).join('');
 
-    document.getElementById('leaderboard-top7').innerHTML = top7;
+    document.getElementById('leaderboard-top6').innerHTML = top6;
   }
 
   async function fetchListedNFTsGrid() {
@@ -653,7 +653,7 @@
       mainWalletBtn.addEventListener('click', connectUniSatWallet);
     }
 
-    loadTop7();
+    loadtop6();
     fetchListedNFTsGrid();
   });
 </script>
