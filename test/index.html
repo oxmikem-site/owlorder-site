@@ -290,23 +290,25 @@
     ];
 
     async function fetchProfileImage(wallet) {
-      const res = await fetch(sheetURL);
-      const text = await res.text();
-      const rows = text.trim().split('\n').map(r => r.split(','));
-      const headers = rows[0].map(h => h.trim());
-      const addrIndex = headers.indexOf("Holder Address");
-      const nftIndex = headers.indexOf("Owl #");
-      const owned = rows.filter(r => r[addrIndex]?.trim() === wallet);
-    if (owned.length > 0) {
-  const nftNumber = owned[0][nftIndex]?.trim();
-  console.log("Looking for NFT image:", `${imageBaseURL}${nftNumber}.webp`);
-  const img = document.getElementById("profile-image");
-  img.src = `${imageBaseURL}${nftNumber}.webp`;
-  img.onerror = () => {
-    console.warn("Image not found, hiding profile.");
-    img.style.display = "../logo1.png";
-  };
-  img.style.display = "block";
+  const res = await fetch(sheetURL);
+  const text = await res.text();
+  const rows = text.trim().split('\n').map(r => r.split(','));
+  const headers = rows[0].map(h => h.trim());
+  const addrIndex = headers.indexOf("Holder Address");
+  const nftIndex = headers.indexOf("Owl #");
+  const owned = rows.filter(r => r[addrIndex]?.trim() === wallet);
+
+  if (owned.length > 0) {
+    const nftNumber = owned[0][nftIndex]?.trim();
+    console.log("Looking for NFT image:", `${imageBaseURL}${nftNumber}.webp`);
+    const img = document.getElementById("profile-image");
+    img.src = `${imageBaseURL}${nftNumber}.webp`;
+    img.onerror = () => {
+      console.warn("Image not found, hiding profile.");
+      img.style.display = "none";
+    };
+    img.style.display = "block";
+  }
 }
 
     async function connectUniSatWallet() {
@@ -392,7 +394,7 @@
 
       const top5 = entries.slice(0, 5).map(({ rank, address, points }) => {
         const shortAddr = address.slice(0, 6) + '...' + address.slice(-4);
-        return <li><strong>#${rank}</strong> ${shortAddr} – ${points}</li>;
+        return `<li><strong>#${rank}</strong> ${shortAddr} – ${points}</li>`;
       }).join('');
 
       document.getElementById('leaderboard-top3').innerHTML = top5;
@@ -416,8 +418,8 @@
       listed.forEach(cols => {
         const nftNumber = cols[9]?.trim();
         const inscriptionId = cols[0]?.trim();
-        const imageURL = ${imageBaseURL}${nftNumber}.webp;
-        const meURL = https://magiceden.io/ordinals/item-details/${inscriptionId};
+        const imageURL = `${imageBaseURL}${nftNumber}.webp`;
+const meURL = `https://magiceden.io/ordinals/item-details/${inscriptionId}`;
 
         const nftDiv = document.createElement("div");
         nftDiv.style.textAlign = "center";
