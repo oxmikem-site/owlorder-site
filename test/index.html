@@ -349,7 +349,7 @@
 
     async function handleWalletConnected(address) {
       const result = await checkHolderInSheet(address);
-      const userPanel = document.querySelector(".user-panel");
+      const userPanel = document.querySelector("panel");
 
       walletButtons.forEach(btn => {
         if (btn) {
