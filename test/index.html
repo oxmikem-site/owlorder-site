@@ -236,8 +236,8 @@
     <header>
       <div class="logo"><img src="../logo1.png" alt="logo" /></div>
       <div class="nav-buttons">
-        <a href="#" class="button">LEADERBOARD</a>
-        <a href="#" class="button">COLLECTION</a>
+        <a href="https://owlbtc.art/leaderboard/" class="button" target="_blank">LEADERBOARD</a>
+        <a href="https://owlbtc.art/collection/" class="button" target="_blank">COLLECTION</a>
         <button class="connect-wallet" id="wallet-header">CONNECT WALLET</button>
       </div>
     </header>
@@ -263,7 +263,7 @@
 
       <div class="leaderboard-panel">
         <h2>LEADERBOARD</h2>
-        <ol id="leaderboard-top3"><li>Loading...</li></ol>
+        <ol id="leaderboard-top5"><li>Loading...</li></ol>
       </div>
 
       <div class="panel">
@@ -299,12 +299,12 @@
       const owned = rows.filter(r => r[addrIndex]?.trim() === wallet);
       if (owned.length > 0) {
         const nftNumber = owned[0][nftIndex]?.trim();
+        console.log("Looking for NFT image:", `${imageBaseURL}${nftNumber}.webp`);
         const img = document.getElementById("profile-image");
         img.src = `${imageBaseURL}${nftNumber}.webp`;
         img.style.display = "block";
       }
     }
-    console.log("Looking for NFT image:", `${imageBaseURL}${nftNumber}.webp`);
 
     async function connectUniSatWallet() {
       if (!window.unisat) return alert("UniSat Wallet not found.");
