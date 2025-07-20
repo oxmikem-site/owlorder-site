@@ -35,6 +35,7 @@
 
     header {
       width: 100%;
+      max-width: unset;
       height: 64px;
       background: var(--bg-panel);
       display: flex;
@@ -43,7 +44,7 @@
       height: 64px;
       padding: 0 20px;
       border-radius: 20px;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+      box-shadow: none;
       margin-top: 20px;
       margin-bottom: 20px;
     }
@@ -288,6 +289,8 @@
   </div>
 
       <div class="panel" style="grid-column: 1; grid-row: 3; visibility: hidden;"></div>
+
+      <div class="panel" style="grid-column: 1; grid-row: 3; visibility: hidden; height: 64px;"></div>
 
   <!-- CENTER COLUMN -->
   <div class="panel" id="listed-nfts" style="grid-column: 2; grid-row: 1 / span 2;">
