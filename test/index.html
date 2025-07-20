@@ -548,22 +548,23 @@
     userPanel.appendChild(wrapper);
   }
     
-      const twitterBtn = document.createElement("button");
-      twitterBtn.textContent = "Connect Twitter";
-      twitterBtn.className = "connect-wallet";
-      twitterBtn.style.marginTop = "10px";
-      twitterBtn.onclick = () => window.location.href = "/auth/twitter2";
-      img.insertAdjacentElement('afterend', twitterBtn);
-    } else {
-      img.style.display = "none";
-    
-      const getOwlBtn = document.createElement("button");
-      getOwlBtn.textContent = "Get your OWL";
-      getOwlBtn.className = "connect-wallet";
-      getOwlBtn.style.marginTop = "10px";
-      getOwlBtn.onclick = () => window.open("https://owlbtc.art/collection", "_blank");
-      userPanel.appendChild(getOwlBtn);
-    }
+  const twitterBtn = document.createElement("button");
+  twitterBtn.textContent = "Connect Twitter";
+  twitterBtn.className = "connect-wallet";
+  twitterBtn.style.marginTop = "10px";
+  twitterBtn.onclick = () => window.location.href = "/auth/twitter2";
+  img.insertAdjacentElement('afterend', twitterBtn);
+
+} else {
+  img.style.display = "none";
+
+  const getOwlBtn = document.createElement("button");
+  getOwlBtn.textContent = "Get your OWL";
+  getOwlBtn.className = "connect-wallet";
+  getOwlBtn.style.marginTop = "10px";
+  getOwlBtn.onclick = () => window.open("https://owlbtc.art/collection", "_blank");
+  userPanel.appendChild(getOwlBtn);
+}
 
   async function loadTop7() {
     const res = await fetch(sheetURL);
