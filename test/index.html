@@ -502,6 +502,13 @@
     if (result.found) {
       img.style.display = "block";
 
+      const totalPointsEl = document.createElement("div");
+    totalPointsEl.style.cssText = "margin-top: 10px; font-size: 15px;";
+    totalPointsEl.innerHTML = `<strong>Total Points:</strong> ${result.found ? result.points : 'Not found'}`;
+    userPanel.appendChild(totalPointsEl);
+    userPanel.appendChild(wrapper);
+  }
+    
       const twitterBtn = document.createElement("button");
       twitterBtn.textContent = "Connect Twitter";
       twitterBtn.className = "connect-wallet";
@@ -510,7 +517,7 @@
       img.insertAdjacentElement('afterend', twitterBtn);
     } else {
       img.style.display = "none";
-
+    
       const getOwlBtn = document.createElement("button");
       getOwlBtn.textContent = "Get your OWL";
       getOwlBtn.className = "connect-wallet";
@@ -518,13 +525,6 @@
       getOwlBtn.onclick = () => window.open("https://owlbtc.art/collection", "_blank");
       userPanel.appendChild(getOwlBtn);
     }
-
-    const totalPointsEl = document.createElement("div");
-    totalPointsEl.style.cssText = "margin-top: 10px; font-size: 15px;";
-    totalPointsEl.innerHTML = `<strong>Total Points:</strong> ${result.found ? result.points : 'Not found'}`;
-    userPanel.appendChild(totalPointsEl);
-    userPanel.appendChild(wrapper);
-  }
 
   async function loadTop7() {
     const res = await fetch(sheetURL);
