@@ -143,6 +143,23 @@
       margin-bottom: 8px;
     }
 
+    .leaderboard-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.leaderboard-list li {
+  padding: 10px 0;
+  font-size: 16px;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.08); 
+}
+
+.leaderboard-list li:last-child {
+  border-bottom: none;
+}
+
+
   .footer {
   background: var(--bg-panel);
   border-radius: 16px;
@@ -461,22 +478,22 @@
     }
 
     async function loadTop10() {
-      const res = await fetch(sheetURL);
-      const text = await res.text();
-      const rows = text.trim().split('\n').map(row => row.split(','));
-      const entries = rows.slice(1).map(row => {
-        const [rank, address, , pointsRaw] = row;
-        const cleanPoints = (pointsRaw || '0').replace(/,/g, '');
-        return { rank, address, points: cleanPoints };
-      });
+  const res = await fetch(sheetURL);
+  const text = await res.text();
+  const rows = text.trim().split('\n').map(row => row.split(','));
+  const entries = rows.slice(1).map(row => {
+    const [, address, , pointsRaw] = row;
+    const cleanPoints = (pointsRaw || '0').replace(/,/g, '');
+    return { address, points: cleanPoints };
+  });
 
-      const top10 = entries.slice(0, 10).map(({ rank, address, points }) => {
-        const shortAddr = address.slice(0, 6) + '...' + address.slice(-4);
-        return `<li><strong>#${rank}</strong> ${shortAddr} – ${points}</li>`;
-      }).join('');
+  const top10 = entries.slice(0, 10).map(({ address, points }) => {
+    const shortAddr = address.slice(0, 6) + '...' + address.slice(-4);
+    return `<li>${shortAddr}<br>${points}</li>`;
+  }).join('');
 
-      document.getElementById('leaderboard-top10').innerHTML = top10;
-    }
+  document.getElementById('leaderboard-top10').innerHTML = top10;
+}
 
     loadTop10();
 
