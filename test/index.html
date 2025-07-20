@@ -361,7 +361,7 @@
       <div class="nav-buttons">
         <a href="https://owlbtc.art/leaderboard/" class="button" target="_blank">LEADERBOARD</a>
         <a href="https://owlbtc.art/collection/" class="button" target="_blank">COLLECTION</a>
-        <button class="connect-wallet" id="wallet-header">CONNECT WALLET</button>
+        <button class="connect-wallet wallet-trigger">CONNECT WALLET</button>
       </div>
     </header>
 
@@ -370,7 +370,7 @@
   <div class="panel" style="grid-column: 1; grid-row: 1;">
     <h2>USER PANEL</h2>
     <img id="profile-image" class="profile-picture" src="" alt="Profile Picture" style="display: none;" />
-    <button class="connect-wallet" id="wallet-panel">CONNECT WALLET</button>
+    <button class="connect-wallet wallet-trigger">CONNECT WALLET</button>
   </div>
 
   <div class="panel" style="grid-column: 1; grid-row: 2 / span 2;">
@@ -408,208 +408,214 @@
 </div>
 
   <script>
-    const SNAPSHOT_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?output=csv&gid=0";
-    const imageBaseURL = "https://raw.githubusercontent.com/oxmikem-site/owlorder-site/main/images/";
-    const sheetURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?gid=1127131432&single=true&output=csv';
+  const SNAPSHOT_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?output=csv&gid=0";
+  const imageBaseURL = "https://raw.githubusercontent.com/oxmikem-site/owlorder-site/main/images/";
+  const sheetURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?gid=1127131432&single=true&output=csv';
 
-    const walletButtons = Array.from(document.querySelectorAll('.connect-wallet'));
+  async function fetchProfileImage(wallet) {
+    const img = document.getElementById("profile-image");
+    const res = await fetch(SNAPSHOT_CSV_URL);
+    const csv = await res.text();
+    const rows = csv.split("\n").slice(1);
 
-    async function fetchProfileImage(wallet) {
-  const img = document.getElementById("profile-image"); 
-
-  const res = await fetch(SNAPSHOT_CSV_URL);
-  const csv = await res.text();
-  const rows = csv.split("\n").slice(1); 
-
-  let match = null;
-
-  for (const row of rows) {
-    const cols = row.split(",");
-    const address = cols[1]?.trim();   
-    const nftNumber = cols[9]?.trim();  
-
-    if (address === wallet && nftNumber) {
-      match = nftNumber;
-      break;
-    }
-  }
-
-  if (!match) {
-    console.warn("Wallet not found or NFT number missing:", wallet);
-    img.src = "../logo1.png"; // fallback
-    img.style.display = "block";
-    return;
-  }
-
-  const imageURL = `${imageBaseURL}${match}.webp`;
-  img.src = imageURL;
-  img.onerror = () => {
-    console.warn("Image failed to load, falling back.");
-    img.src = "../logo1.png";
-  };
-  img.style.display = "block";
-}
-
-
-    async function connectUniSatWallet() {
-      if (!window.unisat) return alert("UniSat Wallet not found.");
-      try {
-        await window.unisat.requestAccounts();
-        const address = (await window.unisat.getAccounts())[0];
-        localStorage.setItem('taproot_wallet', address);
-        await handleWalletConnected(address);
-        await fetchProfileImage(address);
-      } catch (err) {
-        console.error("Connection error:", err);
-        alert("Failed to connect wallet.");
+    let match = null;
+    for (const row of rows) {
+      const cols = row.split(",");
+      const address = cols[1]?.trim();
+      const nftNumber = cols[9]?.trim();
+      if (address === wallet && nftNumber) {
+        match = nftNumber;
+        break;
       }
     }
 
-    async function checkHolderInSheet(address) {
-      const res = await fetch(sheetURL);
-      const text = await res.text();
-      const rows = text.trim().split('\n').map(r => r.split(','));
-      const headers = rows[0].map(h => h.trim());
-      const addrIndex = headers.indexOf("Holder Address");
-      const pointsIndex = headers.indexOf("Total Points");
-      const row = rows.find(r => r[addrIndex]?.trim() === address.trim());
-      if (row) return { found: true, address, points: row[pointsIndex] };
-      return { found: false };
+    if (!match) {
+      console.warn("Wallet not found or NFT number missing:", wallet);
+      img.src = "../logo1.png";
+      img.style.display = "block";
+      return;
     }
 
-    async function handleWalletConnected(address) {
-  const result = await checkHolderInSheet(address);
-
-  const userPanel = document.querySelector(".panel h2")?.textContent === "USER PANEL"
-    ? document.querySelector(".panel")
-    : document.querySelectorAll(".panel")[0];
-
-  const img = document.getElementById("profile-image");
-
-  // Кнопки гаманця
-  walletButtons.forEach(btn => {
-    if (btn) {
-      btn.textContent = `${address.slice(0, 6)}...${address.slice(-4)}`;
-      btn.disabled = true;
-      btn.style.opacity = '0.85';
-      btn.style.marginTop = '8px';
-    }
-  });
-
-  // Прибрати старі дані
-  const existingInfo = userPanel.querySelector(".wallet-info");
-  if (existingInfo) existingInfo.remove();
-
-  const wrapper = document.createElement("div");
-  wrapper.className = "wallet-info";
-  wrapper.style.cssText = "margin-top: 16px; font-size: 15px; line-height: 1.6;";
-
-  // Якщо знайдено — показати зображення і кнопку Twitter
-  if (result.found) {
+    const imageURL = `${imageBaseURL}${match}.webp`;
+    img.src = imageURL;
+    img.onerror = () => {
+      console.warn("Image failed to load, falling back.");
+      img.src = "../logo1.png";
+    };
     img.style.display = "block";
-
-    const twitterBtn = document.createElement("button");
-    twitterBtn.textContent = "Connect Twitter";
-    twitterBtn.className = "connect-wallet";
-    twitterBtn.style.marginTop = "10px";
-    twitterBtn.onclick = () => window.location.href = "/auth/twitter2";
-    img.insertAdjacentElement('afterend', twitterBtn);
-  } else {
-    // Якщо НЕ знайдено — сховати зображення та показати кнопку "Get your OWL"
-    img.style.display = "none";
-
-    const getOwlBtn = document.createElement("button");
-    getOwlBtn.textContent = "Get your OWL";
-    getOwlBtn.className = "connect-wallet";
-    getOwlBtn.style.marginTop = "10px";
-    getOwlBtn.onclick = () => window.open("https://owlbtc.art/collection", "_blank");
-    userPanel.appendChild(getOwlBtn);
   }
 
-  // Показати total points або повідомлення
-  const totalPointsEl = document.createElement("div");
-  totalPointsEl.style.cssText = "margin-top: 10px; font-size: 15px;";
-  totalPointsEl.innerHTML = `<strong>Total Points:</strong> ${result.found ? result.points : 'Not found'}`;
-  userPanel.appendChild(totalPointsEl);
+  async function connectUniSatWallet() {
+    if (!window.unisat) return alert("UniSat Wallet not found.");
+    try {
+      console.log("Requesting accounts...");
+      await window.unisat.requestAccounts();
+      const address = (await window.unisat.getAccounts())[0];
+      console.log("Connected address:", address);
+      localStorage.setItem('taproot_wallet', address);
+      await handleWalletConnected(address);
+      await fetchProfileImage(address);
+    } catch (err) {
+      console.error("Connection error:", err);
+      alert("Failed to connect wallet.");
+    }
+  }
 
-  userPanel.appendChild(wrapper);
-}
-    
-    async function loadTop10() {
-  const res = await fetch(sheetURL);
-  const text = await res.text();
-  const rows = text.trim().split('\n').map(row => row.split(','));
-  const entries = rows.slice(1).map(row => {
-    const [, address, , pointsRaw] = row;
-    const cleanPoints = (pointsRaw || '0').replace(/,/g, '');
-    return { address, points: cleanPoints };
-  });
+  async function checkHolderInSheet(address) {
+    const res = await fetch(sheetURL);
+    const text = await res.text();
+    const rows = text.trim().split('\n').map(r => r.split(','));
+    const headers = rows[0].map(h => h.trim());
+    const addrIndex = headers.indexOf("Holder Address");
+    const pointsIndex = headers.indexOf("Total Points");
+    const row = rows.find(r => r[addrIndex]?.trim() === address.trim());
+    if (row) return { found: true, address, points: row[pointsIndex] };
+    return { found: false };
+  }
 
-  const top10 = entries
-  .slice(0, 10)
-  .map(({ address, points }, index) => {
-    const shortAddr = address.slice(0, 6) + '...' + address.slice(-4);
-    return `
-      <li class="leaderboard-entry">
-        <span class="rank">#${index + 1}</span>
-        <span class="addr">${shortAddr}</span>
-        <span class="pts">${points}</span>
-      </li>
-    `;
-  }).join('');
+  async function handleWalletConnected(address) {
+    const result = await checkHolderInSheet(address);
 
-document.getElementById('leaderboard-top10').innerHTML = top10;
-}
+    const userPanel = document.querySelector(".panel h2")?.textContent === "USER PANEL"
+      ? document.querySelector(".panel")
+      : document.querySelectorAll(".panel")[0];
 
-    loadTop10();
+    const img = document.getElementById("profile-image");
 
-    let listed = [];
+    // Оновити основну кнопку
+    const mainWalletBtn = document.getElementById("wallet-connect-button");
+    if (mainWalletBtn) {
+      mainWalletBtn.textContent = `${address.slice(0, 6)}...${address.slice(-4)}`;
+      mainWalletBtn.disabled = true;
+      mainWalletBtn.style.opacity = '0.85';
+      mainWalletBtn.style.marginTop = '8px';
+    }
+
+    // Видалити стару інфу
+    const existingInfo = userPanel.querySelector(".wallet-info");
+    if (existingInfo) existingInfo.remove();
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "wallet-info";
+    wrapper.style.cssText = "margin-top: 16px; font-size: 15px; line-height: 1.6;";
+
+    if (result.found) {
+      img.style.display = "block";
+
+      const twitterBtn = document.createElement("button");
+      twitterBtn.textContent = "Connect Twitter";
+      twitterBtn.className = "connect-wallet";
+      twitterBtn.style.marginTop = "10px";
+      twitterBtn.onclick = () => window.location.href = "/auth/twitter2";
+      img.insertAdjacentElement('afterend', twitterBtn);
+    } else {
+      img.style.display = "none";
+
+      const getOwlBtn = document.createElement("button");
+      getOwlBtn.textContent = "Get your OWL";
+      getOwlBtn.className = "connect-wallet";
+      getOwlBtn.style.marginTop = "10px";
+      getOwlBtn.onclick = () => window.open("https://owlbtc.art/collection", "_blank");
+      userPanel.appendChild(getOwlBtn);
+    }
+
+    const totalPointsEl = document.createElement("div");
+    totalPointsEl.style.cssText = "margin-top: 10px; font-size: 15px;";
+    totalPointsEl.innerHTML = `<strong>Total Points:</strong> ${result.found ? result.points : 'Not found'}`;
+    userPanel.appendChild(totalPointsEl);
+    userPanel.appendChild(wrapper);
+  }
+
+  async function loadTop10() {
+    const res = await fetch(sheetURL);
+    const text = await res.text();
+    const rows = text.trim().split('\n').map(row => row.split(','));
+    const entries = rows.slice(1).map(row => {
+      const [, address, , pointsRaw] = row;
+      const cleanPoints = (pointsRaw || '0').replace(/,/g, '');
+      return { address, points: cleanPoints };
+    });
+
+    const top10 = entries
+      .slice(0, 10)
+      .map(({ address, points }, index) => {
+        const shortAddr = address.slice(0, 6) + '...' + address.slice(-4);
+        return `
+          <li class="leaderboard-entry">
+            <span class="rank">#${index + 1}</span>
+            <span class="addr">${shortAddr}</span>
+            <span class="pts">${points}</span>
+          </li>
+        `;
+      }).join('');
+
+    document.getElementById('leaderboard-top10').innerHTML = top10;
+  }
+
+  async function fetchListedNFTsGrid() {
+    const res = await fetch(SNAPSHOT_CSV_URL);
+    const csv = await res.text();
+    const rows = csv.split("\n").slice(1);
+    const listed = rows.map(r => r.split(",")).filter(cols => cols[3] && cols[3].toLowerCase().trim() === "yes");
+
+    const container = document.getElementById("me-listed-grid");
+    container.innerHTML = "";
+
+    listed.forEach(cols => {
+      const nftNumber = cols[9]?.trim();
+      const inscriptionId = cols[0]?.trim();
+      const imageURL = `${imageBaseURL}${nftNumber}.webp`;
+      const meURL = `https://magiceden.io/ordinals/item-details/${inscriptionId}`;
+
+      const nftDiv = document.createElement("div");
+      nftDiv.style.textAlign = "center";
+      nftDiv.innerHTML = `
+        <img src="${imageURL}" alt="Owl #${nftNumber}" />
+        <p>Owl #${nftNumber}</p>
+        <a href="${meURL}" target="_blank">
+          <button>Buy on ME</button>
+        </a>
+      `;
+      container.appendChild(nftDiv);
+    });
+
     let currentIndex = 0;
     let direction = 1;
 
-    async function fetchListedNFTsGrid() {
-      const res = await fetch(SNAPSHOT_CSV_URL);
-      const csv = await res.text();
-      const rows = csv.split("\n").slice(1);
-      listed = rows.map(r => r.split(",")).filter(cols => cols[3] && cols[3].toLowerCase().trim() === "yes");
+    if (listed.length > 1) {
+      setInterval(() => {
+        if (currentIndex === listed.length - 1) direction = -1;
+        else if (currentIndex === 0) direction = 1;
 
-      const container = document.getElementById("me-listed-grid");
-      container.innerHTML = "";
+        currentIndex += direction;
 
-      listed.forEach(cols => {
-        const nftNumber = cols[9]?.trim();
-        const inscriptionId = cols[0]?.trim();
-        const imageURL = `${imageBaseURL}${nftNumber}.webp`;
-const meURL = `https://magiceden.io/ordinals/item-details/${inscriptionId}`;
+        container.scrollTo({
+          left: currentIndex * (325 + 16),
+          behavior: 'smooth'
+        });
+      }, 3000);
+    }
+  }
 
-        const nftDiv = document.createElement("div");
-        nftDiv.style.textAlign = "center";
-        nftDiv.innerHTML = `
-  <img src="${imageURL}" alt="Owl #${nftNumber}" />
-  <p>Owl #${nftNumber}</p>
-  <a href="${meURL}" target="_blank">
-    <button>Buy on ME</button>
-  </a>
-`;
-        container.appendChild(nftDiv);
-      });
+  document.addEventListener("DOMContentLoaded", () => {
+    const saved = localStorage.getItem('taproot_wallet');
+    if (saved) {
+      handleWalletConnected(saved);
+      fetchProfileImage(saved);
+    }
+    
+    document.querySelectorAll(".wallet-trigger").forEach(btn =>
+    btn.addEventListener('click', connectUniSatWallet)
+  );
 
-      if (listed.length > 1) {
-        setInterval(() => {
-          if (currentIndex === listed.length - 1) direction = -1;
-          else if (currentIndex === 0) direction = 1;
-
-          currentIndex += direction;
-
-          container.scrollTo({
-            left: currentIndex * (325 + 16),
-            behavior: 'smooth'
-          });
-        }, 3000);
-      }
+    const mainWalletBtn = document.getElementById("wallet-connect-button");
+    if (mainWalletBtn) {
+      mainWalletBtn.addEventListener('click', connectUniSatWallet);
     }
 
-    window.addEventListener("DOMContentLoaded", fetchListedNFTsGrid);
-  </script>
+    loadTop10();
+    fetchListedNFTsGrid();
+  });
+</script>
 </body>
 </html>
