@@ -207,7 +207,7 @@
       object-fit: cover;
     }
 .profile-picture:hover {
-  filter: brightness(5);
+  filter: brightness(1.2);
 }
 
      #listed-nfts {
@@ -238,9 +238,9 @@
  display: none;
     }
     #me-listed-grid > div {
-      flex-shrink: 0;
-      width: 100%;
-      max-width: 380px;
+  flex-shrink: 0;
+  width: 280px;
+  max-width: 280px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -410,10 +410,7 @@
     const imageBaseURL = "https://raw.githubusercontent.com/oxmikem-site/owlorder-site/main/images/";
     const sheetURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?gid=1127131432&single=true&output=csv';
 
-    const walletButtons = [
-      document.getElementById('wallet-header'),
-      document.getElementById('wallet-panel')
-    ];
+    const walletButtons = Array.from(document.querySelectorAll('.connect-wallet'));
 
     async function fetchProfileImage(wallet) {
   const img = document.getElementById("profile-image"); 
@@ -603,7 +600,7 @@ const meURL = `https://magiceden.io/ordinals/item-details/${inscriptionId}`;
           currentIndex += direction;
 
           container.scrollTo({
-            left: currentIndex * (300 + 16),
+            left: currentIndex * (280 + 16),
             behavior: 'smooth'
           });
         }, 3000);
