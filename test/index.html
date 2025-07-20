@@ -110,7 +110,7 @@
       display: flex;
       flex-direction: column;
       justify-content: start;
-      gap: 0; /* ← ДОДАЙ ЦЕ */
+      gap: 0;
     }
 
     .panel h2 {
@@ -138,6 +138,12 @@
     #listed-nfts {
       overflow-x: auto;
       width: 100%;
+      scrollbar-width: none;         /* Firefox */
+      -ms-overflow-style: none;      /* IE/Edge */
+    }
+
+    #listed-nfts::-webkit-scrollbar {
+      display: none;                 /* Chrome/Safari */
     }
 
     #me-listed-grid {
@@ -145,16 +151,9 @@
       gap: 16px;
       scroll-behavior: smooth;
       padding-bottom: 10px;
-      height: 370px;
       align-items: flex-start;
       min-width: 100%;
       max-width: 100%;
-      overflow-x: auto;
-      scrollbar-width: none;
-      -ms-overflow-style: none;
-    }
-    #me-listed-grid::-webkit-scrollbar {
-      display: none;
     }
 
     #me-listed-grid > div {
@@ -165,7 +164,6 @@
       align-items: center;
       justify-content: center;
       border-radius: 16px;
-      height: 100%;
       background: transparent;
       overflow: hidden;
     }
@@ -303,8 +301,8 @@
         const img = document.getElementById("profile-image");
         img.src = `${imageBaseURL}${nftNumber}.webp`;
         img.onerror = () => {
-  img.style.display = "../logo2.png"; // або заміни на дефолтний аватар
-};
+          img.src = "../logo2.png";
+        };
         img.style.display = "block";
       }
     }
@@ -379,26 +377,6 @@
       handleWalletConnected(saved);
       fetchProfileImage(saved);
     }
-
-    async function loadTop5() {
-      const res = await fetch(sheetURL);
-      const text = await res.text();
-      const rows = text.trim().split('\n').map(row => row.split(','));
-      const entries = rows.slice(1).map(row => {
-        const [rank, address, , pointsRaw] = row;
-        const cleanPoints = (pointsRaw || '0').replace(/,/g, '');
-        return { rank, address, points: cleanPoints };
-      });
-
-      const top5 = entries.slice(0, 5).map(({ rank, address, points }) => {
-        const shortAddr = address.slice(0, 6) + '...' + address.slice(-4);
-        return `<li><strong>#${rank}</strong> ${shortAddr} – ${points}</li>`;
-      }).join('');
-
-      document.getElementById('leaderboard-top3').innerHTML = top5;
-    }
-
-    loadTop5();
 
     let listed = [];
     let currentIndex = 0;
