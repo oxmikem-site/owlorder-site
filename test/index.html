@@ -286,7 +286,9 @@
     ];
 
     async function fetchProfileImage(wallet) {
-  const res = await fetch(SNAPSHOT_CSV_URL); // ← ми використовуємо ту саму таблицю!
+  const img = document.getElementById("profile-image"); // ← ВАЖЛИВО: перенесено сюди першим!
+
+  const res = await fetch(SNAPSHOT_CSV_URL);
   const csv = await res.text();
   const rows = csv.split("\n").slice(1); // Пропускаємо заголовок
 
@@ -318,6 +320,7 @@
   };
   img.style.display = "block";
 }
+
 
     async function connectUniSatWallet() {
       if (!window.unisat) return alert("UniSat Wallet not found.");
