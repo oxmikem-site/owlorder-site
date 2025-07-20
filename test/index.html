@@ -113,7 +113,7 @@
 
     .main {
   display: grid;
-  grid-template-columns: 280px 300px 280px;
+  grid-template-columns: 280px 330px 280px;
   gap: 20px;
   grid-auto-rows: min-content;
 }
@@ -201,12 +201,12 @@
   min-width: 100%;
   max-width: 100%;
   overflow-x: auto;  
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE & Edge */
-}
+  scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
 #me-listed-grid::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
-}
+ display: none;
+    }
     #me-listed-grid > div {
       flex-shrink: 0;
       width: 300px;
@@ -229,6 +229,7 @@
       object-fit: cover;
       display: block;
       user-select: none;
+      
     }
 
     #me-listed-grid p {
