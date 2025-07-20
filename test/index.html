@@ -137,9 +137,10 @@
   justify-content: center;
   align-items: center;
   gap: 16px;
-  margin-top: auto; /* щоб футер опускався вниз */
-  flex-wrap: nowrap; /* ← важливо! */
-  height: 64px; /* задає однакову висоту з іншими панелями */
+  flex-wrap: nowrap;
+  height: 64px;
+  grid-column: 2 / span 2; /* ← займає колонки 2 і 3 */
+  grid-row: 3; /* ← розташування по висоті */
 }
 
 .footer-button {
