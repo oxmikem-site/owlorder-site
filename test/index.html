@@ -100,11 +100,10 @@
     }
 
     .main {
-      display: grid;
-      grid-template-columns: 300px minmax(0, 1fr) 300px;
-      gap: 24px;
-      flex-wrap: wrap;
-    }
+  display: grid;
+  grid-template-columns: 300px 1fr 300px;
+  gap: 24px;
+}
 
     .user-panel, .leaderboard-panel, .panel {
       background: var(--bg-panel);
@@ -250,27 +249,27 @@
     </header>
 
     <div class="main">
-      <div class="panel">
+      <div class="panel" style="grid-column: 1;">
         <h2>USER PANEL</h2>
         <img id="profile-image" class="profile-picture" src="" alt="Profile Picture" style="display: none;" />
         <button class="connect-wallet" id="wallet-panel">CONNECT WALLET</button>
       </div>
 
-      <div class="panel" id="listed-nfts">
+      <div class="panel" id="listed-nfts" style="grid-column: 2;">
         <div id="me-listed-grid"></div>
       </div>
 
-      <div class="panel">
+      <div class="panel" style="grid-column: 1;">
         <h2>LEADERBOARD</h2>
         <ol id="leaderboard-top5"><li>Loading...</li></ol>
       </div>
 
-      <div class="panel">
+     <div class="panel" style="grid-column: 3;">
         <h2>ACTIVE RAFFLES</h2>
         <span class="soon-badge">SOON</span>
       </div>
       
-      <div class="panel">
+      <div class="panel" style="grid-column: 3;">
         <h2>ANNOUNCEMENTS</h2>
         <ul>
           <li>Mint Phase 2 starts July 10</li>
