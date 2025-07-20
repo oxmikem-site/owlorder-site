@@ -126,15 +126,17 @@
     }
 
 
-   .footer {
+  .footer {
   background: var(--bg-panel);
   border-radius: 16px;
   padding: 16px 20px;
   display: flex;
   justify-content: center;
+  align-items: center;
   gap: 16px;
-  flex-wrap: wrap;
-  margin-top: 24px;
+  margin-top: auto; /* щоб футер опускався вниз */
+  flex-wrap: nowrap; /* ← важливо! */
+  height: 64px; /* задає однакову висоту з іншими панелями */
 }
 
 .footer-button {
@@ -291,7 +293,7 @@
     <span class="soon-badge">SOON</span>
   </div>
 
-      <div class="panel footer" style="grid-column: 2 / span 2;">
+      <div class="panel" style="grid-column: 3; grid-row: 2; height: 160px;">
   <a href="https://x.com/OwlOrderBTC" target="_blank" class="footer-button">TWITTER</a>
   <a href="https://magiceden.io/ordinals/marketplace/owl" target="_blank" class="footer-button">MAGIC EDEN</a>
   <a href="https://yourdomain.com/collab-request" target="_blank" class="footer-button">COLLABS REQUEST</a>
