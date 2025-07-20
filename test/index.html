@@ -349,7 +349,9 @@
 
     async function handleWalletConnected(address) {
       const result = await checkHolderInSheet(address);
-      const userPanel = document.querySelector("panel");
+     const userPanel = document.querySelector(".panel h2")?.textContent === "USER PANEL"
+  ? document.querySelector(".panel")
+  : document.querySelectorAll(".panel")[0];
 
       walletButtons.forEach(btn => {
         if (btn) {
@@ -378,7 +380,8 @@
         wrapper.appendChild(twitterBtn);
       }
 
-      userPanel.appendChild(wrapper);
+     const img = document.getElementById("profile-image");
+img.insertAdjacentElement('afterend', wrapper);
     }
 
     walletButtons.forEach(btn => {
