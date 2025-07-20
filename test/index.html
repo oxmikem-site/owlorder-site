@@ -358,12 +358,13 @@
   const img = document.getElementById("profile-image"); // ← ПЕРЕНЕСЕНО СЮДИ
 
   walletButtons.forEach(btn => {
-    if (btn) {
-      btn.textContent = `${address.slice(0, 6)}...${address.slice(-4)}`;
-      btn.disabled = true;
-      btn.style.opacity = '0.85';
-    }
-  });
+  if (btn) {
+    btn.textContent = `${address.slice(0, 6)}...${address.slice(-4)}`;
+    btn.disabled = true;
+    btn.style.opacity = '0.85';
+    btn.style.marginTop = '8px'; // ← ДОДАЙ ЦЕ
+  }
+});
 
   const existingInfo = userPanel.querySelector(".wallet-info");
   if (existingInfo) existingInfo.remove();
