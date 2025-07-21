@@ -255,9 +255,11 @@
   filter: brightness(1.2);
 }
 
-     #listed-nfts {
-  overflow-x: auto;
-  width: 100%;
+    #listed-nfts {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  max-height: 620px; 
 }
     #listed-nfts h2 {
   color: var(--accent-color);
@@ -268,6 +270,8 @@
 
 #me-listed-grid {
   display: flex;
+  flex: 1;
+  overflow-x: auto;
   gap: 16px;
   scroll-behavior: smooth;
   padding-bottom: 10px;
@@ -328,14 +332,24 @@
       
     }
 
-    #me-listed-grid p {
-      margin: 12px 0 4px 0;
-      font-weight: bold;
-      color: var(--accent-color);
-      text-align: center;
-      width: 100%;
-      user-select: none;
-    }
+    #me-listed-grid p.nft-number {
+  margin: 12px 0 4px 0;
+  font-weight: bold;
+  color: var(--accent-color);
+  text-align: center;
+  width: 100%;
+  user-select: none;
+}
+
+.nft-description {
+  color: white;
+  font-size: 14px;
+  line-height: 1.4;
+  text-align: center;
+  margin: 0 10px;
+  padding: 0 12px;
+  overflow: hidden;
+}
 
     #me-listed-grid button {
       padding: 6px 14px;
@@ -697,7 +711,7 @@ async function fetchListedNFTsGrid() {
     nftDiv.style.textAlign = "center";
     nftDiv.innerHTML = `
   <img src="${imageURL}" alt="Owl #${nftNumber}" />
-  <p>Owl #${nftNumber}</p>
+  <p class="nft-number">Owl #${nftNumber}</p>
   <a href="${meURL}" target="_blank">
     <button>Buy on ME</button>
   </a>
