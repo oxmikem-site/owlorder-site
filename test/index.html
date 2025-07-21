@@ -561,17 +561,15 @@ function updateWalletButtons(address) {
   const short = shortenAddress(address);
   document.getElementById("wallet-header-btn").textContent = short;
   document.getElementById("wallet-side-btn").textContent = short;
-  document.querySelectorAll(".wallet-dropdown").forEach(dd => dd.style.display = "none");
-  document.querySelectorAll(".wallet-wrapper").forEach(wrapper => {
-    wrapper.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const dropdown = wrapper.querySelector(".wallet-dropdown");
-      dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
-    });
-  });
 
-  document.addEventListener("click", () => {
-    document.querySelectorAll(".wallet-dropdown").forEach(dd => dd.style.display = "none");
+  document.querySelectorAll(".wallet-wrapper").forEach(wrapper => {
+    const dropdown = wrapper.querySelector(".wallet-dropdown, .wallet-dropdown-content");
+    if (dropdown) {
+      wrapper.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+      });
+    }
   });
 
   document.querySelectorAll(".logout-btn").forEach(btn => {
@@ -701,14 +699,26 @@ document.addEventListener("DOMContentLoaded", () => {
     handleWalletConnected(saved);
     fetchProfileImage(saved);
   }
+
   document.querySelectorAll(".wallet-trigger").forEach(btn =>
     btn.addEventListener('click', connectUniSatWallet)
   );
+
+  document.getElementById("wallet-header-btn").addEventListener("click", (e) => {
+    const saved = localStorage.getItem('taproot_wallet');
+    if (saved) return;
+    e.stopPropagation();
+    connectUniSatWallet();
+  });
+
+  document.addEventListener("click", () => {
+    document.querySelectorAll(".wallet-dropdown-content").forEach(dd => dd.style.display = "none");
+  });
+
   loadtop5();
   fetchListedNFTsGrid();
 });
-
-     </script>
+</script>
     </body>
 </html>
 
