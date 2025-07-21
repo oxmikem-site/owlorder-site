@@ -131,7 +131,7 @@
       flex: 1;                      /* займаємо весь простір під хедером */
       width: 100%;
       display: grid;
-      grid-template-columns: 280px 1fr;
+      grid-template-columns: 280px calc(100% - 304px); /* 280 + 24px gap */
       gap: 24px;
       margin-bottom: 40px;
     }
@@ -145,6 +145,9 @@
 }
 .profile-section.active {
   display: block;
+}
+    #section-general h3 {
+  margin-top: 0;
 }
 
     .panel {
@@ -236,6 +239,10 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+}
+    #general-chat {
+  margin-left: -12px;
+  margin-right: -12px;
 }
 
 .chat-messages {
