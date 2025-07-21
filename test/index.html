@@ -418,72 +418,73 @@
         <a href="https://owlbtc.art/leaderboard/" class="button" target="_blank">LEADERBOARD</a>
         <a href="https://owlbtc.art/collection/" class="button" target="_blank">COLLECTION</a>
         <div class="wallet-dropdown">
-  <button class="connect-wallet" id="wallet-header-btn">CONNECT WALLET</button>
-  <div class="wallet-dropdown-content" id="wallet-header-dropdown">
-    <a href="/profile">Profile</a>
-    <a href="#" class="logout-btn">Logout</a>
-  </div>
-</div>
+          <button class="connect-wallet" id="wallet-header-btn">CONNECT WALLET</button>
+          <div class="wallet-dropdown-content" id="wallet-header-dropdown">
+            <a href="/profile">Profile</a>
+            <a href="#" class="logout-btn">Logout</a>
+          </div>
+        </div>
+      </div>
+    </header>
 
     <div class="main">
-  <!-- LEFT COLUMN -->
-  <div class="panel" style="grid-column: 1; grid-row: 1;">
-  <h2>USER PANEL</h2>
-  <div class="overlay">
-    <!-- IMG, buttons, points і все інше — всередині цього блоку -->
-    <img id="profile-image" class="profile-picture" src="" alt="Profile Picture" style="display: none;" />
-    
-    <div class="wallet-wrapper">
-      <button id="wallet-side-btn" class="wallet-trigger">CONNECT WALLET</button>
-      <div class="wallet-dropdown" style="display:none;">
-        <button class="logout-btn">Logout</button>
+      <!-- LEFT COLUMN -->
+      <div class="panel" style="grid-column: 1; grid-row: 1;">
+        <h2>USER PANEL</h2>
+        <div class="overlay">
+          <img id="profile-image" class="profile-picture" src="" alt="Profile Picture" style="display: none;" />
+
+          <div class="wallet-wrapper">
+            <button id="wallet-side-btn" class="wallet-trigger">CONNECT WALLET</button>
+            <div class="wallet-dropdown" style="display:none;">
+              <button class="logout-btn">Logout</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel" style="grid-column: 1; grid-row: 2 / span 2;">
+        <h2>LEADERBOARD</h2>
+        <div class="overlay">
+          <ol id="leaderboard-top5" class="leaderboard-list">
+            <li>Loading...</li>
+          </ol>
+        </div>
+        <a href="https://owlbtc.art/leaderboard/" target="_blank" class="view-more-button">View More</a>
+      </div>
+
+      <!-- CENTER COLUMN -->
+      <div class="panel" id="listed-nfts" style="grid-column: 2; grid-row: 1 / span 2;">
+        <h2>LISTED NFTs</h2>
+        <div id="me-listed-grid"></div>
+      </div>
+
+      <!-- RIGHT COLUMN -->
+      <div class="panel" style="grid-column: 3; grid-row: 1;">
+        <h2>ACTIVE RAFFLES</h2>
+        <span class="soon-badge">SOON</span>
+      </div>
+
+      <div class="panel" style="grid-column: 3; grid-row: 2;">
+        <h2>ANNOUNCEMENTS</h2>
+        <div class="overlay">
+          <ul>
+            <li>Mint Phase 2 starts July 10</li>
+            <li>Magic Eden Partnership Live</li>
+            <li>Claim WL now - only 30 left!</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer" style="grid-column: 2 / span 2; grid-row: 3;">
+        <a href="https://x.com/OwlOrderBTC" target="_blank" class="button">TWITTER</a>
+        <a href="https://magiceden.io/ordinals/marketplace/owl" target="_blank" class="button">MAGIC EDEN</a>
+        <a href="https://yourdomain.com/collab-request" target="_blank" class="button">COLLABS REQUEST</a>
       </div>
     </div>
   </div>
-</div>
+</body>
 
-  <div class="panel" style="grid-column: 1; grid-row: 2 / span 2;">
-  <h2>LEADERBOARD</h2>
-
-  <div class="overlay">
-    <ol id="leaderboard-top5" class="leaderboard-list"><li>Loading...</li></ol>
-  </div>
-
-  <a href="https://owlbtc.art/leaderboard/" target="_blank" class="view-more-button">View More</a>
-</div>
-
-  <!-- CENTER COLUMN -->
-  <div class="panel" id="listed-nfts" style="grid-column: 2; grid-row: 1 / span 2;">
-  <h2>LISTED NFTs</h2>
-  <div id="me-listed-grid"></div>
-</div>
-
-  <!-- RIGHT COLUMN -->
-  <div class="panel" style="grid-column: 3; grid-row: 1;">
-    <h2>ACTIVE RAFFLES</h2>
-    <span class="soon-badge">SOON</span>
-  </div>
-
-  <div class="panel" style="grid-column: 3; grid-row: 2;">
-    <h2>ANNOUNCEMENTS</h2>
-    <div class="overlay">
-    <ul>
-      <li>Mint Phase 2 starts July 10</li>
-      <li>Magic Eden Partnership Live</li>
-      <li>Claim WL now - only 30 left!</li>
-    </ul>
-      </div>
-  </div>
-     
-    <div class="footer" style="grid-column: 2 / span 2; grid-row: 3;">
-  <a href="https://x.com/OwlOrderBTC" target="_blank" class="button">TWITTER</a>
-<a href="https://magiceden.io/ordinals/marketplace/owl" target="_blank" class="button">MAGIC EDEN</a>
-<a href="https://yourdomain.com/collab-request" target="_blank" class="button">COLLABS REQUEST</a>
-</div>
-
-</div>
-<body>
-      
   <script>
 const SNAPSHOT_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?output=csv&gid=0";
 const imageBaseURL = "https://raw.githubusercontent.com/oxmikem-site/owlorder-site/main/images/";
