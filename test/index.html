@@ -598,9 +598,11 @@ async function handleWalletConnected(address) {
     : document.querySelectorAll(".panel")[0];
 
   const img = document.getElementById("profile-image");
-  const wrapper = document.createElement("div");
-  wrapper.className = "wallet-info";
-  wrapper.style.cssText = "margin-top: 16px; font-size: 15px; line-height: 1.6;";
+  let wrapper = userPanel.querySelector(".wallet-info");
+if (wrapper) wrapper.remove(); 
+wrapper = document.createElement("div");
+wrapper.className = "wallet-info";
+wrapper.style.cssText = "margin-top: 16px; font-size: 15px; line-height: 1.6;";
 
   if (result.found) {
     img.style.display = "block";
