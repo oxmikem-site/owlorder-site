@@ -336,33 +336,34 @@
   }
 
   async function fetchProfileImage(wallet) {
-    const img = document.getElementById("profile-image");
-    try {
-      const res = await fetch(SNAPSHOT_CSV_URL);
-      const csv = await res.text();
-      const rows = csv.split("\\n").slice(1);
-      let match = null;
-      for (const row of rows) {
-        const cols = row.split(",");
-        const address = cols[1]?.trim();
-        const nftNumber = cols[9]?.trim();
-        if (address === wallet && nftNumber) {
-          match = nftNumber;
-          break;
-        }
+  const img = document.getElementById("profile-image");
+  try {
+    const res = await fetch(SNAPSHOT_CSV_URL);
+    const csv = await res.text();
+    const rows = csv.split("\n").slice(1);
+
+    let match = null;
+    for (const row of rows) {
+      const cols = row.split(",");
+      const address = cols[1]?.trim().toLowerCase();
+      const nftNumber = cols[9]?.trim();
+      if (address === wallet.toLowerCase() && nftNumber) {
+        match = nftNumber;
+        break;
       }
-      if (!match) {
-        img.src = "../logo1.png";
-        img.style.display = "block";
-        return;
-      }
-      img.src = `${imageBaseURL}${match}.webp`;
-      img.onerror = () => (img.src = "../logo1.png");
-      img.style.display = "block";
-    } catch (err) {
-      console.error("fetchProfileImage error", err);
     }
+
+    img.src = match
+      ? `${imageBaseURL}${match}.webp`
+      : "../logo1.png";
+    img.onerror = () => img.src = "../logo1.png";
+    img.style.display = "block";
+  } catch (err) {
+    console.error("fetchProfileImage error", err);
+    img.src = "../logo1.png";
+    img.style.display = "block";
   }
+}
 
   async function checkHolderInSheet(address) {
     try {
