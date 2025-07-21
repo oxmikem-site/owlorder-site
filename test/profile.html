@@ -1,87 +1,301 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>OWL Wallet Connect</title>
-  <script src="./owl-bundle.umd.js" defer></script> <!-- Вставити сюди зібраний скрипт -->
+  <meta charset="UTF-8" />
+  <title>Profile | OWL</title>
+  <link rel="icon" type="image/png" href="../logo1.png" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
   <style>
+    :root {
+      --bg-dark: #0b0b0b;
+      --bg-panel: linear-gradient(145deg, #1d1d1d, #111111);
+      --text-primary: #ffffff;
+      --text-secondary: #ffffff;
+      --accent: linear-gradient(90deg, #bfa758, #d4c87c);
+      --accent-color: #8a7f5a;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      background-color: #000;
-      color: white;
-      font-family: sans-serif;
+      margin: 0;
+      background: var(--bg-dark);
+      color: var(--text-primary);
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    header {
+      height: 64px;
+      background: var(--bg-panel);
       display: flex;
-      flex-direction: column;
+      justify-content: space-between;
       align-items: center;
-      justify-content: center;
-      height: 100vh;
-      padding: 20px;
-    }
-
-    select, button {
-      padding: 10px;
-      margin: 10px;
-      font-size: 16px;
-    }
-
-    #result {
+      padding: 0 20px;
+      border-radius: 20px;
       margin-top: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.05),
+                  inset 0 -1px 0 rgba(0, 0, 0, 0.4);
+      background: linear-gradient(145deg, #1b1b1b, #101010);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo img {
+      width: 50px;
+      height: 50px;
+    }
+
+    .nav-buttons {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      height: 100%;
+    }
+
+    .button {
+      padding: 8px 10px;
+      background: transparent;
+      border: none;
+      color: var(--text-primary);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 18px;
+      cursor: pointer;
+      transition: color 0.3s ease;
+      height: 40px;
+      display: flex;
+      align-items: center;
+    }
+
+    .button:hover {
+      color: var(--accent-color);
+    }
+
+    .connect-wallet {
+      max-width: 200px;
+      text-align: center;
+      padding: 6px 14px;
+      border-radius: 12px;
+      border: none;
+      font-weight: 600;
+      font-size: 15px;
+      background: var(--accent);
+      color: black;
+      cursor: pointer;
+      transition: filter 0.3s ease;
+    }
+
+    .connect-wallet:hover {
+      filter: brightness(1.15);
+    }
+
+    .wallet-wrapper {
+      position: relative;
+      display: inline-block;
+    }
+
+    .wallet-dropdown-content {
+      display: none;
+      position: absolute;
+      top: 44px;
+      right: 0;
+      background: var(--bg-panel);
+      min-width: 160px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+      z-index: 1000;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .wallet-dropdown-content a {
+      display: block;
+      padding: 10px 14px;
+      color: var(--text-primary);
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    .wallet-dropdown-content a:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    /* --- Main layout for profile --- */
+    .profile-main {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 24px;
+      margin-bottom: 40px;
+    }
+
+    .panel {
+      background: var(--bg-panel);
+      padding: 16px;
+      border-radius: 16px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.05),
+                  inset 0 -1px 0 rgba(0, 0, 0, 0.4);
+      background: linear-gradient(145deg, #1b1b1b, #101010);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .panel h2 {
+      color: var(--accent-color);
+      margin-top: 0;
+      margin-bottom: 12px;
+      font-size: 18px;
+    }
+
+    .overlay {
+      background: linear-gradient(145deg, #151515, #0d0d0d);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 12px 14px;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
+    }
+
+    .profile-sidebar ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .profile-sidebar li {
+      margin-bottom: 10px;
+    }
+
+    .profile-sidebar a {
+      text-decoration: none;
+      color: var(--text-primary);
+      font-weight: 500;
+      transition: color 0.3s;
+    }
+
+    .profile-sidebar a:hover {
+      color: var(--accent-color);
     }
   </style>
 </head>
 <body>
+  <div class="container">
+    <!-- Хедер -->
+    <header>
+      <div class="logo"><img src="../logo1.png" alt="logo" /></div>
+      <div class="nav-buttons">
+        <a href="https://owlbtc.art/leaderboard/" class="button" target="_blank">LEADERBOARD</a>
+        <a href="https://owlbtc.art/collection/" class="button" target="_blank">COLLECTION</a>
+        <div class="wallet-wrapper">
+          <button class="connect-wallet wallet-trigger" id="wallet-header-btn">CONNECT WALLET</button>
+          <div class="wallet-dropdown-content" id="wallet-header-dropdown">
+            <a href="/profile">Profile</a>
+            <a href="#" class="logout-btn">Logout</a>
+          </div>
+        </div>
+      </div>
+    </header>
 
-  <h2>🦉 Connect to Wallet</h2>
+    <!-- Головна секція профілю -->
+    <div class="profile-main">
+      <!-- Sidebar -->
+      <div class="panel profile-sidebar">
+        <h2>Sections</h2>
+        <div class="overlay">
+          <ul>
+            <li><a href="#info">Profile Info</a></li>
+            <li><a href="#activity">Activity</a></li>
+            <li><a href="#settings">Settings</a></li>
+          </ul>
+        </div>
+      </div>
 
-  <label for="walletSelect">Choose Wallet:</label>
-  <select id="walletSelect">
-    <option value="xverse">Xverse</option>
-    <option value="unisat">Unisat</option>
-    <option value="hiro">Hiro</option>
-    <option value="leather">Leather</option>
-    <option value="okx">OKX</option>
-    <option value="bitget">Bitget</option>
-  </select>
+      <!-- Content -->
+      <div class="panel profile-content">
+        <h2>My Profile</h2>
+        <div class="overlay">
+          <p>This is your profile page. You can display wallet info, linked NFTs, points, and more here.</p>
+        </div>
+      </div>
+    </div>
+  </div>
 
-  <button id="connectBtn">Connect</button>
-
-  <div id="result">Not connected</div>
-
+  <!-- Скрипти -->
   <script>
-    document.getElementById("connectBtn").onclick = async () => {
-      const wallet = document.getElementById("walletSelect").value;
-      let provider;
+    function shortenAddress(addr) {
+      return addr.slice(0, 6) + '...' + addr.slice(-4);
+    }
 
-      if (wallet === "xverse" && window.xverse?.bitcoin) provider = window.xverse.bitcoin;
-      else if (wallet === "unisat" && window.unisat) provider = window.unisat;
-      else if (wallet === "hiro" && window.btc) provider = window.btc;
-      else if (wallet === "leather" && window.leather?.bitcoin) provider = window.leather.bitcoin;
-      else if (wallet === "okx" && window.okxwallet?.bitcoin) provider = window.okxwallet.bitcoin;
-      else if (wallet === "bitget" && window.bitkeep?.bitcoin) provider = window.bitkeep.bitcoin;
-      else {
-        document.getElementById("result").textContent = "❌ Wallet not found";
-        return;
-      }
-
+    async function connectUniSatWallet() {
+      if (!window.unisat) return alert("UniSat Wallet not found.");
       try {
-        const response = await provider.request('getAddresses');
-        const taprootAddress = response.addresses?.find(a => a.type === 'p2tr')?.address;
-
-        if (!taprootAddress) throw new Error("Taproot address not found");
-
-        document.getElementById("result").textContent = `✅ Connected: ${taprootAddress}`;
-        console.log("Address:", taprootAddress);
-
-        const relayUrl = createWebSocketURL("wss://relay.damus.io");
-        const relay = connectToRelay(relayUrl);
-        const signed = await signMessage(provider, taprootAddress, "Sign this message to login", relay);
-
-        console.log("Signature OK", signed);
+        await window.unisat.requestAccounts();
+        const address = (await window.unisat.getAccounts())[0];
+        localStorage.setItem('taproot_wallet', address);
+        updateWalletButtons(address);
       } catch (err) {
-        console.error(err);
-        document.getElementById("result").textContent = `❌ Error: ${err.message}`;
+        alert("Failed to connect wallet.");
       }
-    };
-  </script>
+    }
 
+    function updateWalletButtons(address) {
+      const short = shortenAddress(address);
+      document.getElementById("wallet-header-btn").textContent = short;
+
+      document.querySelectorAll(".wallet-wrapper").forEach(wrapper => {
+        const dropdown = wrapper.querySelector(".wallet-dropdown-content");
+        if (dropdown) {
+          wrapper.addEventListener('click', (e) => {
+            e.stopPropagation();
+            dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+          });
+        }
+      });
+
+      document.querySelectorAll(".logout-btn").forEach(btn => {
+        btn.addEventListener('click', () => {
+          localStorage.removeItem("taproot_wallet");
+          location.reload();
+        });
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const saved = localStorage.getItem('taproot_wallet');
+      if (saved) updateWalletButtons(saved);
+
+      document.getElementById("wallet-header-btn").addEventListener("click", (e) => {
+        const saved = localStorage.getItem('taproot_wallet');
+        if (saved) {
+          e.stopPropagation();
+          const dropdown = document.getElementById("wallet-header-dropdown");
+          dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+        } else {
+          connectUniSatWallet();
+        }
+      });
+
+      document.addEventListener("click", () => {
+        document.querySelectorAll(".wallet-dropdown-content").forEach(dd => dd.style.display = "none");
+      });
+
+      document.querySelectorAll(".wallet-trigger").forEach(btn =>
+        btn.addEventListener('click', connectUniSatWallet)
+      );
+    });
+  </script>
 </body>
 </html>
