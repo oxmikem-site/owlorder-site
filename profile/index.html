@@ -5,6 +5,11 @@
   <title>Profile | OWL</title>
   <link rel="icon" type="image/png" href="../logo1.png" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+  <!-- Firebase App (Core SDK) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+
+<!-- Firebase Realtime Database SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js"></script>
   <style>
     :root {
       --bg-dark: #0b0b0b;
@@ -520,6 +525,19 @@
       });
     });
   });
+    const firebaseConfig = {
+    apiKey: "AIzaSyB4w22BYSjUhoGSeAf3GTZCGq_GuVkzFQY",
+    authDomain: "owl-chat-d5d3e.firebaseapp.com",
+    databaseURL: "https://owl-chat-d5d3e-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "owl-chat-d5d3e",
+    storageBucket: "owl-chat-d5d3e.appspot.com",
+    messagingSenderId: "464471442222",
+    appId: "1:464471442222:web:1628d29ef2be5564affb0f",
+    measurementId: "G-MMBR7S9EM1"
+  };
+
+  const app = firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
 </script>
 </body>
 </html>
