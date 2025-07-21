@@ -438,6 +438,12 @@
   position: relative;
   display: inline-block;
 }
+    #wallet-side-dropdown {
+  top: 44px;
+  right: 0;
+  left: unset !important;   
+}
+
 
 .wallet-dropdown-content {
   display: none;
@@ -766,9 +772,6 @@ document.addEventListener("DOMContentLoaded", () => {
       e.stopPropagation();
       const dropdown = document.getElementById("wallet-side-dropdown");
       dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
-      const rect = e.target.getBoundingClientRect();
-      dropdown.style.left = `${rect.left}px`;
-      dropdown.style.top = `${rect.bottom}px`;
     } else {
       connectUniSatWallet();
     }
