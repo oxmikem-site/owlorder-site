@@ -223,6 +223,25 @@
   background: linear-gradient(145deg, #1b1b1b, #101010); 
   border: 1px solid rgba(255, 255, 255, 0.05); 
 }
+    .footer-link {
+  padding: 0 16px;
+  text-decoration: none;
+  color: var(--text-primary);
+  font-weight: 500;
+  font-size: 16px;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  height: 100%;
+  display: flex;
+  align-items: center;
+  transition: color 0.3s ease;
+}
+
+.footer-link:first-child {
+  border-left: none;
+}
+.footer-link:hover {
+  color: var(--accent-color);
+}
     
     .profile-picture {
       width: 100px;
@@ -477,10 +496,10 @@
       </div>
 
       <div class="footer" style="grid-column: 2 / span 2; grid-row: 3;">
-        <a href="https://x.com/OwlOrderBTC" target="_blank" class="button">TWITTER</a>
-        <a href="https://magiceden.io/ordinals/marketplace/owl" target="_blank" class="button">MAGIC EDEN</a>
-        <a href="https://yourdomain.com/collab-request" target="_blank" class="button">COLLABS REQUEST</a>
-      </div>
+  <a href="https://x.com/OwlOrderBTC" target="_blank" class="footer-link">TWITTER</a>
+  <a href="https://magiceden.io/ordinals/marketplace/owl" target="_blank" class="footer-link">MAGIC EDEN</a>
+  <a href="https://yourdomain.com/collab-request" target="_blank" class="footer-link">COLLABS REQUEST</a>
+</div>
     </div>
   </div>
 </body>
