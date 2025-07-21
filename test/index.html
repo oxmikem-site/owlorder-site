@@ -456,8 +456,9 @@
           <img id="profile-image" class="profile-picture" src="" alt="Profile Picture" style="display: none;" />
           <div class="wallet-wrapper">
             <button id="wallet-side-btn" class="connect-wallet wallet-trigger">CONNECT WALLET</button>
-            <div class="wallet-dropdown" style="display:none;">
-              <button class="logout-btn">Logout</button>
+            <div class="wallet-dropdown-content" id="wallet-side-dropdown">
+              <a href="/profile">Profile</a>
+              <a href="#" class="logout-btn">Logout</a>
             </div>
           </div>
         </div>
@@ -708,9 +709,30 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.getElementById("wallet-header-btn").addEventListener("click", (e) => {
     const saved = localStorage.getItem('taproot_wallet');
-    if (saved) return;
-    e.stopPropagation();
-    connectUniSatWallet();
+    if (saved) {
+      e.stopPropagation();
+      const dropdown = document.getElementById("wallet-header-dropdown");
+      dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+      const rect = e.target.getBoundingClientRect();
+      dropdown.style.left = `${rect.left}px`;
+      dropdown.style.top = `${rect.bottom}px`;
+    } else {
+      connectUniSatWallet();
+    }
+  });
+
+  document.getElementById("wallet-side-btn").addEventListener("click", (e) => {
+    const saved = localStorage.getItem('taproot_wallet');
+    if (saved) {
+      e.stopPropagation();
+      const dropdown = document.getElementById("wallet-side-dropdown");
+      dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+      const rect = e.target.getBoundingClientRect();
+      dropdown.style.left = `${rect.left}px`;
+      dropdown.style.top = `${rect.bottom}px`;
+    } else {
+      connectUniSatWallet();
+    }
   });
 
   document.addEventListener("click", () => {
