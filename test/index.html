@@ -428,16 +428,19 @@
     <div class="main">
   <!-- LEFT COLUMN -->
   <div class="panel" style="grid-column: 1; grid-row: 1;">
-    <h2>USER PANEL</h2>
+  <h2>USER PANEL</h2>
+  <div class="inner-panel user-panel-inner">
+    <!-- IMG, buttons, points і все інше — всередині цього блоку -->
     <img id="profile-image" class="profile-picture" src="" alt="Profile Picture" style="display: none;" />
-    <div class="wallet-dropdown">
-  <button class="connect-wallet" id="wallet-side-btn">CONNECT WALLET</button>
-  <div class="wallet-dropdown-content" id="wallet-side-dropdown">
-    <a href="/profile">Profile</a>
-    <a href="#" class="logout-btn">Logout</a>
+    
+    <div class="wallet-wrapper">
+      <button id="wallet-side-btn" class="wallet-trigger">CONNECT WALLET</button>
+      <div class="wallet-dropdown" style="display:none;">
+        <button class="logout-btn">Logout</button>
+      </div>
+    </div>
   </div>
 </div>
-
 
   <div class="panel" style="grid-column: 1; grid-row: 2 / span 2;">
   <h2>LEADERBOARD</h2>
