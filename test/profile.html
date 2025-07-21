@@ -242,22 +242,59 @@
 
         <!-- Sections list -->
         <div class="overlay sections-list">
-          <ul>
-            <li><a href="#info">Profile Info</a></li>
-            <li><a href="#activity">Activity</a></li>
-            <li><a href="#settings">Settings</a></li>
-          </ul>
+          <ul id="sidebar-nav">
+  <li><a href="#" data-section="collection">My Collection</a></li>
+  <li><a href="#" data-section="links">Links</a></li>
+  <li><a href="#" data-section="announcements">Announcements</a></li>
+  <li><a href="#" data-section="general">General</a></li>
+  <li><a href="#" data-section="raffles">Raffles</a></li>
+  <li><a href="#" data-section="ticket">Open Ticket</a></li>
+  <li><a href="#" data-section="settings">Settings</a></li>
+  <li><a href="#" data-section="logout">Logout</a></li>
+</ul>
         </div>
       </div>
 
       <!-- Content -->
-      <div class="panel profile-content">
-        <h2>My Profile</h2>
-        <div class="overlay content-body" id="profile-content-body">
-          <p>This is your profile page. You can display wallet info, linked NFTs, points, and more here.</p>
-          <div id="profile-data"></div>
-        </div>
-      </div>
+      <!-- Central content sections -->
+<div id="section-collection" class="profile-section active">
+  <h3>My Collection</h3>
+  <p>This section will display all NFTs found in your connected wallet based on the snapshot table.</p>
+</div>
+
+<div id="section-links" class="profile-section">
+  <h3>Links (Team-only chat)</h3>
+</div>
+
+<div id="section-announcements" class="profile-section">
+  <h3>Announcements (Team-only chat)</h3>
+</div>
+
+<div id="section-general" class="profile-section">
+  <h3>General Chat (For verified holders)</h3>
+</div>
+
+<div id="section-raffles" class="profile-section">
+  <h3>Raffles</h3>
+</div>
+
+<div id="section-ticket" class="profile-section">
+  <h3>Open a Ticket (Private support)</h3>
+</div>
+
+<div id="section-settings" class="profile-section">
+  <h3>Settings</h3>
+  <ul>
+    <li>Connect Twitter</li>
+    <li>Connect Discord</li>
+    <li>Add Wallet (up to 10 per type: EVM & Ordinals)</li>
+  </ul>
+</div>
+
+<div id="section-logout" class="profile-section">
+  <h3>Logout</h3>
+  <p>You have been logged out.</p>
+</div>
     </div>
   </div>
 
@@ -397,6 +434,21 @@
         });
       });
     }
+
+    document.querySelectorAll('#sidebar-nav a').forEach(link => {
+  link.addEventListener('click', (e) => {
+    e.preventDefault();
+
+    const target = link.getAttribute('data-section');
+
+    document.querySelectorAll('.profile-section').forEach(sec => {
+      sec.classList.remove('active');
+    });
+    const active = document.getElementById('section-' + target);
+    if (active) active.classList.add('active');
+  });
+});
+
 
     document.addEventListener("DOMContentLoaded", () => {
       const saved = localStorage.getItem('taproot_wallet');
