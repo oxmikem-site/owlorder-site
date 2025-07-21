@@ -267,7 +267,7 @@
   <li><a href="#" data-section="raffles">Raffles</a></li>
   <li><a href="#" data-section="ticket">Open Ticket</a></li>
   <li><a href="#" data-section="settings">Settings</a></li>
-  <li><a href="#" data-section="logout">Logout</a></li>
+  <li><a href="#" class="sidebar-logout">Logout</a></li>
 </ul>
         </div>
       </div>
@@ -503,7 +503,14 @@
       });
     });
 
-    // Загальна логіка connect на всі кнопки
+      document.querySelectorAll(".sidebar-logout").forEach(link => {
+  link.addEventListener("click", (e) => {
+    e.preventDefault();
+    localStorage.removeItem("taproot_wallet");
+    location.reload();
+  });
+});
+    
     document.querySelectorAll(".wallet-trigger").forEach(btn => {
       btn.addEventListener("click", (ev) => {
         ev.stopPropagation();
