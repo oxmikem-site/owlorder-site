@@ -148,6 +148,13 @@
 }
     #section-general h3 {
   margin-top: 0;
+  margin-bottom: 10px;
+  font-size: 16px;
+}
+
+#general-chat {
+  margin-left: 0;
+  margin-right: 0;
 }
 
     .panel {
@@ -365,7 +372,7 @@
 </div>
 
 <div id="section-general" class="profile-section">
-  <h3>General Chat (For verified holders)</h3>
+  <h3>General Chat</h3>
   <div id="general-chat" class="chat-box">
   <div id="chat-messages-general" class="chat-messages"></div>
   
@@ -532,6 +539,7 @@
   }
 
     let replyToMessage = null;
+    
     document.addEventListener("DOMContentLoaded", () => {
     const saved = getConnectedWalletAddress();
     if (saved) {
@@ -639,6 +647,12 @@ const db = firebase.database(app);
       ↪️ replying to <strong>${messageObj.replyTo.sender.slice(0,6)}</strong>: ${messageObj.replyTo.text}
     </div>`;
   }
+
+    function deleteMessage(key) {
+  if (confirm("Delete this message?")) {
+    chatMessagesRef.child(key).remove();
+  }
+}  
 
   // Кнопки
   content += ` <button onclick="replyTo('${key}', '${messageObj.sender}', '${messageObj.text.replace(/'/g, "\\'")}')">↩️</button>`;
