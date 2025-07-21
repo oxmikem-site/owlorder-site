@@ -625,6 +625,11 @@ document.getElementById("send-btn-general").addEventListener("click", async () =
 
   input.value = "";
 });
+    document.getElementById("chat-input-general").addEventListener("keydown", function(e) {
+  if (e.key === "Enter") {
+    document.getElementById("send-btn-general").click();
+  }
+});
 </script>
 </body>
 </html>
