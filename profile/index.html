@@ -130,6 +130,17 @@
       margin-bottom: 40px;
     }
 
+    .profile-section {
+  display: none;
+  background: var(--bg-panel);
+  padding: 20px;
+  border-radius: 16px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
+}
+.profile-section.active {
+  display: block;
+}
+
     .panel {
       background: var(--bg-panel);
       padding: 16px;
@@ -243,14 +254,15 @@
         <!-- Sections list -->
         <div class="overlay sections-list">
           <ul id="sidebar-nav">
-  <li><a href="#" data-section="collection">My Collection</a></li>
-  <li><a href="#" data-section="links">Links</a></li>
-  <li><a href="#" data-section="announcements">Announcements</a></li>
-  <li><a href="#" data-section="general">General</a></li>
-  <li><a href="#" data-section="raffles">Raffles</a></li>
-  <li><a href="#" data-section="ticket">Open Ticket</a></li>
-  <li><a href="#" data-section="settings">Settings</a></li>
-  <li><a href="#" data-section="logout">Logout</a></li>
+  <li><a href="#" data-section="collection">Моя колекція</a></li>
+  <li><a href="#" data-section="dashboard">Дашборд</a></li>
+  <li><a href="#" data-section="links">Лінки</a></li>
+  <li><a href="#" data-section="announcements">Анонси</a></li>
+  <li><a href="#" data-section="general">Дженерал</a></li>
+  <li><a href="#" data-section="raffles">Рафли</a></li>
+  <li><a href="#" data-section="ticket">Відкрити тикет</a></li>
+  <li><a href="#" data-section="settings">Налаштування</a></li>
+  <li><a href="#" data-section="logout">Логаут</a></li>
 </ul>
         </div>
       </div>
@@ -260,6 +272,11 @@
 <div id="section-collection" class="profile-section active">
   <h3>My Collection</h3>
   <p>This section will display all NFTs found in your connected wallet based on the snapshot table.</p>
+</div>
+
+      <div id="section-dashboard" class="profile-section">
+  <h3>Дашборд</h3>
+  <p><a href="https://owlbtc.art/test/index.html" target="_blank">Перейти на дашборд</a></p>
 </div>
 
 <div id="section-links" class="profile-section">
