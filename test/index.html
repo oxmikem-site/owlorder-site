@@ -414,6 +414,12 @@
   text-transform: uppercase;
   font-family: 'Inter', sans-serif;
 }
+    
+    .wallet-wrapper {
+  position: relative; /* 👈 обовʼязково! */
+  display: inline-block;
+}
+
     .wallet-dropdown {
   position: relative;
   display: inline-block;
@@ -731,13 +737,11 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("wallet-header-btn").addEventListener("click", (e) => {
     const saved = localStorage.getItem('taproot_wallet');
     if (saved) {
-      e.stopPropagation();
-      const dropdown = document.getElementById("wallet-header-dropdown");
-      dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
-      const rect = e.target.getBoundingClientRect();
-      dropdown.style.left = `${rect.left}px`;
-      dropdown.style.top = `${rect.bottom}px`;
-    } else {
+  e.stopPropagation();
+  const dropdown = document.getElementById("wallet-header-dropdown");
+  dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+}
+ else {
       connectUniSatWallet();
     }
   });
