@@ -277,6 +277,23 @@
   cursor: pointer;
 }
 
+    .chat-message {
+  padding: 4px 6px;
+  margin-bottom: 4px;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.05);
+}
+.chat-message button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #aaa;
+  margin-left: 8px;
+}
+.chat-message button:hover {
+  color: white;
+}
+
   </style>
 </head>
 <body>
@@ -514,6 +531,7 @@
     if (section) section.classList.add('active');
   }
 
+    let replyToMessage = null;
     document.addEventListener("DOMContentLoaded", () => {
     const saved = getConnectedWalletAddress();
     if (saved) {
@@ -607,19 +625,45 @@ const db = firebase.database(app);
 
   const chatMessagesRef = db.ref("chats/general");
 
-  function appendMessageToChat(messageObj) {
-    const chatBox = document.getElementById("chat-messages-general");
-    const msgEl = document.createElement("div");
-    msgEl.textContent = `${messageObj.sender.slice(0, 6)}: ${messageObj.text}`;
-    chatBox.appendChild(msgEl);
-    chatBox.scrollTop = chatBox.scrollHeight;
+  function appendMessageToChat(messageObj, key = null) {
+  const chatBox = document.getElementById("chat-messages-general");
+  const msgEl = document.createElement("div");
+  msgEl.className = "chat-message";
+  msgEl.dataset.key = key;
+
+  const senderShort = messageObj.sender.slice(0, 6);
+  let content = `<strong>${senderShort}</strong>: ${messageObj.text}`;
+
+  if (messageObj.replyTo) {
+    content += `<div style="opacity: 0.6; font-size: 12px; margin-left: 10px;">
+      ↪️ replying to <strong>${messageObj.replyTo.sender.slice(0,6)}</strong>: ${messageObj.replyTo.text}
+    </div>`;
   }
 
-  // Listen for new messages
-  chatMessagesRef.on("child_added", (snapshot) => {
-    const msg = snapshot.val();
-    appendMessageToChat(msg);
-  });
+  // Кнопки
+  content += ` <button onclick="replyTo('${key}', '${messageObj.sender}', '${messageObj.text.replace(/'/g, "\\'")}')">↩️</button>`;
+
+  if (messageObj.sender === localStorage.getItem("taproot_wallet")) {
+    content += ` <button onclick="deleteMessage('${key}')">🗑️</button>`;
+  }
+
+  msgEl.innerHTML = content;
+  chatBox.appendChild(msgEl);
+  chatBox.scrollTop = chatBox.scrollHeight;
+}
+    function replyTo(key, sender, text) {
+  replyToMessage = { key, sender, text };
+  const input = document.getElementById("chat-input-general");
+  input.placeholder = `Replying to ${sender.slice(0, 6)}: ${text}`;
+  input.focus();
+}
+
+    // Listen for new messages
+chatMessagesRef.on("child_added", (snapshot) => {
+  const msg = snapshot.val();
+  const key = snapshot.key;
+  appendMessageToChat(msg, key);
+});
 
   // Send message on button click
 document.getElementById("send-btn-general").addEventListener("click", async () => {
@@ -638,10 +682,13 @@ document.getElementById("send-btn-general").addEventListener("click", async () =
   chatMessagesRef.push({
     sender,
     text,
-    timestamp: Date.now()
+    timestamp: Date.now(),
+    replyTo: replyToMessage
   });
 
   input.value = "";
+  input.placeholder = "Type a message...";
+  replyToMessage = null;
 });
     document.getElementById("chat-input-general").addEventListener("keydown", function(e) {
   if (e.key === "Enter") {
@@ -664,6 +711,16 @@ document.getElementById("emoji-picker").appendChild(picker);
 document.getElementById("toggle-emoji-picker").addEventListener("click", () => {
   const pickerDiv = document.getElementById("emoji-picker");
   pickerDiv.style.display = pickerDiv.style.display === "none" ? "block" : "none";
+});
+
+    chatMessagesRef.on("child_removed", (snapshot) => {
+  const key = snapshot.key;
+  const messages = document.querySelectorAll(".chat-message");
+  messages.forEach(msg => {
+    if (msg.dataset.key === key) {
+      msg.remove();
+    }
+  });
 });
 
 </script>
