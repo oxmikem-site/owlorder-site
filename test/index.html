@@ -299,6 +299,23 @@
       text-align: left;
     }
 
+    .nft-description {
+  color: white;
+  font-size: 14px;
+  line-height: 1.4;
+  text-align: center;
+  margin: 0 10px;
+  padding: 0 12px;
+  overflow: hidden; /* <- блокує скрол */
+}
+
+    .nft-divider {
+  margin: 16px 0;
+  border: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  width: 90%; /* трошки менша ширина */
+}
+
     #me-listed-grid img {
       width: 100%;
       height: auto;
@@ -678,8 +695,8 @@ async function fetchListedNFTsGrid() {
   <a href="${meURL}" target="_blank">
     <button>Buy on ME</button>
   </a>
-  <hr style="margin: 16px 0; border: 0; border-top: 1px solid rgba(255, 255, 255, 0.1);" />
-  <p style="color: white; font-size: 14px; line-height: 1.4; text-align: center; margin: 0 10px;">
+  <hr class="nft-divider" />
+  <p class="nft-description">
     Earn points by holding this NFT in your wallet. Points are updated daily based on snapshot data.
   </p>
 `;
