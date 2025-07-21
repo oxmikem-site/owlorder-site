@@ -319,201 +319,194 @@
   <script>
     /* === CONFIG === */
     const SNAPSHOT_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?output=csv&gid=0";
-    const imageBaseURL   = "https://raw.githubusercontent.com/oxmikem-site/owlorder-site/main/images/";
-    const sheetURL       = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?gid=1127131432&single=true&output=csv";
+  const imageBaseURL     = "https://raw.githubusercontent.com/oxmikem-site/owlorder-site/main/images/";
+  const sheetURL         = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?gid=1127131432&single=true&output=csv";
 
-    /* === HELPERS === */
-    function shortenAddress(addr) {
-      return addr.slice(0, 6) + '...' + addr.slice(-4);
-    }
+  function shortenAddress(addr) {
+    return addr.slice(0, 6) + '...' + addr.slice(-4);
+  }
 
-    async function fetchProfileImage(wallet) {
-      const img = document.getElementById("profile-image");
-      try {
-        const res = await fetch(SNAPSHOT_CSV_URL);
-        const csv = await res.text();
-        const rows = csv.split("\\n").slice(1);
+  function getConnectedWalletAddress() {
+    return localStorage.getItem('taproot_wallet');
+  }
 
-        let match = null;
-        for (const row of rows) {
-          const cols = row.split(",");
-          const address = cols[1]?.trim();
-          const nftNumber = cols[9]?.trim();
-          if (address === wallet && nftNumber) {
-            match = nftNumber;
-            break;
-          }
+  function updateWalletButtons(address) {
+    const short = shortenAddress(address);
+    document.getElementById("wallet-header-btn").textContent = short;
+  }
+
+  async function fetchProfileImage(wallet) {
+    const img = document.getElementById("profile-image");
+    try {
+      const res = await fetch(SNAPSHOT_CSV_URL);
+      const csv = await res.text();
+      const rows = csv.split("\\n").slice(1);
+      let match = null;
+      for (const row of rows) {
+        const cols = row.split(",");
+        const address = cols[1]?.trim();
+        const nftNumber = cols[9]?.trim();
+        if (address === wallet && nftNumber) {
+          match = nftNumber;
+          break;
         }
-
-        if (!match) {
-          img.src = "../logo1.png";
-          img.style.display = "block";
-          return;
-        }
-
-        const imageURL = \`\${imageBaseURL}\${match}.webp\`;
-        img.src = imageURL;
-        img.onerror = () => (img.src = "../logo1.png");
+      }
+      if (!match) {
+        img.src = "../logo1.png";
         img.style.display = "block";
-      } catch (err) {
-        console.error("fetchProfileImage error", err);
-      }
-    }
-
-    async function checkHolderInSheet(address) {
-      try {
-        const res = await fetch(sheetURL);
-        const text = await res.text();
-        const rows = text.trim().split('\\n').map(r => r.split(','));
-        const headers = rows[0].map(h => h.trim());
-        const addrIndex = headers.indexOf("Holder Address");
-        const pointsIndex = headers.indexOf("Total Points");
-        const row = rows.find(r => r[addrIndex]?.trim() === address.trim());
-        return row ? { found: true, address, points: row[pointsIndex] } : { found: false };
-      } catch (err) {
-        console.error("checkHolderInSheet error", err);
-        return { found: false };
-      }
-    }
-
-    /* Заповнити User Info блок у лівій панелі */
-    async function populateSidebarUserInfo(address) {
-      const userInfoBlock = document.getElementById("user-info-block");
-      const addrEl = document.getElementById("sidebar-wallet-addr");
-      const ptsEl  = document.getElementById("sidebar-total-points");
-      const connectBtn = document.getElementById("sidebar-connect-btn");
-      const img = document.getElementById("profile-image");
-
-      addrEl.style.display = "none";
-      ptsEl.style.display = "none";
-      connectBtn.style.display = "none";
-
-      if (!address) {
-        img.style.display = "none";
-        connectBtn.style.display = "inline-block";
         return;
       }
+      img.src = `${imageBaseURL}${match}.webp`;
+      img.onerror = () => (img.src = "../logo1.png");
+      img.style.display = "block";
+    } catch (err) {
+      console.error("fetchProfileImage error", err);
+    }
+  }
 
-      // Show shortened addr
-      addrEl.textContent = shortenAddress(address);
-      addrEl.style.display = "block";
+  async function checkHolderInSheet(address) {
+    try {
+      const res = await fetch(sheetURL);
+      const text = await res.text();
+      const rows = text.trim().split('\n').map(r => r.split(','));
+      const headers = rows[0].map(h => h.trim());
+      const addrIndex = headers.indexOf("Holder Address");
+      const pointsIndex = headers.indexOf("Total Points");
+      const row = rows.find(r => r[addrIndex]?.trim() === address.trim());
+      return row ? { found: true, address, points: row[pointsIndex] } : { found: false };
+    } catch (err) {
+      console.error("checkHolderInSheet error", err);
+      return { found: false };
+    }
+  }
 
-      // Fetch points
-      const result = await checkHolderInSheet(address);
-      if (result.found) {
-        ptsEl.innerHTML = \`<strong>Total Points:</strong> \${result.points}\`;
-        ptsEl.style.display = "block";
-        await fetchProfileImage(address);
-      } else {
-        img.style.display = "none";
-        ptsEl.style.display = "none";
-        // show Get OWL btn instead of connect
-        connectBtn.textContent = "Get your OWL";
-        connectBtn.onclick = () => window.open("https://owlbtc.art/collection", "_blank");
-        connectBtn.style.display = "inline-block";
-      }
+  async function populateSidebarUserInfo(address) {
+    const addrEl = document.getElementById("sidebar-wallet-addr");
+    const ptsEl  = document.getElementById("sidebar-total-points");
+    const connectBtn = document.getElementById("sidebar-connect-btn");
+    const img = document.getElementById("profile-image");
+
+    addrEl.style.display = "none";
+    ptsEl.style.display = "none";
+    connectBtn.style.display = "none";
+
+    if (!address) {
+      img.style.display = "none";
+      connectBtn.style.display = "inline-block";
+      return;
     }
 
-    async function connectUniSatWallet() {
-      if (!window.unisat) {
-        alert("UniSat Wallet not found.");
-        return;
-      }
-      try {
-        await window.unisat.requestAccounts();
-        const address = (await window.unisat.getAccounts())[0];
-        localStorage.setItem('taproot_wallet', address);
-        updateWalletButtons(address);
-        populateSidebarUserInfo(address);
-      } catch (err) {
-        alert("Failed to connect wallet.");
-      }
+    addrEl.textContent = shortenAddress(address);
+    addrEl.style.display = "block";
+
+    const result = await checkHolderInSheet(address);
+    if (result.found) {
+      ptsEl.innerHTML = `<strong>Total Points:</strong> ${result.points}`;
+      ptsEl.style.display = "block";
+      await fetchProfileImage(address);
+    } else {
+      img.style.display = "none";
+      connectBtn.textContent = "Get your OWL";
+      connectBtn.onclick = () => window.open("https://owlbtc.art/collection", "_blank");
+      connectBtn.style.display = "inline-block";
     }
+  }
 
-    function updateWalletButtons(address) {
-      const short = shortenAddress(address);
-      document.getElementById("wallet-header-btn").textContent = short;
-
-      document.querySelectorAll(".wallet-wrapper").forEach(wrapper => {
-        const dropdown = wrapper.querySelector(".wallet-dropdown-content");
-        if (dropdown) {
-          wrapper.addEventListener('click', (e) => {
-            e.stopPropagation();
-            dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
-          });
-        }
-      });
-
-      document.querySelectorAll(".logout-btn").forEach(btn => {
-        btn.addEventListener('click', () => {
-          localStorage.removeItem("taproot_wallet");
-          location.reload();
-        });
-      });
+  async function connectUniSatWallet() {
+    if (!window.unisat) {
+      alert("UniSat Wallet not found.");
+      return;
     }
+    try {
+      await window.unisat.requestAccounts();
+      const address = (await window.unisat.getAccounts())[0];
+      localStorage.setItem('taproot_wallet', address);
+      updateWalletButtons(address);
+      populateSidebarUserInfo(address);
+    } catch (err) {
+      alert("Failed to connect wallet.");
+    }
+  }
 
-    document.querySelectorAll('#sidebar-nav a').forEach(link => {
-  link.addEventListener('click', (e) => {
-    e.preventDefault();
-
-    const target = link.getAttribute('data-section');
-
+  function hideAllSections() {
     document.querySelectorAll('.profile-section').forEach(sec => {
       sec.classList.remove('active');
     });
-    const active = document.getElementById('section-' + target);
-    if (active) active.classList.add('active');
-  });
-});
+  }
 
+  function showSection(id) {
+    const section = document.getElementById('section-' + id);
+    if (section) section.classList.add('active');
+  }
 
     document.addEventListener("DOMContentLoaded", () => {
-      const saved = localStorage.getItem('taproot_wallet');
-      if (saved) {
-        updateWalletButtons(saved);
-        populateSidebarUserInfo(saved);
-      } else {
-        populateSidebarUserInfo(null);
-      }
+    const saved = getConnectedWalletAddress();
+    if (saved) {
+      updateWalletButtons(saved);
+      populateSidebarUserInfo(saved);
+    } else {
+      populateSidebarUserInfo(null);
+    }
 
-      /* Header wallet button */
-      document.getElementById("wallet-header-btn").addEventListener("click", (e) => {
-        const saved = localStorage.getItem('taproot_wallet');
-        if (saved) {
-          e.stopPropagation();
-          const dropdown = document.getElementById("wallet-header-dropdown");
-          dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
-        } else {
-          connectUniSatWallet();
-        }
+    // Показ/сховати дропдаун
+    const wrapper = document.querySelector(".wallet-wrapper");
+    const dropdown = document.getElementById("wallet-header-dropdown");
+    if (wrapper && dropdown) {
+      wrapper.addEventListener("click", (e) => {
+        e.stopPropagation();
+        dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
       });
+    }
 
-      /* Sidebar connect button (in user info block) */
-      document.getElementById("sidebar-connect-btn").addEventListener("click", (e) => {
-        const saved = localStorage.getItem('taproot_wallet');
-        if (saved) {
-          // If already connected and is holder but we changed text to Get OWL, handle click accordingly in populateSidebarUserInfo
-          e.stopPropagation();
-        } else {
-          connectUniSatWallet();
-        }
-      });
-
-      /* Close dropdowns on outside click */
-      document.addEventListener("click", () => {
-        document.querySelectorAll(".wallet-dropdown-content").forEach(dd => dd.style.display = "none");
-      });
-
-      /* Also allow connect via any element with wallet-trigger class */
-      document.querySelectorAll(".wallet-trigger").forEach(btn =>
-        btn.addEventListener('click', (ev) => {
-          // avoid double-call when header already handled
-          if (ev.target.id === "wallet-header-btn") return;
-          const savedAddr = localStorage.getItem('taproot_wallet');
-          if (!savedAddr) connectUniSatWallet();
-        })
-      );
+    // Закриття дропдауна при кліку поза
+    document.addEventListener("click", () => {
+      document.querySelectorAll(".wallet-dropdown-content").forEach(dd => dd.style.display = "none");
     });
-  </script>
+
+    // Обробка кнопки в хедері
+    document.getElementById("wallet-header-btn").addEventListener("click", (e) => {
+      const saved = getConnectedWalletAddress();
+      if (!saved) {
+        e.stopPropagation();
+        connectUniSatWallet();
+      }
+    });
+
+    // Обробка connect в сайдбарі
+    document.getElementById("sidebar-connect-btn").addEventListener("click", (e) => {
+      e.stopPropagation();
+      const saved = getConnectedWalletAddress();
+      if (!saved) connectUniSatWallet();
+    });
+
+    // Перемикання між розділами
+    document.querySelectorAll('#sidebar-nav a').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const target = link.getAttribute('data-section');
+        hideAllSections();
+        showSection(target);
+      });
+    });
+
+    // Logout
+    document.querySelectorAll(".logout-btn").forEach(btn => {
+      btn.addEventListener('click', () => {
+        localStorage.removeItem("taproot_wallet");
+        location.reload();
+      });
+    });
+
+    // Загальна логіка connect на всі кнопки
+    document.querySelectorAll(".wallet-trigger").forEach(btn => {
+      btn.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        if (ev.target.id === "wallet-header-btn") return;
+        const savedAddr = getConnectedWalletAddress();
+        if (!savedAddr) connectUniSatWallet();
+      });
+    });
+  });
+</script>
 </body>
 </html>
