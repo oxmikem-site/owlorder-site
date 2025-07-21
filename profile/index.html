@@ -227,6 +227,45 @@
       overflow-y: auto;
       max-height: 100%;
     }
+    .chat-box {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  padding-top: 12px;
+}
+
+.chat-messages {
+  max-height: 300px;
+  overflow-y: auto;
+  background: #151515;
+  padding: 10px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+.chat-input-wrapper {
+  display: flex;
+  gap: 8px;
+}
+
+.chat-input-wrapper input {
+  flex: 1;
+  padding: 8px;
+  border-radius: 8px;
+  border: none;
+  background: #222;
+  color: white;
+}
+
+.chat-input-wrapper button {
+  padding: 8px 14px;
+  background: var(--accent);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
   </style>
 </head>
 <body>
@@ -299,6 +338,14 @@
 
 <div id="section-general" class="profile-section">
   <h3>General Chat (For verified holders)</h3>
+</div>
+
+      <div id="general-chat" class="chat-box">
+  <div id="chat-messages-general" class="chat-messages"></div>
+  <div class="chat-input-wrapper">
+    <input type="text" id="chat-input-general" placeholder="Type a message..." />
+    <button id="send-btn-general">Send</button>
+  </div>
 </div>
 
 <div id="section-raffles" class="profile-section">
@@ -538,6 +585,47 @@
 
   const app = firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
+
+    // === CHAT: General section ===
+
+  const chatMessagesRef = db.ref("chats/general");
+
+  function appendMessageToChat(messageObj) {
+    const chatBox = document.getElementById("chat-messages-general");
+    const msgEl = document.createElement("div");
+    msgEl.textContent = `${messageObj.sender.slice(0, 6)}: ${messageObj.text}`;
+    chatBox.appendChild(msgEl);
+    chatBox.scrollTop = chatBox.scrollHeight;
+  }
+
+  // Listen for new messages
+  chatMessagesRef.on("child_added", (snapshot) => {
+    const msg = snapshot.val();
+    appendMessageToChat(msg);
+  });
+
+  // Send message on button click
+document.getElementById("send-btn-general").addEventListener("click", async () => {
+  const input = document.getElementById("chat-input-general");
+  const text = input.value.trim();
+  const sender = localStorage.getItem("taproot_wallet");
+
+  if (!text || !sender) return;
+
+  const holderCheck = await checkHolderInSheet(sender);
+  if (!holderCheck.found) {
+    alert("Only verified holders can send messages.");
+    return;
+  }
+
+  chatMessagesRef.push({
+    sender,
+    text,
+    timestamp: Date.now()
+  });
+
+  input.value = "";
+});
 </script>
 </body>
 </html>
