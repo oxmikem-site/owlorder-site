@@ -15,9 +15,9 @@
       --accent-color: #8a7f5a;
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
+
+    html, body { height: 100%; }
 
     body {
       margin: 0;
@@ -31,6 +31,9 @@
       max-width: 1000px;
       margin: 0 auto;
       padding: 0 20px;
+      min-height: 100vh;              /* тягнемось на висоту вікна */
+      display: flex;
+      flex-direction: column;
     }
 
     header {
@@ -48,18 +51,11 @@
                   inset 0 -1px 0 rgba(0, 0, 0, 0.4);
       background: linear-gradient(145deg, #1b1b1b, #101010);
       border: 1px solid rgba(255, 255, 255, 0.05);
+      flex-shrink: 0;
     }
 
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .logo img {
-      width: 50px;
-      height: 50px;
-    }
+    .logo { display: flex; align-items: center; gap: 12px; }
+    .logo img { width: 50px; height: 50px; }
 
     .nav-buttons {
       display: flex;
@@ -82,10 +78,7 @@
       display: flex;
       align-items: center;
     }
-
-    .button:hover {
-      color: var(--accent-color);
-    }
+    .button:hover { color: var(--accent-color); }
 
     .connect-wallet {
       max-width: 200px;
@@ -100,15 +93,9 @@
       cursor: pointer;
       transition: filter 0.3s ease;
     }
+    .connect-wallet:hover { filter: brightness(1.15); }
 
-    .connect-wallet:hover {
-      filter: brightness(1.15);
-    }
-
-    .wallet-wrapper {
-      position: relative;
-      display: inline-block;
-    }
+    .wallet-wrapper { position: relative; display: inline-block; }
 
     .wallet-dropdown-content {
       display: none;
@@ -122,7 +109,6 @@
       z-index: 1000;
       border: 1px solid rgba(255, 255, 255, 0.05);
     }
-
     .wallet-dropdown-content a {
       display: block;
       padding: 10px 14px;
@@ -130,13 +116,14 @@
       text-decoration: none;
       font-size: 14px;
     }
-
     .wallet-dropdown-content a:hover {
       background: rgba(255, 255, 255, 0.05);
     }
 
     /* --- Main layout for profile --- */
     .profile-main {
+      flex: 1;                      /* займаємо весь простір під хедером */
+      width: 100%;
       display: grid;
       grid-template-columns: 280px 1fr;
       gap: 24px;
@@ -152,13 +139,16 @@
                   inset 0 -1px 0 rgba(0, 0, 0, 0.4);
       background: linear-gradient(145deg, #1b1b1b, #101010);
       border: 1px solid rgba(255, 255, 255, 0.05);
+      display: flex;
+      flex-direction: column;
+      min-height: 0;                 /* для правильного flex/grid скролу */
     }
 
     .panel h2 {
       color: var(--accent-color);
-      margin-top: 0;
-      margin-bottom: 12px;
+      margin: 0 0 12px 0;
       font-size: 18px;
+      flex-shrink: 0;
     }
 
     .overlay {
@@ -167,27 +157,54 @@
       border-radius: 12px;
       padding: 12px 14px;
       box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
+      margin-bottom: 16px;
     }
 
-    .profile-sidebar ul {
-      list-style: none;
-      padding: 0;
-      margin: 0;
+    /* User Info block (лівий верх) */
+    .user-info-block {
+      text-align: center;
+    }
+    .user-info-block img.profile-picture {
+      border-radius: 50%;
+      border: 1px solid #d4c87c;
+      box-shadow: 0 0 12px 4px rgba(212, 200, 124, 0.6);
+      width: 96px;
+      height: 96px;
+      object-fit: cover;
+      display: none;
+    }
+    .user-info-block .wallet-address {
+      margin-top: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--accent-color);
+      word-break: break-all;
+    }
+    .user-info-block .total-points {
+      margin-top: 8px;
+      font-size: 15px;
+    }
+    .user-info-block .get-owl-btn {
+      margin-top: 12px;
     }
 
-    .profile-sidebar li {
-      margin-bottom: 10px;
-    }
-
+    /* nav sections list */
+    .profile-sidebar .sections-list { margin-top: 0; }
+    .profile-sidebar ul { list-style: none; padding: 0; margin: 0; }
+    .profile-sidebar li { margin-bottom: 10px; }
     .profile-sidebar a {
       text-decoration: none;
       color: var(--text-primary);
       font-weight: 500;
       transition: color 0.3s;
     }
+    .profile-sidebar a:hover { color: var(--accent-color); }
 
-    .profile-sidebar a:hover {
-      color: var(--accent-color);
+    /* Make content overlay fill */
+    .profile-content .content-body {
+      flex: 1;
+      overflow-y: auto;
+      max-height: 100%;
     }
   </style>
 </head>
@@ -213,8 +230,18 @@
     <div class="profile-main">
       <!-- Sidebar -->
       <div class="panel profile-sidebar">
-        <h2>Sections</h2>
-        <div class="overlay">
+        <h2>Profile</h2>
+
+        <!-- USER INFO BLOCK -->
+        <div class="overlay user-info-block" id="user-info-block">
+          <img id="profile-image" class="profile-picture" src="" alt="Profile Picture" />
+          <div class="wallet-address" id="sidebar-wallet-addr" style="display:none;"></div>
+          <div class="total-points" id="sidebar-total-points" style="display:none;"></div>
+          <button id="sidebar-connect-btn" class="connect-wallet wallet-trigger">CONNECT WALLET</button>
+        </div>
+
+        <!-- Sections list -->
+        <div class="overlay sections-list">
           <ul>
             <li><a href="#info">Profile Info</a></li>
             <li><a href="#activity">Activity</a></li>
@@ -226,8 +253,9 @@
       <!-- Content -->
       <div class="panel profile-content">
         <h2>My Profile</h2>
-        <div class="overlay">
+        <div class="overlay content-body" id="profile-content-body">
           <p>This is your profile page. You can display wallet info, linked NFTs, points, and more here.</p>
+          <div id="profile-data"></div>
         </div>
       </div>
     </div>
@@ -235,17 +263,114 @@
 
   <!-- Скрипти -->
   <script>
+    /* === CONFIG === */
+    const SNAPSHOT_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?output=csv&gid=0";
+    const imageBaseURL   = "https://raw.githubusercontent.com/oxmikem-site/owlorder-site/main/images/";
+    const sheetURL       = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?gid=1127131432&single=true&output=csv";
+
+    /* === HELPERS === */
     function shortenAddress(addr) {
       return addr.slice(0, 6) + '...' + addr.slice(-4);
     }
 
+    async function fetchProfileImage(wallet) {
+      const img = document.getElementById("profile-image");
+      try {
+        const res = await fetch(SNAPSHOT_CSV_URL);
+        const csv = await res.text();
+        const rows = csv.split("\\n").slice(1);
+
+        let match = null;
+        for (const row of rows) {
+          const cols = row.split(",");
+          const address = cols[1]?.trim();
+          const nftNumber = cols[9]?.trim();
+          if (address === wallet && nftNumber) {
+            match = nftNumber;
+            break;
+          }
+        }
+
+        if (!match) {
+          img.src = "../logo1.png";
+          img.style.display = "block";
+          return;
+        }
+
+        const imageURL = \`\${imageBaseURL}\${match}.webp\`;
+        img.src = imageURL;
+        img.onerror = () => (img.src = "../logo1.png");
+        img.style.display = "block";
+      } catch (err) {
+        console.error("fetchProfileImage error", err);
+      }
+    }
+
+    async function checkHolderInSheet(address) {
+      try {
+        const res = await fetch(sheetURL);
+        const text = await res.text();
+        const rows = text.trim().split('\\n').map(r => r.split(','));
+        const headers = rows[0].map(h => h.trim());
+        const addrIndex = headers.indexOf("Holder Address");
+        const pointsIndex = headers.indexOf("Total Points");
+        const row = rows.find(r => r[addrIndex]?.trim() === address.trim());
+        return row ? { found: true, address, points: row[pointsIndex] } : { found: false };
+      } catch (err) {
+        console.error("checkHolderInSheet error", err);
+        return { found: false };
+      }
+    }
+
+    /* Заповнити User Info блок у лівій панелі */
+    async function populateSidebarUserInfo(address) {
+      const userInfoBlock = document.getElementById("user-info-block");
+      const addrEl = document.getElementById("sidebar-wallet-addr");
+      const ptsEl  = document.getElementById("sidebar-total-points");
+      const connectBtn = document.getElementById("sidebar-connect-btn");
+      const img = document.getElementById("profile-image");
+
+      addrEl.style.display = "none";
+      ptsEl.style.display = "none";
+      connectBtn.style.display = "none";
+
+      if (!address) {
+        img.style.display = "none";
+        connectBtn.style.display = "inline-block";
+        return;
+      }
+
+      // Show shortened addr
+      addrEl.textContent = shortenAddress(address);
+      addrEl.style.display = "block";
+
+      // Fetch points
+      const result = await checkHolderInSheet(address);
+      if (result.found) {
+        ptsEl.innerHTML = \`<strong>Total Points:</strong> \${result.points}\`;
+        ptsEl.style.display = "block";
+        await fetchProfileImage(address);
+      } else {
+        img.style.display = "none";
+        ptsEl.style.display = "none";
+        // show Get OWL btn instead of connect
+        connectBtn.textContent = "Get your OWL";
+        connectBtn.onclick = () => window.open("https://owlbtc.art/collection", "_blank");
+        connectBtn.style.display = "inline-block";
+      }
+    }
+
     async function connectUniSatWallet() {
-      if (!window.unisat) return alert("UniSat Wallet not found.");
+      if (!window.unisat) {
+        alert("UniSat Wallet not found.");
+        return;
+      }
       try {
         await window.unisat.requestAccounts();
         const address = (await window.unisat.getAccounts())[0];
         localStorage.setItem('taproot_wallet', address);
         updateWalletButtons(address);
+        populateSidebarUserInfo(address);
       } catch (err) {
         alert("Failed to connect wallet.");
       }
@@ -275,8 +400,14 @@
 
     document.addEventListener("DOMContentLoaded", () => {
       const saved = localStorage.getItem('taproot_wallet');
-      if (saved) updateWalletButtons(saved);
+      if (saved) {
+        updateWalletButtons(saved);
+        populateSidebarUserInfo(saved);
+      } else {
+        populateSidebarUserInfo(null);
+      }
 
+      /* Header wallet button */
       document.getElementById("wallet-header-btn").addEventListener("click", (e) => {
         const saved = localStorage.getItem('taproot_wallet');
         if (saved) {
@@ -288,12 +419,30 @@
         }
       });
 
+      /* Sidebar connect button (in user info block) */
+      document.getElementById("sidebar-connect-btn").addEventListener("click", (e) => {
+        const saved = localStorage.getItem('taproot_wallet');
+        if (saved) {
+          // If already connected and is holder but we changed text to Get OWL, handle click accordingly in populateSidebarUserInfo
+          e.stopPropagation();
+        } else {
+          connectUniSatWallet();
+        }
+      });
+
+      /* Close dropdowns on outside click */
       document.addEventListener("click", () => {
         document.querySelectorAll(".wallet-dropdown-content").forEach(dd => dd.style.display = "none");
       });
 
+      /* Also allow connect via any element with wallet-trigger class */
       document.querySelectorAll(".wallet-trigger").forEach(btn =>
-        btn.addEventListener('click', connectUniSatWallet)
+        btn.addEventListener('click', (ev) => {
+          // avoid double-call when header already handled
+          if (ev.target.id === "wallet-header-btn") return;
+          const savedAddr = localStorage.getItem('taproot_wallet');
+          if (!savedAddr) connectUniSatWallet();
+        })
       );
     });
   </script>
