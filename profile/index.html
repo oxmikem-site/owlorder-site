@@ -770,12 +770,12 @@ document.getElementById("send-btn-general").addEventListener("click", async () =
   }
 
   chatMessagesRef.push({
-    sender,
-    text,
-    timestamp: Date.now(),
-    replyTo: replyToMessage,
-    imageId: holderCheck.imageId
-  });
+  sender,
+  text,
+  timestamp: Date.now(),
+  replyTo: replyToMessage,
+  imageId: holderCheck.imageId || null
+});
 
   input.value = "";
   input.placeholder = "Type a message...";
