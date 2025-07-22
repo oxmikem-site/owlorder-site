@@ -560,7 +560,8 @@
     const imageBaseURL     = "https://raw.githubusercontent.com/oxmikem-site/owlorder-site/main/images2/";
     const sheetURL         = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?gid=1127131432&single=true&output=csv";
     let cachedHolderInfo = null;
-
+    let cachedSnapshotRows = null;
+    let cachedPointsRows = null;
 
   function shortenAddress(addr) {
     return addr.slice(0, 6) + '...' + addr.slice(-4);
@@ -610,12 +611,14 @@
   let points = "-";
 
   try {
-    // 🔸 Спочатку шукаємо imageId в таблиці SNAPSHOT_CSV_URL
-    const resImg = await fetch(SNAPSHOT_CSV_URL);
-    const csvImg = await resImg.text();
-    const rowsImg = csvImg.split("\n").slice(1);
+    // === 1. CACHING SNAPSHOT (imageId)
+    if (!cachedSnapshotRows) {
+      const resImg = await fetch(SNAPSHOT_CSV_URL);
+      const csvImg = await resImg.text();
+      cachedSnapshotRows = csvImg.split("\n").slice(1);
+    }
 
-    for (const row of rowsImg) {
+    for (const row of cachedSnapshotRows) {
       const cols = row.split(",");
       const rowAddress = cols[1]?.trim().toLowerCase();
       if (rowAddress === address.toLowerCase()) {
@@ -624,12 +627,14 @@
       }
     }
 
-    // 🔸 Потім шукаємо points в таблиці sheetURL
-    const resPoints = await fetch(sheetURL);
-    const csvPoints = await resPoints.text();
-    const rowsPoints = csvPoints.split("\n").slice(1);
+    // === 2. CACHING POINTS
+    if (!cachedPointsRows) {
+      const resPoints = await fetch(sheetURL);
+      const csvPoints = await resPoints.text();
+      cachedPointsRows = csvPoints.split("\n").slice(1);
+    }
 
-    for (const row of rowsPoints) {
+    for (const row of cachedPointsRows) {
       const cols = row.split(",");
       const rowAddress = cols[1]?.trim().toLowerCase();
       if (rowAddress === address.toLowerCase()) {
