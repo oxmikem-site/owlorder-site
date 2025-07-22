@@ -279,8 +279,9 @@
 .chat-input-wrapper {
   display: flex;
   gap: 8px;
-  padding-bottom: 12px;
+  padding: 8px;
   align-items: flex-end;
+  background: none;
 }
 
 .chat-input-wrapper textarea {
@@ -298,13 +299,27 @@
   font-family: 'Inter', sans-serif;
 }
 
-.chat-input-wrapper button#upload-image-btn {
-  padding: 8px 10px;
-  font-size: 16px;
+.chat-input-wrapper button#upload-image-btn,
+.chat-input-wrapper button#toggle-emoji-picker {
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+}
+.chat-input-wrapper button#upload-image-btn:hover,
+.chat-input-wrapper button#toggle-emoji-picker:hover {
+  transform: scale(1.1);
+}
+    .chat-input-wrapper button#send-btn-general {
+  padding: 8px 14px;
   background: var(--accent);
   border: none;
   border-radius: 8px;
   cursor: pointer;
+  color: black;
+  font-weight: 600;
 }
 
     .chat-message {
