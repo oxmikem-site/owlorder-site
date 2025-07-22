@@ -246,10 +246,14 @@
       overflow-y: auto;
       max-height: 100%;
     }
+    
     #section-general {
-  display: flex;
+  display: none; /* за замовчуванням прихований */
   flex-direction: column;
   height: 100%;
+}
+#section-general.active {
+  display: flex;
 }
     .chat-box {
   display: flex;
