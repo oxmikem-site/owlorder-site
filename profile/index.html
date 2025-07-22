@@ -367,6 +367,13 @@
   opacity: 0.6;
   margin-bottom: 4px;
 }
+    .message-content img {
+  margin-top: 6px;
+  border-radius: 10px;
+  max-width: 100%;
+  height: auto;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+}
 
   </style>
 </head>
@@ -778,33 +785,22 @@ fileInput.addEventListener("change", async (e) => {
   msgEl.className = "chat-message";
   msgEl.dataset.key = key;
 
-  // Highlight if it's a reply to your message
   if (messageObj.replyTo?.sender === localStorage.getItem("taproot_wallet")) {
     msgEl.classList.add("highlight");
-    if (messageObj.imageUrl) {
-  const imgEl = document.createElement("img");
-  imgEl.src = messageObj.imageUrl;
-  imgEl.style.maxWidth = "240px";
-  imgEl.style.borderRadius = "8px";
-  imgEl.style.marginTop = "6px";
-  content.appendChild(imgEl);
-}
+  }
 
-  // === Avatar and content wrapper
   const avatar = document.createElement("img");
   avatar.className = "avatar";
   avatar.src = messageObj.imageId
-  ? `${imageBaseURL}${messageObj.imageId}.webp`
-  : "../logo1.png";
+    ? `${imageBaseURL}${messageObj.imageId}.webp`
+    : "../logo1.png";
 
   const content = document.createElement("div");
   content.className = "message-content";
 
-  // Sender and message
   const senderShort = messageObj.sender.slice(0, 6);
   content.innerHTML = `<strong>${senderShort}</strong>: ${messageObj.text}`;
 
-  // Reply preview
   if (messageObj.replyTo) {
     const replyBlock = document.createElement("div");
     replyBlock.className = "reply-preview";
@@ -812,7 +808,17 @@ fileInput.addEventListener("change", async (e) => {
     content.prepend(replyBlock);
   }
 
-  // === Hover menu (emoji + menu)
+  // ⬇️ ПОТРІБНО СЮДИ перемістити вставку зображення
+  if (messageObj.imageUrl) {
+    const imgEl = document.createElement("img");
+    imgEl.src = messageObj.imageUrl;
+    imgEl.style.maxWidth = "240px";
+    imgEl.style.borderRadius = "8px";
+    imgEl.style.marginTop = "6px";
+    imgEl.style.display = "block";
+    content.appendChild(imgEl);
+  }
+
   const hoverMenu = document.createElement("div");
   hoverMenu.className = "hover-menu";
   hoverMenu.innerHTML = `
