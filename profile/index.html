@@ -300,8 +300,9 @@
   font-family: 'Inter', sans-serif;
 }
 
-.chat-input-wrapper button {
-  padding: 8px 14px;
+.chat-input-wrapper button#upload-image-btn {
+  padding: 8px 10px;
+  font-size: 16px;
   background: var(--accent);
   border: none;
   border-radius: 8px;
@@ -442,11 +443,13 @@
     <div id="chat-messages-general" class="chat-messages"></div>
     <div class="chat-input-wrapper">
       <textarea id="chat-input-general" placeholder="Type a message..."></textarea>
-      <div id="emoji-picker-container" style="position: relative;">
-        <button id="toggle-emoji-picker" style="padding: 6px;">😀</button>
-        <div id="emoji-picker" style="position: absolute; bottom: 45px; right: 0; z-index: 999; display: none;"></div>
-      </div>
-      <button id="send-btn-general">Send</button>
+<div id="emoji-picker-container" style="position: relative;">
+  <button id="toggle-emoji-picker" style="padding: 6px;">😀</button>
+  <div id="emoji-picker" style="position: absolute; bottom: 45px; right: 0; z-index: 999; display: none;"></div>
+</div>
+<input type="file" id="image-upload" accept="image/*" style="display: none;" />
+<button id="upload-image-btn">📎</button>
+<button id="send-btn-general">Send</button>
     </div>
   </div>
 </div>
@@ -641,6 +644,47 @@
       populateSidebarUserInfo(null);
     }
 
+      const uploadBtn = document.getElementById("upload-image-btn");
+const fileInput = document.getElementById("image-upload");
+
+uploadBtn.addEventListener("click", () => {
+  fileInput.click();
+});
+
+fileInput.addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const sender = localStorage.getItem("taproot_wallet");
+  if (!sender) {
+    alert("Please connect wallet.");
+    return;
+  }
+
+  const holderCheck = await checkHolderInSheet(sender);
+  if (!holderCheck.found) {
+    alert("Only verified holders can send images.");
+    return;
+  }
+
+  const fileName = `chat_images/${Date.now()}_${file.name}`;
+  const ref = storage.ref().child(fileName);
+  const snapshot = await ref.put(file);
+  const downloadURL = await snapshot.ref.getDownloadURL();
+
+  // Надіслати повідомлення з imageUrl
+  chatMessagesRef.push({
+    sender,
+    text: "", // можеш додати підпис
+    imageUrl: downloadURL,
+    timestamp: Date.now(),
+    replyTo: replyToMessage,
+    imageId: holderCheck.imageId || null
+  });
+
+  fileInput.value = "";
+});
+
     // Показ/сховати дропдаун
     const wrapper = document.querySelector(".wallet-wrapper");
     const dropdown = document.getElementById("wallet-header-dropdown");
@@ -721,7 +765,8 @@
   };
 
   const app = firebase.initializeApp(firebaseConfig);
-const db = firebase.database(app);
+    const db = firebase.database(app);
+    const storage = firebase.storage(app);
 
     // === CHAT: General section ===
 
@@ -736,7 +781,14 @@ const db = firebase.database(app);
   // Highlight if it's a reply to your message
   if (messageObj.replyTo?.sender === localStorage.getItem("taproot_wallet")) {
     msgEl.classList.add("highlight");
-  }
+    if (messageObj.imageUrl) {
+  const imgEl = document.createElement("img");
+  imgEl.src = messageObj.imageUrl;
+  imgEl.style.maxWidth = "240px";
+  imgEl.style.borderRadius = "8px";
+  imgEl.style.marginTop = "6px";
+  content.appendChild(imgEl);
+}
 
   // === Avatar and content wrapper
   const avatar = document.createElement("img");
