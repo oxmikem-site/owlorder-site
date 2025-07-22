@@ -146,11 +146,19 @@
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
 }
 
-.profile-section.active {
-  display: flex;
-flex-direction: column;
-justify-content: space-between;
+/* Для звичайних секцій — як My Collection */
+.profile-section {
+  display: block;
 }
+
+/* Лише для чату застосовуємо flex */
+#section-general.profile-section {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%; /* або min-height: 500px; */
+}
+
     #section-general h3 {
   margin-top: 0;
   margin-bottom: 10px;
