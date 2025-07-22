@@ -385,7 +385,7 @@
         <div class="overlay sections-list">
           <ul id="sidebar-nav">
   <li><a href="#" data-section="collection">My Collection</a></li>
-  <li><a href="#" data-section="dashboard">Dashboard</a></li>
+  <li><a href="https://owlbtc.art/test/index.html">Dashboard</a></li>
   <li><a href="#" data-section="links">Links</a></li>
   <li><a href="#" data-section="announcements">Announcements</a></li>
   <li><a href="#" data-section="general">General</a></li>
@@ -628,6 +628,7 @@
         const target = link.getAttribute('data-section');
         hideAllSections();
         showSection(target);
+        if (target === "dashboard") return; // пропускаємо, щоб відкрилось нормально
       });
     });
 
