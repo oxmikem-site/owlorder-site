@@ -505,20 +505,30 @@
 }
 
   async function checkHolderInSheet(address) {
-    try {
-      const res = await fetch(sheetURL);
-      const text = await res.text();
-      const rows = text.trim().split('\n').map(r => r.split(','));
-      const headers = rows[0].map(h => h.trim());
-      const addrIndex = headers.indexOf("Holder Address");
-      const pointsIndex = headers.indexOf("Total Points");
-      const row = rows.find(r => r[addrIndex]?.trim() === address.trim());
-      return row ? { found: true, address, points: row[pointsIndex] } : { found: false };
-    } catch (err) {
-      console.error("checkHolderInSheet error", err);
-      return { found: false };
-    }
+  try {
+    const res = await fetch(sheetURL);
+    const text = await res.text();
+    const rows = text.trim().split('\n').map(r => r.split(','));
+    const headers = rows[0].map(h => h.trim());
+
+    const addrIndex = headers.indexOf("Holder Address");
+    const pointsIndex = headers.indexOf("Total Points");
+    const nftIndex = headers.indexOf("NFT ID"); // ← додай це (або правильну назву колонки)
+
+    const row = rows.find(r => r[addrIndex]?.trim() === address.trim());
+    return row
+      ? {
+          found: true,
+          address,
+          points: row[pointsIndex],
+          imageId: row[nftIndex]  // ← повертає ID картинки
+        }
+      : { found: false };
+  } catch (err) {
+    console.error("checkHolderInSheet error", err);
+    return { found: false };
   }
+}
 
   async function populateSidebarUserInfo(address) {
     const addrEl = document.getElementById("sidebar-wallet-addr");
@@ -689,7 +699,9 @@ const db = firebase.database(app);
   // === Avatar and content wrapper
   const avatar = document.createElement("img");
   avatar.className = "avatar";
-  avatar.src = "../logo1.png"; // можеш замінити на url з messageObj.avatar або кастом
+  avatar.src = messageObj.imageId
+  ? `${imageBaseURL}${messageObj.imageId}.webp`
+  : "../logo1.png";
 
   const content = document.createElement("div");
   content.className = "message-content";
@@ -753,7 +765,8 @@ document.getElementById("send-btn-general").addEventListener("click", async () =
     sender,
     text,
     timestamp: Date.now(),
-    replyTo: replyToMessage
+    replyTo: replyToMessage,
+    imageId: holderCheck.imageId
   });
 
   input.value = "";
