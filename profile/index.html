@@ -862,9 +862,12 @@ fileInput.addEventListener("change", async (e) => {
 
   const chatMessagesRef = db.ref("chats/general");
 
+    const localMessageIds = new Set();
   function appendMessageToChat(messageObj, key = null) {
   const chatBox = document.getElementById("chat-messages-general");
   const msgEl = document.createElement("div");
+    if (key && document.querySelector(`.chat-message[data-key="${key}"]`)) {
+  return; 
   msgEl.className = "chat-message";
   msgEl.dataset.key = key;
 
@@ -931,10 +934,16 @@ fileInput.addEventListener("change", async (e) => {
   input.focus();
 }
 
-    // Listen for new messages
-chatMessagesRef.on("child_added", (snapshot) => {
+ chatMessagesRef.on("child_added", (snapshot) => {
   const msg = snapshot.val();
   const key = snapshot.key;
+
+  // ⛔️ Пропусти, якщо це вже додане локальне повідомлення
+  if (localMessageIds.has(key)) {
+    localMessageIds.delete(key); // очищаємо
+    return;
+  }
+
   appendMessageToChat(msg, key);
 });
 
@@ -951,19 +960,19 @@ document.getElementById("send-btn-general").addEventListener("click", () => {
     return;
   }
 
-  const msgData = {
-    sender,
-    text,
-    timestamp: Date.now(),
-    replyTo: replyToMessage,
-    imageId: cachedHolderInfo.imageId || null
-  };
+  const msgKey = `local-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+const msgData = {
+  sender,
+  text,
+  timestamp: Date.now(),
+  replyTo: replyToMessage,
+  imageId: cachedHolderInfo.imageId || null
+};
 
-  // 1. Показати в DOM одразу
-  appendMessageToChat(msgData);
+localMessageIds.add(msgKey);
+appendMessageToChat(msgData, msgKey); // ✅ тимчасове локальне відображення
+chatMessagesRef.push(msgData);
 
-  // 2. Надіслати в Firebase
-  chatMessagesRef.push(msgData);
 
   // 3. Очистити поле
   input.value = "";
