@@ -520,12 +520,13 @@
       const cols = row.split(",");
       const rowAddress = cols[1]?.trim().toLowerCase();
       const nftId = cols[9]?.trim();
+      const points = cols[10]?.trim(); // 🟡 <-- припустимо, що 11-та колонка містить поінти
 
       if (rowAddress === address.toLowerCase() && nftId) {
         result = {
           found: true,
           address,
-          points: "-", // not used here
+          points: points || "-",
           imageId: nftId
         };
         break;
