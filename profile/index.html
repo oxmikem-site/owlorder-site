@@ -311,6 +311,10 @@
 .chat-input-wrapper textarea::-webkit-scrollbar {
   display: none;
 }
+    .chat-message.glow-highlight {
+  border: 1px solid #d4c87c;
+  box-shadow: 0 0 12px 4px rgba(212, 200, 124, 0.6);
+}
 
 .chat-input-wrapper {
   display: flex;
@@ -853,11 +857,13 @@ fileInput.addEventListener("change", async (e) => {
   const msgEl = document.createElement("div");
   msgEl.className = "chat-message";
   msgEl.dataset.key = key;
-
-  if (messageObj.replyTo?.sender === localStorage.getItem("taproot_wallet")) {
-    msgEl.classList.add("highlight");
+    
+if (messageObj.replyTo?.key) {
+  const repliedEl = document.querySelector(`.chat-message[data-key="${messageObj.replyTo.key}"]`);
+  if (repliedEl) {
+    repliedEl.classList.add("glow-highlight");
   }
-
+}
   const avatar = document.createElement("img");
   avatar.className = "avatar";
   avatar.src = messageObj.imageId
