@@ -558,8 +558,10 @@
   <script>
     /* === CONFIG === */
     const SNAPSHOT_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?output=csv&gid=0";
-  const imageBaseURL     = "https://raw.githubusercontent.com/oxmikem-site/owlorder-site/main/images2/";
-  const sheetURL         = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?gid=1127131432&single=true&output=csv";
+    const imageBaseURL     = "https://raw.githubusercontent.com/oxmikem-site/owlorder-site/main/images2/";
+    const sheetURL         = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?gid=1127131432&single=true&output=csv";
+    let cachedHolderInfo = null;
+
 
   function shortenAddress(addr) {
     return addr.slice(0, 6) + '...' + addr.slice(-4);
@@ -669,7 +671,8 @@
     addrEl.textContent = shortenAddress(address);
     addrEl.style.display = "block";
 
-    const result = await checkHolderInSheet(address);
+    cachedHolderInfo = await checkHolderInSheet(address);
+const result = cachedHolderInfo;
     if (result.found) {
       ptsEl.innerHTML = `<strong>Total Points:</strong> ${result.points}`;
       ptsEl.style.display = "block";
@@ -923,31 +926,39 @@ chatMessagesRef.on("child_added", (snapshot) => {
 });
 
   // Send message on button click
-document.getElementById("send-btn-general").addEventListener("click", async () => {
+document.getElementById("send-btn-general").addEventListener("click", () => {
   const input = document.getElementById("chat-input-general");
-  const text = input.value.trim();
+  const text = input.value;
   const sender = localStorage.getItem("taproot_wallet");
 
-  if (!text || !sender) return;
+  if (!text.replace(/\s+/g, '') || !sender) return;
 
-  const holderCheck = await checkHolderInSheet(sender);
-  if (!holderCheck.found) {
+  if (!cachedHolderInfo?.found) {
     alert("Only verified holders can send messages.");
     return;
   }
 
-  chatMessagesRef.push({
-  sender,
-  text,
-  timestamp: Date.now(),
-  replyTo: replyToMessage,
-  imageId: holderCheck.imageId || null
-});
+  const msgData = {
+    sender,
+    text,
+    timestamp: Date.now(),
+    replyTo: replyToMessage,
+    imageId: cachedHolderInfo.imageId || null
+  };
 
+  // 1. Показати в DOM одразу
+  appendMessageToChat(msgData);
+
+  // 2. Надіслати в Firebase
+  chatMessagesRef.push(msgData);
+
+  // 3. Очистити поле
   input.value = "";
+  input.style.height = "auto";
   input.placeholder = "Type a message...";
   replyToMessage = null;
 });
+    
    const chatInput = document.getElementById("chat-input-general");
 
 chatInput.addEventListener("input", () => {
