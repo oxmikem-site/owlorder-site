@@ -864,13 +864,20 @@ fileInput.addEventListener("change", async (e) => {
   const msgEl = document.createElement("div");
   msgEl.className = "chat-message";
   msgEl.dataset.key = key;
-    
-    if (messageObj.replyTo?.key) {
+
+  // Підсвітка, якщо повідомлення адресовано мені
+  if (messageObj.replyTo?.wallet) {
     const userWallet = localStorage.getItem("taproot_wallet");
-    if (messageObj.replyTo === userWallet) {
-        msgEl.classList.add("highlight");
+    if (messageObj.replyTo.wallet === userWallet) {
+      msgEl.classList.add("highlight");
     }
+  }
+
+  // далі - формування вмісту повідомлення...
+  msgEl.innerText = `${messageObj.username}: ${messageObj.text}`;
+  chatBox.appendChild(msgEl);
 }
+
   const avatar = document.createElement("img");
   avatar.className = "avatar";
   avatar.src = messageObj.imageId
