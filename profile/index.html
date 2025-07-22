@@ -148,6 +148,8 @@
 
 .profile-section.active {
   display: flex;
+flex-direction: column;
+justify-content: space-between;
 }
     #section-general h3 {
   margin-top: 0;
@@ -369,6 +371,11 @@
   display: flex;
   align-items: flex-start;
   gap: 8px;
+}
+    #chat-messages-general {
+  flex: 1;
+  overflow-y: auto;
+  margin-bottom: 8px;
 }
 
 .message-content {
