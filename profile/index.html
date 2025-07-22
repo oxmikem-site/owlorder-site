@@ -509,30 +509,46 @@
   }
 }
 
-  async function checkHolderInSheet(address) {
-  try {
-    const res = await fetch(SNAPSHOT_CSV_URL);
-    const csv = await res.text();
-    const rows = csv.split("\n").slice(1); // skip header
+ async function checkHolderInSheet(address) {
+  let imageId = null;
+  let points = "-";
 
-    let result = { found: false };
-    for (const row of rows) {
+  try {
+    // 🔸 Спочатку шукаємо imageId в таблиці SNAPSHOT_CSV_URL
+    const resImg = await fetch(SNAPSHOT_CSV_URL);
+    const csvImg = await resImg.text();
+    const rowsImg = csvImg.split("\n").slice(1);
+
+    for (const row of rowsImg) {
       const cols = row.split(",");
       const rowAddress = cols[1]?.trim().toLowerCase();
-      const nftId = cols[9]?.trim();
-      const points = cols[10]?.trim(); // 🟡 <-- припустимо, що 11-та колонка містить поінти
-
-      if (rowAddress === address.toLowerCase() && nftId) {
-        result = {
-          found: true,
-          address,
-          points: points || "-",
-          imageId: nftId
-        };
+      if (rowAddress === address.toLowerCase()) {
+        imageId = cols[9]?.trim(); // колонка J
         break;
       }
     }
-    return result;
+
+    // 🔸 Потім шукаємо points в таблиці sheetURL
+    const resPoints = await fetch(sheetURL);
+    const csvPoints = await resPoints.text();
+    const rowsPoints = csvPoints.split("\n").slice(1);
+
+    for (const row of rowsPoints) {
+      const cols = row.split(",");
+      const rowAddress = cols[1]?.trim().toLowerCase();
+      if (rowAddress === address.toLowerCase()) {
+        points = cols[3]?.trim() || "-"; // колонка D
+        break;
+      }
+    }
+
+    return {
+      found: !!imageId,
+      address,
+      imageId: imageId || null,
+      points
+    };
+
   } catch (err) {
     console.error("checkHolderInSheet error", err);
     return { found: false };
