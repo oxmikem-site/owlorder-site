@@ -514,24 +514,27 @@
 
   async function checkHolderInSheet(address) {
   try {
-    const res = await fetch(sheetURL);
-    const text = await res.text();
-    const rows = text.trim().split('\n').map(r => r.split(','));
-    const headers = rows[0].map(h => h.trim());
+    const res = await fetch(SNAPSHOT_CSV_URL);
+    const csv = await res.text();
+    const rows = csv.split("\n").slice(1); // skip header
 
-    const addrIndex = headers.indexOf("Holder Address");
-    const pointsIndex = headers.indexOf("Total Points");
-    const nftIndex = headers.indexOf("NFT ID"); // ← додай це (або правильну назву колонки)
+    let result = { found: false };
+    for (const row of rows) {
+      const cols = row.split(",");
+      const rowAddress = cols[1]?.trim().toLowerCase();
+      const nftId = cols[9]?.trim();
 
-    const row = rows.find(r => r[addrIndex]?.trim() === address.trim());
-    return row
-      ? {
+      if (rowAddress === address.toLowerCase() && nftId) {
+        result = {
           found: true,
           address,
-          points: row[pointsIndex],
-          imageId: row[nftIndex]  // ← повертає ID картинки
-        }
-      : { found: false };
+          points: "-", // not used here
+          imageId: nftId
+        };
+        break;
+      }
+    }
+    return result;
   } catch (err) {
     console.error("checkHolderInSheet error", err);
     return { found: false };
