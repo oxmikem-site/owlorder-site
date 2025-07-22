@@ -865,11 +865,11 @@ fileInput.addEventListener("change", async (e) => {
   msgEl.className = "chat-message";
   msgEl.dataset.key = key;
     
-if (messageObj.replyTo?.key) {
-  const userWallet = localStorage.getItem("taproot_wallet");
-if (message.replyTo === userWallet) {
-  messageElement.classList.add("highlight");
-}
+    if (messageObj.replyTo?.key) {
+    const userWallet = localStorage.getItem("taproot_wallet");
+    if (messageObj.replyTo === userWallet) {
+        msgEl.classList.add("highlight");
+    }
 }
   const avatar = document.createElement("img");
   avatar.className = "avatar";
