@@ -737,6 +737,14 @@ document.getElementById("toggle-emoji-picker").addEventListener("click", () => {
   });
 });
 
+    function deleteMessage(key) {
+  const confirmDelete = confirm("Are you sure you want to delete this message?");
+  if (!confirmDelete) return;
+
+  chatMessagesRef.child(key).remove()
+    .then(() => console.log("Message deleted:", key))
+    .catch((error) => console.error("Delete error:", error));
+}
 </script>
 </body>
 </html>
