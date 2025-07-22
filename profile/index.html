@@ -639,32 +639,46 @@ const db = firebase.database(app);
   msgEl.className = "chat-message";
   msgEl.dataset.key = key;
 
+  // Highlight if it's a reply to your message
+  if (messageObj.replyTo?.sender === localStorage.getItem("taproot_wallet")) {
+    msgEl.classList.add("highlight");
+  }
+
+  // === Avatar and content wrapper
+  const avatar = document.createElement("img");
+  avatar.className = "avatar";
+  avatar.src = "../logo1.png"; // можеш замінити на url з messageObj.avatar або кастом
+
+  const content = document.createElement("div");
+  content.className = "message-content";
+
+  // Sender and message
   const senderShort = messageObj.sender.slice(0, 6);
-  let content = `<strong>${senderShort}</strong>: ${messageObj.text}`;
+  content.innerHTML = `<strong>${senderShort}</strong>: ${messageObj.text}`;
 
+  // Reply preview
   if (messageObj.replyTo) {
-    content += `<div style="opacity: 0.6; font-size: 12px; margin-left: 10px;">
-      ↪️ replying to <strong>${messageObj.replyTo.sender.slice(0,6)}</strong>: ${messageObj.replyTo.text}
-    </div>`;
+    const replyBlock = document.createElement("div");
+    replyBlock.className = "reply-preview";
+    replyBlock.innerHTML = `↪️ replying to <strong>${messageObj.replyTo.sender.slice(0,6)}</strong>: ${messageObj.replyTo.text}`;
+    content.prepend(replyBlock);
   }
 
-    function deleteMessage(key) {
-  if (confirm("Delete this message?")) {
-    chatMessagesRef.child(key).remove();
-  }
-}  
+  // === Hover menu (emoji + menu)
+  const hoverMenu = document.createElement("div");
+  hoverMenu.className = "hover-menu";
+  hoverMenu.innerHTML = `
+    <button onclick="replyTo('${key}', '${messageObj.sender}', '${messageObj.text.replace(/'/g, "\\'")}')">↩️</button>
+    ${messageObj.sender === localStorage.getItem("taproot_wallet") ? `<button onclick="deleteMessage('${key}')">🗑️</button>` : ""}
+  `;
 
-  // Кнопки
-  content += ` <button onclick="replyTo('${key}', '${messageObj.sender}', '${messageObj.text.replace(/'/g, "\\'")}')">↩️</button>`;
-
-  if (messageObj.sender === localStorage.getItem("taproot_wallet")) {
-    content += ` <button onclick="deleteMessage('${key}')">🗑️</button>`;
-  }
-
-  msgEl.innerHTML = content;
+  msgEl.appendChild(avatar);
+  msgEl.appendChild(content);
+  msgEl.appendChild(hoverMenu);
   chatBox.appendChild(msgEl);
   chatBox.scrollTop = chatBox.scrollHeight;
 }
+    
     function replyTo(key, sender, text) {
   replyToMessage = { key, sender, text };
   const input = document.getElementById("chat-input-general");
