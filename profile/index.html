@@ -311,9 +311,8 @@
 .chat-input-wrapper textarea::-webkit-scrollbar {
   display: none;
 }
-    .chat-message.glow-highlight {
-  border: 1px solid #d4c87c;
-  box-shadow: 0 0 12px 4px rgba(212, 200, 124, 0.6);
+    .highlight {
+  box-shadow: 0 0 4px rgba(212, 200, 124, 0.4);
 }
 
 .chat-input-wrapper {
@@ -862,10 +861,10 @@ fileInput.addEventListener("change", async (e) => {
   msgEl.dataset.key = key;
     
 if (messageObj.replyTo?.key) {
-  const repliedEl = document.querySelector(`.chat-message[data-key="${messageObj.replyTo.key}"]`);
-  if (repliedEl) {
-    repliedEl.classList.add("glow-highlight");
-  }
+  const userWallet = localStorage.getItem("taproot_wallet");
+if (message.replyTo === userWallet) {
+  messageElement.classList.add("highlight");
+}
 }
   const avatar = document.createElement("img");
   avatar.className = "avatar";
