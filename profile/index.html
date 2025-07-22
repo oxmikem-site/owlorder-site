@@ -158,17 +158,11 @@
   height: 100%;
 }
 
-/* Спеціально для general чату можна залишити: */
-#section-general.profile-section {
-  justify-content: space-between;
-}
-
-/* Лише для чату застосовуємо flex */
 #section-general.profile-section {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  height: 100%; /* або min-height: 500px; */
+  justify-content: flex-start;
+  height: 100%;
 }
 
     #section-general h3 {
@@ -277,10 +271,11 @@
   height: 100%;
 }
     .chat-box {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  height: 100%;
   justify-content: space-between;
+  height: 100%;
 }
     #general-chat {
   margin-left: 0;
@@ -297,29 +292,36 @@
   font-size: 14px;
   margin-bottom: 12px;
   max-height: 200px;
+  padding-right: 4px;
+}
+    .chat-messages::-webkit-scrollbar,
+.chat-input-wrapper textarea::-webkit-scrollbar {
+  width: 0;
+  height: 0;
 }
 
 .chat-input-wrapper {
   display: flex;
-  gap: 8px;
-  padding: 8px;
   align-items: flex-end;
-  background: none;
+  gap: 8px;
+  margin-top: 8px;
+  padding-bottom: 12px;
 }
 
 .chat-input-wrapper textarea {
   flex: 1;
+  resize: none;
+  overflow-y: auto;
+  min-height: 40px;
+  max-height: 200px;
   padding: 8px;
   border-radius: 8px;
-  border: none;
   background: #222;
   color: white;
-  resize: none;
-  max-height: 200px;
-  min-height: 40px;
-  line-height: 20px;
-  overflow-y: auto;
   font-family: 'Inter', sans-serif;
+  border: none;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE */
 }
 
 .chat-input-wrapper button#upload-image-btn,
@@ -335,16 +337,19 @@
 .chat-input-wrapper button#toggle-emoji-picker:hover {
   transform: scale(1.1);
 }
-    .chat-input-wrapper button#send-btn-general {
-  padding: 8px 14px;
+    .chat-input-wrapper button {
   background: var(--accent);
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
   color: black;
-  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
 }
-
+    .chat-input-wrapper button:not(#send-btn-general) {
+  background: transparent;
+  color: white;
+  padding: 8px;
+}
     .chat-message {
   padding: 4px 6px;
   margin-bottom: 4px;
@@ -485,22 +490,31 @@
   <h3>Announcements (Team-only chat)</h3>
 </div>
 
-<div id="section-general" class="profile-section">
+<div id="section-general" class="profile-section active">
   <h3>General Chat</h3>
-  <div id="general-chat" class="chat-box">
+
+  <div class="chat-box">
     <div id="chat-messages-general" class="chat-messages"></div>
+
     <div class="chat-input-wrapper">
       <textarea id="chat-input-general" placeholder="Type a message..."></textarea>
-<div id="emoji-picker-container" style="position: relative;">
-  <button id="toggle-emoji-picker" style="padding: 6px;">😀</button>
-  <div id="emoji-picker" style="position: absolute; bottom: 45px; right: 0; z-index: 999; display: none;"></div>
-</div>
-<input type="file" id="image-upload" accept="image/*" style="display: none;" />
-<button id="upload-image-btn">📎</button>
-<button id="send-btn-general">Send</button>
+
+      <!-- Emoji Picker Button -->
+      <div id="emoji-picker-container" style="position: relative;">
+        <button id="toggle-emoji-picker" title="Emoji">😀</button>
+        <div id="emoji-picker" style="position: absolute; bottom: 45px; right: 0; z-index: 999; display: none;"></div>
+      </div>
+
+      <!-- Image Upload Button -->
+      <input type="file" id="image-upload" accept="image/*" style="display: none;" />
+      <button id="upload-image-btn" title="Attach Image">📎</button>
+
+      <!-- Send Button -->
+      <button id="send-btn-general">Send</button>
     </div>
   </div>
 </div>
+
 
 <div id="section-raffles" class="profile-section">
   <h3>Raffles</h3>
