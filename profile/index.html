@@ -320,8 +320,8 @@
   flex: 1;
   resize: none;
   overflow-y: auto;
-  min-height: 40px;
-  max-height: 200px;
+  min-height: 32px; 
+  max-height: 120px;      
   padding: 8px;
   border-radius: 8px;
   background: #222;
@@ -942,7 +942,7 @@ document.getElementById("send-btn-general").addEventListener("click", async () =
 
 chatInput.addEventListener("input", () => {
   chatInput.style.height = "auto";
-  chatInput.style.height = Math.min(chatInput.scrollHeight, 200) + "px";
+  chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + "px";
 });
 
 chatInput.addEventListener("keydown", function (e) {
