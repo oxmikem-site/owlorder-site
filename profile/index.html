@@ -295,14 +295,17 @@
 .chat-messages {
   flex: 1;
   overflow-y: auto;
-  background: #151515;
+  min-height: 0;               
   padding: 10px;
   border-radius: 10px;
+  background: #151515;
   font-size: 14px;
   margin-bottom: 12px;
   padding-right: 4px;
-  min-height: 0; 
+  white-space: pre-wrap;
+  word-break: break-word;
 }
+
     .chat-messages::-webkit-scrollbar,
 .chat-input-wrapper textarea::-webkit-scrollbar {
   display: none;
