@@ -305,6 +305,45 @@
     .profile-sidebar .overlay + .overlay {
   margin-top: 16px;
 }
+.hover-menu {
+  display: none;
+  position: absolute;
+  right: 10px;
+  top: 10px;
+}
+
+.chat-message {
+  position: relative;
+}
+
+.chat-message:hover .hover-menu {
+  display: block;
+}
+.chat-message.highlight {
+  background: rgba(255, 255, 255, 0.1);
+}
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+
+.chat-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.message-content {
+  flex: 1;
+}
+
+.reply-preview {
+  font-size: 12px;
+  opacity: 0.6;
+  margin-bottom: 4px;
+}
 
   </style>
 </head>
