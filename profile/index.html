@@ -604,15 +604,19 @@
   }
 
   function hideAllSections() {
-    document.querySelectorAll('.profile-section').forEach(sec => {
-      sec.classList.remove('active');
-    });
-  }
+  document.querySelectorAll('.profile-section').forEach(sec => {
+    sec.classList.remove('active');
+    sec.style.display = "none"; // <== додано
+  });
+}
 
   function showSection(id) {
-    const section = document.getElementById('section-' + id);
-    if (section) section.classList.add('active');
+  const section = document.getElementById('section-' + id);
+  if (section) {
+    section.classList.add('active');
+    section.style.display = "block"; // <== додано
   }
+}
 
     let replyToMessage = null;
     
