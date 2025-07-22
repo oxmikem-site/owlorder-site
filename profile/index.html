@@ -129,6 +129,7 @@
     /* --- Main layout for profile --- */
     .profile-main {
       flex: 1;                      /* займаємо весь простір під хедером */
+      min-height: 0;
       width: 100%;
       display: grid;
       grid-template-columns: 280px calc(100% - 304px); /* 280 + 24px gap */
@@ -245,6 +246,11 @@
       overflow-y: auto;
       max-height: 100%;
     }
+    #section-general {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
     .chat-box {
   display: flex;
   flex-direction: column;
@@ -269,6 +275,7 @@
 .chat-input-wrapper {
   display: flex;
   gap: 8px;
+  padding-bottom: 12px;
 }
 
 .chat-input-wrapper input {
