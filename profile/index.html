@@ -865,9 +865,12 @@ fileInput.addEventListener("change", async (e) => {
     const localMessageIds = new Set();
   function appendMessageToChat(messageObj, key = null) {
   const chatBox = document.getElementById("chat-messages-general");
+
+  if (key && document.querySelector(`.chat-message[data-key="${key}"]`)) {
+    return;
+  }
+
   const msgEl = document.createElement("div");
-    if (key && document.querySelector(`.chat-message[data-key="${key}"]`)) {
-  return; 
   msgEl.className = "chat-message";
   msgEl.dataset.key = key;
 
@@ -878,11 +881,6 @@ fileInput.addEventListener("change", async (e) => {
       msgEl.classList.add("highlight");
     }
   }
-
-  // далі - формування вмісту повідомлення...
-  msgEl.innerText = `${messageObj.username}: ${messageObj.text}`;
-  chatBox.appendChild(msgEl);
-}
 
   const avatar = document.createElement("img");
   avatar.className = "avatar";
@@ -903,7 +901,6 @@ fileInput.addEventListener("change", async (e) => {
     content.prepend(replyBlock);
   }
 
-  // ⬇️ ПОТРІБНО СЮДИ перемістити вставку зображення
   if (messageObj.imageUrl) {
     const imgEl = document.createElement("img");
     imgEl.src = messageObj.imageUrl;
@@ -926,6 +923,7 @@ fileInput.addEventListener("change", async (e) => {
   msgEl.appendChild(hoverMenu);
   chatBox.appendChild(msgEl);
   chatBox.scrollTop = chatBox.scrollHeight;
+}
     
     function replyTo(key, sender, text) {
   replyToMessage = { key, sender, text };
