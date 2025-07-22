@@ -633,14 +633,15 @@
 
     // Перемикання між розділами
     document.querySelectorAll('#sidebar-nav a').forEach(link => {
-      link.addEventListener('click', (e) => {
-        e.preventDefault();
-        const target = link.getAttribute('data-section');
-        hideAllSections();
-        showSection(target);
-        if (target === "dashboard") return; // пропускаємо, щоб відкрилось нормально
-      });
-    });
+  link.addEventListener('click', (e) => {
+    const target = link.getAttribute('data-section');
+    if (!target) return; // ⛔️ не чіпаємо зовнішні лінки
+
+    e.preventDefault();
+    hideAllSections();
+    showSection(target);
+  });
+});
 
     // Logout
     document.querySelectorAll(".logout-btn").forEach(btn => {
