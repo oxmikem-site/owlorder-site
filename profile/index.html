@@ -573,6 +573,7 @@
     let cachedHolderInfo = null;
     let cachedSnapshotRows = null;
     let cachedPointsRows = null;
+    
 
   function shortenAddress(addr) {
     return addr.slice(0, 6) + '...' + addr.slice(-4);
@@ -868,10 +869,11 @@ fileInput.addEventListener("change", async (e) => {
 
     // === CHAT: General section ===
 
-  const chatMessagesRef = db.ref("chats/general");
-
+    const chatMessagesRef = db.ref("chats/general");
     const localMessageIds = new Set();
-  function appendMessageToChat(messageObj, key = null) {
+    const userMessageKeys = new Set(); // Зберігаємо ключі повідомлень користувача
+
+function appendMessageToChat(messageObj, key = null) {
   const chatBox = document.getElementById("chat-messages-general");
 
   if (key && document.querySelector(`.chat-message[data-key="${key}"]`)) {
@@ -882,8 +884,15 @@ fileInput.addEventListener("change", async (e) => {
   msgEl.className = "chat-message";
   msgEl.dataset.key = key;
 
-  // Підсвітка, якщо це реплай до тебе
-  if (messageObj.replyTo?.wallet === localStorage.getItem("taproot_wallet")) {
+  const currentWallet = localStorage.getItem("taproot_wallet");
+
+  // 💾 Якщо це моє повідомлення — запам’ятай key
+  if (messageObj.sender === currentWallet && key) {
+    userMessageKeys.add(key);
+  }
+
+  // ✅ Якщо хтось відповідає на моє повідомлення — підсвітити
+  if (messageObj.replyTo?.key && userMessageKeys.has(messageObj.replyTo.key)) {
     msgEl.classList.add("highlight");
   }
 
@@ -920,7 +929,7 @@ fileInput.addEventListener("change", async (e) => {
   hoverMenu.className = "hover-menu";
   hoverMenu.innerHTML = `
     <button onclick="replyTo('${key}', '${messageObj.sender}', '${messageObj.text?.replace(/'/g, "\\'") || ""}')">↩️</button>
-    ${messageObj.sender === localStorage.getItem("taproot_wallet") ? `<button onclick="deleteMessage('${key}')">🗑️</button>` : ""}
+    ${messageObj.sender === currentWallet ? `<button onclick="deleteMessage('${key}')">🗑️</button>` : ""}
   `;
 
   msgEl.appendChild(avatar);
