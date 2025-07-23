@@ -367,15 +367,13 @@
   margin-top: 16px;
 }
 .hover-menu {
-  display: flex;
+  display: none;
   position: absolute;
-  top: 6px;           
-  right: 8px;          
-  gap: 2px;              
+  top: 8px;
+  right: 8px;
+  gap: 4px;
   z-index: 10;
-}
-.chat-message {
-  position: relative;
+  flex-direction: row; /* важливо для горизонтального вирівнювання */
 }
 
 .chat-message:hover .hover-menu {
@@ -393,10 +391,15 @@
 }
 
 .chat-message {
+  position: relative;
   display: flex;
   align-items: flex-start;
   gap: 8px;
+  padding: 8px;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.05);
 }
+
     #chat-messages-general {
   flex: 1;
   overflow-y: auto;
