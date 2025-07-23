@@ -859,7 +859,7 @@ fileInput.addEventListener("change", async (e) => {
 
     const chatMessagesRef = db.ref("chats/general");
     const localMessageIds = new Set();
-    const userMessageKeys = new Set(); // Зберігаємо ключі повідомлень користувача
+    const userMessageKeys = new Set();
 
 function appendMessageToChat(messageObj, key = null) {
   const chatBox = document.getElementById("chat-messages-general");
@@ -874,15 +874,18 @@ function appendMessageToChat(messageObj, key = null) {
 
   const currentWallet = localStorage.getItem("taproot_wallet");
 
-  // 💾 Якщо це моє повідомлення — запам’ятай key
   if (messageObj.sender === currentWallet && key) {
     userMessageKeys.add(key);
   }
 
-  // ✅ Якщо хтось відповідає на моє повідомлення — підсвітити
   if (messageObj.replyTo?.key && userMessageKeys.has(messageObj.replyTo.key)) {
     msgEl.classList.add("highlight");
   }
+
+  chatBox.appendChild(msgEl);
+  chatBox.scrollTop = chatBox.scrollHeight;
+}
+
 
   const avatar = document.createElement("img");
   avatar.className = "avatar";
@@ -946,7 +949,12 @@ function appendMessageToChat(messageObj, key = null) {
   }
 
   appendMessageToChat(msg, key);
+   setTimeout(() => {
+  const chatBox = document.getElementById("chat-messages-general");
+  chatBox.scrollTop = chatBox.scrollHeight;
+}, 100);
 });
+    
 
   // Send message on button click
 document.getElementById("send-btn-general").addEventListener("click", () => {
