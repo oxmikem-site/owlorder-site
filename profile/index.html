@@ -9,6 +9,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@1.9.0/index.js"></script>
+  <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
 
   <style>
     :root {
@@ -508,13 +509,17 @@
 
       <!-- Emoji Picker Button -->
       <div id="emoji-picker-container" style="position: relative;">
-  <button id="toggle-emoji-picker" title="Emoji">😀</button>
+  <button id="toggle-emoji-picker" title="Emoji">
+  <iconify-icon icon="twemoji:smiling-face" width="20"></iconify-icon>
+</button>
   <emoji-picker id="emoji-picker" style="position: absolute; bottom: 45px; right: 0; z-index: 999; display: none;"></emoji-picker>
 </div>
 
       <!-- Image Upload Button -->
       <input type="file" id="image-upload" accept="image/*" style="display: none;" />
-      <button id="upload-image-btn" title="Attach Image">📎</button>
+      <button id="upload-image-btn" title="Attach Image">
+  <iconify-icon icon="mdi:paperclip" width="20"></iconify-icon>
+</button>
 
       <!-- Send Button -->
       <button id="send-btn-general">Send</button>
@@ -902,10 +907,14 @@ function appendMessageToChat(messageObj, key = null) {
   const hoverMenu = document.createElement("div");
   hoverMenu.className = "hover-menu";
   hoverMenu.innerHTML = `
-  <button onclick="replyTo('${key}', '${messageObj.sender}', '${messageObj.text?.replace(/'/g, "\\'") || ""}')">↩️</button>
-  ${messageObj.sender === currentWallet ? `<button onclick="deleteMessage('${key}')">🗑️</button>` : ""}
+  <button onclick="replyTo('${key}', '${messageObj.sender}', '${messageObj.text?.replace(/'/g, "\\'") || ""}')">
+    <iconify-icon icon="mdi:reply" width="18"></iconify-icon>
+  </button>
+  ${messageObj.sender === currentWallet ? `
+    <button onclick="deleteMessage('${key}')">
+      <iconify-icon icon="ic:baseline-delete" width="18"></iconify-icon>
+    </button>` : ""}
 `;
-
 
   msgEl.appendChild(hoverMenu);
   msgEl.appendChild(avatar);
