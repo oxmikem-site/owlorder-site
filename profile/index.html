@@ -880,14 +880,10 @@ fileInput.addEventListener("change", async (e) => {
   msgEl.className = "chat-message";
   msgEl.dataset.key = key;
 
-  // Підсвітка, якщо повідомлення адресовано мені
-  if (messageObj.replyTo?.wallet) {
-    const userWallet = localStorage.getItem("taproot_wallet");
-
-if (messageObj.replyTo?.wallet === userWallet) {
-  msgEl.classList.add("highlight");
-}
-
+  // Підсвітка, якщо це реплай до тебе
+  if (messageObj.replyTo?.wallet === localStorage.getItem("taproot_wallet")) {
+    msgEl.classList.add("highlight");
+  }
 
   const avatar = document.createElement("img");
   avatar.className = "avatar";
@@ -898,8 +894,8 @@ if (messageObj.replyTo?.wallet === userWallet) {
   const content = document.createElement("div");
   content.className = "message-content";
 
-  const senderShort = messageObj.sender.slice(0, 6);
-  content.innerHTML = `<strong>${senderShort}</strong>: ${messageObj.text}`;
+  const senderShort = messageObj.sender?.slice(0, 6) || "Anon";
+  content.innerHTML = `<strong>${senderShort}</strong>: ${messageObj.text || ""}`;
 
   if (messageObj.replyTo) {
     const replyBlock = document.createElement("div");
@@ -921,7 +917,7 @@ if (messageObj.replyTo?.wallet === userWallet) {
   const hoverMenu = document.createElement("div");
   hoverMenu.className = "hover-menu";
   hoverMenu.innerHTML = `
-    <button onclick="replyTo('${key}', '${messageObj.sender}', '${messageObj.text.replace(/'/g, "\\'")}')">↩️</button>
+    <button onclick="replyTo('${key}', '${messageObj.sender}', '${messageObj.text?.replace(/'/g, "\\'") || ""}')">↩️</button>
     ${messageObj.sender === localStorage.getItem("taproot_wallet") ? `<button onclick="deleteMessage('${key}')">🗑️</button>` : ""}
   `;
 
@@ -931,6 +927,7 @@ if (messageObj.replyTo?.wallet === userWallet) {
   chatBox.appendChild(msgEl);
   chatBox.scrollTop = chatBox.scrollHeight;
 }
+
     }
     
     function replyTo(key, sender, text) {
