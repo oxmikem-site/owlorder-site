@@ -874,10 +874,7 @@ function appendMessageToChat(messageObj, key = null) {
     userMessageKeys.add(key);
   }
 
- if (
-  messageObj.replyTo?.wallet &&
-  messageObj.replyTo.wallet === currentWallet
-) {
+ if (messageObj.replyTo?.wallet && messageObj.replyTo.wallet === currentWallet) {
   msgEl.classList.add("highlight");
 }
 
