@@ -22,7 +22,10 @@
 
     * { box-sizing: border-box; }
 
-    html, body { height: 100%; }
+   html, body {
+  height: 100%;
+  margin: 0;
+}
 
     body {
       margin: 0;
@@ -136,15 +139,6 @@
       margin-bottom: 40px;
     }
 
-   .profile-section {
-  display: none;
-  background: var(--bg-panel);
-  flex-direction: column;
-  height: 100%;
-  border-radius: 16px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
-}
-
 .profile-section {
   display: none;
   background: var(--bg-panel);
@@ -164,12 +158,6 @@
   min-height: 0;
 }
 
-.profile-section.active {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-}
     #section-general h3 {
   margin-top: 0;
   margin-bottom: 10px;
