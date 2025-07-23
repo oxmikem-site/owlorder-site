@@ -372,12 +372,13 @@
   margin-top: 16px;
 }
 .hover-menu {
-  display: none;
+  display: flex;
+  gap: 6px;
   position: absolute;
-  right: 10px;
-  top: 10px;
+  top: 6px;
+  right: 6px;
+  z-index: 10;
 }
-
 .chat-message {
   position: relative;
 }
@@ -910,10 +911,11 @@ function appendMessageToChat(messageObj, key = null) {
 
   const hoverMenu = document.createElement("div");
   hoverMenu.className = "hover-menu";
-  hoverMenu.innerHTML = `
-    <button onclick="replyTo('${key}', '${messageObj.sender}', '${messageObj.text?.replace(/'/g, "\\'") || ""}')">↩️</button>
-    ${messageObj.sender === currentWallet ? `<button onclick="deleteMessage('${key}')">🗑️</button>` : ""}
-  `;
+ hoverMenu.innerHTML = `
+  <button onclick="openReactionPicker(event, '${key}')">😊</button>
+  <button onclick="replyTo('${key}', '${messageObj.sender}', '${messageObj.text?.replace(/'/g, "\\'") || ""}')">↩️</button>
+  ${messageObj.sender === currentWallet ? `<button onclick="deleteMessage('${key}')">🗑️</button>` : ""}
+`;
 
   msgEl.appendChild(avatar);
   msgEl.appendChild(content);
@@ -1005,7 +1007,8 @@ chatInput.addEventListener("keydown", function (e) {
 
     const toggleBtn = document.getElementById("toggle-emoji-picker");
 const emojiPicker = document.getElementById("emoji-picker");
-const chatInput = document.getElementById("chat-input-general");
+chatInput = document.getElementById("chat-input-general");
+
 
 toggleBtn.addEventListener("click", () => {
   emojiPicker.style.display = emojiPicker.style.display === "none" ? "block" : "none";
@@ -1037,6 +1040,37 @@ emojiPicker.addEventListener("emoji-click", event => {
     .then(() => console.log("Message deleted:", key))
     .catch((error) => console.error("Delete error:", error));
 }
+
+    function openReactionPicker(event, msgKey) {
+  const picker = document.createElement('emoji-picker');
+  picker.style.position = 'absolute';
+  picker.style.top = '30px';
+  picker.style.right = '0';
+  picker.style.zIndex = '999';
+  picker.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
+  picker.style.background = '#1b1b1b';
+  picker.style.borderRadius = '12px';
+
+  picker.addEventListener('emoji-click', e => {
+    const emoji = e.detail.unicode;
+
+    // Знайти повідомлення по ключу і додати emoji inline
+    const msgEl = document.querySelector(`.chat-message[data-key="${msgKey}"] .message-content`);
+    if (msgEl) {
+      const span = document.createElement("span");
+      span.textContent = ` ${emoji}`;
+      msgEl.appendChild(span);
+    }
+
+    picker.remove();
+  });
+
+  // Очистити старий пікер, якщо є
+  document.querySelectorAll('emoji-picker').forEach(p => p.remove());
+
+  event.target.parentNode.appendChild(picker);
+}
+
 </script>
 </body>
 </html>
