@@ -373,20 +373,23 @@
   margin-top: 16px;
 }
 .hover-menu {
-  display: flex;
-  gap: 6px;
+  display: none;
   position: absolute;
-  top: 6px;
-  right: 6px;
+  top: 10px;
+  right: 10px;
+  flex-direction: row;
+  gap: 6px;
   z-index: 10;
 }
+
 .chat-message {
   position: relative;
 }
 
 .chat-message:hover .hover-menu {
-  display: block;
+  display: flex;
 }
+
 .chat-message.highlight {
   background: rgba(255, 255, 255, 0.01);
 }
@@ -918,6 +921,7 @@ function appendMessageToChat(messageObj, key = null) {
   ${messageObj.sender === currentWallet ? `<button onclick="deleteMessage('${key}')">🗑️</button>` : ""}
 `;
 
+  msgEl.appendChild(hoverMenu);
   msgEl.appendChild(avatar);
   msgEl.appendChild(content);
   msgEl.appendChild(hoverMenu);
