@@ -366,15 +366,13 @@
   margin-top: 16px;
 }
 .hover-menu {
-  display: none;
+  display: flex;
   position: absolute;
-  top: 10px;
-  right: 10px;
-  flex-direction: row;
-  gap: 6px;
+  top: 6px;           
+  right: 8px;          
+  gap: 2px;              
   z-index: 10;
 }
-
 .chat-message {
   position: relative;
 }
@@ -904,10 +902,10 @@ function appendMessageToChat(messageObj, key = null) {
   const hoverMenu = document.createElement("div");
   hoverMenu.className = "hover-menu";
   hoverMenu.innerHTML = `
-    <button onclick="openReactionPicker(event, '${key}')">😊</button>
-    <button onclick="replyTo('${key}', '${messageObj.sender}', '${messageObj.text?.replace(/'/g, "\\'") || ""}')">↩️</button>
-    ${messageObj.sender === currentWallet ? `<button onclick="deleteMessage('${key}')">🗑️</button>` : ""}
-  `;
+  <button onclick="replyTo('${key}', '${messageObj.sender}', '${messageObj.text?.replace(/'/g, "\\'") || ""}')">↩️</button>
+  ${messageObj.sender === currentWallet ? `<button onclick="deleteMessage('${key}')">🗑️</button>` : ""}
+`;
+
 
   msgEl.appendChild(hoverMenu);
   msgEl.appendChild(avatar);
