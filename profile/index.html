@@ -871,9 +871,12 @@ function appendMessageToChat(messageObj, key = null) {
     userMessageKeys.add(key);
   }
 
-  if (messageObj.replyTo?.key && userMessageKeys.has(messageObj.replyTo.key)) {
-    msgEl.classList.add("highlight");
-  }
+ if (
+  messageObj.replyTo?.wallet &&
+  messageObj.replyTo.wallet === currentWallet
+) {
+  msgEl.classList.add("highlight");
+}
 
   const avatar = document.createElement("img");
   avatar.className = "avatar";
