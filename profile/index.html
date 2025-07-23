@@ -273,11 +273,11 @@
       max-height: 100%;
     }
     
-    #section-general {
-  display: none;
+   #section-general {
+  display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  height: 100%;
+  height: calc(100vh - 300px); /* налаштуй по своїй верстці */
+  overflow: hidden;
 }
     .chat-box {
   flex: 1;
@@ -285,6 +285,7 @@
   flex-direction: column;
   height: 100%;
   overflow: hidden; 
+  min-height: 0;
 }
     #general-chat {
   margin-left: 0;
