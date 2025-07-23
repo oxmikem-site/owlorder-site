@@ -135,7 +135,6 @@
       grid-template-columns: 280px calc(100% - 304px); /* 280 + 24px gap */
       gap: 24px;
       margin-bottom: 40px;
-      overflow: hidden;
     }
 
    .profile-section {
@@ -166,11 +165,11 @@
   min-height: 0;
 }
 
-#section-general {
-  display: none;
+.profile-section.active {
+  display: flex;
   flex-direction: column;
-  justify-content: space-between;
   height: 100%;
+  min-height: 0;
 }
     #section-general h3 {
   margin-top: 0;
