@@ -130,14 +130,13 @@
 
     /* --- Main layout for profile --- */
     .profile-main {
-      flex: 1;                      
-      min-height: 0;
-      width: 100%;
-      display: grid;
-      grid-template-columns: 280px calc(100% - 304px); /* 280 + 24px gap */
-      gap: 24px;
-      margin-bottom: 40px;
-    }
+  flex: 1;
+  display: grid;
+  grid-template-columns: 280px calc(100% - 304px);
+  gap: 24px;
+  min-height: 0;
+  overflow: hidden;
+}
 
 .profile-section {
   display: none;
