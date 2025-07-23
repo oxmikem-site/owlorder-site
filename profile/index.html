@@ -431,6 +431,31 @@
   height: auto;
   box-shadow: 0 2px 6px rgba(0,0,0,0.5);
 }
+    .message-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+  font-size: 13px;
+}
+
+.sender-name {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.message-time {
+  font-size: 12px;
+  color: #aaa;
+  opacity: 0.6;
+}
+
+.message-text {
+  font-size: 14px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 
   </style>
 </head>
@@ -866,50 +891,63 @@ function appendMessageToChat(messageObj, key = null) {
   if (key && document.querySelector(`.chat-message[data-key="${key}"]`)) return;
 
   const msgEl = document.createElement("div");
-  msgEl.className = "chat-message";
-  msgEl.dataset.key = key;
+msgEl.className = "chat-message";
+msgEl.dataset.key = key;
 
-  const currentWallet = localStorage.getItem("taproot_wallet");
-  if (messageObj.sender === currentWallet && key) {
-    userMessageKeys.add(key);
-  }
+const avatar = document.createElement("img");
+avatar.className = "avatar";
+avatar.src = messageObj.imageId
+  ? `${imageBaseURL}${messageObj.imageId}.webp`
+  : "../logo1.png";
 
- if (messageObj.replyTo?.wallet && messageObj.replyTo.wallet === currentWallet) {
-  msgEl.classList.add("highlight");
+const content = document.createElement("div");
+content.className = "message-content";
+
+// HEADER (address + time)
+const header = document.createElement("div");
+header.className = "message-header";
+
+const nameEl = document.createElement("span");
+nameEl.className = "sender-name";
+nameEl.textContent = shortenAddress(messageObj.sender);
+
+const timeEl = document.createElement("span");
+timeEl.className = "message-time";
+const time = new Date(messageObj.timestamp);
+timeEl.textContent = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+header.appendChild(nameEl);
+header.appendChild(timeEl);
+content.appendChild(header);
+
+// Reply block if present
+if (messageObj.replyTo) {
+  const replyBlock = document.createElement("div");
+  replyBlock.className = "reply-preview";
+  replyBlock.innerHTML = `↪️ replying to <strong>${shortenAddress(messageObj.replyTo.sender)}</strong>: ${messageObj.replyTo.text}`;
+  content.appendChild(replyBlock);
 }
 
-  const avatar = document.createElement("img");
-  avatar.className = "avatar";
-  avatar.src = messageObj.imageId
-    ? `${imageBaseURL}${messageObj.imageId}.webp`
-    : "../logo1.png";
+// MESSAGE BODY
+const body = document.createElement("div");
+body.className = "message-text";
+body.textContent = messageObj.text || "";
+content.appendChild(body);
 
-  const content = document.createElement("div");
-  content.className = "message-content";
+// IMAGE if any
+if (messageObj.imageUrl) {
+  const imgEl = document.createElement("img");
+  imgEl.src = messageObj.imageUrl;
+  imgEl.style.maxWidth = "240px";
+  imgEl.style.borderRadius = "8px";
+  imgEl.style.marginTop = "6px";
+  imgEl.style.display = "block";
+  content.appendChild(imgEl);
+}
 
-  const senderShort = messageObj.sender?.slice(0, 6) || "Anon";
-  content.innerHTML = `<strong>${senderShort}</strong>: ${messageObj.text || ""}`;
-
-  if (messageObj.replyTo) {
-    const replyBlock = document.createElement("div");
-    replyBlock.className = "reply-preview";
-    replyBlock.innerHTML = `↪️ replying to <strong>${messageObj.replyTo.sender.slice(0,6)}</strong>: ${messageObj.replyTo.text}`;
-    content.prepend(replyBlock);
-  }
-
-  if (messageObj.imageUrl) {
-    const imgEl = document.createElement("img");
-    imgEl.src = messageObj.imageUrl;
-    imgEl.style.maxWidth = "240px";
-    imgEl.style.borderRadius = "8px";
-    imgEl.style.marginTop = "6px";
-    imgEl.style.display = "block";
-    content.appendChild(imgEl);
-  }
-
-  const hoverMenu = document.createElement("div");
-  hoverMenu.className = "hover-menu";
-  hoverMenu.innerHTML = `
+const hoverMenu = document.createElement("div");
+hoverMenu.className = "hover-menu";
+hoverMenu.innerHTML = `
   <button onclick="replyTo('${key}', '${messageObj.sender}', '${messageObj.text?.replace(/'/g, "\\'") || ""}')">
     <iconify-icon icon="mdi:reply" width="18"></iconify-icon>
   </button>
@@ -919,10 +957,10 @@ function appendMessageToChat(messageObj, key = null) {
     </button>` : ""}
 `;
 
-  msgEl.appendChild(hoverMenu);
-  msgEl.appendChild(avatar);
-  msgEl.appendChild(content);
-  chatBox.appendChild(msgEl);
+msgEl.appendChild(hoverMenu);
+msgEl.appendChild(avatar);
+msgEl.appendChild(content);
+chatBox.appendChild(msgEl);
   chatBox.scrollTop = chatBox.scrollHeight;
 }
     
