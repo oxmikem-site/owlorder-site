@@ -166,11 +166,6 @@
   margin-left: 4px; /* ✅ підлаштувати вручну для точного вирівнювання */
 }
 
-#general-chat {
-  margin-left: 0;
-  margin-right: 0;
-}
-
     .panel {
       background: var(--bg-panel);
       padding: 16px;
@@ -193,7 +188,6 @@
     }
 
     .overlay {
-      background: linear-gradient(145deg, #151515, #0d0d0d);
       border: 1px solid rgba(255, 255, 255, 0.05);
       border-radius: 12px;
       padding: 12px 14px;
@@ -927,7 +921,6 @@ function appendMessageToChat(messageObj, key = null) {
   msgEl.appendChild(hoverMenu);
   msgEl.appendChild(avatar);
   msgEl.appendChild(content);
-  msgEl.appendChild(hoverMenu);
   chatBox.appendChild(msgEl);
   chatBox.scrollTop = chatBox.scrollHeight;
     
