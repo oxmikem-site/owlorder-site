@@ -947,9 +947,8 @@ function appendMessageToChat(messageObj, key = null) {
   const msg = snapshot.val();
   const key = snapshot.key;
 
-  // ⛔️ Пропусти, якщо це вже додане локальне повідомлення
-  if (localMessageIds.has(key)) {
-    localMessageIds.delete(key); // очищаємо
+  if (msg.clientId && localMessageIds.has(msg.clientId)) {
+    localMessageIds.delete(msg.clientId); 
     return;
   }
 
@@ -975,19 +974,20 @@ const msgData = {
   text,
   timestamp: Date.now(),
   imageId: cachedHolderInfo.imageId || null,
+  clientId: `${Date.now()}_${Math.random().toString(36).slice(2)}`,
   ...(replyToMessage && {
     replyTo: {
       key: replyToMessage.key,
       sender: replyToMessage.sender,
       text: replyToMessage.text,
-      wallet: sender, 
+      wallet: sender,
     },
   }),
 };
 
-localMessageIds.add(msgKey);
-appendMessageToChat(msgData, msgKey); // ✅ тимчасове локальне відображення
-chatMessagesRef.push(msgData);
+localMessageIds.add(msgData.clientId); 
+appendMessageToChat(msgData, msgKey);   
+chatMessagesRef.push(msgData);          
 
 
   // 3. Очистити поле
