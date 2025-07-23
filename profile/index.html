@@ -858,16 +858,13 @@ fileInput.addEventListener("change", async (e) => {
 function appendMessageToChat(messageObj, key = null) {
   const chatBox = document.getElementById("chat-messages-general");
 
-  if (key && document.querySelector(`.chat-message[data-key="${key}"]`)) {
-    return;
-  }
+  if (key && document.querySelector(`.chat-message[data-key="${key}"]`)) return;
 
   const msgEl = document.createElement("div");
   msgEl.className = "chat-message";
   msgEl.dataset.key = key;
 
   const currentWallet = localStorage.getItem("taproot_wallet");
-
   if (messageObj.sender === currentWallet && key) {
     userMessageKeys.add(key);
   }
@@ -875,11 +872,6 @@ function appendMessageToChat(messageObj, key = null) {
   if (messageObj.replyTo?.key && userMessageKeys.has(messageObj.replyTo.key)) {
     msgEl.classList.add("highlight");
   }
-
-  chatBox.appendChild(msgEl);
-  chatBox.scrollTop = chatBox.scrollHeight;
-}
-
 
   const avatar = document.createElement("img");
   avatar.className = "avatar";
@@ -912,17 +904,18 @@ function appendMessageToChat(messageObj, key = null) {
 
   const hoverMenu = document.createElement("div");
   hoverMenu.className = "hover-menu";
- hoverMenu.innerHTML = `
-  <button onclick="openReactionPicker(event, '${key}')">😊</button>
-  <button onclick="replyTo('${key}', '${messageObj.sender}', '${messageObj.text?.replace(/'/g, "\\'") || ""}')">↩️</button>
-  ${messageObj.sender === currentWallet ? `<button onclick="deleteMessage('${key}')">🗑️</button>` : ""}
-`;
+  hoverMenu.innerHTML = `
+    <button onclick="openReactionPicker(event, '${key}')">😊</button>
+    <button onclick="replyTo('${key}', '${messageObj.sender}', '${messageObj.text?.replace(/'/g, "\\'") || ""}')">↩️</button>
+    ${messageObj.sender === currentWallet ? `<button onclick="deleteMessage('${key}')">🗑️</button>` : ""}
+  `;
 
   msgEl.appendChild(hoverMenu);
   msgEl.appendChild(avatar);
   msgEl.appendChild(content);
   chatBox.appendChild(msgEl);
   chatBox.scrollTop = chatBox.scrollHeight;
+}
     
     function replyTo(key, sender, text) {
   replyToMessage = { key, sender, text };
