@@ -900,6 +900,23 @@ fileInput.addEventListener("change", async (e) => {
     const localMessageIds = new Set();
     const userMessageKeys = new Set();
 
+    const emojiToIconifyMap = {
+  "😊": "twemoji:smiling-face",
+  "😂": "twemoji:face-with-tears-of-joy",
+  "🔥": "twemoji:fire",
+  "💯": "twemoji:hundred-points",
+  // додай ще ті emoji, які ти точно хочеш підтримати
+};
+
+function replaceEmojisWithIconify(text) {
+  return text.replace(/[\u{1F300}-\u{1FAFF}]/gu, (match) => {
+    const iconName = emojiToIconifyMap[match];
+    return iconName
+      ? `<iconify-icon icon="${iconName}" width="18" style="vertical-align: middle;"></iconify-icon>`
+      : match;
+  });
+}
+    
 function appendMessageToChat(messageObj, key = null) {
   const chatBox = document.getElementById("chat-messages-general");
 
