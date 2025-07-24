@@ -781,7 +781,6 @@ fileInput.addEventListener("change", async (e) => {
   }
 
   document.getElementById("image-preview-name").textContent = file.name;
-  }
 
   const sender = localStorage.getItem("taproot_wallet");
   if (!sender) {
@@ -800,10 +799,9 @@ fileInput.addEventListener("change", async (e) => {
   const snapshot = await ref.put(file);
   const downloadURL = await snapshot.ref.getDownloadURL();
 
-  // Надіслати повідомлення з imageUrl
   chatMessagesRef.push({
     sender,
-    text: "", // можеш додати підпис
+    text: "",
     imageUrl: downloadURL,
     timestamp: Date.now(),
     replyTo: replyToMessage,
