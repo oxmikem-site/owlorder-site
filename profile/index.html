@@ -937,9 +937,15 @@ content.appendChild(header);
 
 // Reply block if present
 if (messageObj.replyTo) {
+  const replyBlock = document.createElement("div");
+  replyBlock.className = "reply-preview";
+
   const rawText = messageObj.replyTo?.text || "";
-const previewText = rawText.trim() ? rawText.split("\n")[0].slice(0, 60) : "(image)";
-replyBlock.textContent = `<iconify-icon icon="mdi:reply" width="16" style="vertical-align: text-bottom; margin-right: 4px;"></iconify-icon> replying to <strong>${shortenAddress(messageObj.replyTo.sender)}: ${previewText}`;
+  const previewRaw = rawText.trim() ? rawText.split("\n")[0].slice(0, 60) : "(image)";
+  const previewText = replaceEmojisWithIconify(previewRaw); // якщо ти використовуєш заміну емодзі
+
+  replyBlock.innerHTML = `<iconify-icon icon="mdi:reply" width="16" style="vertical-align: text-bottom; margin-right: 4px;"></iconify-icon> replying to <strong>${shortenAddress(messageObj.replyTo.sender)}</strong>: ${previewText}`;
+
   content.appendChild(replyBlock);
 }
 
