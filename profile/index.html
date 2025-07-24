@@ -456,6 +456,9 @@
   word-break: break-word;
 }
 
+    .hidden {
+  display: none !important;
+}
 
   </style>
 </head>
@@ -545,6 +548,7 @@
 
       <!-- Image Upload Button -->
       <input type="file" id="image-upload" accept="image/*" style="display: none;" />
+      <span id="image-preview-name" style="font-size: 12px; color: #999;"></span>
       <button id="upload-image-btn" title="Attach Image">
   <iconify-icon icon="mdi:paperclip" width="20"></iconify-icon>
 </button>
@@ -724,6 +728,7 @@ const result = cachedHolderInfo;
       localStorage.setItem('taproot_wallet', address);
       updateWalletButtons(address);
       populateSidebarUserInfo(address);
+      currentWallet = address;
     } catch (err) {
       alert("Failed to connect wallet.");
     }
@@ -732,25 +737,27 @@ const result = cachedHolderInfo;
   function hideAllSections() {
   document.querySelectorAll('.profile-section').forEach(sec => {
     sec.classList.remove('active');
-    sec.style.display = "none";
+    sec.classList.add('hidden');
   });
 }
 
   function showSection(id) {
   const section = document.getElementById('section-' + id);
   if (section) {
+    section.classList.remove('hidden');
     section.classList.add('active');
-    section.style.display = "flex"; 
   }
 }
 
     let replyToMessage = null;
+    let currentWallet = null;
     
     document.addEventListener("DOMContentLoaded", () => {
     const saved = getConnectedWalletAddress();
     if (saved) {
       updateWalletButtons(saved);
       populateSidebarUserInfo(saved);
+      currentWallet = saved;
     } else {
       populateSidebarUserInfo(null);
     }
@@ -764,7 +771,17 @@ uploadBtn.addEventListener("click", () => {
 
 fileInput.addEventListener("change", async (e) => {
   const file = e.target.files[0];
+  document.getElementById("image-preview-name").textContent = "";
+
   if (!file) return;
+
+  if (file.size > 5 * 1024 * 1024) {
+    alert("Max image size is 5MB.");
+    return;
+  }
+
+  document.getElementById("image-preview-name").textContent = file.name;
+  }
 
   const sender = localStorage.getItem("taproot_wallet");
   if (!sender) {
@@ -923,8 +940,8 @@ content.appendChild(header);
 // Reply block if present
 if (messageObj.replyTo) {
   const replyBlock = document.createElement("div");
-  replyBlock.className = "reply-preview";
-  replyBlock.innerHTML = `↪️ replying to <strong>${shortenAddress(messageObj.replyTo.sender)}</strong>: ${messageObj.replyTo.text}`;
+replyBlock.className = "reply-preview";
+replyBlock.textContent = `↪️ replying to ${shortenAddress(messageObj.replyTo.sender)}: ${messageObj.replyTo.text}`;
   content.appendChild(replyBlock);
 }
 
