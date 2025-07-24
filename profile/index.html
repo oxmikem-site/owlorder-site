@@ -736,10 +736,10 @@ const result = cachedHolderInfo;
   });
 }
 
-  function showSection(id) {
+function showSection(id) {
   const section = document.getElementById('section-' + id);
   if (section) {
-    section.classList.remove('hidden');
+    section.classList.remove('hidden'); // Ось тут важливо
     section.classList.add('active');
   }
 }
