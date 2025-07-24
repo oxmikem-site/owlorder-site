@@ -912,8 +912,8 @@ function replaceEmojisWithIconify(text) {
   return text.replace(/[\u{1F300}-\u{1FAFF}]/gu, (match) => {
     const iconName = emojiToIconifyMap[match];
     return iconName
-      ? `<iconify-icon icon="${iconName}" width="18" style="vertical-align: middle;"></iconify-icon>`
-      : match;
+  ? `<iconify-icon icon="${iconName}" width="18" style="vertical-align: middle;"></iconify-icon>`
+  : match;
   });
 }
     
