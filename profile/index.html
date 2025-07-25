@@ -293,9 +293,9 @@
   display: none;
 }
     .highlight {
-  box-shadow: 0 0 8px #d4c87c;
-  border-radius: 6px;
-  transition: all 0.3s ease;
+   background-color: rgba(212, 200, 124, 0.15);
+  border: none;
+  border-radius: 10px;
 }
 
 .chat-input-wrapper {
@@ -1079,6 +1079,9 @@ content.appendChild(header);
     const replyBlock = document.createElement("div");
     replyBlock.className = "reply-preview";
 
+    if (messageObj.replyTo?.wallet === currentWallet) {
+  replyBlock.classList.add("highlight");
+}
     const previewRaw = (messageObj.replyTo?.text || "").trim()
       ? messageObj.replyTo.text.split("\n")[0].slice(0, 100)
       : "(image)";
