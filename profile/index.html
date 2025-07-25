@@ -453,12 +453,30 @@
 
 .reply-preview {
   display: flex;
-  align-items: center;
-  margin-bottom: 6px;
+  align-items: flex-start;
+  margin-bottom: 4px;
   font-size: 12px;
-  background: rgba(255,255,255,0.03);
-  padding: 4px 8px;
-  border-radius: 8px;
+  padding: 0; /* 🔹 без фону */
+  border-radius: 0;
+  gap: 6px;
+  position: relative;
+}
+
+.inline-reply {
+  padding-left: 8px; /* 🔹 відступ, щоб лінія мала простір */
+}
+
+.reply-connector {
+  width: 8px;
+  height: 100%;
+  border-left: 2px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0 0 0 6px;
+  margin-top: 6px;
+  flex-shrink: 0;
+  position: absolute;
+  left: 0;
+  top: 0;
 }
 
 .reply-container {
@@ -468,8 +486,8 @@
 }
 
 .avatar-small {
-  width: 18px;
-  height: 18px;
+  width: 16px; /* 🔹 трохи менше виглядає більш Discord-like */
+  height: 16px;
   border-radius: 50%;
   object-fit: cover;
 }
@@ -484,13 +502,15 @@
   font-weight: 600;
   color: var(--accent-color);
   font-size: 11px;
-  margin-bottom: 2px;
+  margin-bottom: 1px;
 }
 
 .reply-to-preview {
-  opacity: 0.7;
+  opacity: 0.75;
   font-size: 11px;
+  line-height: 1.2;
 }
+
     .message-content img {
   margin-top: 6px;
   border-radius: 10px;
@@ -1033,28 +1053,30 @@ content.appendChild(header);
 // Reply block if present
 // Create reply block first
 if (messageObj.replyTo) {
-  const replyBlock = document.createElement("div");
-  replyBlock.className = "reply-preview";
+  const replyWrapper = document.createElement("div");
+  replyWrapper.className = "reply-wrapper";
 
-  const rawText = messageObj.replyTo?.text || "";
-  const previewRaw = rawText.trim() ? rawText.split("\n")[0].slice(0, 60) : "(image)";
+  const previewRaw = (messageObj.replyTo?.text || "").trim()
+    ? messageObj.replyTo.text.split("\n")[0].slice(0, 60)
+    : "(image)";
   const previewText = replaceEmojisWithIconify(previewRaw);
 
   const avatarSrc = messageObj.replyTo.imageId
-  ? `${imageBaseURL}${messageObj.replyTo.imageId}.webp`
-  : "../logo1.png";
+    ? `${imageBaseURL}${messageObj.replyTo.imageId}.webp`
+    : "../logo1.png";
 
-replyBlock.innerHTML = `
-  <div class="reply-container">
-    <img src="${avatarSrc}" class="avatar-small" />
-      <div class="reply-text">
-        <span class="reply-to-name">${shortenAddress(messageObj.replyTo.sender)}</span>
-        <span class="reply-to-preview">${previewText}</span>
+  replyWrapper.innerHTML = `
+    <div class="reply-connector"></div>
+    <div class="reply-inline">
+      <div class="reply-to-name">${shortenAddress(messageObj.replyTo.sender)}</div>
+      <div class="reply-to-preview">
+        <img src="${avatarSrc}" class="avatar-small" />
+        ${previewText}
       </div>
     </div>
   `;
 
-  content.appendChild(replyBlock); 
+  content.appendChild(replyWrapper);
 }
 
 // HEADER (address + time)
