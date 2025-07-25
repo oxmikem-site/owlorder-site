@@ -1053,8 +1053,8 @@ content.appendChild(header);
 // Reply block if present
 // Create reply block first
 if (messageObj.replyTo) {
-  const replyWrapper = document.createElement("div");
-  replyWrapper.className = "reply-wrapper";
+  const replyBlock = document.createElement("div");
+  replyBlock.className = "reply-preview inline-reply";
 
   const previewRaw = (messageObj.replyTo?.text || "").trim()
     ? messageObj.replyTo.text.split("\n")[0].slice(0, 60)
@@ -1065,18 +1065,18 @@ if (messageObj.replyTo) {
     ? `${imageBaseURL}${messageObj.replyTo.imageId}.webp`
     : "../logo1.png";
 
-  replyWrapper.innerHTML = `
+  replyBlock.innerHTML = `
     <div class="reply-connector"></div>
-    <div class="reply-inline">
-      <div class="reply-to-name">${shortenAddress(messageObj.replyTo.sender)}</div>
-      <div class="reply-to-preview">
-        <img src="${avatarSrc}" class="avatar-small" />
-        ${previewText}
+    <div class="reply-container">
+      <img src="${avatarSrc}" class="avatar-small" />
+      <div class="reply-text">
+        <span class="reply-to-name">${shortenAddress(messageObj.replyTo.sender)}</span>
+        <span class="reply-to-preview">${previewText}</span>
       </div>
     </div>
   `;
 
-  content.appendChild(replyWrapper);
+  content.appendChild(replyBlock);
 }
 
 // HEADER (address + time)
