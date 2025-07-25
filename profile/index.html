@@ -392,7 +392,7 @@
   gap: 8px;
   padding: 8px;
   border-radius: 6px;
-  background: rgba(255,255,255,0.05);
+  background: transparent;
 }
 
     #chat-messages-general {
@@ -919,6 +919,9 @@ function appendMessageToChat(messageObj, key = null) {
 
   const msgEl = document.createElement("div");
 msgEl.className = "chat-message";
+  if (messageObj.replyTo?.wallet === currentWallet) {
+  msgEl.classList.add("highlight");
+}
 msgEl.dataset.key = key;
 
 const avatar = document.createElement("img");
