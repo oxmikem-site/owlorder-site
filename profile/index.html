@@ -834,13 +834,21 @@ fileInput.addEventListener("change", async (e) => {
   const downloadURL = await snapshot.ref.getDownloadURL();
 
   chatMessagesRef.push({
-    sender,
-    text: "",
-    imageUrl: downloadURL,
-    timestamp: Date.now(),
-    replyTo: replyToMessage,
-    imageId: holderCheck.imageId || null
-  });
+  sender,
+  text: "",
+  imageUrl: downloadURL,
+  timestamp: Date.now(),
+  imageId: holderCheck.imageId || null,
+  ...(replyToMessage && {
+    replyTo: {
+      key: replyToMessage.key,
+      sender: replyToMessage.sender,
+      text: replyToMessage.text,
+      wallet: replyToMessage.sender
+    }
+  })
+});
+
 
   fileInput.value = "";
 });
@@ -958,9 +966,10 @@ function appendMessageToChat(messageObj, key = null) {
 
   const msgEl = document.createElement("div");
 msgEl.className = "chat-message";
-  if (messageObj.replyTo?.wallet === currentWallet) {
+  if (messageObj.replyTo?.sender === currentWallet) {
   msgEl.classList.add("highlight");
 }
+
 msgEl.dataset.key = key;
 
 const avatar = document.createElement("img");
@@ -999,15 +1008,13 @@ if (messageObj.replyTo) {
   const previewRaw = rawText.trim() ? rawText.split("\n")[0].slice(0, 60) : "(image)";
   const previewText = replaceEmojisWithIconify(previewRaw);
 
-  const replyAvatar = document.createElement("img");
-replyAvatar.className = "avatar-small";
-replyAvatar.src = messageObj.replyTo.imageId
+  const avatarSrc = messageObj.replyTo.imageId
   ? `${imageBaseURL}${messageObj.replyTo.imageId}.webp`
   : "../logo1.png";
 
-  replyBlock.innerHTML = `
-    <div class="reply-container">
-      <img src="${replyAvatar.src}" class="avatar-small" />
+replyBlock.innerHTML = `
+  <div class="reply-container">
+    <img src="${avatarSrc}" class="avatar-small" />
       <div class="reply-text">
         <span class="reply-to-name">${shortenAddress(messageObj.replyTo.sender)}</span>
         <span class="reply-to-preview">${previewText}</span>
