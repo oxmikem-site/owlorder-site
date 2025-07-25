@@ -451,17 +451,21 @@
   white-space: pre-wrap;  
 }
 
+.message-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
 .reply-preview {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
-  background: rgba(255, 255, 255, 0.04);
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.05);
   border-left: 3px solid var(--accent-color);
   border-radius: 8px 8px 8px 0;
-  margin-bottom: 6px;
-  font-size: 12px;
-  position: relative;
+  padding: 6px 10px;
 }
 
 .reply-container {
@@ -470,24 +474,28 @@
   gap: 6px;
 }
 
-.reply-to-name {
-  font-weight: 600;
-  color: var(--accent-color);
-  font-size: 11px;
-  line-height: 1.1;
-}
-
-.reply-to-preview {
-  font-size: 11px;
-  opacity: 0.75;
-  line-height: 1.2;
-}
-
 .avatar-small {
   width: 18px;
   height: 18px;
   border-radius: 50%;
   object-fit: cover;
+}
+
+.reply-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.reply-to-name {
+  font-weight: 600;
+  color: var(--accent-color);
+  font-size: 11px;
+}
+
+.reply-to-preview {
+  font-size: 11px;
+  opacity: 0.75;
 }
 
     .message-content img {
