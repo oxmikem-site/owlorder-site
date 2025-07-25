@@ -254,11 +254,11 @@
     }
     
     #section-general {
-  display: none;
   flex-direction: column;
   justify-content: space-between;
   height: 100%;
 }
+
     .chat-box {
   flex: 1;
   display: flex;
@@ -757,9 +757,6 @@ function showSection(id) {
       populateSidebarUserInfo(null);
     }
 
-       hideAllSections();
-  showSection("general");
-      
       const uploadBtn = document.getElementById("upload-image-btn");
 const fileInput = document.getElementById("image-upload");
 
