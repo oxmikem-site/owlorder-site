@@ -508,6 +508,7 @@
     .message-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
   margin-bottom: 2px;
   font-size: 13px;
@@ -1022,22 +1023,43 @@ function appendMessageToChat(messageObj, key = null) {
   const content = document.createElement("div");
   content.className = "message-content";
 
-  // HEADER (address + time)
-  const header = document.createElement("div");
-  header.className = "message-header";
+ const header = document.createElement("div");
+header.className = "message-header";
 
-  const nameEl = document.createElement("span");
-  nameEl.className = "sender-name";
-  nameEl.textContent = shortenAddress(messageObj.sender);
+// LEFT: sender + time
+const left = document.createElement("div");
+left.style.display = "flex";
+left.style.gap = "6px";
+left.style.alignItems = "center";
 
-  const timeEl = document.createElement("span");
-  timeEl.className = "message-time";
-  const time = new Date(messageObj.timestamp);
-  timeEl.textContent = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+const nameEl = document.createElement("span");
+nameEl.className = "sender-name";
+nameEl.textContent = shortenAddress(messageObj.sender);
 
-  header.appendChild(nameEl);
-  header.appendChild(timeEl);
-  content.appendChild(header);
+const timeEl = document.createElement("span");
+timeEl.className = "message-time";
+const time = new Date(messageObj.timestamp);
+timeEl.textContent = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+left.appendChild(nameEl);
+left.appendChild(timeEl);
+
+// RIGHT: hover buttons
+const right = document.createElement("div");
+right.className = "hover-menu";
+right.innerHTML = `
+  <button onclick="replyTo('${key}', '${messageObj.sender}', '${messageObj.text?.replace(/'/g, "\\'") || ""}')">
+    <iconify-icon icon="mdi:reply" width="18"></iconify-icon>
+  </button>
+  ${messageObj.sender === currentWallet ? `
+    <button onclick="deleteMessage('${key}')">
+      <iconify-icon icon="ic:baseline-delete" width="18"></iconify-icon>
+    </button>` : ""}
+`;
+
+header.appendChild(left);
+header.appendChild(right);
+content.appendChild(header);
 
   // TEXT
   const textEl = document.createElement("div");
