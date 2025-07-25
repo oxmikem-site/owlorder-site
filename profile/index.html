@@ -999,7 +999,9 @@ if (messageObj.replyTo) {
   const previewRaw = rawText.trim() ? rawText.split("\n")[0].slice(0, 60) : "(image)";
   const previewText = replaceEmojisWithIconify(previewRaw);
 
-  const avatarSrc = messageObj.replyTo.imageId
+  const replyAvatar = document.createElement("img");
+replyAvatar.className = "avatar-small";
+replyAvatar.src = messageObj.replyTo.imageId
   ? `${imageBaseURL}${messageObj.replyTo.imageId}.webp`
   : "../logo1.png";
 
@@ -1102,11 +1104,11 @@ const msgData = {
   clientId: `${Date.now()}_${Math.random().toString(36).slice(2)}`,
   ...(replyToMessage && {
     replyTo: {
-    key: replyToMessage.key,
-    sender: replyToMessage.sender,
-    text: replyToMessage.text,
-    wallet: sender, 
-  },
+  key: replyToMessage.key,
+  sender: replyToMessage.sender,
+  text: replyToMessage.text,
+  wallet: replyToMessage.sender
+}
 }),
 };
 
