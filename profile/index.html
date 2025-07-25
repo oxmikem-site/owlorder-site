@@ -1119,13 +1119,13 @@ if (messageObj.imageUrl) {
   imgEl.style.display = "block";
   content.appendChild(imgEl);
 }
-    
+    }
     function replyTo(key, sender, text) {
   replyToMessage = { key, sender, text };
   const input = document.getElementById("chat-input-general");
   input.placeholder = `Replying to ${sender.slice(0, 6)}: ${text}`;
   input.focus();
-}
+      }
 
  chatMessagesRef.on("child_added", (snapshot) => {
   const msg = snapshot.val();
