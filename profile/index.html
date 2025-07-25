@@ -314,7 +314,6 @@
   min-height: 20px; /* ⬅️ базова висота */
   padding: 5px;
   border-radius: 8px;
-  background: #222;
   color: white;
   font-family: 'Inter', sans-serif;
   border: none;
@@ -1050,25 +1049,30 @@ content.appendChild(header);
 // Create reply block first
 if (messageObj.replyTo) {
   const replyBlock = document.createElement("div");
-  replyBlock.className = "reply-preview";
+  replyBlock.className = "reply-preview inline-reply";
 
   const previewRaw = (messageObj.replyTo?.text || "").trim()
-    ? messageObj.replyTo.text.split("\n")[0].slice(0, 100)
+    ? messageObj.replyTo.text.split("\n")[0].slice(0, 60)
     : "(image)";
   const previewText = replaceEmojisWithIconify(previewRaw);
 
+  const avatarSrc = messageObj.replyTo.imageId
+    ? `${imageBaseURL}${messageObj.replyTo.imageId}.webp`
+    : "../logo1.png";
+
   replyBlock.innerHTML = `
-    <div class="reply-border"></div>
-    <div class="reply-meta">
-      <span class="reply-name">${shortenAddress(messageObj.replyTo.sender)}</span>
-      <span class="reply-text">${previewText}</span>
+    <div class="reply-connector"></div>
+    <div class="reply-container">
+      <img src="${avatarSrc}" class="avatar-small" />
+      <div class="reply-text">
+        <span class="reply-to-name">${shortenAddress(messageObj.replyTo.sender)}</span>
+        <span class="reply-to-preview">${previewText}</span>
+      </div>
     </div>
   `;
 
-  // вставляємо НАЙПЕРШИМ, перед хедером
-  content.insertBefore(replyBlock, content.firstChild);
+  content.appendChild(replyBlock);
 }
-
 
 // HEADER (address + time)
 const messageHeader = document.createElement("div");
