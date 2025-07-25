@@ -453,25 +453,15 @@
 
 .reply-preview {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 6px;
-  margin-bottom: 4px;
-  position: relative;
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border-left: 3px solid var(--accent-color);
+  border-radius: 8px 8px 8px 0;
+  margin-bottom: 6px;
   font-size: 12px;
-  padding-left: 10px;
-}
-
-.reply-connector {
-  width: 8px;
-  height: 100%;
-  border-left: 2px solid rgba(255, 255, 255, 0.08);
-  border-bottom: 2px solid rgba(255, 255, 255, 0.08);
-  border-radius: 0 0 0 6px;
-  margin-top: 6px;
-  flex-shrink: 0;
-  position: absolute;
-  left: 0;
-  top: 0;
+  position: relative;
 }
 
 .reply-container {
@@ -480,32 +470,25 @@
   gap: 6px;
 }
 
-.avatar-small {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.reply-text {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.2;
-}
-
 .reply-to-name {
   font-weight: 600;
   color: var(--accent-color);
   font-size: 11px;
-  margin-bottom: 1px;
+  line-height: 1.1;
 }
 
 .reply-to-preview {
-  opacity: 0.75;
   font-size: 11px;
+  opacity: 0.75;
   line-height: 1.2;
 }
 
+.avatar-small {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  object-fit: cover;
+}
 
     .message-content img {
   margin-top: 6px;
@@ -1062,7 +1045,6 @@ if (messageObj.replyTo) {
     : "../logo1.png";
 
   replyBlock.innerHTML = `
-    <div class="reply-connector"></div>
     <div class="reply-container">
       <img src="${avatarSrc}" class="avatar-small" />
       <div class="reply-text">
