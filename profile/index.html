@@ -1047,12 +1047,12 @@ const msgData = {
   clientId: `${Date.now()}_${Math.random().toString(36).slice(2)}`,
   ...(replyToMessage && {
     replyTo: {
-      key: replyToMessage.key,
-      sender: replyToMessage.sender,
-      text: replyToMessage.text,
-      wallet: sender,
-    },
-  }),
+    key: replyToMessage.key,
+    sender: replyToMessage.sender,
+    text: replyToMessage.text,
+    wallet: replyToMessage.sender, 
+  },
+}),
 };
 
 localMessageIds.add(msgData.clientId); 
