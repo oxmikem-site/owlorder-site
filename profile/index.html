@@ -419,9 +419,44 @@
 }
 
 .reply-preview {
+  display: flex;
+  align-items: center;
+  margin-bottom: 6px;
   font-size: 12px;
-  opacity: 0.6;
-  margin-bottom: 4px;
+  background: rgba(255,255,255,0.03);
+  padding: 4px 8px;
+  border-radius: 8px;
+}
+
+.reply-container {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.avatar-small {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.reply-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.reply-to-name {
+  font-weight: 600;
+  color: var(--accent-color);
+  font-size: 11px;
+  margin-bottom: 2px;
+}
+
+.reply-to-preview {
+  opacity: 0.7;
+  font-size: 11px;
 }
     .message-content img {
   margin-top: 6px;
@@ -955,18 +990,37 @@ header.appendChild(timeEl);
 content.appendChild(header);
 
 // Reply block if present
+// Create reply block first
 if (messageObj.replyTo) {
   const replyBlock = document.createElement("div");
   replyBlock.className = "reply-preview";
 
   const rawText = messageObj.replyTo?.text || "";
   const previewRaw = rawText.trim() ? rawText.split("\n")[0].slice(0, 60) : "(image)";
-  const previewText = replaceEmojisWithIconify(previewRaw); // якщо ти використовуєш заміну емодзі
+  const previewText = replaceEmojisWithIconify(previewRaw);
 
-  replyBlock.innerHTML = `<iconify-icon icon="mdi:reply" width="16" style="vertical-align: text-bottom; margin-right: 4px;"></iconify-icon> replying to <strong>${shortenAddress(messageObj.replyTo.sender)}</strong>: ${previewText}`;
+  const replyAvatar = document.createElement("img");
+  replyAvatar.className = "avatar-small";
+  replyAvatar.src = messageObj.replyTo.imageId
+    ? `${imageBaseURL}${messageObj.replyTo.imageId}.webp`
+    : "../logo1.png";
 
-  content.appendChild(replyBlock);
+  replyBlock.innerHTML = `
+    <div class="reply-container">
+      <img src="${replyAvatar.src}" class="avatar-small" />
+      <div class="reply-text">
+        <span class="reply-to-name">${shortenAddress(messageObj.replyTo.sender)}</span>
+        <span class="reply-to-preview">${previewText}</span>
+      </div>
+    </div>
+  `;
+
+  content.appendChild(replyBlock); // ➕ вставляємо перед header
 }
+
+// HEADER (address + time)
+const header = document.createElement("div");
+header.className = "message-header";
 
 // MESSAGE BODY
 const body = document.createElement("div");
