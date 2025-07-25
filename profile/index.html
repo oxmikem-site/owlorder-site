@@ -1000,93 +1000,80 @@ function replaceEmojisWithIconify(text) {
   });
 }
     
+// === FINAL FIXED FUNCTION ===
 function appendMessageToChat(messageObj, key = null) {
   const chatBox = document.getElementById("chat-messages-general");
-
   if (key && document.querySelector(`.chat-message[data-key="${key}"]`)) return;
 
   const msgEl = document.createElement("div");
   msgEl.className = "chat-message";
-
+  msgEl.dataset.key = key;
   if (messageObj.replyTo?.wallet === currentWallet) {
     msgEl.classList.add("highlight");
   }
 
-  msgEl.dataset.key = key;
-
+  // AVATAR
   const avatar = document.createElement("img");
   avatar.className = "avatar";
   avatar.src = messageObj.imageId
     ? `${imageBaseURL}${messageObj.imageId}.webp`
     : "../logo1.png";
 
+  // MESSAGE CONTENT
   const content = document.createElement("div");
   content.className = "message-content";
 
- const header = document.createElement("div");
-header.className = "message-header";
+  // HEADER (LEFT name + time + RIGHT buttons)
+  const header = document.createElement("div");
+  header.className = "message-header";
 
-// LEFT: sender + time
-const left = document.createElement("div");
-left.style.display = "flex";
-left.style.gap = "6px";
-left.style.alignItems = "center";
+  const left = document.createElement("div");
+  left.style.display = "flex";
+  left.style.gap = "6px";
+  left.style.alignItems = "center";
 
-const nameEl = document.createElement("span");
-nameEl.className = "sender-name";
-nameEl.textContent = shortenAddress(messageObj.sender);
+  const nameEl = document.createElement("span");
+  nameEl.className = "sender-name";
+  nameEl.textContent = shortenAddress(messageObj.sender);
 
-const timeEl = document.createElement("span");
-timeEl.className = "message-time";
-const time = new Date(messageObj.timestamp);
-timeEl.textContent = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const timeEl = document.createElement("span");
+  timeEl.className = "message-time";
+  const time = new Date(messageObj.timestamp);
+  timeEl.textContent = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-left.appendChild(nameEl);
-left.appendChild(timeEl);
+  left.appendChild(nameEl);
+  left.appendChild(timeEl);
 
-// RIGHT: hover buttons
-const right = document.createElement("div");
-right.className = "hover-menu";
-right.innerHTML = `
-  <button onclick="replyTo('${key}', '${messageObj.sender}', '${messageObj.text?.replace(/'/g, "\\'") || ""}')">
-    <iconify-icon icon="mdi:reply" width="18"></iconify-icon>
-  </button>
-  ${messageObj.sender === currentWallet ? `
+  const right = document.createElement("div");
+  right.style.display = "flex";
+  right.style.alignItems = "center";
+  right.style.gap = "8px";
+  right.innerHTML = `
+    <button onclick="replyTo('${key}', '${messageObj.sender}', '${(messageObj.text || '').replace(/'/g, "\\'")}')">
+      <iconify-icon icon="mdi:reply" width="18"></iconify-icon>
+    </button>
+    ${messageObj.sender === currentWallet ? `
     <button onclick="deleteMessage('${key}')">
       <iconify-icon icon="ic:baseline-delete" width="18"></iconify-icon>
-    </button>` : ""}
-`;
+    </button>` : ""}`;
 
-header.appendChild(left);
-header.appendChild(right);
-content.appendChild(header);
+  header.appendChild(left);
+  header.appendChild(right);
+  content.appendChild(header);
 
-  // TEXT
-  const textEl = document.createElement("div");
-  textEl.className = "message-text";
-  textEl.innerHTML = replaceEmojisWithIconify(messageObj.text || "");
-  content.appendChild(textEl);
-
-  msgEl.appendChild(avatar);
-  msgEl.appendChild(content);
-
-  // WRAPPER (for reply + message)
-  let wrapper = document.createElement("div");
+  // REPLY BLOCK
+  const wrapper = document.createElement("div");
   wrapper.className = "message-wrapper";
-
   if (messageObj.replyTo) {
     const replyBlock = document.createElement("div");
     replyBlock.className = "reply-preview";
-
     const previewRaw = (messageObj.replyTo?.text || "").trim()
       ? messageObj.replyTo.text.split("\n")[0].slice(0, 100)
       : "(image)";
     const previewText = replaceEmojisWithIconify(previewRaw);
-
     const avatarSrc = messageObj.replyTo.imageId
       ? `${imageBaseURL}${messageObj.replyTo.imageId}.webp`
       : "../logo1.png";
-
     replyBlock.innerHTML = `
       <div class="reply-container">
         <img src="${avatarSrc}" class="avatar-small" />
@@ -1096,77 +1083,32 @@ content.appendChild(header);
         </div>
       </div>
     `;
-
     wrapper.appendChild(replyBlock);
   }
 
-  // ✅ FIX HERE — insert correct variable
+  // MESSAGE TEXT
+  const textEl = document.createElement("div");
+  textEl.className = "message-text";
+  textEl.innerHTML = replaceEmojisWithIconify(messageObj.text || "");
+  content.appendChild(textEl);
+
+  // IMAGE if exists
+  if (messageObj.imageUrl) {
+    const imgEl = document.createElement("img");
+    imgEl.src = messageObj.imageUrl;
+    imgEl.style.maxWidth = "240px";
+    imgEl.style.borderRadius = "8px";
+    imgEl.style.marginTop = "6px";
+    imgEl.style.display = "block";
+    content.appendChild(imgEl);
+  }
+
+  msgEl.appendChild(avatar);
+  msgEl.appendChild(content);
   wrapper.appendChild(msgEl);
   chatBox.appendChild(wrapper);
-
-// HEADER (address + time)
-const messageHeader = document.createElement("div");
-messageHeader.className = "message-header";
-
-// MESSAGE BODY
-const body = document.createElement("div");
-body.className = "message-text";
-body.textContent = messageObj.text || "";
-content.appendChild(body);
-
-// IMAGE if any
-if (messageObj.imageUrl) {
-  const imgEl = document.createElement("img");
-  imgEl.src = messageObj.imageUrl;
-  imgEl.style.maxWidth = "240px";
-  imgEl.style.borderRadius = "8px";
-  imgEl.style.marginTop = "6px";
-  imgEl.style.display = "block";
-  content.appendChild(imgEl);
-}
-
-const hoverMenu = document.createElement("div");
-hoverMenu.className = "hover-menu";
-hoverMenu.innerHTML = `
-  <button onclick="replyTo('${key}', '${messageObj.sender}', '${messageObj.text?.replace(/'/g, "\\'") || ""}')">
-    <iconify-icon icon="mdi:reply" width="18"></iconify-icon>
-  </button>
-  ${messageObj.sender === currentWallet ? `
-    <button onclick="deleteMessage('${key}')">
-      <iconify-icon icon="ic:baseline-delete" width="18"></iconify-icon>
-    </button>` : ""}
-`;
-
-msgEl.appendChild(hoverMenu);
-msgEl.appendChild(avatar);
-msgEl.appendChild(content);
   chatBox.scrollTop = chatBox.scrollHeight;
-}
-    
-    function replyTo(key, sender, text) {
-  replyToMessage = { key, sender, text };
-  const input = document.getElementById("chat-input-general");
-  input.placeholder = `Replying to ${sender.slice(0, 6)}: ${text}`;
-  input.focus();
-}
-
- chatMessagesRef.on("child_added", (snapshot) => {
-  const msg = snapshot.val();
-  const key = snapshot.key;
-
-  const uniqueId = `${msg.sender}_${msg.timestamp}`;
-  if (seenMessages.has(uniqueId)) return;
-  seenMessages.add(uniqueId);
-
-  // Автоочистка, якщо багато записів
-  if (seenMessages.size > 500) seenMessages.clear();
-
-  appendMessageToChat(msg, key);
-
-  setTimeout(() => {
-    const chatBox = document.getElementById("chat-messages-general");
-    chatBox.scrollTop = chatBox.scrollHeight;
-  }, 100);
+}, 100);
 });
     
   // Send message on button click
