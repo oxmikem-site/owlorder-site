@@ -999,11 +999,9 @@ if (messageObj.replyTo) {
   const previewRaw = rawText.trim() ? rawText.split("\n")[0].slice(0, 60) : "(image)";
   const previewText = replaceEmojisWithIconify(previewRaw);
 
-  const replyAvatar = document.createElement("img");
-  replyAvatar.className = "avatar-small";
-  replyAvatar.src = messageObj.replyTo.imageId
-    ? `${imageBaseURL}${messageObj.replyTo.imageId}.webp`
-    : "../logo1.png";
+  const avatarSrc = messageObj.replyTo.imageId
+  ? `${imageBaseURL}${messageObj.replyTo.imageId}.webp`
+  : "../logo1.png";
 
   replyBlock.innerHTML = `
     <div class="reply-container">
