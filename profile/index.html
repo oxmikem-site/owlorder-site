@@ -305,21 +305,6 @@
   background: #111;
   border-radius: 8px;
 }
-    .chat-input-wrapper button.icon-button {
-  background: transparent;
-  border: none;
-  font-size: 20px;
-  cursor: pointer;
-  padding: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  line-height: 1;
-}
-
-.chat-input-wrapper button.icon-button:hover {
-  transform: scale(1.1);
-}
 
 .chat-input-wrapper textarea {
   flex: 1;
@@ -338,12 +323,49 @@
   box-shadow: inset 3px 3px 6px #0c0c0c, inset -3px -3px 6px #2a2a2a;
 }
 
+.chat-input-wrapper button#upload-image-btn,
+.chat-input-wrapper button#toggle-emoji-picker {
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+}
+.chat-input-wrapper button#upload-image-btn:hover,
+.chat-input-wrapper button#toggle-emoji-picker:hover {
+  transform: scale(1.1);
 }/* Обгортка з emoji, скріпкою та кнопкою */
 .chat-actions {
   display: flex;
   align-items: center;
   gap: 8px;
   margin-left: 10px;
+}
+
+/* Кнопка емодзі */
+#toggle-emoji-picker {
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Скріпка */
+#upload-image-btn {
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Send button */
@@ -586,7 +608,7 @@
   <div class="chat-actions">
     <!-- Emoji Button -->
     <div id="emoji-picker-container" style="position: relative;">
-      <button id="toggle-emoji-picker" class="icon-button" title="Emoji">...</button>
+      <button id="toggle-emoji-picker" title="Emoji">
         <iconify-icon icon="twemoji:smiling-face" width="20"></iconify-icon>
       </button>
       <emoji-picker id="emoji-picker" style="position: absolute; bottom: 45px; right: 0; z-index: 999; display: none;"></emoji-picker>
@@ -594,7 +616,7 @@
 
     <!-- Image Upload -->
     <input type="file" id="image-upload" accept="image/*" style="display: none;" />
-    <button id="upload-image-btn" class="icon-button" title="Attach Image">...</button>
+    <button id="upload-image-btn" title="Attach Image">
       <iconify-icon icon="mdi:paperclip" width="20"></iconify-icon>
     </button>
 
