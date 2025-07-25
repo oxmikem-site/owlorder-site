@@ -1086,6 +1086,18 @@ function appendMessageToChat(messageObj, key = null) {
     wrapper.appendChild(replyBlock);
   }
 
+  chatMessagesRef.on("child_added", (snapshot) => {
+  const message = snapshot.val();
+  const key = snapshot.key;
+
+  if (!message || seenMessages.has(`${message.sender}_${message.timestamp}`)) return;
+  if (message.clientId && localMessageIds.has(message.clientId)) return;
+
+  seenMessages.add(`${message.sender}_${message.timestamp}`);
+  userMessageKeys.add(key);
+  appendMessageToChat(message, key);
+});
+
   // MESSAGE TEXT
   const textEl = document.createElement("div");
   textEl.className = "message-text";
