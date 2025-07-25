@@ -966,7 +966,7 @@ function appendMessageToChat(messageObj, key = null) {
 
   const msgEl = document.createElement("div");
 msgEl.className = "chat-message";
-  if (messageObj.replyTo?.sender === currentWallet) {
+  if (messageObj.replyTo?.wallet === currentWallet) {
   msgEl.classList.add("highlight");
 }
 
@@ -996,7 +996,7 @@ timeEl.textContent = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-d
 
 header.appendChild(nameEl);
 header.appendChild(timeEl);
-content.appendChild(Header);
+content.appendChild(message-header);
 
 // Reply block if present
 // Create reply block first
