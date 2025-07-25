@@ -1005,11 +1005,35 @@ function appendMessageToChat(messageObj, key = null) {
   const chatBox = document.getElementById("chat-messages-general");
   if (key && document.querySelector(`.chat-message[data-key="${key}"]`)) return;
 
-  const msgEl = document.createElement("div");
+  const wrapper = document.createElement("div");
+  wrapper.className = "message-wrapper";
+
+ const msgEl = document.createElement("div");
   msgEl.className = "chat-message";
   msgEl.dataset.key = key;
-  if (messageObj.replyTo?.wallet === currentWallet) {
-    msgEl.classList.add("highlight");
+  if (messageObj.replyTo?.key) msgEl.dataset.replyto = messageObj.replyTo.key;
+  if (messageObj.replyTo?.wallet === currentWallet) msgEl.classList.add("highlight");
+
+  if (messageObj.replyTo) {
+    const replyBlock = document.createElement("div");
+    replyBlock.className = "reply-preview";
+    const previewRaw = (messageObj.replyTo?.text || "").trim()
+      ? messageObj.replyTo.text.split("\n")[0].slice(0, 100)
+      : "(image)";
+    const previewText = replaceEmojisWithIconify(previewRaw);
+    const avatarSrc = messageObj.replyTo.imageId
+      ? `${imageBaseURL}${messageObj.replyTo.imageId}.webp`
+      : "../logo1.png";
+    replyBlock.innerHTML = `
+      <div class="reply-container">
+        <img src="${avatarSrc}" class="avatar-small" />
+        <div class="reply-text">
+          <span class="reply-to-name">${shortenAddress(messageObj.replyTo.sender)}</span>
+          <span class="reply-to-preview">${previewText}</span>
+        </div>
+      </div>
+    `;
+    msgEl.appendChild(replyBlock);
   }
 
   // AVATAR
@@ -1060,31 +1084,6 @@ function appendMessageToChat(messageObj, key = null) {
   header.appendChild(left);
   header.appendChild(right);
   content.appendChild(header);
-
-  // REPLY BLOCK
-  const wrapper = document.createElement("div");
-  wrapper.className = "message-wrapper";
-  if (messageObj.replyTo) {
-    const replyBlock = document.createElement("div");
-    replyBlock.className = "reply-preview";
-    const previewRaw = (messageObj.replyTo?.text || "").trim()
-      ? messageObj.replyTo.text.split("\n")[0].slice(0, 100)
-      : "(image)";
-    const previewText = replaceEmojisWithIconify(previewRaw);
-    const avatarSrc = messageObj.replyTo.imageId
-      ? `${imageBaseURL}${messageObj.replyTo.imageId}.webp`
-      : "../logo1.png";
-    replyBlock.innerHTML = `
-      <div class="reply-container">
-        <img src="${avatarSrc}" class="avatar-small" />
-        <div class="reply-text">
-          <span class="reply-to-name">${shortenAddress(messageObj.replyTo.sender)}</span>
-          <span class="reply-to-preview">${previewText}</span>
-        </div>
-      </div>
-    `;
-    wrapper.appendChild(replyBlock);
-  }
 
   // MESSAGE TEXT
   const textEl = document.createElement("div");
