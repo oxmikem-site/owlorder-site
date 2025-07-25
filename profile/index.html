@@ -996,7 +996,7 @@ timeEl.textContent = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-d
 
 header.appendChild(nameEl);
 header.appendChild(timeEl);
-content.appendChild(messageHeader);
+content.appendChild(Header);
 
 // Reply block if present
 // Create reply block first
@@ -1022,7 +1022,7 @@ replyBlock.innerHTML = `
     </div>
   `;
 
-  content.appendChild(replyBlock); // ➕ вставляємо перед header
+  content.appendChild(replyBlock); 
 }
 
 // HEADER (address + time)
