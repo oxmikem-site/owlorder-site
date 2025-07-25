@@ -425,7 +425,7 @@
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  padding: 8px;
+  padding: 5px 8px 5px 8px;
   border-radius: 6px;
   background: transparent;
 }
@@ -508,6 +508,7 @@
     .message-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
   margin-bottom: 2px;
   font-size: 13px;
@@ -980,6 +981,7 @@ fileInput.addEventListener("change", async (e) => {
     const chatMessagesRef = db.ref("chats/general");
     const localMessageIds = new Set();
     const userMessageKeys = new Set();
+    const seenMessages = new Set();
 
     const emojiToIconifyMap = {
   "😊": "twemoji:smiling-face",
@@ -1004,25 +1006,31 @@ function appendMessageToChat(messageObj, key = null) {
   if (key && document.querySelector(`.chat-message[data-key="${key}"]`)) return;
 
   const msgEl = document.createElement("div");
-msgEl.className = "chat-message";
+  msgEl.className = "chat-message";
+
   if (messageObj.replyTo?.wallet === currentWallet) {
-  msgEl.classList.add("highlight");
-}
+    msgEl.classList.add("highlight");
+  }
 
-msgEl.dataset.key = key;
+  msgEl.dataset.key = key;
 
-const avatar = document.createElement("img");
-avatar.className = "avatar";
-avatar.src = messageObj.imageId
-  ? `${imageBaseURL}${messageObj.imageId}.webp`
-  : "../logo1.png";
+  const avatar = document.createElement("img");
+  avatar.className = "avatar";
+  avatar.src = messageObj.imageId
+    ? `${imageBaseURL}${messageObj.imageId}.webp`
+    : "../logo1.png";
 
-const content = document.createElement("div");
-content.className = "message-content";
+  const content = document.createElement("div");
+  content.className = "message-content";
 
-// HEADER (address + time)
-const header = document.createElement("div");
+ const header = document.createElement("div");
 header.className = "message-header";
+
+// LEFT: sender + time
+const left = document.createElement("div");
+left.style.display = "flex";
+left.style.gap = "6px";
+left.style.alignItems = "center";
 
 const nameEl = document.createElement("span");
 nameEl.className = "sender-name";
@@ -1033,43 +1041,68 @@ timeEl.className = "message-time";
 const time = new Date(messageObj.timestamp);
 timeEl.textContent = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-header.appendChild(nameEl);
-header.appendChild(timeEl);
+left.appendChild(nameEl);
+left.appendChild(timeEl);
+
+// RIGHT: hover buttons
+const right = document.createElement("div");
+right.className = "hover-menu";
+right.innerHTML = `
+  <button onclick="replyTo('${key}', '${messageObj.sender}', '${messageObj.text?.replace(/'/g, "\\'") || ""}')">
+    <iconify-icon icon="mdi:reply" width="18"></iconify-icon>
+  </button>
+  ${messageObj.sender === currentWallet ? `
+    <button onclick="deleteMessage('${key}')">
+      <iconify-icon icon="ic:baseline-delete" width="18"></iconify-icon>
+    </button>` : ""}
+`;
+
+header.appendChild(left);
+header.appendChild(right);
 content.appendChild(header);
-  
-// Reply block if present
-// Create reply block first
-let wrapper = document.createElement("div");
-wrapper.className = "message-wrapper";
 
-if (messageObj.replyTo) {
-  const replyBlock = document.createElement("div");
-  replyBlock.className = "reply-preview";
+  // TEXT
+  const textEl = document.createElement("div");
+  textEl.className = "message-text";
+  textEl.innerHTML = replaceEmojisWithIconify(messageObj.text || "");
+  content.appendChild(textEl);
 
-  const previewRaw = (messageObj.replyTo?.text || "").trim()
-    ? messageObj.replyTo.text.split("\n")[0].slice(0, 100)
-    : "(image)";
-  const previewText = replaceEmojisWithIconify(previewRaw);
+  msgEl.appendChild(avatar);
+  msgEl.appendChild(content);
 
-  const avatarSrc = messageObj.replyTo.imageId
-    ? `${imageBaseURL}${messageObj.replyTo.imageId}.webp`
-    : "../logo1.png";
+  // WRAPPER (for reply + message)
+  let wrapper = document.createElement("div");
+  wrapper.className = "message-wrapper";
 
-  replyBlock.innerHTML = `
-    <div class="reply-container">
-      <img src="${avatarSrc}" class="avatar-small" />
-      <div class="reply-text">
-        <span class="reply-to-name">${shortenAddress(messageObj.replyTo.sender)}</span>
-        <span class="reply-to-preview">${previewText}</span>
+  if (messageObj.replyTo) {
+    const replyBlock = document.createElement("div");
+    replyBlock.className = "reply-preview";
+
+    const previewRaw = (messageObj.replyTo?.text || "").trim()
+      ? messageObj.replyTo.text.split("\n")[0].slice(0, 100)
+      : "(image)";
+    const previewText = replaceEmojisWithIconify(previewRaw);
+
+    const avatarSrc = messageObj.replyTo.imageId
+      ? `${imageBaseURL}${messageObj.replyTo.imageId}.webp`
+      : "../logo1.png";
+
+    replyBlock.innerHTML = `
+      <div class="reply-container">
+        <img src="${avatarSrc}" class="avatar-small" />
+        <div class="reply-text">
+          <span class="reply-to-name">${shortenAddress(messageObj.replyTo.sender)}</span>
+          <span class="reply-to-preview">${previewText}</span>
+        </div>
       </div>
-    </div>
-  `;
+    `;
 
-  wrapper.appendChild(replyBlock);
-}
+    wrapper.appendChild(replyBlock);
+  }
 
-wrapper.appendChild(messageEl);
-chatContainer.appendChild(wrapper);
+  // ✅ FIX HERE — insert correct variable
+  wrapper.appendChild(msgEl);
+  chatBox.appendChild(wrapper);
 
 // HEADER (address + time)
 const messageHeader = document.createElement("div");
@@ -1107,7 +1140,6 @@ hoverMenu.innerHTML = `
 msgEl.appendChild(hoverMenu);
 msgEl.appendChild(avatar);
 msgEl.appendChild(content);
-chatBox.appendChild(msgEl);
   chatBox.scrollTop = chatBox.scrollHeight;
 }
     
@@ -1122,19 +1154,21 @@ chatBox.appendChild(msgEl);
   const msg = snapshot.val();
   const key = snapshot.key;
 
-  if (msg.clientId && localMessageIds.has(msg.clientId)) {
-    localMessageIds.delete(msg.clientId); 
-    return;
-  }
+  const uniqueId = `${msg.sender}_${msg.timestamp}`;
+  if (seenMessages.has(uniqueId)) return;
+  seenMessages.add(uniqueId);
+
+  // Автоочистка, якщо багато записів
+  if (seenMessages.size > 500) seenMessages.clear();
 
   appendMessageToChat(msg, key);
-   setTimeout(() => {
-  const chatBox = document.getElementById("chat-messages-general");
-  chatBox.scrollTop = chatBox.scrollHeight;
-}, 100);
+
+  setTimeout(() => {
+    const chatBox = document.getElementById("chat-messages-general");
+    chatBox.scrollTop = chatBox.scrollHeight;
+  }, 100);
 });
     
-
   // Send message on button click
 document.getElementById("send-btn-general").addEventListener("click", () => {
   const input = document.getElementById("chat-input-general");
@@ -1165,10 +1199,10 @@ const msgData = {
 }),
 };
 
-localMessageIds.add(msgData.clientId); 
-appendMessageToChat(msgData, msgKey);   
+localMessageIds.add(msgData.clientId);  
 chatMessagesRef.push(msgData);          
-
+const uniqueId = `${sender}_${msgData.timestamp}`;
+seenMessages.add(uniqueId);
 
   // 3. Очистити поле
   input.value = "";
