@@ -311,8 +311,8 @@
   resize: none;
   overflow-y: auto;
   max-height: 80px; /* ⬅️ обмежуємо max */
-  min-height: 36px; /* ⬅️ базова висота */
-  padding: 8px;
+  min-height: 20px; /* ⬅️ базова висота */
+  padding: 5px;
   border-radius: 8px;
   background: #222;
   color: white;
@@ -320,6 +320,7 @@
   border: none;
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE */
+  box-shadow: inset 3px 3px 6px #0c0c0c, inset -3px -3px 6px #2a2a2a;
 }
 
 .chat-input-wrapper button#upload-image-btn,
@@ -407,6 +408,8 @@
   white-space: pre-wrap;
   word-break: break-word;
   scroll-behavior: smooth;
+      box-shadow: inset 4px 4px 8px #0d0d0d, inset -4px -4px 8px #1d1d1d;
+  border: 1px solid rgba(255, 255, 255, 0.03);
 }
     
 .message-content {
