@@ -1108,12 +1108,6 @@ content.appendChild(header);
 const messageHeader = document.createElement("div");
 messageHeader.className = "message-header";
 
-// MESSAGE BODY
-const body = document.createElement("div");
-body.className = "message-text";
-body.textContent = messageObj.text || "";
-content.appendChild(body);
-
 // IMAGE if any
 if (messageObj.imageUrl) {
   const imgEl = document.createElement("img");
