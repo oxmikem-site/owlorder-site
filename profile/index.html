@@ -1107,8 +1107,10 @@ function appendMessageToChat(messageObj, key = null) {
   msgEl.appendChild(content);
   wrapper.appendChild(msgEl);
   chatBox.appendChild(wrapper);
+  setTimeout(() => {
   chatBox.scrollTop = chatBox.scrollHeight;
 }, 100);
+
     
   // Send message on button click
 document.getElementById("send-btn-general").addEventListener("click", () => {
