@@ -1031,12 +1031,15 @@ content.appendChild(header);
   
 // Reply block if present
 // Create reply block first
+let wrapper = document.createElement("div");
+wrapper.className = "message-wrapper";
+
 if (messageObj.replyTo) {
   const replyBlock = document.createElement("div");
-  replyBlock.className = "reply-preview inline-reply";
+  replyBlock.className = "reply-preview";
 
   const previewRaw = (messageObj.replyTo?.text || "").trim()
-    ? messageObj.replyTo.text.split("\n")[0].slice(0, 60)
+    ? messageObj.replyTo.text.split("\n")[0].slice(0, 100)
     : "(image)";
   const previewText = replaceEmojisWithIconify(previewRaw);
 
@@ -1054,8 +1057,11 @@ if (messageObj.replyTo) {
     </div>
   `;
 
-  content.appendChild(replyBlock);
+  wrapper.appendChild(replyBlock);
 }
+
+wrapper.appendChild(messageEl);
+chatContainer.appendChild(wrapper);
 
 // HEADER (address + time)
 const messageHeader = document.createElement("div");
