@@ -980,6 +980,7 @@ fileInput.addEventListener("change", async (e) => {
     const chatMessagesRef = db.ref("chats/general");
     const localMessageIds = new Set();
     const userMessageKeys = new Set();
+    const seenMessages = new Set();
 
     const emojiToIconifyMap = {
   "😊": "twemoji:smiling-face",
@@ -1131,19 +1132,21 @@ msgEl.appendChild(content);
   const msg = snapshot.val();
   const key = snapshot.key;
 
-  if (msg.clientId && localMessageIds.has(msg.clientId)) {
-    localMessageIds.delete(msg.clientId); 
-    return;
-  }
+  const uniqueId = `${msg.sender}_${msg.timestamp}`;
+  if (seenMessages.has(uniqueId)) return;
+  seenMessages.add(uniqueId);
+
+  // Автоочистка, якщо багато записів
+  if (seenMessages.size > 500) seenMessages.clear();
 
   appendMessageToChat(msg, key);
-   setTimeout(() => {
-  const chatBox = document.getElementById("chat-messages-general");
-  chatBox.scrollTop = chatBox.scrollHeight;
-}, 100);
+
+  setTimeout(() => {
+    const chatBox = document.getElementById("chat-messages-general");
+    chatBox.scrollTop = chatBox.scrollHeight;
+  }, 100);
 });
     
-
   // Send message on button click
 document.getElementById("send-btn-general").addEventListener("click", () => {
   const input = document.getElementById("chat-input-general");
@@ -1176,7 +1179,8 @@ const msgData = {
 
 localMessageIds.add(msgData.clientId);  
 chatMessagesRef.push(msgData);          
-
+const uniqueId = `${sender}_${msgData.timestamp}`;
+seenMessages.add(uniqueId);
 
   // 3. Очистити поле
   input.value = "";
