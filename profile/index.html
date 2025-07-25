@@ -479,24 +479,25 @@
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  object-fit: cover;
 }
 
 .reply-text {
   display: flex;
-  flex-direction: column;
-  line-height: 1.2;
+  gap: 4px;
+  font-size: 14px;
+  color: #d4c87c;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .reply-to-name {
-  font-weight: 600;
+  font-weight: bold;
   color: var(--accent-color);
-  font-size: 11px;
 }
 
 .reply-to-preview {
-  font-size: 11px;
-  opacity: 0.75;
+  opacity: 0.8;
 }
 
     .message-content img {
@@ -1092,14 +1093,14 @@ content.appendChild(header);
       : "../logo1.png";
 
     replyBlock.innerHTML = `
-      <div class="reply-container">
-        <img src="${avatarSrc}" class="avatar-small" />
-        <div class="reply-text">
-          <span class="reply-to-name">${shortenAddress(messageObj.replyTo.sender)}</span>
-          <span class="reply-to-preview">${previewText}</span>
-        </div>
-      </div>
-    `;
+  <div class="reply-container">
+    <img src="${avatarSrc}" class="avatar-small" />
+    <div class="reply-text">
+      <span class="reply-to-name">${shortenAddress(messageObj.replyTo.sender)}</span>
+      <span class="reply-to-preview">${previewText}</span>
+    </div>
+  </div>
+`;
 
     wrapper.appendChild(replyBlock);
   }
