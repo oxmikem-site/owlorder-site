@@ -1017,7 +1017,6 @@ function appendMessageToChat(messageObj, key = null) {
   if (messageObj.replyTo?.wallet === currentWallet) {
   msgEl.classList.add("highlight");
   wrapper.classList.add("reply-highlight");
-  replyBlock.classList.add("highlight"); // ⬅️ також підсвітка блоку з прев'ю
 }
 
   msgEl.dataset.key = key;
@@ -1078,42 +1077,47 @@ content.appendChild(header);
   msgEl.appendChild(avatar);
   msgEl.appendChild(content);
 
-  // WRAPPER (for reply + message)
-  let wrapper = document.createElement("div");
-  wrapper.className = "message-wrapper";
+ // WRAPPER (for reply + message)
+let wrapper = document.createElement("div");
+wrapper.className = "message-wrapper";
 
-  if (messageObj.replyTo) {
-    const replyBlock = document.createElement("div");
-    replyBlock.className = "reply-preview";
+let replyBlock = null; // створюємо змінну поза if
 
-    if (messageObj.replyTo?.wallet === currentWallet) {
-  replyBlock.classList.add("highlight");
-}
-    const previewRaw = (messageObj.replyTo?.text || "").trim()
-      ? messageObj.replyTo.text.split("\n")[0].slice(0, 100)
-      : "(image)";
-    const previewText = replaceEmojisWithIconify(previewRaw);
+if (messageObj.replyTo) {
+  replyBlock = document.createElement("div");
+  replyBlock.className = "reply-preview";
 
-    const avatarSrc = messageObj.replyTo.imageId
-      ? `${imageBaseURL}${messageObj.replyTo.imageId}.webp`
-      : "../logo1.png";
+  const previewRaw = (messageObj.replyTo?.text || "").trim()
+    ? messageObj.replyTo.text.split("\n")[0].slice(0, 100)
+    : "(image)";
+  const previewText = replaceEmojisWithIconify(previewRaw);
 
-    replyBlock.innerHTML = `
-  <div class="reply-container">
-    <img src="${avatarSrc}" class="avatar-small" />
-    <div class="reply-text">
-      <span class="reply-to-name">${shortenAddress(messageObj.replyTo.sender)}</span>
-      <span class="reply-to-preview">${previewText}</span>
+  const avatarSrc = messageObj.replyTo.imageId
+    ? `${imageBaseURL}${messageObj.replyTo.imageId}.webp`
+    : "../logo1.png";
+
+  replyBlock.innerHTML = `
+    <div class="reply-container">
+      <img src="${avatarSrc}" class="avatar-small" />
+      <div class="reply-text">
+        <span class="reply-to-name">${shortenAddress(messageObj.replyTo.sender)}</span>
+        <span class="reply-to-preview">${previewText}</span>
+      </div>
     </div>
-  </div>
-`;
+  `;
 
-    wrapper.appendChild(replyBlock);
-  }
+  wrapper.appendChild(replyBlock);
+}
 
-  // ✅ FIX HERE — insert correct variable
-  wrapper.appendChild(msgEl);
-  chatBox.appendChild(wrapper);
+// ✅ Тут перевіряємо і додаємо підсвітку, навіть якщо replyBlock не створений
+if (messageObj.replyTo?.wallet === currentWallet) {
+  msgEl.classList.add("highlight");
+  wrapper.classList.add("highlight");
+  if (replyBlock) replyBlock.classList.add("highlight");
+}
+
+wrapper.appendChild(msgEl);
+chatBox.appendChild(wrapper);
 
 // HEADER (address + time)
 const messageHeader = document.createElement("div");
