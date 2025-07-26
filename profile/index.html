@@ -1089,7 +1089,8 @@ content.appendChild(header);
 let wrapper = document.createElement("div");
 wrapper.className = "message-wrapper";
 
-let replyBlock = null; // створюємо змінну поза if
+// Створюємо блок відповіді, якщо є
+let replyBlock = null;
 
 if (messageObj.replyTo) {
   replyBlock = document.createElement("div");
@@ -1117,14 +1118,17 @@ if (messageObj.replyTo) {
   wrapper.appendChild(replyBlock);
 }
 
-// ✅ Тут перевіряємо і додаємо підсвітку, навіть якщо replyBlock не створений
+// ✅ Підсвітка: якщо повідомлення є відповіддю на ваше повідомлення
 if (messageObj.replyTo?.wallet === currentWallet) {
   msgEl.classList.add("highlight");
   wrapper.classList.add("highlight");
   if (replyBlock) replyBlock.classList.add("highlight");
 }
 
+// Додаємо саме повідомлення до обгортки
 wrapper.appendChild(msgEl);
+
+// Вставляємо у чат
 chatBox.appendChild(wrapper);
 
 // HEADER (address + time)
