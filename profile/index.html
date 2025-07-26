@@ -460,6 +460,10 @@
   margin-bottom: 12px;
 }
 
+    .message-wrapper.highlight {
+  background: #323025;
+}
+
 .reply-preview {
    font-size: 10px;
   line-height: 1.2;
@@ -849,6 +853,24 @@ function showSection(id) {
       populateSidebarUserInfo(null);
     }
 
+      chatMessagesRef.on("child_added", (snapshot) => {
+    const msg = snapshot.val();
+    const key = snapshot.key;
+
+    const uniqueId = `${msg.sender}_${msg.timestamp}`;
+    if (seenMessages.has(uniqueId)) return;
+    seenMessages.add(uniqueId);
+
+    if (seenMessages.size > 500) seenMessages.clear();
+
+    appendMessageToChat(msg, key);
+
+    setTimeout(() => {
+      const chatBox = document.getElementById("chat-messages-general");
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }, 100);
+  });
+
       const uploadBtn = document.getElementById("upload-image-btn");
 const fileInput = document.getElementById("image-upload");
 
@@ -1118,10 +1140,8 @@ if (messageObj.replyTo) {
 }
 
 // ✅ Підсвітка: якщо повідомлення є відповіддю на ваше повідомлення
-if (messageObj.replyTo?.wallet === currentWallet) {
-  msgEl.classList.add("highlight");
+if ((messageObj.replyTo?.wallet || "").toLowerCase() === (currentWallet || "").toLowerCase()) {
   wrapper.classList.add("highlight");
-  if (replyBlock) replyBlock.classList.add("highlight");
 }
 
 // Додаємо саме повідомлення до обгортки
@@ -1151,25 +1171,6 @@ if (messageObj.imageUrl) {
   input.placeholder = `Replying to ${sender.slice(0, 6)}: ${text}`;
   input.focus();
       }
-
- chatMessagesRef.on("child_added", (snapshot) => {
-  const msg = snapshot.val();
-  const key = snapshot.key;
-
-  const uniqueId = `${msg.sender}_${msg.timestamp}`;
-  if (seenMessages.has(uniqueId)) return;
-  seenMessages.add(uniqueId);
-
-  // Автоочистка, якщо багато записів
-  if (seenMessages.size > 500) seenMessages.clear();
-
-  appendMessageToChat(msg, key);
-
-  setTimeout(() => {
-    const chatBox = document.getElementById("chat-messages-general");
-    chatBox.scrollTop = chatBox.scrollHeight;
-  }, 100);
-});
     
   // Send message on button click
 document.getElementById("send-btn-general").addEventListener("click", () => {
