@@ -449,7 +449,7 @@
 .message-wrapper {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 0px;
   margin-bottom: 12px;
 }
 
@@ -459,7 +459,6 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background: transparent;
   border-left: 3px solid var(--accent-color);
   border-radius: 8px 8px 8px 0;
   padding: 6px 10px;
@@ -470,7 +469,7 @@
     .highlight {
    background-color: #363428;
   border: none;
-  border-radius: 10px;
+  border-radius: none;
 }
 
 .reply-container {
@@ -1016,8 +1015,10 @@ function appendMessageToChat(messageObj, key = null) {
   msgEl.className = "chat-message";
 
   if (messageObj.replyTo?.wallet === currentWallet) {
-    msgEl.classList.add("highlight");
-  }
+  msgEl.classList.add("highlight");
+  wrapper.classList.add("reply-highlight");
+  replyBlock.classList.add("highlight"); // ⬅️ також підсвітка блоку з прев'ю
+}
 
   msgEl.dataset.key = key;
 
