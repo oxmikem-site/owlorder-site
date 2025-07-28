@@ -296,22 +296,25 @@
 .chat-input-wrapper {
   display: flex;
   align-items: center;
-  padding: 8px;
+  padding: 6px 8px;
   background: transparent;
   border-radius: 8px;
+  margin-left: 0;
+  margin-right: 0;
 }
 
 .chat-input-wrapper textarea {
   flex: 1;
   resize: none;
   overflow-y: auto;
-  max-height: 80px; /* ⬅️ обмежуємо max */
-  min-height: 10px; /* ⬅️ базова висота */
-  padding: 5px;
+  max-height: 60px; /* ⬅️ обмежуємо max */
+  min-height: 20px; /* ⬅️ базова висота */
+  padding: 3px 6px;
   border-radius: 8px;
   background: #222;
   color: white;
   font-family: 'Inter', sans-serif;
+  font-size: 13px;
   border: none;
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE */
