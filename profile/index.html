@@ -639,8 +639,9 @@
 <button id="send-btn-general">
   <img src="../images2/send.png" alt="Send" class="send-icon" />
 </button>
+</div>
 
-<div id="section-raffles" class="profile-section">
+     <div id="section-raffles" class="profile-section">
   <h3>Raffles</h3>
 </div>
 
@@ -651,8 +652,8 @@
     <li>Connect Discord</li>
     <li>Add Wallet (up to 10 per type: EVM & Ordinals)</li>
   </ul>
-</div>
-
+  </div>
+     
 <div id="section-logout" class="profile-section">
   <h3>Logout</h3>
   <p>You have been logged out.</p>
@@ -1128,11 +1129,7 @@ wrapper.appendChild(msgEl);
 
 // Вставляємо у чат
 chatBox.appendChild(wrapper);
-
-// HEADER (address + time)
-const messageHeader = document.createElement("div");
-messageHeader.className = "message-header";
-
+  
 // IMAGE if any
 if (messageObj.imageUrl) {
   const imgEl = document.createElement("img");
