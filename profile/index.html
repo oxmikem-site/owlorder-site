@@ -318,6 +318,11 @@
   box-shadow: inset 3px 3px 6px #0c0c0c, inset -3px -3px 6px #2a2a2a;
 }
 
+    .chat-input-wrapper textarea:focus {
+  outline: none;
+  box-shadow: inset 3px 3px 6px #0c0c0c, inset -3px -3px 6px #2a2a2a; /* тільки внутрішня */
+}
+
 .chat-input-wrapper button#upload-image-btn,
 .chat-input-wrapper button#toggle-emoji-picker {
   background: transparent;
@@ -836,9 +841,9 @@ function showSection(id) {
     document.addEventListener("DOMContentLoaded", () => {
     const saved = getConnectedWalletAddress();
     if (saved) {
+      currentWallet = saved;
       updateWalletButtons(saved);
       populateSidebarUserInfo(saved);
-      currentWallet = saved;
     } else {
       populateSidebarUserInfo(null);
     }
@@ -1072,10 +1077,13 @@ right.innerHTML = `
   <button onclick="replyTo('${key}', '${messageObj.sender}', '${messageObj.text?.replace(/'/g, "\\'") || ""}')">
     <iconify-icon icon="mdi:reply" width="18"></iconify-icon>
   </button>
-  ${messageObj.sender === currentWallet ? `
-    <button onclick="deleteMessage('${key}')">
-      <iconify-icon icon="ic:baseline-delete" width="18"></iconify-icon>
-    </button>` : ""}
+  ${messageObj.sender?.toLowerCase() === currentWallet?.toLowerCase() ? `
+  <button onclick="editMessage('${key}', \`${messageObj.text || ""}\`)">
+    <iconify-icon icon="mdi:pencil" width="18"></iconify-icon>
+  </button>
+  <button onclick="deleteMessage('${key}')">
+    <iconify-icon icon="ic:baseline-delete" width="18"></iconify-icon>
+  </button>` : ""}
 `;
 
 header.appendChild(left);
@@ -1244,6 +1252,15 @@ emojiPicker.addEventListener("emoji-click", event => {
     .catch((error) => console.error("Delete error:", error));
 }
 
+    function editMessage(key, oldText) {
+  const newText = prompt("Edit your message:", oldText);
+  if (newText !== null && newText.trim() !== "") {
+    chatMessagesRef.child(key).update({ text: newText })
+      .then(() => console.log("Message updated"))
+      .catch(err => console.error("Edit error:", err));
+  }
+}
+    
     function openReactionPicker(event, msgKey) {
   const picker = document.createElement('emoji-picker');
   picker.style.position = 'absolute';
