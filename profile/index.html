@@ -1243,6 +1243,17 @@ emojiPicker.addEventListener("emoji-click", event => {
   });
 });
 
+    chatMessagesRef.on("child_changed", (snapshot) => {
+  const key = snapshot.key;
+  const updatedMsg = snapshot.val();
+
+  // Знаходимо повідомлення у DOM
+  const msgEl = document.querySelector(`.chat-message[data-key="${key}"] .message-text`);
+  if (msgEl) {
+    msgEl.innerHTML = replaceEmojisWithIconify(updatedMsg.text || "");
+  }
+});
+
     function deleteMessage(key) {
   const confirmDelete = confirm("Are you sure you want to delete this message?");
   if (!confirmDelete) return;
