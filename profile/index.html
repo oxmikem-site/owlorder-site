@@ -411,10 +411,7 @@
 .chat-message:hover .hover-menu {
   display: flex;
 }
-
-.chat-message.highlight {
-  background: rgba(255, 255, 255, 0.01);
-}
+    
 .avatar {
   width: 35px;
   height: 35px;
@@ -460,10 +457,6 @@
   margin-bottom: 12px;
 }
 
-    .message-wrapper.highlight {
-  background: #323025;
-}
-
 .reply-preview {
    font-size: 10px;
   line-height: 1.2;
@@ -475,10 +468,6 @@
   padding: 6px 10px;
   margin-left: 10px;
   margin-bottom: 0;
-}
-
-    .highlight {
-  background: #323025 !important;
 }
     
 .reply-container {
@@ -1043,11 +1032,6 @@ function appendMessageToChat(messageObj, key = null) {
   const msgEl = document.createElement("div");
   msgEl.className = "chat-message";
 
-  if (messageObj.replyTo?.wallet === currentWallet) {
-  msgEl.classList.add("highlight");
-  wrapper.classList.add("reply-highlight");
-}
-
   msgEl.dataset.key = key;
 
   const avatar = document.createElement("img");
@@ -1137,11 +1121,6 @@ if (messageObj.replyTo) {
   `;
 
   wrapper.appendChild(replyBlock);
-}
-
-// ✅ Підсвітка: якщо повідомлення є відповіддю на ваше повідомлення
-if ((messageObj.replyTo?.wallet || "").toLowerCase() === (currentWallet || "").toLowerCase()) {
-  wrapper.classList.add("highlight");
 }
 
 // Додаємо саме повідомлення до обгортки
