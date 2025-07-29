@@ -524,6 +524,14 @@
   margin-bottom: 0;
   background: transparent;
 }
+
+    .message-wrapper.reply-highlight {
+  background: rgba(255, 255, 153, 0.1); /* світлий фон */
+  border-left: 3px solid #ffeb3b;        /* жовта лінія */
+  border-radius: 8px;
+  padding: 4px;
+  transition: background 0.2s ease;
+}
     
 .reply-container {
   display: flex;
@@ -1173,10 +1181,13 @@ if (messageObj.replyTo) {
   wrapper.appendChild(replyBlock);
 }
 
-// Додаємо саме повідомлення до обгортки
+  // ✅ Підсвітка: якщо повідомлення є відповіддю на моє повідомлення
+if (messageObj.replyTo?.wallet?.toLowerCase() === currentWallet?.toLowerCase()) {
+  wrapper.classList.add("reply-highlight"); // додає жовте підсвічування
+}
+
 wrapper.appendChild(msgEl);
 wrapper.appendChild(right);
-// Вставляємо у чат
 chatBox.appendChild(wrapper);
   
 // IMAGE if any
