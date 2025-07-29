@@ -455,7 +455,7 @@
   justify-content: center;
 }
 
-.message-wrapper:hover .hover-menu {
+.chat-message:hover .hover-menu {
   display: flex;
 }
     
@@ -1197,12 +1197,52 @@ if (messageObj.imageUrl) {
   input.focus();
       }
     
-document.getElementById("send-btn-general")
+document.getElementById("send-btn-general").addEventListener("click", async () => {
+  const input = document.getElementById("chat-input-general");
+  const text = input.value.trim();
+  const sender = localStorage.getItem("taproot_wallet");
 
-localMessageIds.add(msgData.clientId);  
-chatMessagesRef.push(msgData);          
-const uniqueId = `${sender}_${msgData.timestamp}`;
-seenMessages.add(uniqueId);
+  if ((!text && !fileInput.files[0]) || !sender) return;
+
+  if (!cachedHolderInfo?.found) {
+    alert("Only verified holders can send messages.");
+    return;
+  }
+
+  let imageUrl = "";
+  if (fileInput.files[0]) {
+    const file = fileInput.files[0];
+    const fileName = `chat_images/${Date.now()}_${file.name}`;
+    const ref = storage.ref().child(fileName);
+    const snapshot = await ref.put(file);
+    imageUrl = await snapshot.ref.getDownloadURL();
+  }
+
+  const msgData = {
+    sender,
+    text,
+    timestamp: Date.now(),
+    imageId: cachedHolderInfo.imageId || null,
+    imageUrl: imageUrl || null,
+    ...(replyToMessage && {
+      replyTo: {
+        key: replyToMessage.key,
+        sender: replyToMessage.sender,
+        text: replyToMessage.text
+      }
+    }),
+  };
+
+  chatMessagesRef.push(msgData);
+
+  input.value = "";
+  input.style.height = "auto";
+  input.placeholder = "Type a message...";
+  replyToMessage = null;
+  fileInput.value = "";
+  document.getElementById("image-preview-container").style.display = "none";
+});
+
 
   // 3. Очистити поле
   input.value = "";
