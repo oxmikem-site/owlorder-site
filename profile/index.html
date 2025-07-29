@@ -470,6 +470,7 @@
 }
 
 .message-wrapper {
+  position: relative;
   display: flex;
   flex-direction: column;
   margin-bottom: 12px;
@@ -1108,7 +1109,6 @@ right.innerHTML = `
 `;
 
 header.appendChild(left);
-header.appendChild(right);
 content.appendChild(header);
 
   // TEXT
@@ -1156,7 +1156,7 @@ if (messageObj.replyTo) {
 
 // Додаємо саме повідомлення до обгортки
 wrapper.appendChild(msgEl);
-
+wrapper.appendChild(right);
 // Вставляємо у чат
 chatBox.appendChild(wrapper);
   
