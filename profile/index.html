@@ -1248,10 +1248,15 @@ emojiPicker.addEventListener("emoji-click", event => {
   const key = snapshot.key;
   const msg = document.querySelector(`.chat-message[data-key="${key}"]`);
   if (msg) {
-    msg.remove();
+    msg.closest(".message-wrapper").remove();
   }
   document.querySelectorAll(`.reply-preview[data-reply-key="${key}"]`).forEach(preview => {
+    const wrapper = preview.closest(".message-wrapper");
     preview.remove();
+    const chatMsg = wrapper.querySelector(".chat-message");
+    if (chatMsg) {
+      chatMsg.style.borderRadius = "8px"; 
+    }
   });
 });
 
