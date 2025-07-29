@@ -1112,6 +1112,7 @@ let replyBlock = null;
 if (messageObj.replyTo) {
   replyBlock = document.createElement("div");
   replyBlock.className = "reply-preview";
+  replyBlock.dataset.replyKey = messageObj.replyTo.key; // 🔹 зберігаємо ключ відповіді
 
   const previewRaw = (messageObj.replyTo?.text || "").trim()
     ? messageObj.replyTo.text.split("\n")[0].slice(0, 100)
@@ -1238,11 +1239,12 @@ emojiPicker.addEventListener("emoji-click", event => {
 
     chatMessagesRef.on("child_removed", (snapshot) => {
   const key = snapshot.key;
-  const messages = document.querySelectorAll(".chat-message");
-  messages.forEach(msg => {
-    if (msg.dataset.key === key) {
-      msg.remove();
-    }
+  const msg = document.querySelector(`.chat-message[data-key="${key}"]`);
+  if (msg) {
+    msg.remove();
+  }
+  document.querySelectorAll(`.reply-preview[data-reply-key="${key}"]`).forEach(preview => {
+    preview.remove();
   });
 });
 
