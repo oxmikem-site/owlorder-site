@@ -433,7 +433,7 @@
   align-items: flex-start;
   gap: 8px;
   padding: 5px 8px 5px 8px;
-  border-radius: 6px;
+  border-radius: 0 0 8px 8px;
   background: transparent;
 }
 
@@ -461,21 +461,28 @@
 .message-wrapper {
   display: flex;
   flex-direction: column;
-  gap: 0px;
   margin-bottom: 12px;
+  border-radius: 8px;
+  background: transparent;
+  transition: background 0.2s ease;
+}
+    
+    .message-wrapper:hover {
+  background: #1e1e1e; /* трохи світліший ніж чат */
 }
 
 .reply-preview {
-   font-size: 10px;
+  font-size: 10px;
   line-height: 1.2;
   display: flex;
   align-items: center;
   gap: 8px;
   border-left: 3px solid var(--accent-color);
-  border-radius: 8px 8px 8px 0;
+  border-radius: 8px 8px 0 0;
   padding: 6px 10px;
   margin-left: 10px;
   margin-bottom: 0;
+  background: transparent;
 }
     
 .reply-container {
