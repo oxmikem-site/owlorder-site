@@ -1196,8 +1196,8 @@ if (messageObj.replyTo) {
 }
 
   // ✅ Підсвітка: якщо повідомлення є відповіддю на моє повідомлення
-if (messageObj.replyTo?.wallet?.toLowerCase() === currentWallet?.toLowerCase()) {
-  wrapper.classList.add("reply-highlight"); // додає жовте підсвічування
+if (messageObj.replyTo?.sender?.toLowerCase() === currentWallet?.toLowerCase()) {
+  wrapper.classList.add("reply-highlight");
 }
 
 wrapper.appendChild(msgEl);
