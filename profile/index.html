@@ -1138,14 +1138,14 @@ const right = document.createElement("div");
 right.className = "hover-menu";
 right.innerHTML = `
   <button onclick="replyTo('${key}', '${messageObj.sender}', '${messageObj.text?.replace(/'/g, "\\'") || ""}')">
-    <iconify-icon icon="mdi:reply" width="18"></iconify-icon>
+    <iconify-icon icon="mdi:reply" width="14"></iconify-icon>
   </button>
   ${messageObj.sender?.toLowerCase() === currentWallet?.toLowerCase() ? `
   <button onclick="editMessage('${key}', \`${messageObj.text || ""}\`)">
-    <iconify-icon icon="mdi:pencil" width="18"></iconify-icon>
+    <iconify-icon icon="mdi:pencil" width="14"></iconify-icon>
   </button>
   <button onclick="deleteMessage('${key}')">
-    <iconify-icon icon="ic:baseline-delete" width="18"></iconify-icon>
+    <iconify-icon icon="ic:baseline-delete" width="14"></iconify-icon>
   </button>` : ""}
 `;
 
