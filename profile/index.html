@@ -436,7 +436,7 @@
 }
 .hover-menu {
   position: absolute;
-  top: 4px;
+  top: 2px;
   right: 4px;
   display: none;
   flex-direction: row;
@@ -453,6 +453,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+    .hover-menu button iconify-icon {
+  color: #aaa; /* світло-сірий */
+  transition: color 0.2s ease;
+}
+.hover-menu button:hover iconify-icon {
+  color: white; /* білий при наведенні */
 }
 
 .message-wrapper:hover .hover-menu {
