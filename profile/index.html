@@ -1014,25 +1014,30 @@ chatMessagesRef
     isLoadingOldMessages = true;
 
     chatMessagesRef
-      .orderByKey()
-      .endAt(lastLoadedKey)
-      .limitToLast(51) // +1 щоб уникнути дубля
-      .once("value", (snapshot) => {
-        const msgs = [];
-        snapshot.forEach((child) => {
-          if (child.key !== lastLoadedKey) {
-            msgs.push({ key: child.key, val: child.val() });
-          }
-        });
+  .orderByKey()
+  .endAt(lastLoadedKey)
+  .limitToLast(51) // +1 щоб уникнути дубля
+  .once("value", (snapshot) => {
+    const messages = [];
+    snapshot.forEach((child) => {
+      if (child.key !== lastLoadedKey) {
+        messages.push({ key: child.key, val: child.val() });
+      }
+    });
 
-        if (msgs.length > 0) {
-          lastLoadedKey = msgs[0].key;
-          const oldScrollHeight = chatBox.scrollHeight;
-          msgs.reverse().forEach((m) => appendMessageToTop(m.val, m.key));
-          chatBox.scrollTop = chatBox.scrollHeight - oldScrollHeight;
-        }
-        isLoadingOldMessages = false;
-      });
+    if (messages.length > 0) {
+      lastLoadedKey = messages[0].key;
+
+      const oldScrollHeight = chatBox.scrollHeight;
+
+      // додаємо повідомлення у правильному порядку
+      messages.reverse().forEach(m => appendMessageToTop(m.val, m.key));
+
+      chatBox.scrollTop = chatBox.scrollHeight - oldScrollHeight;
+    }
+
+    isLoadingOldMessages = false;
+  });
   }
 });
 
@@ -1329,11 +1334,7 @@ if (fileInput.files.length > 0) {
 
   function appendMessageToTop(messageObj, key) {
   const chatBox = document.getElementById("chat-messages-general");
-
-  // Використовуємо ту ж логіку appendMessageToChat
   appendMessageToChat(messageObj, key);
-
-  // Беремо останній елемент (нове повідомлення) і переносимо його вгору
   const newMsg = chatBox.lastElementChild;
   chatBox.prepend(newMsg);
 }
