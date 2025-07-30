@@ -614,6 +614,28 @@
   display: none !important;
 }
 
+    .editing-message {
+  background: #222;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 6px;
+  padding: 4px;
+  outline: none;
+}
+
+.save-edit-btn, .cancel-edit-btn {
+  background: #333;
+  color: white;
+  border: none;
+  padding: 2px 6px;
+  margin-left: 4px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.save-edit-btn:hover { background: #4caf50; }
+.cancel-edit-btn:hover { background: #f44336; }
+
+
   </style>
 </head>
 <body>
@@ -1348,12 +1370,50 @@ emojiPicker.addEventListener("emoji-click", event => {
     .catch((error) => console.error("Delete error:", error));
 }
 
-    function editMessage(key, oldText) {
-  const newText = prompt("Edit your message:", oldText);
-  if (newText !== null && newText.trim() !== "") {
-    chatMessagesRef.child(key).update({ text: newText })
-      .then(() => console.log("Message updated"))
-      .catch(err => console.error("Edit error:", err));
+   function editMessage(key, oldText) {
+  const msgEl = document.querySelector(`.chat-message[data-key="${key}"] .message-text`);
+  if (!msgEl) return;
+
+  // Зберігаємо старий текст
+  const originalText = msgEl.innerHTML;
+
+  // Робимо поле редагованим
+  msgEl.contentEditable = "true";
+  msgEl.focus();
+  msgEl.classList.add("editing-message");
+
+  // Додаємо кнопки збереження / скасування
+  const saveBtn = document.createElement("button");
+  saveBtn.textContent = "Save";
+  saveBtn.className = "save-edit-btn";
+
+  const cancelBtn = document.createElement("button");
+  cancelBtn.textContent = "Cancel";
+  cancelBtn.className = "cancel-edit-btn";
+
+  msgEl.parentNode.appendChild(saveBtn);
+  msgEl.parentNode.appendChild(cancelBtn);
+
+  // Збереження
+  saveBtn.addEventListener("click", () => {
+    const newText = msgEl.innerText.trim();
+    if (newText) {
+      chatMessagesRef.child(key).update({ text: newText });
+    }
+    cleanup();
+  });
+
+  // Скасування
+  cancelBtn.addEventListener("click", () => {
+    msgEl.innerHTML = originalText;
+    cleanup();
+  });
+
+  function cleanup() {
+    msgEl.contentEditable = "false";
+    msgEl.classList.remove("editing-message");
+    saveBtn.remove();
+    cancelBtn.remove();
   }
 }
     
