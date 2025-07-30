@@ -1078,6 +1078,12 @@ function replaceEmojisWithIconify(text) {
   : match;
   });
 }
+
+    function linkify(text) {
+  const urlPattern = /(https?:\/\/[^\s]+)/g;
+  return text.replace(urlPattern, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
+}
+
     
 function appendMessageToChat(messageObj, key = null) {
   const chatBox = document.getElementById("chat-messages-general");
@@ -1141,7 +1147,7 @@ content.appendChild(header);
   // TEXT
   const textEl = document.createElement("div");
   textEl.className = "message-text";
-  textEl.innerHTML = replaceEmojisWithIconify(messageObj.text || "");
+  textEl.innerHTML = replaceEmojisWithIconify(linkify(messageObj.text || ""));
   content.appendChild(textEl);
 
   msgEl.appendChild(avatar);
