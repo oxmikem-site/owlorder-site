@@ -914,6 +914,35 @@ function showSection(id) {
 
     let replyToMessage = null;
     let currentWallet = null;
+
+    const uploadBtn = document.getElementById("upload-image-btn");
+const fileInput = document.getElementById("image-upload");
+
+uploadBtn.addEventListener("click", () => {
+  fileInput.click();
+});
+
+    fileInput.addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  if (file.size > 5 * 1024 * 1024) {
+    alert("Max image size is 5MB.");
+    return;
+  }
+
+  // Показуємо прев’ю
+  const previewContainer = document.getElementById("image-preview-container");
+  const previewImg = document.getElementById("image-preview");
+  previewImg.src = URL.createObjectURL(file);
+  previewContainer.style.display = "block";
+
+  // Кнопка скасування
+  document.getElementById("cancel-image").onclick = () => {
+    previewContainer.style.display = "none";
+    fileInput.value = "";
+  };
+});
     
     document.addEventListener("DOMContentLoaded", () => {
     const saved = getConnectedWalletAddress();
@@ -942,35 +971,6 @@ function showSection(id) {
       chatBox.scrollTop = chatBox.scrollHeight;
     }, 100);
   });
-
-      const uploadBtn = document.getElementById("upload-image-btn");
-const fileInput = document.getElementById("image-upload");
-
-uploadBtn.addEventListener("click", () => {
-  fileInput.click();
-});
-
-fileInput.addEventListener("change", (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-
-  if (file.size > 5 * 1024 * 1024) {
-    alert("Max image size is 5MB.");
-    return;
-  }
-
-  // Показуємо прев’ю
-  const previewContainer = document.getElementById("image-preview-container");
-  const previewImg = document.getElementById("image-preview");
-  previewImg.src = URL.createObjectURL(file);
-  previewContainer.style.display = "block";
-
-  // Кнопка скасування
-  document.getElementById("cancel-image").onclick = () => {
-    previewContainer.style.display = "none";
-    fileInput.value = "";
-  };
-});
 
     // Показ/сховати дропдаун
     const wrapper = document.querySelector(".wallet-wrapper");
@@ -1220,21 +1220,30 @@ document.getElementById("send-btn-general").addEventListener("click", async () =
     return;
   }
 
-  let imageUrl = "";
-  if (fileInput.files[0]) {
+  let imageUrl = null;
+if (fileInput.files.length > 0) {
+  try {
     const file = fileInput.files[0];
+    console.log("Uploading image:", file.name);
+
     const fileName = `chat_images/${Date.now()}_${file.name}`;
     const ref = storage.ref().child(fileName);
     const snapshot = await ref.put(file);
+
     imageUrl = await snapshot.ref.getDownloadURL();
+    console.log("Image uploaded. URL:", imageUrl);
+  } catch (err) {
+    console.error("Image upload failed:", err);
+    alert("Failed to upload image.");
   }
+}
 
   const msgData = {
     sender,
     text,
     timestamp: Date.now(),
     imageId: cachedHolderInfo.imageId || null,
-    imageUrl: imageUrl || null,
+    imageUrl: imageUrl ? imageUrl : null,
     ...(replyToMessage && {
       replyTo: {
         key: replyToMessage.key,
