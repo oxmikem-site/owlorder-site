@@ -388,9 +388,7 @@
   width: 23px;
   height: 23px;
   display: block;
-}
-    #send-btn-general:hover {
-  box-shadow: 0 0 13px rgba(212, 200, 124, 0.6);
+   cursor: pointer;
 }
 
     #image-preview-container {
@@ -986,35 +984,80 @@ uploadBtn.addEventListener("click", () => {
 
       const chatBox = document.getElementById("chat-messages-general");
 
-// Завантажуємо тільки останні 50 при старті
+// === ФУНКЦІЇ ДЛЯ ВСТАВКИ ПОВІДОМЛЕНЬ ===
+function appendMessageToTop(messageObj, key) {
+  const chatBox = document.getElementById("chat-messages-general");
+  appendMessageToChat(messageObj, key);
+  const newMsg = chatBox.lastElementChild;
+  chatBox.prepend(newMsg);
+}
+
+// === ПАГІНАЦІЯ ЧАТУ ===
+let lastLoadedKey = null;        
+let isLoadingOldMessages = false;
+
+const chatBox = document.getElementById("chat-messages-general");
+
+// === СТАРТОВЕ ЗАВАНТАЖЕННЯ ОСТАННІХ 50 ===
 chatMessagesRef
   .orderByKey()
   .limitToLast(50)
   .once("value", (snapshot) => {
-  let firstKey = null;
-  let lastKey = null;
+    let firstKey = null;
+    let lastKey = null;
 
-  snapshot.forEach((child) => {
-    if (!firstKey) firstKey = child.key; // зберігаємо найстаріший
-    lastKey = child.key;                 // зберігаємо останній
-    appendMessageToChat(child.val(), child.key);
-  });
+    snapshot.forEach((child) => {
+      if (!firstKey) firstKey = child.key;
+      lastKey = child.key;
+      appendMessageToChat(child.val(), child.key);
+    });
 
-  lastLoadedKey = firstKey; // для підвантаження вгору
+    lastLoadedKey = firstKey;
 
-  // Скролимо в самий низ після рендеру
-  setTimeout(() => {
-    chatBox.scrollTop = chatBox.scrollHeight;
-  }, 50);
-
-  // Live оновлення нових повідомлень
-  chatMessagesRef
-    .orderByKey()
-    .startAfter(lastKey) // ✅ щоб не дублювало останнє з 50
-    .on("child_added", (snap) => {
-      appendMessageToChat(snap.val(), snap.key);
+    // Прокрутка в кінець
+    requestAnimationFrame(() => {
       chatBox.scrollTop = chatBox.scrollHeight;
     });
+
+    // Live нові повідомлення
+    chatMessagesRef
+      .orderByKey()
+      .startAfter(lastKey) // щоб не дублювало останнє
+      .on("child_added", (snap) => {
+        if (!document.querySelector(`.chat-message[data-key="${snap.key}"]`)) {
+          appendMessageToChat(snap.val(), snap.key);
+          chatBox.scrollTop = chatBox.scrollHeight;
+        }
+      });
+  });
+
+// === ПІДВАНТАЖЕННЯ ПРИ СКРОЛІ ВГОРУ ===
+chatBox.addEventListener("scroll", () => {
+  if (chatBox.scrollTop === 0 && !isLoadingOldMessages && lastLoadedKey) {
+    isLoadingOldMessages = true;
+
+    chatMessagesRef
+      .orderByKey()
+      .endBefore(lastLoadedKey)
+      .limitToLast(50)
+      .once("value", (snapshot) => {
+        const messages = [];
+        snapshot.forEach((child) => {
+          messages.push({ key: child.key, val: child.val() });
+        });
+
+        if (messages.length > 0) {
+          lastLoadedKey = messages[0].key;
+          const oldScrollHeight = chatBox.scrollHeight;
+
+          messages.reverse().forEach((m) => appendMessageToTop(m.val, m.key));
+
+          chatBox.scrollTop = chatBox.scrollHeight - oldScrollHeight;
+        }
+
+        isLoadingOldMessages = false;
+      });
+  }
 });
 
       chatBox.addEventListener("scroll", () => {
