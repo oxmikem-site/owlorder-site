@@ -388,7 +388,9 @@
   width: 23px;
   height: 23px;
   display: block;
-   cursor: pointer;
+}
+    #send-btn-general:hover {
+  box-shadow: 0 0 13px rgba(212, 200, 124, 0.6);
 }
 
     #image-preview-container {
@@ -982,113 +984,23 @@ uploadBtn.addEventListener("click", () => {
       populateSidebarUserInfo(null);
     }
 
+      chatMessagesRef.on("child_added", (snapshot) => {
+    const msg = snapshot.val();
+    const key = snapshot.key;
+
+    const uniqueId = `${msg.sender}_${msg.timestamp}`;
+    if (seenMessages.has(uniqueId)) return;
+    seenMessages.add(uniqueId);
+
+    if (seenMessages.size > 500) seenMessages.clear();
+
+    appendMessageToChat(msg, key);
+
+    setTimeout(() => {
       const chatBox = document.getElementById("chat-messages-general");
-
-// === ФУНКЦІЇ ДЛЯ ВСТАВКИ ПОВІДОМЛЕНЬ ===
-function appendMessageToTop(messageObj, key) {
-  const chatBox = document.getElementById("chat-messages-general");
-  appendMessageToChat(messageObj, key);
-  const newMsg = chatBox.lastElementChild;
-  chatBox.prepend(newMsg);
-}
-
-// === ПАГІНАЦІЯ ЧАТУ ===
-let lastLoadedKey = null;        
-let isLoadingOldMessages = false;
-
-const chatBox = document.getElementById("chat-messages-general");
-
-// === СТАРТОВЕ ЗАВАНТАЖЕННЯ ОСТАННІХ 50 ===
-chatMessagesRef
-  .orderByKey()
-  .limitToLast(50)
-  .once("value", (snapshot) => {
-    let firstKey = null;
-    let lastKey = null;
-
-    snapshot.forEach((child) => {
-      if (!firstKey) firstKey = child.key;
-      lastKey = child.key;
-      appendMessageToChat(child.val(), child.key);
-    });
-
-    lastLoadedKey = firstKey;
-
-    // Прокрутка в кінець
-    requestAnimationFrame(() => {
       chatBox.scrollTop = chatBox.scrollHeight;
-    });
-
-    // Live нові повідомлення
-    chatMessagesRef
-      .orderByKey()
-      .startAfter(lastKey) // щоб не дублювало останнє
-      .on("child_added", (snap) => {
-        if (!document.querySelector(`.chat-message[data-key="${snap.key}"]`)) {
-          appendMessageToChat(snap.val(), snap.key);
-          chatBox.scrollTop = chatBox.scrollHeight;
-        }
-      });
+    }, 100);
   });
-
-// === ПІДВАНТАЖЕННЯ ПРИ СКРОЛІ ВГОРУ ===
-chatBox.addEventListener("scroll", () => {
-  if (chatBox.scrollTop === 0 && !isLoadingOldMessages && lastLoadedKey) {
-    isLoadingOldMessages = true;
-
-    chatMessagesRef
-      .orderByKey()
-      .endBefore(lastLoadedKey)
-      .limitToLast(50)
-      .once("value", (snapshot) => {
-        const messages = [];
-        snapshot.forEach((child) => {
-          messages.push({ key: child.key, val: child.val() });
-        });
-
-        if (messages.length > 0) {
-          lastLoadedKey = messages[0].key;
-          const oldScrollHeight = chatBox.scrollHeight;
-
-          messages.reverse().forEach((m) => appendMessageToTop(m.val, m.key));
-
-          chatBox.scrollTop = chatBox.scrollHeight - oldScrollHeight;
-        }
-
-        isLoadingOldMessages = false;
-      });
-  }
-});
-
-      chatBox.addEventListener("scroll", () => {
-  if (chatBox.scrollTop === 0 && !isLoadingOldMessages && lastLoadedKey) {
-    isLoadingOldMessages = true;
-
-    chatMessagesRef
-      .orderByKey()
-      .endBefore(lastLoadedKey)  // замість endAt
-      .limitToLast(50)           // беремо попередні 50
-      .once("value", (snapshot) => {
-        const messages = [];
-        snapshot.forEach((child) => {
-          messages.push({ key: child.key, val: child.val() });
-        });
-
-        if (messages.length > 0) {
-          lastLoadedKey = messages[0].key; // оновлюємо найстаріший ключ
-          const oldScrollHeight = chatBox.scrollHeight;
-
-          // додаємо у правильному порядку
-          messages.reverse().forEach((m) => appendMessageToTop(m.val, m.key));
-
-          chatBox.scrollTop = chatBox.scrollHeight - oldScrollHeight;
-        }
-
-        isLoadingOldMessages = false;
-      });
-  }
-});
-
 
     // Показ/сховати дропдаун
     const wrapper = document.querySelector(".wallet-wrapper");
@@ -1179,10 +1091,6 @@ chatBox.addEventListener("scroll", () => {
     const localMessageIds = new Set();
     const userMessageKeys = new Set();
     const seenMessages = new Set();
-
-    // Пагінація
-let lastLoadedKey = null;        // ключ найстарішого завантаженого повідомлення
-let isLoadingOldMessages = false; // блокування повторного завантаження
 
     const emojiToIconifyMap = {
   "😊": "twemoji:smiling-face",
@@ -1380,13 +1288,6 @@ if (fileInput.files.length > 0) {
       }
     }),
   };
-
-  function appendMessageToTop(messageObj, key) {
-  const chatBox = document.getElementById("chat-messages-general");
-  appendMessageToChat(messageObj, key);
-  const newMsg = chatBox.lastElementChild;
-  chatBox.prepend(newMsg);
-}
 
   chatMessagesRef.push(msgData);
 
