@@ -1201,7 +1201,7 @@ uploadBtn.addEventListener("click", () => {
   // Додаємо слухачів для додавання
   chatRef.on("child_added", (snapshot) => {
     const msg = snapshot.val();
-    appendMessageToChat(msg, snapshot.key, section);
+    appendMessageToChat(msg, snapshot.key, section); 
   });
 
   // Видалення повідомлення
@@ -1340,8 +1340,8 @@ function replaceEmojisWithIconify(text) {
 }
 
     
-function appendMessageToChat(messageObj, key = null) {
-  const chatBox = document.getElementById("chat-messages-general");
+function appendMessageToChat(messageObj, key = null, section = "general") {
+  const chatBox = document.getElementById(`chat-messages-${section}`);
 
   if (key && document.querySelector(`.chat-message[data-key="${key}"]`)) return;
 
