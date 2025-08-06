@@ -735,58 +735,67 @@
   <h3>Announcements (Team-only chat)</h3>
 </div>
 
+<!-- General Chat -->
 <div id="section-general" class="profile-section">
   <h3>General Chat</h3>
 
   <div class="chat-box">
     <div id="chat-messages-general" class="chat-messages"></div>
 
-   <div class="chat-input-wrapper">
-  <textarea id="chat-input-general" placeholder="Type a message..."></textarea>
+    <div class="chat-input-wrapper">
+      <textarea id="chat-input-general" placeholder="Type a message..."></textarea>
 
-  <div class="chat-actions">
-   <!-- Emoji Button -->
-<div id="emoji-picker-container" style="position: relative;">
-  <button id="toggle-emoji-picker" title="Emoji">
-    <img src="../images2/em.png" alt="emoji" width="20" height="20" />
-  </button>
-  <emoji-picker id="emoji-picker" style="position: absolute; bottom: 45px; right: 0; z-index: 999; display: none;"></emoji-picker>
-</div>
+      <div class="chat-actions">
+        <!-- Emoji Button -->
+        <div id="emoji-picker-container" style="position: relative;">
+          <button id="toggle-emoji-picker" title="Emoji">
+            <img src="../images2/em.png" alt="emoji" width="20" height="20" />
+          </button>
+          <emoji-picker id="emoji-picker"
+            style="position: absolute; bottom: 45px; right: 0; z-index: 999; display: none;">
+          </emoji-picker>
+        </div>
 
-<!-- Image Upload -->
-<input type="file" id="image-upload" accept="image/*" style="display: none;" />
-<button id="upload-image-btn" title="Attach Image">
-  <img src="../images2/paperclip.png" alt="attach" width="20" height="20" />
-</button>
+        <!-- Image Upload -->
+        <input type="file" id="image-upload" accept="image/*" style="display: none;" />
+        <button id="upload-image-btn" title="Attach Image">
+          <img src="../images2/paperclip.png" alt="attach" width="20" height="20" />
+        </button>
 
-<button id="send-btn-general">
-  <img src="../images2/send.png" alt="Send" class="send-icon" />
-</button>
-</div>
+        <!-- Send Button -->
+        <button id="send-btn-general">
+          <img src="../images2/send.png" alt="Send" class="send-icon" />
+        </button>
+      </div>
+    </div>
 
-<div id="image-preview-container" style="display:none; margin:8px 0;">
-  <div style="position:relative; display:inline-block;">
-    <img id="image-preview" style="max-width:150px; border-radius:8px;">
-    <button id="cancel-image" style="
-      position:absolute;
-      top:0;
-      right:0;
-      background:rgba(0,0,0,0.6);
-      color:white;
-      border:none;
-      border-radius:50%;
-      width:20px;
-      height:20px;
-      cursor:pointer;
-    ">✖</button>
+    <!-- Image Preview -->
+    <div id="image-preview-container" style="display:none; margin:8px 0;">
+      <div style="position:relative; display:inline-block;">
+        <img id="image-preview" style="max-width:150px; border-radius:8px;">
+        <button id="cancel-image" style="
+          position:absolute;
+          top:0;
+          right:0;
+          background:rgba(0,0,0,0.6);
+          color:white;
+          border:none;
+          border-radius:50%;
+          width:20px;
+          height:20px;
+          cursor:pointer;
+        ">✖</button>
+      </div>
+    </div>
   </div>
 </div>
 
-
-     <div id="section-raffles" class="profile-section">
+<!-- Raffles -->
+<div id="section-raffles" class="profile-section">
   <h3>Raffles</h3>
 </div>
 
+<!-- Settings -->
 <div id="section-settings" class="profile-section">
   <h3>Settings</h3>
   <ul>
@@ -794,14 +803,14 @@
     <li>Connect Discord</li>
     <li>Add Wallet (up to 10 per type: EVM & Ordinals)</li>
   </ul>
-  </div>
-     
+</div>
+
+<!-- Logout -->
 <div id="section-logout" class="profile-section">
   <h3>Logout</h3>
   <p>You have been logged out.</p>
 </div>
-    </div>
-  </div>
+
 
   <!-- Скрипти -->
   <script>
