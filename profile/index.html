@@ -1150,7 +1150,11 @@ nameEl.textContent = shortenAddress(messageObj.sender);
 const timeEl = document.createElement("span");
 timeEl.className = "message-time";
 const time = new Date(messageObj.timestamp);
-timeEl.textContent = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+// Формат: DD.MM.YYYY HH:MM
+const dateStr = time.toLocaleDateString([], { day: '2-digit', month: '2-digit', year: 'numeric' });
+const timeStr = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+timeEl.textContent = `${timeStr} ${dateStr}`;
+
 
 left.appendChild(nameEl);
 left.appendChild(timeEl);
