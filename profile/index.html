@@ -1372,6 +1372,12 @@ toggleBtn.addEventListener("click", () => {
   emojiPicker.style.display = emojiPicker.style.display === "none" ? "block" : "none";
 });
 
+    document.addEventListener("click", (e) => {
+  if (!emojiPicker.contains(e.target) && !toggleBtn.contains(e.target)) {
+    emojiPicker.style.display = "none";
+  }
+});
+
 emojiPicker.addEventListener("emoji-click", event => {
   const emoji = event.detail.unicode;
   chatInput.value += emoji;
