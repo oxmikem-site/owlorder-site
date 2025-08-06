@@ -895,20 +895,17 @@
             style="position: absolute; bottom: 45px; right: 0; z-index: 999; display: none;">
           </emoji-picker>
         </div>
-
         <!-- Image Upload -->
         <input type="file" id="image-upload-share-art" accept="image/*" style="display: none;" />
         <button id="upload-image-btn-share-art" title="Attach Image">
           <img src="../images2/paperclip.png" alt="attach" width="20" height="20" />
         </button>
-
         <!-- Send Button -->
         <button id="send-btn-share-art">
           <img src="../images2/send.png" alt="Send" class="send-icon" />
         </button>
       </div>
     </div>
-
     <!-- Image Preview -->
     <div id="image-preview-container-share-art" style="display:none; margin:8px 0;">
       <div style="position:relative; display:inline-block;">
@@ -927,33 +924,41 @@
 <div id="section-spot-request" class="profile-section">
   <h3>Spot Request</h3>
   <div class="chat-box">
-    <div id="chat-messages-links" class="chat-messages"></div>
+    <div id="chat-messages-spot-request" class="chat-messages"></div>
+    
     <div class="chat-input-wrapper">
       <textarea id="chat-input-spot-request" placeholder="Type a message..."></textarea>
+      
       <div class="chat-actions">
-        <div id="emoji-picker-container-links" style="position: relative;">
-          <button id="toggle-emoji-picker-links" title="Emoji">
+        <!-- Emoji Picker -->
+        <div id="emoji-picker-container-spot-request" style="position: relative;">
+          <button id="toggle-emoji-picker-spot-request" title="Emoji">
             <img src="../images2/em.png" alt="emoji" width="20" height="20" />
           </button>
-          <emoji-picker id="emoji-picker-links"
+          <emoji-picker id="emoji-picker-spot-request"
             style="position: absolute; bottom: 45px; right: 0; z-index: 999; display: none;">
           </emoji-picker>
         </div>
+        <!-- Image Upload -->
         <input type="file" id="image-upload-spot-request" accept="image/*" style="display: none;" />
-        <button id="upload-image-btn-links" title="Attach Image">
+        <button id="upload-image-btn-spot-request" title="Attach Image">
           <img src="../images2/paperclip.png" alt="attach" width="20" height="20" />
         </button>
+        <!-- Send Button -->
         <button id="send-btn-spot-request">
           <img src="../images2/send.png" alt="Send" class="send-icon" />
         </button>
       </div>
     </div>
-    <div id="image-preview-container-links" style="display:none; margin:8px 0;">
+    <!-- Image Preview -->
+    <div id="image-preview-container-spot-request" style="display:none; margin:8px 0;">
       <div style="position:relative; display:inline-block;">
-        <img id="image-preview-links" style="max-width:150px; border-radius:8px;">
-        <button id="cancel-image-links"
+        <img id="image-preview-spot-request" style="max-width:150px; border-radius:8px;">
+        <button id="cancel-image-spot-request"
           style="position:absolute; top:0; right:0; background:rgba(0,0,0,0.6);
-                 color:white; border:none; border-radius:50%; width:20px; height:20px; cursor:pointer;">✖</button>
+                 color:white; border:none; border-radius:50%; width:20px; height:20px; cursor:pointer;">
+          ✖
+        </button>
       </div>
     </div>
   </div>
