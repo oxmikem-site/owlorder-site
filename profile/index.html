@@ -543,6 +543,24 @@
   background: transparent;
 }
 
+    .reply-text {
+  display: flex;
+  flex: 1;
+  min-width: 0; /* дозволяє обрізати текст всередині flex */
+  gap: 4px;
+  font-size: 10px;
+  overflow: hidden;
+}
+
+.reply-to-preview {
+  font-size: 10px;
+  opacity: 0.8;
+  overflow: hidden;
+  text-overflow: ellipsis; /* додає три крапки */
+  white-space: nowrap; /* в один рядок */
+  max-width: 120px; /* або інше значення під твій дизайн */
+}
+
     .message-wrapper.reply-highlight {
   background: rgb(66, 63, 46, 0.2); /* світлий фон */
   border-left: 3px solid var(--accent-color);
@@ -1335,10 +1353,10 @@ chatInput.addEventListener("input", () => {
 });
 
 chatInput.addEventListener("keydown", function (e) {
-  if (e.key === "Enter" && !e.ctrlKey) {
+  if (e.key === "Enter" && !e.shiftKey) {
     e.preventDefault();
     document.getElementById("send-btn-general").click();
-  } else if (e.key === "Enter" && e.ctrlKey) {
+  } else if (e.key === "Enter" && e.shiftKey) {
     const start = chatInput.selectionStart;
     const end = chatInput.selectionEnd;
     chatInput.value = chatInput.value.slice(0, start) + "\n" + chatInput.value.slice(end);
