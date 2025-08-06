@@ -275,6 +275,8 @@
 
 .chat-messages {
   flex: 1;
+  display: flex;                /* ✅ додаємо flex */
+  flex-direction: column-reverse; /* ✅ останні повідомлення внизу */
   overflow-y: auto;
   height: 100%;
   padding: 10px;
@@ -286,7 +288,6 @@
   white-space: pre-wrap;
   word-break: break-word;
 }
-
 
     .chat-messages::-webkit-scrollbar,
 .chat-input-wrapper textarea::-webkit-scrollbar {
