@@ -1237,7 +1237,6 @@ content.appendChild(header);
   textEl.innerHTML = replaceEmojisWithIconify(linkify(messageObj.text || ""));
   content.appendChild(textEl);
 
- // Підтримка і twitter.com і x.com
 const tweetMatch = messageObj.text.match(/https:\/\/(twitter|x)\.com\/[^\/]+\/status\/\d+/);
 if (tweetMatch) {
   const tweetUrl = tweetMatch[0];
@@ -1245,12 +1244,20 @@ if (tweetMatch) {
   embedDiv.innerHTML = `<blockquote class="twitter-tweet"><a href="${tweetUrl}"></a></blockquote>`;
   textEl.appendChild(embedDiv);
 
+  // Завантаження або оновлення Twitter widget
+  function loadTwitterWidgets() {
+    if (window.twttr && twttr.widgets) {
+      twttr.widgets.load();
+    }
+  }
+
   if (window.twttr && twttr.widgets) {
-    twttr.widgets.load();
+    loadTwitterWidgets();
   } else {
     const script = document.createElement("script");
     script.src = "https://platform.twitter.com/widgets.js";
     script.async = true;
+    script.onload = loadTwitterWidgets; // ✅ гарантований виклик після завантаження
     document.body.appendChild(script);
   }
 }
