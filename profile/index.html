@@ -1164,22 +1164,32 @@ uploadBtn.addEventListener("click", () => {
       populateSidebarUserInfo(null);
     }
 
-      chatMessagesRef.on("child_added", (snapshot) => {
+      function initChat(section) {
+  const chatRef = chatRefs[section];
+  const chatBox = document.getElementById(`chat-messages-${section}`);
+  
+  // Вимикаємо старі слухачі і очищуємо чат
+  chatRef.off();
+  chatBox.innerHTML = "";
+
+  // Додаємо слухачів для додавання
+  chatRef.on("child_added", (snapshot) => {
     const msg = snapshot.val();
-    const key = snapshot.key;
-
-    const uniqueId = `${msg.sender}_${msg.timestamp}`;
-    seenMessages.add(uniqueId);
-
-    if (seenMessages.size > 500) seenMessages.clear();
-
-    appendMessageToChat(msg, key);
-
-    setTimeout(() => {
-  const chatBox = document.getElementById("chat-messages-general");
-  chatBox.scrollTop = 0; // ✅ останнє повідомлення зверху
-}, 100);
+    appendMessageToChat(msg, snapshot.key, section);
   });
+
+  // Видалення повідомлення
+  chatRef.on("child_removed", (snapshot) => {
+    const msgEl = document.querySelector(`.chat-message[data-key="${snapshot.key}"]`);
+    if (msgEl) msgEl.closest(".message-wrapper").remove();
+  });
+
+  // Зміна тексту повідомлення
+  chatRef.on("child_changed", (snapshot) => {
+    const msgEl = document.querySelector(`.chat-message[data-key="${snapshot.key}"] .message-text`);
+    if (msgEl) msgEl.innerHTML = replaceEmojisWithIconify(snapshot.val().text || "");
+  });
+}
 
     // Показ/сховати дропдаун
     const wrapper = document.querySelector(".wallet-wrapper");
@@ -1212,17 +1222,20 @@ uploadBtn.addEventListener("click", () => {
       if (!saved) connectUniSatWallet();
     });
 
-    // Перемикання між розділами
     document.querySelectorAll('#sidebar-nav a').forEach(link => {
   link.addEventListener('click', (e) => {
     const target = link.getAttribute('data-section');
-    if (!target) return; // ⛔️ не чіпаємо зовнішні лінки
+    if (!target) return; /
+    if (!chatRefs[target]) return;
 
     e.preventDefault();
     hideAllSections();
     showSection(target);
+    
+    initChat(target); 
   });
 });
+
 
     // Logout
     document.querySelectorAll(".logout-btn").forEach(btn => {
@@ -1266,7 +1279,14 @@ uploadBtn.addEventListener("click", () => {
 
     // === CHAT: General section ===
 
-    const chatMessagesRef = db.ref("chats/general");
+    const chatRefs = {
+  general: db.ref("chats/general"),
+  links: db.ref("chats/links"),
+  announcements: db.ref("chats/announcements"),
+  "share-art": db.ref("chats/share-art"),
+  "spot-request": db.ref("chats/spot-request")
+};
+
     const localMessageIds = new Set();
     const userMessageKeys = new Set();
     const seenMessages = new Set();
@@ -1476,60 +1496,61 @@ if (messageObj.imageUrl) {
   input.focus();
 }
     
-document.getElementById("send-btn-general").addEventListener("click", async () => {
-  const input = document.getElementById("chat-input-general");
-  const text = input.value.trim();
-  const sender = localStorage.getItem("taproot_wallet");
+document.querySelectorAll("[id^=send-btn-]").forEach(btn => {
+  btn.addEventListener("click", async (e) => {
+    const section = e.target.closest("button").id.replace("send-btn-", "");
+    const input = document.getElementById(`chat-input-${section}`);
+    const fileInput = document.getElementById(`image-upload-${section}`); // 🔥 окремий інпут для кожного чату
+    const text = input.value.trim();
+    const sender = localStorage.getItem("taproot_wallet");
 
-  if ((!text && !fileInput.files[0]) || !sender) return;
+    if ((!text && !fileInput.files[0]) || !sender) return;
 
-  if (!cachedHolderInfo?.found) {
-    alert("Only verified holders can send messages.");
-    return;
-  }
+    if (!cachedHolderInfo?.found) {
+      alert("Only verified holders can send messages.");
+      return;
+    }
 
-  let imageUrl = null;
-if (fileInput.files.length > 0) {
-  try {
-    const file = fileInput.files[0];
-    console.log("Uploading image:", file.name);
+    let imageUrl = null;
+    if (fileInput.files.length > 0) {
+      try {
+        const file = fileInput.files[0];
+        const fileName = `chat_images/${Date.now()}_${file.name}`;
+        const ref = storage.ref().child(fileName);
+        const snapshot = await ref.put(file);
+        imageUrl = await snapshot.ref.getDownloadURL();
+      } catch (err) {
+        console.error("Image upload failed:", err);
+        alert("Failed to upload image.");
+      }
+    }
 
-    const fileName = `chat_images/${Date.now()}_${file.name}`;
-    const ref = storage.ref().child(fileName);
-    const snapshot = await ref.put(file);
+    const msgData = {
+      sender,
+      text,
+      timestamp: Date.now(),
+      imageId: cachedHolderInfo.imageId || null,
+      imageUrl: imageUrl ? imageUrl : null,
+      ...(replyToMessage && {
+        replyTo: {
+          key: replyToMessage.key,
+          sender: replyToMessage.sender,
+          text: replyToMessage.text,
+          imageId: replyToMessage.imageId || null
+        }
+      }),
+    };
 
-    imageUrl = await snapshot.ref.getDownloadURL();
-    console.log("Image uploaded. URL:", imageUrl);
-  } catch (err) {
-    console.error("Image upload failed:", err);
-    alert("Failed to upload image.");
-  }
-}
+    chatRefs[section].push(msgData);
 
-  const msgData = {
-    sender,
-    text,
-    timestamp: Date.now(),
-    imageId: cachedHolderInfo.imageId || null,
-    imageUrl: imageUrl ? imageUrl : null,
-    ...(replyToMessage && {
-  replyTo: {
-    key: replyToMessage.key,
-    sender: replyToMessage.sender,
-    text: replyToMessage.text,
-    imageId: replyToMessage.imageId || null  // 🔥 додаємо imageId
-  }
-}),
-  };
-
-  chatMessagesRef.push(msgData);
-
-  input.value = "";
-  input.style.height = "auto";
-  input.placeholder = "Type a message...";
-  replyToMessage = null;
-  fileInput.value = "";
-  document.getElementById("image-preview-container").style.display = "none";
+    // Reset input
+    input.value = "";
+    input.style.height = "auto";
+    replyToMessage = null;
+    fileInput.value = "";
+    const previewContainer = document.getElementById(`image-preview-container-${section}`);
+    if (previewContainer) previewContainer.style.display = "none";
+  });
 });
 
    const chatInput = document.getElementById("chat-input-general");
