@@ -1251,7 +1251,7 @@ uploadBtn.addEventListener("click", () => {
     document.querySelectorAll('#sidebar-nav a').forEach(link => {
   link.addEventListener('click', (e) => {
     const target = link.getAttribute('data-section');
-    if (!target) return; /
+    if (!target) return;
     if (!chatRefs[target]) return;
 
     e.preventDefault();
