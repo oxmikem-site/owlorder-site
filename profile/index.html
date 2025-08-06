@@ -1206,7 +1206,7 @@ const time = new Date(messageObj.timestamp);
 // Формат: DD.MM.YYYY HH:MM
 const dateStr = time.toLocaleDateString([], { day: '2-digit', month: '2-digit', year: 'numeric' });
 const timeStr = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-timeEl.textContent = `${timeStr} ${dateStr}`;
+timeEl.textContent = `${dateStr} ${timeStr}`;
 
 
 left.appendChild(nameEl);
