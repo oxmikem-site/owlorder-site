@@ -1216,11 +1216,11 @@ left.appendChild(timeEl);
 const right = document.createElement("div");
 right.className = "hover-menu";
 right.innerHTML = `
-  <button onclick="replyTo('${key}', '${messageObj.sender}', '${messageObj.text?.replace(/'/g, "\\'") || ""}')">
+  <button onclick="replyTo('${key}')">
     <iconify-icon icon="mdi:reply" width="14"></iconify-icon>
   </button>
   ${messageObj.sender?.toLowerCase() === currentWallet?.toLowerCase() ? `
-  <button onclick="editMessage('${key}', \`${messageObj.text || ""}\`)">
+  <button onclick="editMessage('${key}')">
     <iconify-icon icon="mdi:pencil" width="14"></iconify-icon>
   </button>
   <button onclick="deleteMessage('${key}')">
@@ -1244,11 +1244,13 @@ if (tweetMatch) {
   embedDiv.innerHTML = `<blockquote class="twitter-tweet"><a href="${tweetUrl}"></a></blockquote>`;
   textEl.appendChild(embedDiv);
 
-  // Завантаження або оновлення Twitter widget
+  // ✅ Єдина правильна функція
   function loadTwitterWidgets() {
-    if (window.twttr && twttr.widgets) {
-      twttr.widgets.load();
-    }
+    setTimeout(() => {
+      if (window.twttr && twttr.widgets) {
+        twttr.widgets.load();
+      }
+    }, 200);
   }
 
   if (window.twttr && twttr.widgets) {
@@ -1257,13 +1259,13 @@ if (tweetMatch) {
     const script = document.createElement("script");
     script.src = "https://platform.twitter.com/widgets.js";
     script.async = true;
-    script.onload = loadTwitterWidgets; // ✅ гарантований виклик після завантаження
+    script.onload = loadTwitterWidgets;
     document.body.appendChild(script);
   }
 }
 
-  msgEl.appendChild(avatar);
-  msgEl.appendChild(content);
+msgEl.appendChild(avatar);
+msgEl.appendChild(content);
 
  // WRAPPER (for reply + message)
 let wrapper = document.createElement("div");
@@ -1319,24 +1321,24 @@ if (messageObj.imageUrl) {
   content.appendChild(imgEl);
 }
     }
-   function replyTo(key, sender, text) {
-  // Знаходимо повідомлення в DOM
-  const msgEl = document.querySelector(`.chat-message[data-key="${key}"] img.avatar`);
-  
-  // Витягуємо imageId з src аватарки
+   function replyTo(key) {
+  const msgEl = document.querySelector(`.chat-message[data-key="${key}"]`);
+  if (!msgEl) return;
+
+  const sender = msgEl.querySelector(".sender-name")?.textContent || "";
+  const text = msgEl.querySelector(".message-text")?.innerText || "";
+  const avatarImg = msgEl.querySelector("img.avatar")?.src;
+
   let imageId = null;
-  if (msgEl) {
-    const avatarSrc = msgEl.src;
-    const match = avatarSrc.match(/(\d+)\.webp$/); // шукаємо 123.webp
+  if (avatarImg) {
+    const match = avatarImg.match(/(\d+)\.webp$/);
     imageId = match ? match[1] : null;
   }
 
-  // Зберігаємо reply з imageId
   replyToMessage = { key, sender, text, imageId };
 
-  // Оновлюємо плейсхолдер у полі вводу
   const input = document.getElementById("chat-input-general");
-  input.placeholder = `Replying to ${sender.slice(0, 6)}: ${text}`;
+  input.placeholder = `Replying to ${sender.slice(0, 6)}: ${text.slice(0, 50)}${text.length > 50 ? "..." : ""}`;
   input.focus();
 }
     
