@@ -9,7 +9,9 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@1.9.0/index.js"></script>
-  <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+<script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+
 
   <style>
     :root {
@@ -1212,6 +1214,17 @@ content.appendChild(header);
   textEl.className = "message-text";
   textEl.innerHTML = replaceEmojisWithIconify(linkify(messageObj.text || ""));
   content.appendChild(textEl);
+
+  const tweetMatch = messageObj.text.match(/https:\/\/twitter\.com\/[^\/]+\/status\/\d+/);
+if (tweetMatch) {
+  const tweetUrl = tweetMatch[0];
+  const embedDiv = document.createElement("div");
+  embedDiv.innerHTML = `<blockquote class="twitter-tweet"><a href="${tweetUrl}"></a></blockquote>`;
+  textEl.appendChild(embedDiv);
+  if (typeof twttr !== "undefined" && twttr.widgets) {
+    twttr.widgets.load();
+  }
+}
 
   msgEl.appendChild(avatar);
   msgEl.appendChild(content);
