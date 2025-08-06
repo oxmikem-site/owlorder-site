@@ -1203,7 +1203,7 @@ const timeStr = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit'
 // Якщо пройшло більше 24 годин — додаємо дату
 if (diffHours > 24) {
   const dateStr = time.toLocaleDateString([], { day: '2-digit', month: '2-digit', year: 'numeric' });
-  timeEl.textContent = `${timeStr} ${dateStr}`;
+  timeEl.textContent = `${dateStr},  ${timeStr}`;
 } else {
   timeEl.textContent = `${timeStr}`;
 }
