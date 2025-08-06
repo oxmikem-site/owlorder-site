@@ -358,8 +358,7 @@
   margin-left: 6px;
 }
 
-/* Кнопка емодзі */
-#toggle-emoji-picker {
+    .toggle-emoji-picker, .upload-image-btn {
   background: transparent;
   border: none;
   font-size: 20px;
@@ -370,24 +369,15 @@
   align-items: center;
   justify-content: center;
 }
-
-/* Скріпка */
-#upload-image-btn {
-  background: transparent;
-  border: none;
-  font-size: 20px;
-  cursor: pointer;
-  padding: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.toggle-emoji-picker:hover, .upload-image-btn:hover {
+  transform: scale(1.1);
 }
 
-#send-btn-general {
-  background: transparent; /* прозорий фон */
+.send-btn {
+  background: transparent;
   border: none;
   cursor: pointer;
-  border-radius: 0px; /* для приємного ховера/тача */
+  border-radius: 0;
   width: 15px;
   height: 15px;
   display: flex;
@@ -395,7 +385,9 @@
   justify-content: center;
   padding: 0;
 }
-
+.send-btn:hover {
+  box-shadow: 0 0 13px rgba(212, 200, 124, 0.6);
+}
     .send-icon {
   width: 23px;
   height: 23px;
@@ -405,18 +397,16 @@
   box-shadow: 0 0 13px rgba(212, 200, 124, 0.6);
 }
 
-    #image-preview-container {
+.image-preview-container {
   display: none;
   padding: 5px;
 }
-
-#image-preview {
+.image-preview {
   max-width: 180px;
   border-radius: 8px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.4);
 }
-
-#cancel-image {
+.cancel-image {
   position: absolute;
   top: 2px;
   right: 2px;
@@ -429,9 +419,10 @@
   font-size: 12px;
   cursor: pointer;
 }
-#cancel-image:hover {
+.cancel-image:hover {
   background: rgba(255,0,0,0.8);
 }
+
 
 .chat-message button {
   background: none;
@@ -486,17 +477,7 @@
   margin-right: 8px;
 }
 
-.chat-message {
-  position: relative;
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 5px 8px 5px 8px;
-  border-radius: 0 0 8px 8px;
-  background: transparent;
-}
-
-    #chat-messages-general {
+.chat-messages {
   flex: 1;
   overflow-y: auto;
   min-height: 0;
@@ -507,7 +488,7 @@
   white-space: pre-wrap;
   word-break: break-word;
   scroll-behavior: smooth;
-      box-shadow: inset 4px 4px 8px #0d0d0d, inset -4px -4px 8px #1d1d1d;
+  box-shadow: inset 4px 4px 8px #0d0d0d, inset -4px -4px 8px #1d1d1d;
   border: 1px solid rgba(255, 255, 255, 0.03);
 }
     
@@ -827,15 +808,15 @@
   <h3>General Chat</h3>
 
   <div class="chat-box">
-    <div id="chat-messages-general" class="chat-messages"></div>
+    <div class="chat-messages" class="chat-messages"></div>
 
     <div class="chat-input-wrapper">
-      <textarea id="chat-input-general" placeholder="Type a message..."></textarea>
+      <textarea class="chat-input" placeholder="Type a message..."></textarea>
 
       <div class="chat-actions">
         <!-- Emoji Button -->
         <div id="emoji-picker-container" style="position: relative;">
-          <button id="toggle-emoji-picker" title="Emoji">
+          <button class="toggle-emoji-picker" title="Emoji">
             <img src="../images2/em.png" alt="emoji" width="20" height="20" />
           </button>
           <emoji-picker id="emoji-picker"
@@ -845,12 +826,12 @@
 
         <!-- Image Upload -->
         <input type="file" id="image-upload" accept="image/*" style="display: none;" />
-        <button id="upload-image-btn" title="Attach Image">
+        <button class="upload-image-btn" title="Attach Image">
           <img src="../images2/paperclip.png" alt="attach" width="20" height="20" />
         </button>
 
         <!-- Send Button -->
-        <button id="send-btn-general">
+        <button class="send-btn">
           <img src="../images2/send.png" alt="Send" class="send-icon" />
         </button>
       </div>
@@ -859,8 +840,8 @@
     <!-- Image Preview -->
     <div id="image-preview-container" style="display:none; margin:8px 0;">
       <div style="position:relative; display:inline-block;">
-        <img id="image-preview" style="max-width:150px; border-radius:8px;">
-        <button id="cancel-image" style="
+        <img class="image-preview" style="max-width:150px; border-radius:8px;">
+        <button class="cancel-image" style="
           position:absolute;
           top:0;
           right:0;
