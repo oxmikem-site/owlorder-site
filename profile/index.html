@@ -763,183 +763,151 @@
   <h3>Announcements</h3>
   <div class="chat-box">
     <div id="chat-messages-announcements" class="chat-messages"></div>
-    
     <div class="chat-input-wrapper">
       <textarea id="chat-input-announcements" placeholder="Type a message..."></textarea>
-      
       <div class="chat-actions">
-        <!-- Emoji Picker -->
-        <div id="emoji-picker-container-announcements" style="position: relative;">
-          <button id="toggle-emoji-picker-announcements" title="Emoji">
+        <div class="emoji-picker-container" style="position: relative;">
+          <button class="toggle-emoji-picker" title="Emoji" data-section="announcements">
             <img src="../images2/em.png" alt="emoji" width="20" height="20" />
           </button>
           <emoji-picker id="emoji-picker-announcements"
             style="position: absolute; bottom: 45px; right: 0; z-index: 999; display: none;">
           </emoji-picker>
         </div>
-        <!-- Image Upload -->
-        <input type="file" id="image-upload-announcements" accept="image/*" style="display: none;" />
-        <button id="upload-image-btn-announcements" title="Attach Image">
+
+        <input type="file" id="image-upload-announcements" class="image-upload" data-section="announcements" accept="image/*" style="display: none;" />
+
+        <button class="upload-image-btn" title="Attach Image" data-section="announcements">
           <img src="../images2/paperclip.png" alt="attach" width="20" height="20" />
         </button>
-        <!-- Send Button -->
-        <button id="send-btn-announcements">
+
+        <button class="send-btn" data-section="announcements">
           <img src="../images2/send.png" alt="Send" class="send-icon" />
         </button>
       </div>
     </div>
-    <!-- Image Preview -->
+
     <div id="image-preview-container-announcements" style="display:none; margin:8px 0;">
       <div style="position:relative; display:inline-block;">
         <img id="image-preview-announcements" style="max-width:150px; border-radius:8px;">
-        <button id="cancel-image-announcements"
-          style="position:absolute; top:0; right:0; background:rgba(0,0,0,0.6);
-                 color:white; border:none; border-radius:50%; width:20px; height:20px; cursor:pointer;">
-          ✖
-        </button>
+        <button class="cancel-image" data-section="announcements"
+          style="position:absolute; top:0; right:0; background:rgba(0,0,0,0.6); color:white; border:none; border-radius:50%; width:20px; height:20px; cursor:pointer;">✖</button>
       </div>
     </div>
   </div>
 </div>
 
-
 <!-- General Chat -->
 <div id="section-general" class="profile-section">
-  <h3>General Chat</h3>
-
+  <h3>General</h3>
   <div class="chat-box">
-    <div class="chat-messages" class="chat-messages"></div>
-
+    <div id="chat-messages-general" class="chat-messages"></div>
     <div class="chat-input-wrapper">
-      <textarea class="chat-input" placeholder="Type a message..."></textarea>
-
+      <textarea id="chat-input-general" placeholder="Type a message..."></textarea>
       <div class="chat-actions">
-        <!-- Emoji Button -->
-        <div id="emoji-picker-container" style="position: relative;">
-          <button class="toggle-emoji-picker" title="Emoji">
+        <div class="emoji-picker-container" style="position: relative;">
+          <button class="toggle-emoji-picker" title="Emoji" data-section="general">
             <img src="../images2/em.png" alt="emoji" width="20" height="20" />
           </button>
-          <emoji-picker id="emoji-picker"
+          <emoji-picker id="emoji-picker-general"
             style="position: absolute; bottom: 45px; right: 0; z-index: 999; display: none;">
           </emoji-picker>
         </div>
 
-        <!-- Image Upload -->
-        <input type="file" id="image-upload" accept="image/*" style="display: none;" />
-        <button class="upload-image-btn" title="Attach Image">
+        <input type="file" id="image-upload-general" class="image-upload" data-section="general" accept="image/*" style="display: none;" />
+
+        <button class="upload-image-btn" title="Attach Image" data-section="general">
           <img src="../images2/paperclip.png" alt="attach" width="20" height="20" />
         </button>
 
-        <!-- Send Button -->
-        <button class="send-btn">
+        <button class="send-btn" data-section="general">
           <img src="../images2/send.png" alt="Send" class="send-icon" />
         </button>
       </div>
     </div>
 
-    <!-- Image Preview -->
-    <div id="image-preview-container" style="display:none; margin:8px 0;">
+    <div id="image-preview-container-general" style="display:none; margin:8px 0;">
       <div style="position:relative; display:inline-block;">
-        <img class="image-preview" style="max-width:150px; border-radius:8px;">
-        <button class="cancel-image" style="
-          position:absolute;
-          top:0;
-          right:0;
-          background:rgba(0,0,0,0.6);
-          color:white;
-          border:none;
-          border-radius:50%;
-          width:20px;
-          height:20px;
-          cursor:pointer;
-        ">✖</button>
+        <img id="image-preview-general" style="max-width:150px; border-radius:8px;">
+        <button class="cancel-image" data-section="general"
+          style="position:absolute; top:0; right:0; background:rgba(0,0,0,0.6); color:white; border:none; border-radius:50%; width:20px; height:20px; cursor:pointer;">✖</button>
       </div>
     </div>
   </div>
 </div>
 
-      <div id="section-share-art" class="profile-section">
+    <div id="section-share-art" class="profile-section">
   <h3>Share Art</h3>
   <div class="chat-box">
     <div id="chat-messages-share-art" class="chat-messages"></div>
-    
     <div class="chat-input-wrapper">
       <textarea id="chat-input-share-art" placeholder="Type a message..."></textarea>
-      
       <div class="chat-actions">
-        <!-- Emoji Picker -->
-        <div id="emoji-picker-container-share-art" style="position: relative;">
-          <button id="toggle-emoji-picker-share-art" title="Emoji">
+        <div class="emoji-picker-container" style="position: relative;">
+          <button class="toggle-emoji-picker" title="Emoji" data-section="share-art">
             <img src="../images2/em.png" alt="emoji" width="20" height="20" />
           </button>
           <emoji-picker id="emoji-picker-share-art"
             style="position: absolute; bottom: 45px; right: 0; z-index: 999; display: none;">
           </emoji-picker>
         </div>
-        <!-- Image Upload -->
-        <input type="file" id="image-upload-share-art" accept="image/*" style="display: none;" />
-        <button id="upload-image-btn-share-art" title="Attach Image">
+
+        <input type="file" id="image-upload-share-art" class="image-upload" data-section="share-art" accept="image/*" style="display: none;" />
+
+        <button class="upload-image-btn" title="Attach Image" data-section="share-art">
           <img src="../images2/paperclip.png" alt="attach" width="20" height="20" />
         </button>
-        <!-- Send Button -->
-        <button id="send-btn-share-art">
+
+        <button class="send-btn" data-section="share-art">
           <img src="../images2/send.png" alt="Send" class="send-icon" />
         </button>
       </div>
     </div>
-    <!-- Image Preview -->
+
     <div id="image-preview-container-share-art" style="display:none; margin:8px 0;">
       <div style="position:relative; display:inline-block;">
         <img id="image-preview-share-art" style="max-width:150px; border-radius:8px;">
-        <button id="cancel-image-share-art"
-          style="position:absolute; top:0; right:0; background:rgba(0,0,0,0.6);
-                 color:white; border:none; border-radius:50%; width:20px; height:20px; cursor:pointer;">
-          ✖
-        </button>
+        <button class="cancel-image" data-section="share-art"
+          style="position:absolute; top:0; right:0; background:rgba(0,0,0,0.6); color:white; border:none; border-radius:50%; width:20px; height:20px; cursor:pointer;">✖</button>
       </div>
     </div>
   </div>
 </div>
 
 
-<div id="section-spot-request" class="profile-section">
-  <h3>Spot Request</h3>
+<div id="section-spot-requests" class="profile-section">
+  <h3>Spot Requests</h3>
   <div class="chat-box">
-    <div id="chat-messages-spot-request" class="chat-messages"></div>
-    
+    <div id="chat-messages-spot-requests" class="chat-messages"></div>
     <div class="chat-input-wrapper">
-      <textarea id="chat-input-spot-request" placeholder="Type a message..."></textarea>
-      
+      <textarea id="chat-input-spot-requests" placeholder="Type a message..."></textarea>
       <div class="chat-actions">
-        <!-- Emoji Picker -->
-        <div id="emoji-picker-container-spot-request" style="position: relative;">
-          <button id="toggle-emoji-picker-spot-request" title="Emoji">
+        <div class="emoji-picker-container" style="position: relative;">
+          <button class="toggle-emoji-picker" title="Emoji" data-section="spot-requests">
             <img src="../images2/em.png" alt="emoji" width="20" height="20" />
           </button>
-          <emoji-picker id="emoji-picker-spot-request"
+          <emoji-picker id="emoji-picker-spot-requests"
             style="position: absolute; bottom: 45px; right: 0; z-index: 999; display: none;">
           </emoji-picker>
         </div>
-        <!-- Image Upload -->
-        <input type="file" id="image-upload-spot-request" accept="image/*" style="display: none;" />
-        <button id="upload-image-btn-spot-request" title="Attach Image">
+
+        <input type="file" id="image-upload-spot-requests" class="image-upload" data-section="spot-requests" accept="image/*" style="display: none;" />
+
+        <button class="upload-image-btn" title="Attach Image" data-section="spot-requests">
           <img src="../images2/paperclip.png" alt="attach" width="20" height="20" />
         </button>
-        <!-- Send Button -->
-        <button id="send-btn-spot-request">
+
+        <button class="send-btn" data-section="spot-requests">
           <img src="../images2/send.png" alt="Send" class="send-icon" />
         </button>
       </div>
     </div>
-    <!-- Image Preview -->
-    <div id="image-preview-container-spot-request" style="display:none; margin:8px 0;">
+
+    <div id="image-preview-container-spot-requests" style="display:none; margin:8px 0;">
       <div style="position:relative; display:inline-block;">
-        <img id="image-preview-spot-request" style="max-width:150px; border-radius:8px;">
-        <button id="cancel-image-spot-request"
-          style="position:absolute; top:0; right:0; background:rgba(0,0,0,0.6);
-                 color:white; border:none; border-radius:50%; width:20px; height:20px; cursor:pointer;">
-          ✖
-        </button>
+        <img id="image-preview-spot-requests" style="max-width:150px; border-radius:8px;">
+        <button class="cancel-image" data-section="spot-requests"
+          style="position:absolute; top:0; right:0; background:rgba(0,0,0,0.6); color:white; border:none; border-radius:50%; width:20px; height:20px; cursor:pointer;">✖</button>
       </div>
     </div>
   </div>
@@ -1284,6 +1252,99 @@ uploadBtn.addEventListener("click", () => {
     const db = firebase.database(app);
     const storage = firebase.storage();
 
+function setupChatListeners() {
+  const sendButtons = document.querySelectorAll(".send-btn");
+  sendButtons.forEach(button => {
+    button.addEventListener("click", async () => {
+      const section = button.dataset.section;
+      const input = document.getElementById(`chat-input-${section}`);
+      const text = input.value.trim();
+      const sender = localStorage.getItem("taproot_wallet");
+      const fileInput = document.getElementById(`image-upload-${section}`);
+      const previewContainer = document.getElementById(`image-preview-container-${section}`);
+      let imageUrl = null;
+
+      if ((!text && fileInput.files.length === 0) || !sender) return;
+
+      if (!cachedHolderInfo?.found) {
+        alert("Only verified holders can send messages.");
+        return;
+      }
+
+      if (fileInput.files.length > 0) {
+        try {
+          const file = fileInput.files[0];
+          const fileName = `chat_images/${Date.now()}_${file.name}`;
+          const ref = storage.ref().child(fileName);
+          const snapshot = await ref.put(file);
+          imageUrl = await snapshot.ref.getDownloadURL();
+        } catch (err) {
+          alert("Failed to upload image.");
+        }
+      }
+
+      const msgData = {
+        sender,
+        text,
+        timestamp: Date.now(),
+        imageId: cachedHolderInfo.imageId || null,
+        imageUrl: imageUrl ? imageUrl : null,
+        ...(replyToMessage && {
+          replyTo: {
+            key: replyToMessage.key,
+            sender: replyToMessage.sender,
+            text: replyToMessage.text,
+            imageId: replyToMessage.imageId || null
+          }
+        })
+      };
+
+      chatRefs[section].push(msgData);
+      input.value = "";
+      fileInput.value = "";
+      previewContainer.style.display = "none";
+    });
+  });
+
+  const uploadButtons = document.querySelectorAll(".upload-image-btn");
+  uploadButtons.forEach(button => {
+    button.addEventListener("click", () => {
+      const section = button.dataset.section;
+      document.getElementById(`image-upload-${section}`).click();
+    });
+  });
+
+  const fileInputs = document.querySelectorAll(".image-upload");
+  fileInputs.forEach(input => {
+    input.addEventListener("change", () => {
+      const section = input.dataset.section;
+      const file = input.files[0];
+      if (!file) return;
+      const preview = document.getElementById(`image-preview-${section}`);
+      const container = document.getElementById(`image-preview-container-${section}`);
+      preview.src = URL.createObjectURL(file);
+      container.style.display = "block";
+    });
+  });
+
+  const cancelButtons = document.querySelectorAll(".cancel-image");
+  cancelButtons.forEach(button => {
+    button.addEventListener("click", () => {
+      const section = button.dataset.section;
+      const input = document.getElementById(`image-upload-${section}`);
+      const container = document.getElementById(`image-preview-container-${section}`);
+      input.value = "";
+      container.style.display = "none";
+    });
+  });
+}
+
+// Ініціалізувати після завантаження DOM
+document.addEventListener("DOMContentLoaded", () => {
+  setupChatListeners();
+});
+
+    
     // === CHAT: General section ===
 
     const chatRefs = {
