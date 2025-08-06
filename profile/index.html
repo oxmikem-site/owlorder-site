@@ -1238,12 +1238,26 @@ if (messageObj.imageUrl) {
   content.appendChild(imgEl);
 }
     }
-    function replyTo(key, sender, text) {
-  replyToMessage = { key, sender, text };
+   function replyTo(key, sender, text) {
+  // Знаходимо повідомлення в DOM
+  const msgEl = document.querySelector(`.chat-message[data-key="${key}"] img.avatar`);
+  
+  // Витягуємо imageId з src аватарки
+  let imageId = null;
+  if (msgEl) {
+    const avatarSrc = msgEl.src;
+    const match = avatarSrc.match(/(\d+)\.webp$/); // шукаємо 123.webp
+    imageId = match ? match[1] : null;
+  }
+
+  // Зберігаємо reply з imageId
+  replyToMessage = { key, sender, text, imageId };
+
+  // Оновлюємо плейсхолдер у полі вводу
   const input = document.getElementById("chat-input-general");
   input.placeholder = `Replying to ${sender.slice(0, 6)}: ${text}`;
   input.focus();
-      }
+}
     
 document.getElementById("send-btn-general").addEventListener("click", async () => {
   const input = document.getElementById("chat-input-general");
@@ -1282,12 +1296,13 @@ if (fileInput.files.length > 0) {
     imageId: cachedHolderInfo.imageId || null,
     imageUrl: imageUrl ? imageUrl : null,
     ...(replyToMessage && {
-      replyTo: {
-        key: replyToMessage.key,
-        sender: replyToMessage.sender,
-        text: replyToMessage.text
-      }
-    }),
+  replyTo: {
+    key: replyToMessage.key,
+    sender: replyToMessage.sender,
+    text: replyToMessage.text,
+    imageId: replyToMessage.imageId || null  // 🔥 додаємо imageId
+  }
+}),
   };
 
   chatMessagesRef.push(msgData);
