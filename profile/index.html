@@ -1280,7 +1280,7 @@ if (messageObj.replyTo) {
   replyBlock.dataset.replyKey = messageObj.replyTo.key; // 🔹 зберігаємо ключ відповіді
 
   const previewRaw = (messageObj.replyTo?.text || "").trim()
-    ? messageObj.replyTo.text.split("\n")[0].slice(0, 100)
+    ? messageObj.replyTo.text.split("\n")[0].slice(0, 250)
     : "(image)";
   const previewText = replaceEmojisWithIconify(previewRaw);
 
