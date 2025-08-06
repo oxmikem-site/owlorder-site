@@ -744,7 +744,7 @@
 </div>
 
 <div id="section-links" class="profile-section">
-  <h3>Links (Team-only chat)</h3>
+  <h3>Links</h3>
   <div class="chat-box">
     <div id="chat-messages-links" class="chat-messages"></div>
     <div class="chat-input-wrapper">
@@ -782,36 +782,45 @@
   <h3>Announcements</h3>
   <div class="chat-box">
     <div id="chat-messages-announcements" class="chat-messages"></div>
+    
     <div class="chat-input-wrapper">
-      <textarea id="chat-input-links" placeholder="Type a message..."></textarea>
+      <textarea id="chat-input-announcements" placeholder="Type a message..."></textarea>
+      
       <div class="chat-actions">
-        <div id="emoji-picker-container-links" style="position: relative;">
-          <button id="toggle-emoji-picker-links" title="Emoji">
+        <!-- Emoji Picker -->
+        <div id="emoji-picker-container-announcements" style="position: relative;">
+          <button id="toggle-emoji-picker-announcements" title="Emoji">
             <img src="../images2/em.png" alt="emoji" width="20" height="20" />
           </button>
-          <emoji-picker id="emoji-picker-links"
+          <emoji-picker id="emoji-picker-announcements"
             style="position: absolute; bottom: 45px; right: 0; z-index: 999; display: none;">
           </emoji-picker>
         </div>
-        <input type="file" id="image-upload-links" accept="image/*" style="display: none;" />
-        <button id="upload-image-btn-links" title="Attach Image">
+        <!-- Image Upload -->
+        <input type="file" id="image-upload-announcements" accept="image/*" style="display: none;" />
+        <button id="upload-image-btn-announcements" title="Attach Image">
           <img src="../images2/paperclip.png" alt="attach" width="20" height="20" />
         </button>
-        <button id="send-btn-links">
+        <!-- Send Button -->
+        <button id="send-btn-announcements">
           <img src="../images2/send.png" alt="Send" class="send-icon" />
         </button>
       </div>
     </div>
-    <div id="image-preview-container-links" style="display:none; margin:8px 0;">
+    <!-- Image Preview -->
+    <div id="image-preview-container-announcements" style="display:none; margin:8px 0;">
       <div style="position:relative; display:inline-block;">
-        <img id="image-preview-links" style="max-width:150px; border-radius:8px;">
-        <button id="cancel-image-links"
+        <img id="image-preview-announcements" style="max-width:150px; border-radius:8px;">
+        <button id="cancel-image-announcements"
           style="position:absolute; top:0; right:0; background:rgba(0,0,0,0.6);
-                 color:white; border:none; border-radius:50%; width:20px; height:20px; cursor:pointer;">✖</button>
+                 color:white; border:none; border-radius:50%; width:20px; height:20px; cursor:pointer;">
+          ✖
+        </button>
       </div>
     </div>
   </div>
 </div>
+
 
 <!-- General Chat -->
 <div id="section-general" class="profile-section">
@@ -870,45 +879,57 @@
 
       <div id="section-share-art" class="profile-section">
   <h3>Share Art</h3>
- <div class="chat-box">
+  <div class="chat-box">
     <div id="chat-messages-share-art" class="chat-messages"></div>
+    
     <div class="chat-input-wrapper">
-      <textarea id="chat-input-links" placeholder="Type a message..."></textarea>
+      <textarea id="chat-input-share-art" placeholder="Type a message..."></textarea>
+      
       <div class="chat-actions">
-        <div id="emoji-picker-container-links" style="position: relative;">
-          <button id="toggle-emoji-picker-links" title="Emoji">
+        <!-- Emoji Picker -->
+        <div id="emoji-picker-container-share-art" style="position: relative;">
+          <button id="toggle-emoji-picker-share-art" title="Emoji">
             <img src="../images2/em.png" alt="emoji" width="20" height="20" />
           </button>
-          <emoji-picker id="emoji-picker-links"
+          <emoji-picker id="emoji-picker-share-art"
             style="position: absolute; bottom: 45px; right: 0; z-index: 999; display: none;">
           </emoji-picker>
         </div>
-        <input type="file" id="image-upload-links" accept="image/*" style="display: none;" />
-        <button id="upload-image-btn-links" title="Attach Image">
+
+        <!-- Image Upload -->
+        <input type="file" id="image-upload-share-art" accept="image/*" style="display: none;" />
+        <button id="upload-image-btn-share-art" title="Attach Image">
           <img src="../images2/paperclip.png" alt="attach" width="20" height="20" />
         </button>
-        <button id="send-btn-links">
+
+        <!-- Send Button -->
+        <button id="send-btn-share-art">
           <img src="../images2/send.png" alt="Send" class="send-icon" />
         </button>
       </div>
     </div>
-    <div id="image-preview-container-links" style="display:none; margin:8px 0;">
+
+    <!-- Image Preview -->
+    <div id="image-preview-container-share-art" style="display:none; margin:8px 0;">
       <div style="position:relative; display:inline-block;">
-        <img id="image-preview-links" style="max-width:150px; border-radius:8px;">
-        <button id="cancel-image-links"
+        <img id="image-preview-share-art" style="max-width:150px; border-radius:8px;">
+        <button id="cancel-image-share-art"
           style="position:absolute; top:0; right:0; background:rgba(0,0,0,0.6);
-                 color:white; border:none; border-radius:50%; width:20px; height:20px; cursor:pointer;">✖</button>
+                 color:white; border:none; border-radius:50%; width:20px; height:20px; cursor:pointer;">
+          ✖
+        </button>
       </div>
     </div>
   </div>
 </div>
+
 
 <div id="section-spot-request" class="profile-section">
   <h3>Spot Request</h3>
   <div class="chat-box">
     <div id="chat-messages-links" class="chat-messages"></div>
     <div class="chat-input-wrapper">
-      <textarea id="chat-input-links" placeholder="Type a message..."></textarea>
+      <textarea id="chat-input-spot-request" placeholder="Type a message..."></textarea>
       <div class="chat-actions">
         <div id="emoji-picker-container-links" style="position: relative;">
           <button id="toggle-emoji-picker-links" title="Emoji">
@@ -918,11 +939,11 @@
             style="position: absolute; bottom: 45px; right: 0; z-index: 999; display: none;">
           </emoji-picker>
         </div>
-        <input type="file" id="image-upload-links" accept="image/*" style="display: none;" />
+        <input type="file" id="image-upload-spot-request" accept="image/*" style="display: none;" />
         <button id="upload-image-btn-links" title="Attach Image">
           <img src="../images2/paperclip.png" alt="attach" width="20" height="20" />
         </button>
-        <button id="send-btn-links">
+        <button id="send-btn-spot-request">
           <img src="../images2/send.png" alt="Send" class="send-icon" />
         </button>
       </div>
