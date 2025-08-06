@@ -957,8 +957,9 @@ const result = cachedHolderInfo;
 
   function hideAllSections() {
   document.querySelectorAll('.profile-section').forEach(sec => {
-    sec.classList.remove('active');      // 🔥 важливо!
+    sec.classList.remove('active');
     sec.classList.add('hidden');
+    sec.style.display = "none"; // 🔥 примусово ховає
   });
 }
 
@@ -967,6 +968,7 @@ function showSection(id) {
   if (section) {
     section.classList.remove('hidden');
     section.classList.add('active');
+    section.style.display = "flex"; // 🔥 примусово показує секцію
   }
 }
 
