@@ -884,14 +884,12 @@
   let points = "-";
 
   try {
-    // === 1. CACHING SNAPSHOT (imageId)
-    if (!cachedSnapshotRows) {
-      const resImg = await fetch(SNAPSHOT_CSV_URL);
-      const csvImg = await resImg.text();
-      cachedSnapshotRows = csvImg.split("\n").slice(1);
-    }
+    // === SNAPSHOT (imageId)
+    const resImg = await fetch(SNAPSHOT_CSV_URL);
+    const csvImg = await resImg.text();
+    const rowsImg = csvImg.split("\n").slice(1);
 
-    for (const row of cachedSnapshotRows) {
+    for (const row of rowsImg) {
       const cols = row.split(",");
       const rowAddress = cols[1]?.trim().toLowerCase();
       if (rowAddress === address.toLowerCase()) {
@@ -900,14 +898,12 @@
       }
     }
 
-    // === 2. CACHING POINTS
-    if (!cachedPointsRows) {
-      const resPoints = await fetch(sheetURL);
-      const csvPoints = await resPoints.text();
-      cachedPointsRows = csvPoints.split("\n").slice(1);
-    }
+    // === POINTS
+    const resPoints = await fetch(sheetURL);
+    const csvPoints = await resPoints.text();
+    const rowsPoints = csvPoints.split("\n").slice(1);
 
-    for (const row of cachedPointsRows) {
+    for (const row of rowsPoints) {
       const cols = row.split(",");
       const rowAddress = cols[1]?.trim().toLowerCase();
       if (rowAddress === address.toLowerCase()) {
@@ -916,12 +912,7 @@
       }
     }
 
-    return {
-      found: !!imageId,
-      address,
-      imageId: imageId || null,
-      points
-    };
+    return { found: !!imageId, address, imageId, points };
 
   } catch (err) {
     console.error("checkHolderInSheet error", err);
