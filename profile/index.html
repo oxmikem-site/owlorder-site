@@ -1215,14 +1215,21 @@ content.appendChild(header);
   textEl.innerHTML = replaceEmojisWithIconify(linkify(messageObj.text || ""));
   content.appendChild(textEl);
 
-  const tweetMatch = messageObj.text.match(/https:\/\/twitter\.com\/[^\/]+\/status\/\d+/);
+ // Підтримка і twitter.com і x.com
+const tweetMatch = messageObj.text.match(/https:\/\/(twitter|x)\.com\/[^\/]+\/status\/\d+/);
 if (tweetMatch) {
   const tweetUrl = tweetMatch[0];
   const embedDiv = document.createElement("div");
   embedDiv.innerHTML = `<blockquote class="twitter-tweet"><a href="${tweetUrl}"></a></blockquote>`;
   textEl.appendChild(embedDiv);
-  if (typeof twttr !== "undefined" && twttr.widgets) {
+
+  // Безпечне завантаження віджета
+  if (window.twttr && twttr.widgets) {
     twttr.widgets.load();
+  } else {
+    setTimeout(() => {
+      if (window.twttr && twttr.widgets) twttr.widgets.load();
+    }, 1000);
   }
 }
 
