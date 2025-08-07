@@ -1221,7 +1221,28 @@ function appendMessageToChat(messageObj, key = null) {
  if (key) {
   const oldMsg = document.querySelector(`.chat-message[data-key="${key}"]`)?.closest(".message-wrapper");
   if (oldMsg) {
-    oldMsg.remove();
+    const newWrapper = document.createElement("div");
+    newWrapper.className = "message-wrapper";
+
+    // 🔽 СТВОРИ ТУТ ВНУТРІШНІ ЕЛЕМЕНТИ (msgEl, avatar, content...) І ДОДАЙ ДО newWrapper
+    const msgEl = document.createElement("div");
+    msgEl.className = "chat-message";
+    msgEl.dataset.key = key;
+
+    const avatar = document.createElement("img");
+    avatar.className = "avatar";
+    avatar.src = messageObj.imageId ? `${imageBaseURL}${messageObj.imageId}.webp` : "../logo1.png";
+
+    const content = document.createElement("div");
+    content.className = "message-content";
+    // ...тут додаєш text, images, replies, reactions як зараз...
+
+    msgEl.appendChild(avatar);
+    msgEl.appendChild(content);
+    newWrapper.appendChild(msgEl);
+
+    oldMsg.replaceWith(newWrapper);
+    return;
   }
 }
 
