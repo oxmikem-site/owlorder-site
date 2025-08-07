@@ -1780,7 +1780,7 @@ if (messageObj.imageUrl) {
   content.appendChild(imgEl);
 }
 
-   function replyTo((section, key) {
+   function replyTo(section, key) {
   const msgEl = document.querySelector(`.chat-message[data-key='${section}', "${key}"]`);
   if (!msgEl) return;
 
