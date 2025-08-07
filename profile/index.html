@@ -1635,35 +1635,37 @@ picker.style.maxWidth = '200px';  // обмежуємо ширину
 picker.style.overflow = 'hidden'; // не даємо розтягуватись
 
   picker.addEventListener('emoji-click', async e => {
-    const emoji = e.detail.unicode;
-    const msgRef = chatMessagesRef.child(msgKey);
-    const snapshot = await msgRef.get();
-    const msg = snapshot.val();
-    if (!msg) return;
+  const emoji = e.detail.unicode;
 
-    const wallet = getConnectedWalletAddress();
-    if (!wallet) return;
+  const messageRef = chatMessagesRef.child(msgKey);
+  const snapshot = await messageRef.get();
+  const msg = snapshot.val();
+  if (!msg) return;
 
-    const reactions = msg.reactions || {};
-    const currentUsers = reactions[emoji] || [];
+  const wallet = getConnectedWalletAddress();
+  if (!wallet) return;
 
-    const hasReacted = currentUsers.includes(wallet);
+  const reactions = msg.reactions || {};
+  const currentUsers = reactions[emoji] || [];
 
-    // Якщо вже натискав — прибираємо
-    if (hasReacted) {
-      reactions[emoji] = currentUsers.filter(w => w !== wallet);
-      if (reactions[emoji].length === 0) delete reactions[emoji];
-    } else {
-      if (Object.keys(reactions).length >= 6 && !reactions[emoji]) {
-        alert("Максимум 6 різних реакцій.");
-        return;
-      }
-      reactions[emoji] = [...currentUsers, wallet];
+  const hasReacted = currentUsers.includes(wallet);
+
+  if (hasReacted) {
+    reactions[emoji] = currentUsers.filter(w => w !== wallet);
+    if (reactions[emoji].length === 0) delete reactions[emoji];
+  } else {
+    if (Object.keys(reactions).length >= 6 && !reactions[emoji]) {
+      alert("Максимум 6 різних реакцій.");
+      return;
     }
+    reactions[emoji] = [...currentUsers, wallet];
+  }
 
-    await msgRef.update({ reactions });
-    picker.remove();
-  });
+  // 🔥 Лише оновлення reactions — без перезапису всього повідомлення
+  await messageRef.update({ reactions });
+
+  picker.remove();
+});
 
   document.querySelectorAll('emoji-picker').forEach(p => p.remove());
   event.target.parentNode.appendChild(picker);
