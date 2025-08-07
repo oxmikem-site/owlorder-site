@@ -1702,8 +1702,54 @@ picker.style.overflow = 'hidden'; // не даємо розтягуватись
     reactions[emoji] = [...currentUsers, wallet];
   }
 
-  // 🔥 Лише оновлення reactions — без перезапису всього повідомлення
   await messageRef.update({ reactions });
+
+// 🟡 Примусово викликаємо chatMessagesRef.on("child_changed") вручну:
+const updatedSnapshot = await messageRef.get();
+const updatedMsg = updatedSnapshot.val();
+
+const msgEl = document.querySelector(`.chat-message[data-key="${msgKey}"]`);
+if (!msgEl) return;
+
+const reactionRow = msgEl.querySelector(".reaction-row");
+if (!reactionRow) return;
+
+reactionRow.innerHTML = "";
+for (const [emoji, users] of Object.entries(updatedMsg.reactions || {})) {
+  const newBtn = document.createElement("button");
+  newBtn.className = "reaction-btn";
+  newBtn.textContent = `${emoji} ${users.length}`;
+
+  if (users.includes(currentWallet)) {
+    newBtn.classList.add("reacted");
+  }
+
+  newBtn.addEventListener("click", async () => {
+    // 🔁 (можна винести це в окрему функцію)
+    const wallet = getConnectedWalletAddress();
+    if (!wallet) return;
+
+    const msgRef = chatMessagesRef.child(msgKey);
+    const snapshot = await msgRef.get();
+    const msg = snapshot.val();
+    if (!msg) return;
+
+    const reactions = msg.reactions || {};
+    const currentUsers = reactions[emoji] || [];
+    const hasReacted = currentUsers.includes(wallet);
+
+    if (hasReacted) {
+      reactions[emoji] = currentUsers.filter(w => w !== wallet);
+      if (reactions[emoji].length === 0) delete reactions[emoji];
+    } else {
+      reactions[emoji] = [...currentUsers, wallet];
+    }
+
+    await msgRef.update({ reactions });
+  });
+
+  reactionRow.appendChild(newBtn);
+}
 
   picker.remove();
 });
