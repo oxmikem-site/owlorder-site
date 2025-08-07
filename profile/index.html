@@ -1093,12 +1093,6 @@ uploadBtn.addEventListener("click", () => {
   const key = snapshot.key;
   const updatedMsg = snapshot.val();
 
-  // Повністю перерендерити повідомлення
-  const wrapper = document.querySelector(`.chat-message[data-key="${key}"]`)?.closest(".message-wrapper");
-  if (!wrapper) return;
-
-  // Очистити старий DOM та вставити оновлену версію
-  wrapper.innerHTML = "";
   appendMessageToChat(updatedMsg, key);
 });
 
@@ -1214,15 +1208,91 @@ function replaceEmojisWithIconify(text) {
   return text.replace(urlPattern, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
 }
 
+function createMessageWrapper(messageObj, key = null) {
+  const wrapper = document.createElement("div");
+  wrapper.className = "message-wrapper";
+
+  const msgEl = document.createElement("div");
+  msgEl.className = "chat-message";
+  if (key) msgEl.dataset.key = key;
+
+  // 📌 Відповідь (reply)
+  if (messageObj.replyTo) {
+    const replyBlock = document.createElement("div");
+    replyBlock.className = "reply-block";
+    replyBlock.innerText = messageObj.replyTo.text?.slice(0, 60) + "...";
+    msgEl.appendChild(replyBlock);
+  }
+
+  // 🧑‍💼 Аватар
+  const avatar = document.createElement("img");
+  avatar.className = "avatar";
+  avatar.src = messageObj.imageId
+    ? `${imageBaseURL}${messageObj.imageId}.webp`
+    : "../logo1.png";
+
+  // 📝 Контент
+  const content = document.createElement("div");
+  content.className = "message-content";
+
+  const wallet = document.createElement("div");
+  wallet.className = "wallet-address";
+  wallet.innerText = messageObj.address?.slice(0, 6) + "..." + messageObj.address?.slice(-4);
+
+  const timestamp = document.createElement("span");
+  timestamp.className = "timestamp";
+  timestamp.innerText = new Date(messageObj.timestamp).toLocaleString();
+
+  const text = document.createElement("div");
+  text.className = "message-text";
+  text.innerHTML = replaceEmojisWithIconify(linkify(messageObj.text || ""));
+
+  // 📎 Зображення (якщо є)
+  if (messageObj.imageURL) {
+    const imagePreview = document.createElement("img");
+    imagePreview.className = "image-preview";
+    imagePreview.src = messageObj.imageURL;
+    text.appendChild(imagePreview);
+  }
+
+  wallet.appendChild(timestamp);
+  content.appendChild(wallet);
+  content.appendChild(text);
+  msgEl.appendChild(avatar);
+  msgEl.appendChild(content);
+
+  // 💬 Реакції
+  const reactionRow = document.createElement("div");
+  reactionRow.className = "reaction-row";
+  if (messageObj.reactions) {
+    for (const emoji in messageObj.reactions) {
+      const count = messageObj.reactions[emoji];
+      if (count > 0) {
+        const span = document.createElement("span");
+        span.innerText = `${emoji} ${count}`;
+        reactionRow.appendChild(span);
+      }
+    }
+  }
+  msgEl.appendChild(reactionRow);
+
+  wrapper.appendChild(msgEl);
+  return wrapper;
+}
+
     
 function appendMessageToChat(messageObj, key = null) {
   const chatBox = document.getElementById("chat-messages-general");
 
- if (key) {
-  const oldMsg = document.querySelector(`.chat-message[data-key="${key}"]`)?.closest(".message-wrapper");
-  if (oldMsg) {
-    const newWrapper = document.createElement("div");
-    newWrapper.className = "message-wrapper";
+ // 🔁 Якщо повідомлення вже є — замінити його на місці (без зміщення)
+  if (key) {
+    const oldMsg = document.querySelector(`.chat-message[data-key="${key}"]`)?.closest(".message-wrapper");
+    if (oldMsg) {
+      const newWrapper = createMessageWrapper(messageObj, key);
+      oldMsg.replaceWith(newWrapper);
+      return;
+    }
+  }
 
     // 🔽 СТВОРИ ТУТ ВНУТРІШНІ ЕЛЕМЕНТИ (msgEl, avatar, content...) І ДОДАЙ ДО newWrapper
     const msgEl = document.createElement("div");
