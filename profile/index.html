@@ -1218,7 +1218,12 @@ function replaceEmojisWithIconify(text) {
 function appendMessageToChat(messageObj, key = null) {
   const chatBox = document.getElementById("chat-messages-general");
 
-  if (key && document.querySelector(`.chat-message[data-key="${key}"]`)) return;
+ if (key) {
+  const oldMsg = document.querySelector(`.chat-message[data-key="${key}"]`)?.closest(".message-wrapper");
+  if (oldMsg) {
+    oldMsg.remove();
+  }
+}
 
   const msgEl = document.createElement("div");
   msgEl.className = "chat-message";
