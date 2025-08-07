@@ -1136,45 +1136,64 @@ uploadBtn.addEventListener("click", () => {
     textEl.innerHTML = replaceEmojisWithIconify(linkify(updatedMsg.text || ""));
   }
 
-  // 🔄 Оновити реакції
-  const reactionRow = msgEl.querySelector(".reaction-row");
-  if (reactionRow) {
-    reactionRow.innerHTML = "";
-    for (const [emoji, users] of Object.entries(updatedMsg.reactions || {})) {
-      const btn = document.createElement("button");
-      btn.className = "reaction-btn";
-      btn.textContent = `${emoji} ${users.length}`;
-      if (users.includes(currentWallet)) {
-        btn.classList.add("reacted");
+  // 🛠️ Оновити або створити реакції
+  let reactionRow = msgEl.querySelector(".reaction-row");
+
+  if (!reactionRow) {
+    reactionRow = document.createElement("div");
+    reactionRow.className = "reaction-row";
+    msgEl.querySelector(".message-content").appendChild(reactionRow);
+  }
+
+  // Очистити й перерисувати
+  reactionRow.innerHTML = "";
+
+  for (const [emoji, users] of Object.entries(updatedMsg.reactions || {})) {
+    const btn = document.createElement("button");
+    btn.className = "reaction-btn";
+    btn.textContent = `${emoji} ${users.length}`;
+    if (users.includes(currentWallet)) {
+      btn.classList.add("reacted");
+    }
+
+    btn.addEventListener("click", async () => {
+      const wallet = getConnectedWalletAddress();
+      if (!wallet) return;
+
+      const msgRef = chatMessagesRef.child(key);
+      const snapshot = await msgRef.get();
+      const msg = snapshot.val();
+      if (!msg) return;
+
+      const reactions = msg.reactions || {};
+      const currentUsers = reactions[emoji] || [];
+      const hasReacted = currentUsers.includes(wallet);
+
+      if (hasReacted) {
+        reactions[emoji] = currentUsers.filter(w => w !== wallet);
+        if (reactions[emoji].length === 0) delete reactions[emoji];
+      } else {
+        reactions[emoji] = [...currentUsers, wallet];
       }
 
-      btn.addEventListener("click", async () => {
-        const wallet = getConnectedWalletAddress();
-        if (!wallet) return;
+      await msgRef.update({ reactions });
+    });
 
-        const msgRef = chatMessagesRef.child(key);
-        const snapshot = await msgRef.get();
-        const msg = snapshot.val();
-        if (!msg) return;
+    reactionRow.appendChild(btn);
+  }
 
-        const reactions = msg.reactions || {};
-        const currentUsers = reactions[emoji] || [];
-        const hasReacted = currentUsers.includes(wallet);
-
-        if (hasReacted) {
-          reactions[emoji] = currentUsers.filter(w => w !== wallet);
-          if (reactions[emoji].length === 0) delete reactions[emoji];
-        } else {
-          reactions[emoji] = [...currentUsers, wallet];
-        }
-
-        await msgRef.update({ reactions });
-      });
-
-      reactionRow.appendChild(btn);
-    }
+  // ➕ Додати кнопку для нових реакцій, якщо немає
+  if (!reactionRow.querySelector(".add-reaction-btn")) {
+    const addReactionBtn = document.createElement("button");
+    addReactionBtn.className = "add-reaction-btn";
+    addReactionBtn.innerHTML = "➕";
+    addReactionBtn.addEventListener("click", () => {
+      openReactionPicker(key);
+    });
+    reactionRow.appendChild(addReactionBtn);
   }
 });
+
 
 
     // Показ/сховати дропдаун
