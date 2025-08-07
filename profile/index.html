@@ -679,6 +679,45 @@
   max-width: 100% !important;
 }
 
+    .reaction-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+  padding-left: 4px;
+  flex-wrap: wrap;
+}
+
+.reaction-bubble {
+  background: #333;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 13px;
+  color: white;
+  box-shadow: inset 1px 1px 2px #111, inset -1px -1px 2px #222;
+}
+
+    .reaction-btn {
+  background: #333;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 13px;
+  color: white;
+  border: none;
+  cursor: pointer;
+  box-shadow: inset 1px 1px 2px #111, inset -1px -1px 2px #222;
+  transition: background 0.2s ease;
+}
+
+.reaction-btn:hover {
+  background: #555;
+}
+
+.reaction-btn.reacted {
+  background: var(--accent-color);
+  color: black;
+  font-weight: bold;
+}
+
   </style>
 </head>
 <body>
@@ -1215,16 +1254,19 @@ left.appendChild(timeEl);
 const right = document.createElement("div");
 right.className = "hover-menu";
 right.innerHTML = `
+  <button onclick="openReactionPicker(event, '${key}')">
+    <iconify-icon icon="mdi:emoticon-outline" width="14"></iconify-icon>
+  </button>
   <button onclick="replyTo('${key}')">
     <iconify-icon icon="mdi:reply" width="14"></iconify-icon>
   </button>
   ${messageObj.sender?.toLowerCase() === currentWallet?.toLowerCase() ? `
-  <button onclick="editMessage('${key}')">
-    <iconify-icon icon="mdi:pencil" width="14"></iconify-icon>
-  </button>
-  <button onclick="deleteMessage('${key}')">
-    <iconify-icon icon="ic:baseline-delete" width="14"></iconify-icon>
-  </button>` : ""}
+    <button onclick="editMessage('${key}')">
+      <iconify-icon icon="mdi:pencil" width="14"></iconify-icon>
+    </button>
+    <button onclick="deleteMessage('${key}')">
+      <iconify-icon icon="ic:baseline-delete" width="14"></iconify-icon>
+    </button>` : ""}
 `;
 
 header.appendChild(left);
@@ -1235,6 +1277,51 @@ content.appendChild(header);
   textEl.className = "message-text";
   textEl.innerHTML = replaceEmojisWithIconify(linkify(messageObj.text || ""));
   content.appendChild(textEl);
+
+  if (messageObj.reactions) {
+  const reactionRow = document.createElement("div");
+  reactionRow.className = "reaction-row";
+
+  for (const [emoji, users] of Object.entries(messageObj.reactions)) {
+    const btn = document.createElement("button");
+    btn.className = "reaction-btn";
+    btn.textContent = `${emoji} ${users.length}`;
+
+    const hasUser = users.includes(currentWallet);
+
+    if (hasUser) {
+      btn.classList.add("reacted");
+    }
+
+    btn.addEventListener("click", async () => {
+      const msgRef = chatMessagesRef.child(key);
+      const snapshot = await msgRef.get();
+      const msg = snapshot.val();
+      if (!msg) return;
+
+      const wallet = getConnectedWalletAddress();
+      if (!wallet) return;
+
+      const reactions = msg.reactions || {};
+      const currentUsers = reactions[emoji] || [];
+
+      const hasReacted = currentUsers.includes(wallet);
+
+      if (hasReacted) {
+        reactions[emoji] = currentUsers.filter(w => w !== wallet);
+        if (reactions[emoji].length === 0) delete reactions[emoji];
+      } else {
+        reactions[emoji] = [...currentUsers, wallet];
+      }
+
+      await msgRef.update({ reactions });
+    });
+
+    reactionRow.appendChild(btn);
+  }
+
+  content.appendChild(reactionRow);
+}
 
 const tweetMatch = messageObj.text.match(/https:\/\/(twitter|x)\.com\/[^\/]+\/status\/\d+/);
 if (tweetMatch) {
@@ -1525,29 +1612,44 @@ emojiPicker.addEventListener("emoji-click", event => {
   const picker = document.createElement('emoji-picker');
   picker.style.position = 'absolute';
   picker.style.top = '30px';
-  picker.style.right = '0';
+  picker.style.left = '0';
   picker.style.zIndex = '999';
-  picker.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
   picker.style.background = '#1b1b1b';
   picker.style.borderRadius = '12px';
+  picker.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
 
-  picker.addEventListener('emoji-click', e => {
+  picker.addEventListener('emoji-click', async e => {
     const emoji = e.detail.unicode;
+    const msgRef = chatMessagesRef.child(msgKey);
+    const snapshot = await msgRef.get();
+    const msg = snapshot.val();
+    if (!msg) return;
 
-    // Знайти повідомлення по ключу і додати emoji inline
-    const msgEl = document.querySelector(`.chat-message[data-key="${msgKey}"] .message-content`);
-    if (msgEl) {
-      const span = document.createElement("span");
-      span.textContent = ` ${emoji}`;
-      msgEl.appendChild(span);
+    const wallet = getConnectedWalletAddress();
+    if (!wallet) return;
+
+    const reactions = msg.reactions || {};
+    const currentUsers = reactions[emoji] || [];
+
+    const hasReacted = currentUsers.includes(wallet);
+
+    // Якщо вже натискав — прибираємо
+    if (hasReacted) {
+      reactions[emoji] = currentUsers.filter(w => w !== wallet);
+      if (reactions[emoji].length === 0) delete reactions[emoji];
+    } else {
+      if (Object.keys(reactions).length >= 6 && !reactions[emoji]) {
+        alert("Максимум 6 різних реакцій.");
+        return;
+      }
+      reactions[emoji] = [...currentUsers, wallet];
     }
 
+    await msgRef.update({ reactions });
     picker.remove();
   });
 
-  // Очистити старий пікер, якщо є
   document.querySelectorAll('emoji-picker').forEach(p => p.remove());
-
   event.target.parentNode.appendChild(picker);
 }
 
