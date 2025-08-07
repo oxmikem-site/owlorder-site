@@ -1085,6 +1085,19 @@ uploadBtn.addEventListener("click", () => {
 }, 100);
   });
 
+      chatMessagesRef.on("child_changed", (snapshot) => {
+  const key = snapshot.key;
+  const updatedMsg = snapshot.val();
+
+  // Повністю перерендерити повідомлення
+  const wrapper = document.querySelector(`.chat-message[data-key="${key}"]`)?.closest(".message-wrapper");
+  if (!wrapper) return;
+
+  // Очистити старий DOM та вставити оновлену версію
+  wrapper.innerHTML = "";
+  appendMessageToChat(updatedMsg, key);
+});
+
     // Показ/сховати дропдаун
     const wrapper = document.querySelector(".wallet-wrapper");
     const dropdown = document.getElementById("wallet-header-dropdown");
@@ -1609,14 +1622,17 @@ emojiPicker.addEventListener("emoji-click", event => {
 }
     
     function openReactionPicker(event, msgKey) {
-  const picker = document.createElement('emoji-picker');
-  picker.style.position = 'absolute';
-  picker.style.top = '30px';
-  picker.style.left = '0';
-  picker.style.zIndex = '999';
-  picker.style.background = '#1b1b1b';
-  picker.style.borderRadius = '12px';
-  picker.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
+ const picker = document.createElement('emoji-picker');
+picker.style.position = 'absolute';
+picker.style.top = '26px';
+picker.style.right = '0'; // ставимо праворуч
+picker.style.zIndex = '999';
+picker.style.background = '#1b1b1b';
+picker.style.borderRadius = '12px';
+picker.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
+picker.style.maxHeight = '240px'; // обмежуємо висоту
+picker.style.maxWidth = '200px';  // обмежуємо ширину
+picker.style.overflow = 'hidden'; // не даємо розтягуватись
 
   picker.addEventListener('emoji-click', async e => {
     const emoji = e.detail.unicode;
