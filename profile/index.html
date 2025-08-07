@@ -1069,21 +1069,25 @@ uploadBtn.addEventListener("click", () => {
     }
 
       chatMessagesRef.on("child_added", (snapshot) => {
-    const msg = snapshot.val();
-    const key = snapshot.key;
+  const msg = snapshot.val();
+  const key = snapshot.key;
 
-    const uniqueId = `${msg.sender}_${msg.timestamp}`;
-    seenMessages.add(uniqueId);
+  const uniqueId = `${msg.sender}_${msg.timestamp}`;
+  seenMessages.add(uniqueId);
 
-    if (seenMessages.size > 500) seenMessages.clear();
+  if (seenMessages.size > 500) seenMessages.clear();
 
-    appendMessageToChat(msg, key);
+  appendMessageToChat(msg, key);
 
+  // Прокрутка тільки якщо це реально нове повідомлення
+  const now = Date.now();
+  if (msg.timestamp > now - 10000) { // 10 сек
     setTimeout(() => {
-  const chatBox = document.getElementById("chat-messages-general");
-  chatBox.scrollTop = 0; // ✅ останнє повідомлення зверху
-}, 100);
-  });
+      const chatBox = document.getElementById("chat-messages-general");
+      chatBox.scrollTop = 0; // або scrollHeight для вниз
+    }, 100);
+  }
+});
 
       chatMessagesRef.on("child_changed", (snapshot) => {
   const key = snapshot.key;
