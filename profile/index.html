@@ -1123,20 +1123,20 @@ uploadBtn.addEventListener("click", () => {
 }, 100);
   });
 
-      chatMessagesRef.on("child_changed", (snapshot) => {
+     chatMessagesRef.on("child_changed", (snapshot) => {
   const key = snapshot.key;
   const updatedMsg = snapshot.val();
 
   const msgEl = document.querySelector(`.chat-message[data-key="${key}"]`);
   if (!msgEl) return;
 
-  // 🔄 Оновити текст повідомлення
+  // 🔄 Оновити текст
   const textEl = msgEl.querySelector(".message-text");
   if (textEl) {
     textEl.innerHTML = replaceEmojisWithIconify(linkify(updatedMsg.text || ""));
   }
 
-  // 🛠️ Оновити або створити реакції
+  // 🛠️ Оновити або створити reaction-row
   let reactionRow = msgEl.querySelector(".reaction-row");
 
   if (!reactionRow) {
@@ -1145,7 +1145,7 @@ uploadBtn.addEventListener("click", () => {
     msgEl.querySelector(".message-content").appendChild(reactionRow);
   }
 
-  // Очистити й перерисувати
+  // 🔁 Очистити і додати всі реакції
   reactionRow.innerHTML = "";
 
   for (const [emoji, users] of Object.entries(updatedMsg.reactions || {})) {
@@ -1181,20 +1181,7 @@ uploadBtn.addEventListener("click", () => {
 
     reactionRow.appendChild(btn);
   }
-
-  // ➕ Додати кнопку для нових реакцій, якщо немає
-  if (!reactionRow.querySelector(".add-reaction-btn")) {
-    const addReactionBtn = document.createElement("button");
-    addReactionBtn.className = "add-reaction-btn";
-    addReactionBtn.innerHTML = "➕";
-    addReactionBtn.addEventListener("click", () => {
-      openReactionPicker(key);
-    });
-    reactionRow.appendChild(addReactionBtn);
-  }
 });
-
-
 
     // Показ/сховати дропдаун
     const wrapper = document.querySelector(".wallet-wrapper");
