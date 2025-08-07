@@ -739,7 +739,7 @@
     </header>
 
     <!-- Головна секція профілю -->
-    <div id="profile-main-wrapper" class="profile-main" style="display: none;">
+    <div class="profile-main">
       <!-- Sidebar -->
       <div class="panel profile-sidebar">
         <h2>Profile</h2>
@@ -760,8 +760,6 @@
   <li><a href="#" data-section="links">Links</a></li>
   <li><a href="#" data-section="announcements">Announcements</a></li>
   <li><a href="#" data-section="general">General</a></li>
-  <li><a href="#" data-section="share-art">Share Art</a></li>
-  <li><a href="#" data-section="spot-request">Spot Request</a></li>
   <li><a href="#" data-section="raffles">Raffles</a></li>
   <li><a href="#" data-section="settings">Settings</a></li>
   <li><a href="#" class="sidebar-logout">Logout</a></li>
@@ -781,106 +779,13 @@
   <p><a href="https://owlbtc.art/test/index.html" target="_blank">Dashboard</a></p>
 </div>
 
-<!-- Links Chat -->
 <div id="section-links" class="profile-section">
   <h3>Links (Team-only chat)</h3>
-  <div class="chat-box">
-    <div id="chat-messages-links" class="chat-messages"></div>
-
-    <div class="chat-input-wrapper">
-      <textarea id="chat-input-links" placeholder="Type a message..."></textarea>
-
-      <div class="chat-actions">
-        <div id="emoji-picker-container-links" style="position: relative;">
-          <button id="toggle-emoji-picker-links" title="Emoji">
-            <img src="../images2/em.png" alt="emoji" width="20" height="20" />
-          </button>
-          <emoji-picker id="emoji-picker-links"
-            style="position: absolute; bottom: 45px; right: 0; z-index: 999; display: none;">
-          </emoji-picker>
-        </div>
-
-        <input type="file" id="image-upload-links" accept="image/*" style="display: none;" />
-        <button id="upload-image-btn-links" title="Attach Image">
-          <img src="../images2/paperclip.png" alt="attach" width="20" height="20" />
-        </button>
-
-        <button id="send-btn-links">
-          <img src="../images2/send.png" alt="Send" class="send-icon" />
-        </button>
-      </div>
-    </div>
-
-    <div id="image-preview-container-links" style="display:none; margin:8px 0;">
-      <div style="position:relative; display:inline-block;">
-        <img id="image-preview-links" style="max-width:150px; border-radius:8px;">
-        <button id="cancel-image-links" style="
-          position:absolute;
-          top:0;
-          right:0;
-          background:rgba(0,0,0,0.6);
-          color:white;
-          border:none;
-          border-radius:50%;
-          width:20px;
-          height:20px;
-          cursor:pointer;
-        ">✖</button>
-      </div>
-    </div>
-  </div>
 </div>
 
-<!-- Announcements Chat -->
 <div id="section-announcements" class="profile-section">
-  <h3>Announcements</h3>
-  <div class="chat-box">
-    <div id="chat-messages-announcements" class="chat-messages"></div>
-
-    <div class="chat-input-wrapper">
-      <textarea id="chat-input-announcements" placeholder="Type a message..."></textarea>
-
-      <div class="chat-actions">
-        <div id="emoji-picker-container-announcements" style="position: relative;">
-          <button id="toggle-emoji-picker-announcements" title="Emoji">
-            <img src="../images2/em.png" alt="emoji" width="20" height="20" />
-          </button>
-          <emoji-picker id="emoji-picker-announcements"
-            style="position: absolute; bottom: 45px; right: 0; z-index: 999; display: none;">
-          </emoji-picker>
-        </div>
-
-        <input type="file" id="image-upload-announcements" accept="image/*" style="display: none;" />
-        <button id="upload-image-btn-announcements" title="Attach Image">
-          <img src="../images2/paperclip.png" alt="attach" width="20" height="20" />
-        </button>
-
-        <button id="send-btn-announcements">
-          <img src="../images2/send.png" alt="Send" class="send-icon" />
-        </button>
-      </div>
-    </div>
-
-    <div id="image-preview-container-announcements" style="display:none; margin:8px 0;">
-      <div style="position:relative; display:inline-block;">
-        <img id="image-preview-announcements" style="max-width:150px; border-radius:8px;">
-        <button id="cancel-image-announcements" style="
-          position:absolute;
-          top:0;
-          right:0;
-          background:rgba(0,0,0,0.6);
-          color:white;
-          border:none;
-          border-radius:50%;
-          width:20px;
-          height:20px;
-          cursor:pointer;
-        ">✖</button>
-      </div>
-    </div>
-  </div>
+  <h3>Announcements (Team-only chat)</h3>
 </div>
-
 
 <!-- General Chat -->
 <div id="section-general" class="profile-section">
@@ -921,108 +826,6 @@
       <div style="position:relative; display:inline-block;">
         <img id="image-preview" style="max-width:150px; border-radius:8px;">
         <button id="cancel-image" style="
-          position:absolute;
-          top:0;
-          right:0;
-          background:rgba(0,0,0,0.6);
-          color:white;
-          border:none;
-          border-radius:50%;
-          width:20px;
-          height:20px;
-          cursor:pointer;
-        ">✖</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-      <!-- Share Art -->
-<div id="section-share-art" class="profile-section">
-  <h3>Share Art Chat</h3>
-
-  <div class="chat-box">
-    <div id="chat-messages-share-art" class="chat-messages"></div>
-
-    <div class="chat-input-wrapper">
-      <textarea id="chat-input-share-art" placeholder="Type a message..."></textarea>
-
-      <div class="chat-actions">
-        <div id="emoji-picker-container-share" style="position: relative;">
-          <button id="toggle-emoji-picker-share" title="Emoji">
-            <img src="../images2/em.png" alt="emoji" width="20" height="20" />
-          </button>
-          <emoji-picker id="emoji-picker-share"
-            style="position: absolute; bottom: 45px; right: 0; z-index: 999; display: none;">
-          </emoji-picker>
-        </div>
-
-        <input type="file" id="image-upload-share" accept="image/*" style="display: none;" />
-        <button id="upload-image-btn-share" title="Attach Image">
-          <img src="../images2/paperclip.png" alt="attach" width="20" height="20" />
-        </button>
-
-        <button id="send-btn-share-art">
-          <img src="../images2/send.png" alt="Send" class="send-icon" />
-        </button>
-      </div>
-    </div>
-
-    <div id="image-preview-container-share" style="display:none; margin:8px 0;">
-      <div style="position:relative; display:inline-block;">
-        <img id="image-preview-share" style="max-width:150px; border-radius:8px;">
-        <button id="cancel-image-share" style="
-          position:absolute;
-          top:0;
-          right:0;
-          background:rgba(0,0,0,0.6);
-          color:white;
-          border:none;
-          border-radius:50%;
-          width:20px;
-          height:20px;
-          cursor:pointer;
-        ">✖</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Spot Request -->
-<div id="section-spot-request" class="profile-section">
-  <h3>Spot Request Chat</h3>
-
-  <div class="chat-box">
-    <div id="chat-messages-spot-request" class="chat-messages"></div>
-
-    <div class="chat-input-wrapper">
-      <textarea id="chat-input-spot-request" placeholder="Type a message..."></textarea>
-
-      <div class="chat-actions">
-        <div id="emoji-picker-container-spot" style="position: relative;">
-          <button id="toggle-emoji-picker-spot" title="Emoji">
-            <img src="../images2/em.png" alt="emoji" width="20" height="20" />
-          </button>
-          <emoji-picker id="emoji-picker-spot"
-            style="position: absolute; bottom: 45px; right: 0; z-index: 999; display: none;">
-          </emoji-picker>
-        </div>
-
-        <input type="file" id="image-upload-spot" accept="image/*" style="display: none;" />
-        <button id="upload-image-btn-spot" title="Attach Image">
-          <img src="../images2/paperclip.png" alt="attach" width="20" height="20" />
-        </button>
-
-        <button id="send-btn-spot-request">
-          <img src="../images2/send.png" alt="Send" class="send-icon" />
-        </button>
-      </div>
-    </div>
-
-    <div id="image-preview-container-spot" style="display:none; margin:8px 0;">
-      <div style="position:relative; display:inline-block;">
-        <img id="image-preview-spot" style="max-width:150px; border-radius:8px;">
-        <button id="cancel-image-spot" style="
           position:absolute;
           top:0;
           right:0;
@@ -1083,7 +886,6 @@
   function updateWalletButtons(address) {
     const short = shortenAddress(address);
     document.getElementById("wallet-header-btn").textContent = short;
-    document.getElementById("profile-main-wrapper").style.display = "flex";
   }
 
   async function fetchProfileImage(wallet) {
@@ -1266,90 +1068,34 @@ uploadBtn.addEventListener("click", () => {
       populateSidebarUserInfo(null);
     }
 
-      function listenToChatSection(section) {
-  const ref = chatRefs[section];
-
-  ref.on("child_added", (snapshot) => {
+      chatMessagesRef.on("child_added", (snapshot) => {
     const msg = snapshot.val();
     const key = snapshot.key;
 
     const uniqueId = `${msg.sender}_${msg.timestamp}`;
     seenMessages.add(uniqueId);
+
     if (seenMessages.size > 500) seenMessages.clear();
 
-    appendMessageToChat(section, msg, key);
+    appendMessageToChat(msg, key);
 
-    // Scroll only if recent
-    const now = Date.now();
-    if (msg.timestamp > now - 10000) {
-      setTimeout(() => {
-        const chatBox = document.getElementById(`chat-messages-${section}`);
-        chatBox.scrollTop = 0;
-      }, 100);
-    }
+    setTimeout(() => {
+  const chatBox = document.getElementById("chat-messages-general");
+  chatBox.scrollTop = 0; // ✅ останнє повідомлення зверху
+}, 100);
   });
 
-  ref.on("child_changed", (snapshot) => {
-    const updatedMsg = snapshot.val();
-    const key = snapshot.key;
-    appendMessageToChat(section, updatedMsg, key);
-  });
+      chatMessagesRef.on("child_changed", (snapshot) => {
+  const key = snapshot.key;
+  const updatedMsg = snapshot.val();
 
-  ref.on("child_removed", (snapshot) => {
-    const key = snapshot.key;
-    const msg = document.querySelector(`#chat-messages-${section} .chat-message[data-key="${key}"]`);
-    if (msg) msg.closest(".message-wrapper").remove();
+  // Повністю перерендерити повідомлення
+  const wrapper = document.querySelector(`.chat-message[data-key="${key}"]`)?.closest(".message-wrapper");
+  if (!wrapper) return;
 
-    document.querySelectorAll(`#chat-messages-${section} .reply-preview[data-reply-key="${key}"]`).forEach(preview => {
-      const wrapper = preview.closest(".message-wrapper");
-      preview.remove();
-      const chatMsg = wrapper.querySelector(".chat-message");
-      if (chatMsg) {
-        chatMsg.style.borderRadius = "8px";
-      }
-    });
-  });
-}
-      function listenToChatSection(section) {
-  const ref = chatRefs[section];
-
-  ref.on("child_added", (snapshot) => {
-    const msg = snapshot.val();
-    const key = snapshot.key;
-    const uniqueId = `${msg.sender}_${msg.timestamp}`;
-    seenMessages.add(uniqueId);
-    if (seenMessages.size > 500) seenMessages.clear();
-    appendMessageToChat(section, msg, key);
-
-    const now = Date.now();
-    if (msg.timestamp > now - 10000) {
-      setTimeout(() => {
-        const chatBox = document.getElementById(`chat-messages-${section}`);
-        if (chatBox) chatBox.scrollTop = 0;
-      }, 100);
-    }
-  });
-
-  ref.on("child_changed", (snapshot) => {
-    const msg = snapshot.val();
-    const key = snapshot.key;
-    appendMessageToChat(section, msg, key);
-  });
-
-  ref.on("child_removed", (snapshot) => {
-    const key = snapshot.key;
-    const el = document.querySelector(`#chat-messages-${section} .chat-message[data-key="${key}"]`);
-    if (el) el.closest(".message-wrapper").remove();
-  });
-}
-
-      
-      ["general", "share-art", "spot-request", "announcements", "links"].forEach(section => {
-  listenToChatSection(section);
-});
-
-      chatSections.forEach(section => {
-  listenToChatSection(section);
+  // Очистити старий DOM та вставити оновлену версію
+  wrapper.innerHTML = "";
+  appendMessageToChat(updatedMsg, key);
 });
 
     // Показ/сховати дропдаун
@@ -1435,11 +1181,6 @@ uploadBtn.addEventListener("click", () => {
     const db = firebase.database(app);
     const storage = firebase.storage();
 
-    const chatSections = ["general", "links", "announcements", "share-art", "spot-request"];
-const chatRefs = {};
-chatSections.forEach(section => {
-  chatRefs[section] = db.ref("chats/" + section);
-});
     // === CHAT: General section ===
 
     const chatMessagesRef = db.ref("chats/general");
@@ -1469,112 +1210,11 @@ function replaceEmojisWithIconify(text) {
   return text.replace(urlPattern, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
 }
 
-function createMessageWrapper(messageObj, key = null) {
-  const wrapper = document.createElement("div");
-  wrapper.className = "message-wrapper";
-
-  const msgEl = document.createElement("div");
-  msgEl.className = "chat-message";
-  if (key) msgEl.dataset.key = key;
-
-  // 📌 Відповідь (reply)
-  if (messageObj.replyTo) {
-    const replyBlock = document.createElement("div");
-    replyBlock.className = "reply-block";
-    replyBlock.innerText = messageObj.replyTo.text?.slice(0, 60) + "...";
-    msgEl.appendChild(replyBlock);
-  }
-
-  // 🧑‍💼 Аватар
-  const avatar = document.createElement("img");
-  avatar.className = "avatar";
-  avatar.src = messageObj.imageId
-    ? `${imageBaseURL}${messageObj.imageId}.webp`
-    : "../logo1.png";
-
-  // 📝 Контент
-  const content = document.createElement("div");
-  content.className = "message-content";
-
-  const wallet = document.createElement("div");
-  wallet.className = "wallet-address";
-  wallet.innerText = messageObj.address?.slice(0, 6) + "..." + messageObj.address?.slice(-4);
-
-  const timestamp = document.createElement("span");
-  timestamp.className = "timestamp";
-  timestamp.innerText = new Date(messageObj.timestamp).toLocaleString();
-
-  const text = document.createElement("div");
-  text.className = "message-text";
-  text.innerHTML = replaceEmojisWithIconify(linkify(messageObj.text || ""));
-
-  // 📎 Зображення (якщо є)
-  if (messageObj.imageURL) {
-    const imagePreview = document.createElement("img");
-    imagePreview.className = "image-preview";
-    imagePreview.src = messageObj.imageURL;
-    text.appendChild(imagePreview);
-  }
-
-  wallet.appendChild(timestamp);
-  content.appendChild(wallet);
-  content.appendChild(text);
-  msgEl.appendChild(avatar);
-  msgEl.appendChild(content);
-
-  // 💬 Реакції
-  const reactionRow = document.createElement("div");
-  reactionRow.className = "reaction-row";
-  if (messageObj.reactions) {
-    for (const emoji in messageObj.reactions) {
-      const count = messageObj.reactions[emoji];
-      if (count > 0) {
-        const span = document.createElement("span");
-        span.innerText = `${emoji} ${count}`;
-        reactionRow.appendChild(span);
-      }
-    }
-  }
-  msgEl.appendChild(reactionRow);
-
-  wrapper.appendChild(msgEl);
-  return wrapper;
-}
-
     
-function appendMessageToChat(section, messageObj, key = null) {
+function appendMessageToChat(messageObj, key = null) {
   const chatBox = document.getElementById("chat-messages-general");
 
- // 🔁 Якщо повідомлення вже є — замінити його на місці (без зміщення)
-  if (key) {
-    const oldMsg = document.querySelector(`.chat-message[data-key="${key}"]`)?.closest(".message-wrapper");
-    if (oldMsg) {
-      const newWrapper = createMessageWrapper(messageObj, key);
-      oldMsg.replaceWith(newWrapper);
-      return;
-    }
-  }
-
-    // 🔽 СТВОРИ ТУТ ВНУТРІШНІ ЕЛЕМЕНТИ (msgEl, avatar, content...) І ДОДАЙ ДО newWrapper
-    const msgEl = document.createElement("div");
-    msgEl.className = "chat-message";
-    msgEl.dataset.key = key;
-
-    const avatar = document.createElement("img");
-    avatar.className = "avatar";
-    avatar.src = messageObj.imageId ? `${imageBaseURL}${messageObj.imageId}.webp` : "../logo1.png";
-
-    const content = document.createElement("div");
-    content.className = "message-content";
-    // ...тут додаєш text, images, replies, reactions як зараз...
-
-    msgEl.appendChild(avatar);
-    msgEl.appendChild(content);
-    newWrapper.appendChild(msgEl);
-
-    oldMsg.replaceWith(newWrapper);
-    return;
-  }
+  if (key && document.querySelector(`.chat-message[data-key="${key}"]`)) return;
 
   const msgEl = document.createElement("div");
   msgEl.className = "chat-message";
@@ -1627,17 +1267,17 @@ left.appendChild(timeEl);
 const right = document.createElement("div");
 right.className = "hover-menu";
 right.innerHTML = `
-  <button onclick="openReactionPicker(event, '${section}', '${key}')">
+  <button onclick="openReactionPicker(event, '${key}')">
     <iconify-icon icon="mdi:emoticon-outline" width="14"></iconify-icon>
   </button>
-  <button onclick="replyTo('${section}', '${key}')">
+  <button onclick="replyTo('${key}')">
     <iconify-icon icon="mdi:reply" width="14"></iconify-icon>
   </button>
   ${messageObj.sender?.toLowerCase() === currentWallet?.toLowerCase() ? `
-    <button onclick="editMessage('${section}', '${key}')">
+    <button onclick="editMessage('${key}')">
       <iconify-icon icon="mdi:pencil" width="14"></iconify-icon>
     </button>
-    <button onclick="deleteMessage('${section}', '${key}'>
+    <button onclick="deleteMessage('${key}')">
       <iconify-icon icon="ic:baseline-delete" width="14"></iconify-icon>
     </button>` : ""}
 `;
@@ -1667,7 +1307,7 @@ content.appendChild(header);
     }
 
     btn.addEventListener("click", async () => {
-      const msgRef = chatMessagesRef.child(section, key);
+      const msgRef = chatMessagesRef.child(key);
       const snapshot = await msgRef.get();
       const msg = snapshot.val();
       if (!msg) return;
@@ -1779,9 +1419,9 @@ if (messageObj.imageUrl) {
   imgEl.style.display = "block";
   content.appendChild(imgEl);
 }
-
-   function replyTo(section, key) {
-  const msgEl = document.querySelector(`.chat-message[data-key='${section}', "${key}"]`);
+    }
+   function replyTo(key) {
+  const msgEl = document.querySelector(`.chat-message[data-key="${key}"]`);
   if (!msgEl) return;
 
   const sender = msgEl.querySelector(".sender-name")?.textContent || "";
@@ -1794,54 +1434,67 @@ if (messageObj.imageUrl) {
     imageId = match ? match[1] : null;
   }
 
-  replyToMessage = {section, key, sender, text, imageId };
+  replyToMessage = { key, sender, text, imageId };
 
   const input = document.getElementById("chat-input-general");
   input.placeholder = `Replying to ${sender.slice(0, 6)}: ${text.slice(0, 50)}${text.length > 50 ? "..." : ""}`;
   input.focus();
 }
     
-["general", "share-art", "spot-request", "announcements", "links"].forEach(section => {
-  document.getElementById(`send-btn-${section}`).addEventListener("click", async () => {
-    const input = document.getElementById(`chat-input-${section}`);
-    const text = input.value.trim();
-    const sender = getConnectedWalletAddress();
-    if ((!text && !fileInput.files[0]) || !sender) return;
+document.getElementById("send-btn-general").addEventListener("click", async () => {
+  const input = document.getElementById("chat-input-general");
+  const text = input.value.trim();
+  const sender = localStorage.getItem("taproot_wallet");
 
-    let imageUrl = null;
-    if (fileInput.files.length > 0) {
-      const file = fileInput.files[0];
-      const fileName = `chat_images/${Date.now()}_${file.name}`;
-      const ref = storage.ref().child(fileName);
-      const snapshot = await ref.put(file);
-      imageUrl = await snapshot.ref.getDownloadURL();
-    }
+  if ((!text && !fileInput.files[0]) || !sender) return;
 
-    const msgData = {
-      sender,
-      text,
-      timestamp: Date.now(),
-      imageId: cachedHolderInfo?.imageId || null,
-      imageUrl,
-      ...(replyToMessage && {
-        replyTo: {
-          key: replyToMessage.key,
-          sender: replyToMessage.sender,
-          text: replyToMessage.text,
-          imageId: replyToMessage.imageId || null,
-        },
-      }),
-    };
+  if (!cachedHolderInfo?.found) {
+    alert("Only verified holders can send messages.");
+    return;
+  }
 
-    await chatRefs[section].push(msgData);
+  let imageUrl = null;
+if (fileInput.files.length > 0) {
+  try {
+    const file = fileInput.files[0];
+    console.log("Uploading image:", file.name);
 
-    input.value = "";
-    input.style.height = "auto";
-    input.placeholder = "Type a message...";
-    replyToMessage = null;
-    fileInput.value = "";
-    document.getElementById("image-preview-container").style.display = "none";
-  });
+    const fileName = `chat_images/${Date.now()}_${file.name}`;
+    const ref = storage.ref().child(fileName);
+    const snapshot = await ref.put(file);
+
+    imageUrl = await snapshot.ref.getDownloadURL();
+    console.log("Image uploaded. URL:", imageUrl);
+  } catch (err) {
+    console.error("Image upload failed:", err);
+    alert("Failed to upload image.");
+  }
+}
+
+  const msgData = {
+    sender,
+    text,
+    timestamp: Date.now(),
+    imageId: cachedHolderInfo.imageId || null,
+    imageUrl: imageUrl ? imageUrl : null,
+    ...(replyToMessage && {
+  replyTo: {
+    key: replyToMessage.key,
+    sender: replyToMessage.sender,
+    text: replyToMessage.text,
+    imageId: replyToMessage.imageId || null  // 🔥 додаємо imageId
+  }
+}),
+  };
+
+  chatMessagesRef.push(msgData);
+
+  input.value = "";
+  input.style.height = "auto";
+  input.placeholder = "Type a message...";
+  replyToMessage = null;
+  fileInput.value = "";
+  document.getElementById("image-preview-container").style.display = "none";
 });
 
    const chatInput = document.getElementById("chat-input-general");
@@ -1887,11 +1540,11 @@ emojiPicker.addEventListener("emoji-click", event => {
 
     chatMessagesRef.on("child_removed", (snapshot) => {
   const key = snapshot.key;
-  const msg = document.querySelector(`.chat-message[data-key=section,'${section}', "${key}"]`);
+  const msg = document.querySelector(`.chat-message[data-key="${key}"]`);
   if (msg) {
     msg.closest(".message-wrapper").remove();
   }
-  document.querySelectorAll(`.reply-preview[data-reply-key='${section}', "${key}"]`).forEach(preview => {
+  document.querySelectorAll(`.reply-preview[data-reply-key="${key}"]`).forEach(preview => {
     const wrapper = preview.closest(".message-wrapper");
     preview.remove();
     const chatMsg = wrapper.querySelector(".chat-message");
@@ -1906,23 +1559,23 @@ emojiPicker.addEventListener("emoji-click", event => {
   const updatedMsg = snapshot.val();
 
   // Знаходимо повідомлення у DOM
-  const msgEl = document.querySelector(`.chat-message[data-key='${section}', "${key}"] .message-text`);
+  const msgEl = document.querySelector(`.chat-message[data-key="${key}"] .message-text`);
   if (msgEl) {
     msgEl.innerHTML = replaceEmojisWithIconify(updatedMsg.text || "");
   }
 });
 
-    function deleteMessage(section, key) {
+    function deleteMessage(key) {
   const confirmDelete = confirm("Are you sure you want to delete this message?");
   if (!confirmDelete) return;
 
-  chatMessagesRef.child(section, key).remove()
+  chatMessagesRef.child(key).remove()
     .then(() => console.log("Message deleted:", key))
     .catch((error) => console.error("Delete error:", error));
 }
 
-   function editMessage(section, key, oldText) {
-  const msgEl = document.querySelector(`.chat-message[data-key='${section}', "${key}"] .message-text`);
+   function editMessage(key, oldText) {
+  const msgEl = document.querySelector(`.chat-message[data-key="${key}"] .message-text`);
   if (!msgEl) return;
 
   // Зберігаємо старий текст
@@ -1949,7 +1602,7 @@ emojiPicker.addEventListener("emoji-click", event => {
   saveBtn.addEventListener("click", () => {
     const newText = msgEl.innerText.trim();
     if (newText) {
-      chatMessagesRef.child(section, key).update({ text: newText });
+      chatMessagesRef.child(key).update({ text: newText });
     }
     cleanup();
   });
@@ -1968,7 +1621,7 @@ emojiPicker.addEventListener("emoji-click", event => {
   }
 }
     
-    function openReactionPicker(section, event, msgKey) {
+    function openReactionPicker(event, msgKey) {
  const picker = document.createElement('emoji-picker');
 picker.style.position = 'absolute';
 picker.style.top = '26px';
