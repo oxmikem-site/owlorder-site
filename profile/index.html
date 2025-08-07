@@ -1089,14 +1089,55 @@ uploadBtn.addEventListener("click", () => {
   const key = snapshot.key;
   const updatedMsg = snapshot.val();
 
-  // Повністю перерендерити повідомлення
-  const wrapper = document.querySelector(`.chat-message[data-key="${key}"]`)?.closest(".message-wrapper");
-  if (!wrapper) return;
+  const msgEl = document.querySelector(`.chat-message[data-key="${key}"]`);
+  if (!msgEl) return;
 
-  // Очистити старий DOM та вставити оновлену версію
-  wrapper.innerHTML = "";
-  appendMessageToChat(updatedMsg, key);
+  // 🔄 Оновити текст повідомлення
+  const textEl = msgEl.querySelector(".message-text");
+  if (textEl) {
+    textEl.innerHTML = replaceEmojisWithIconify(linkify(updatedMsg.text || ""));
+  }
+
+  // 🔄 Оновити реакції
+  const reactionRow = msgEl.querySelector(".reaction-row");
+  if (reactionRow) {
+    reactionRow.innerHTML = "";
+    for (const [emoji, users] of Object.entries(updatedMsg.reactions || {})) {
+      const btn = document.createElement("button");
+      btn.className = "reaction-btn";
+      btn.textContent = `${emoji} ${users.length}`;
+      if (users.includes(currentWallet)) {
+        btn.classList.add("reacted");
+      }
+
+      btn.addEventListener("click", async () => {
+        const wallet = getConnectedWalletAddress();
+        if (!wallet) return;
+
+        const msgRef = chatMessagesRef.child(key);
+        const snapshot = await msgRef.get();
+        const msg = snapshot.val();
+        if (!msg) return;
+
+        const reactions = msg.reactions || {};
+        const currentUsers = reactions[emoji] || [];
+        const hasReacted = currentUsers.includes(wallet);
+
+        if (hasReacted) {
+          reactions[emoji] = currentUsers.filter(w => w !== wallet);
+          if (reactions[emoji].length === 0) delete reactions[emoji];
+        } else {
+          reactions[emoji] = [...currentUsers, wallet];
+        }
+
+        await msgRef.update({ reactions });
+      });
+
+      reactionRow.appendChild(btn);
+    }
+  }
 });
+
 
     // Показ/сховати дропдаун
     const wrapper = document.querySelector(".wallet-wrapper");
