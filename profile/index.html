@@ -732,8 +732,15 @@
   --font-family: 'Inter', sans-serif;
   --header-padding: 8px;
   --shadow: none;
+
+  width: 280px !important; /* ширший пікер */
   border-radius: 12px;
   box-shadow: 0 8px 18px rgba(0, 0, 0, 0.6);
+  scrollbar-width: none !important; /* Firefox */
+}
+
+emoji-picker::-webkit-scrollbar {
+  display: none !important; /* Chrome */
 }
 
 emoji-picker::part(emoji) {
@@ -743,6 +750,10 @@ emoji-picker::part(emoji) {
 
 emoji-picker::part(emoji):hover {
   background: #40444B;
+}
+
+emoji-picker::part(recent) {
+  display: none !important;
 }
 
   </style>
