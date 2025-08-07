@@ -760,6 +760,8 @@
   <li><a href="#" data-section="links">Links</a></li>
   <li><a href="#" data-section="announcements">Announcements</a></li>
   <li><a href="#" data-section="general">General</a></li>
+  <li><a href="#" data-section="share-art">Share Art</a></li>
+  <li><a href="#" data-section="spot-request">Spot Request</a></li>
   <li><a href="#" data-section="raffles">Raffles</a></li>
   <li><a href="#" data-section="settings">Settings</a></li>
   <li><a href="#" class="sidebar-logout">Logout</a></li>
@@ -826,6 +828,108 @@
       <div style="position:relative; display:inline-block;">
         <img id="image-preview" style="max-width:150px; border-radius:8px;">
         <button id="cancel-image" style="
+          position:absolute;
+          top:0;
+          right:0;
+          background:rgba(0,0,0,0.6);
+          color:white;
+          border:none;
+          border-radius:50%;
+          width:20px;
+          height:20px;
+          cursor:pointer;
+        ">✖</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+      <!-- Share Art -->
+<div id="section-share-art" class="profile-section">
+  <h3>Share Art Chat</h3>
+
+  <div class="chat-box">
+    <div id="chat-messages-share-art" class="chat-messages"></div>
+
+    <div class="chat-input-wrapper">
+      <textarea id="chat-input-share-art" placeholder="Type a message..."></textarea>
+
+      <div class="chat-actions">
+        <div id="emoji-picker-container-share" style="position: relative;">
+          <button id="toggle-emoji-picker-share" title="Emoji">
+            <img src="../images2/em.png" alt="emoji" width="20" height="20" />
+          </button>
+          <emoji-picker id="emoji-picker-share"
+            style="position: absolute; bottom: 45px; right: 0; z-index: 999; display: none;">
+          </emoji-picker>
+        </div>
+
+        <input type="file" id="image-upload-share" accept="image/*" style="display: none;" />
+        <button id="upload-image-btn-share" title="Attach Image">
+          <img src="../images2/paperclip.png" alt="attach" width="20" height="20" />
+        </button>
+
+        <button id="send-btn-share-art">
+          <img src="../images2/send.png" alt="Send" class="send-icon" />
+        </button>
+      </div>
+    </div>
+
+    <div id="image-preview-container-share" style="display:none; margin:8px 0;">
+      <div style="position:relative; display:inline-block;">
+        <img id="image-preview-share" style="max-width:150px; border-radius:8px;">
+        <button id="cancel-image-share" style="
+          position:absolute;
+          top:0;
+          right:0;
+          background:rgba(0,0,0,0.6);
+          color:white;
+          border:none;
+          border-radius:50%;
+          width:20px;
+          height:20px;
+          cursor:pointer;
+        ">✖</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Spot Request -->
+<div id="section-spot-request" class="profile-section">
+  <h3>Spot Request Chat</h3>
+
+  <div class="chat-box">
+    <div id="chat-messages-spot-request" class="chat-messages"></div>
+
+    <div class="chat-input-wrapper">
+      <textarea id="chat-input-spot-request" placeholder="Type a message..."></textarea>
+
+      <div class="chat-actions">
+        <div id="emoji-picker-container-spot" style="position: relative;">
+          <button id="toggle-emoji-picker-spot" title="Emoji">
+            <img src="../images2/em.png" alt="emoji" width="20" height="20" />
+          </button>
+          <emoji-picker id="emoji-picker-spot"
+            style="position: absolute; bottom: 45px; right: 0; z-index: 999; display: none;">
+          </emoji-picker>
+        </div>
+
+        <input type="file" id="image-upload-spot" accept="image/*" style="display: none;" />
+        <button id="upload-image-btn-spot" title="Attach Image">
+          <img src="../images2/paperclip.png" alt="attach" width="20" height="20" />
+        </button>
+
+        <button id="send-btn-spot-request">
+          <img src="../images2/send.png" alt="Send" class="send-icon" />
+        </button>
+      </div>
+    </div>
+
+    <div id="image-preview-container-spot" style="display:none; margin:8px 0;">
+      <div style="position:relative; display:inline-block;">
+        <img id="image-preview-spot" style="max-width:150px; border-radius:8px;">
+        <button id="cancel-image-spot" style="
           position:absolute;
           top:0;
           right:0;
