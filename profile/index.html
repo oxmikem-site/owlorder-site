@@ -1669,15 +1669,18 @@ customElements.whenDefined('emoji-picker').then(() => {
     function openReactionPicker(event, msgKey) {
  const picker = document.createElement('emoji-picker');
 picker.style.position = 'absolute';
-picker.style.top = '26px';
-picker.style.right = '0'; // ставимо праворуч
-picker.style.zIndex = '999';
-picker.style.background = '#1b1b1b';
-picker.style.borderRadius = '12px';
-picker.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
-picker.style.maxHeight = '240px'; // обмежуємо висоту
-picker.style.maxWidth = '200px';  // обмежуємо ширину
-picker.style.overflow = 'hidden'; // не даємо розтягуватись
+picker.style.bottom = '26px'; // показати над кнопкою
+picker.style.right = '0';
+picker.style.zIndex = '1000';
+picker.style.background = '#121212'; // темніший фон
+picker.style.border = '1px solid #333';
+picker.style.borderRadius = '10px';
+picker.style.padding = '4px';
+picker.style.boxShadow = '0 6px 14px rgba(0, 0, 0, 0.45)';
+picker.style.width = '180px'; // чітка ширина
+picker.style.maxHeight = '200px';
+picker.style.overflowY = 'auto';
+picker.style.fontSize = '18px';
 
   picker.addEventListener('emoji-click', async e => {
   const emoji = e.detail.unicode;
