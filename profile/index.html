@@ -1071,8 +1071,8 @@
                         }
 
                         img.src = match ?
-                            `${imageBaseURL}${match}.webp` :
-                            "../logo1.png";
+    `${imageBaseURL}${match}.webp` :
+    "../logo1.png";
                         img.onerror = () => img.src = "../logo1.png";
                         img.style.display = "block";
                     } catch (err) {
@@ -2067,14 +2067,7 @@
 
       reactionRow.appendChild(newBtn);
     }
-
-      picker.remove();
-};
-
-  document.querySelectorAll('emoji-picker').forEach(p => p.remove());
-  event.target.parentNode.appendChild(picker);
-)}
-                
+         
 </script>
 </body>
 </html>
