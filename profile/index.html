@@ -1833,6 +1833,65 @@ function initChat(section) {
     appendMessageToChat(msg, key, chatMessages, section); // <- ми додамо цю функцію окремо
   });
 
+  dbRef.on("child_changed", (snapshot) => {
+  const key = snapshot.key;
+  const updatedMsg = snapshot.val();
+
+  const msgEl = document.querySelector(`.chat-message[data-key="${key}"]`);
+  if (!msgEl) return;
+
+  // 🔄 Оновити текст
+  const textEl = msgEl.querySelector(".message-text");
+  if (textEl) {
+    textEl.innerHTML = replaceEmojisWithIconify(linkify(updatedMsg.text || ""));
+  }
+
+  // 🛠️ Оновити або створити reaction-row
+  let reactionRow = msgEl.querySelector(".reaction-row");
+  if (!reactionRow) {
+    reactionRow = document.createElement("div");
+    reactionRow.className = "reaction-row";
+    msgEl.querySelector(".message-content").appendChild(reactionRow);
+  }
+
+  // 🔁 Очистити і додати всі реакції
+  reactionRow.innerHTML = "";
+
+  for (const [emoji, users] of Object.entries(updatedMsg.reactions || {})) {
+    const btn = document.createElement("button");
+    btn.className = "reaction-btn";
+    btn.textContent = `${emoji} ${users.length}`;
+    if (users.includes(currentWallet)) {
+      btn.classList.add("reacted");
+    }
+
+    btn.addEventListener("click", async () => {
+      const wallet = getConnectedWalletAddress();
+      if (!wallet) return;
+
+      const msgRef = dbRef.child(key);
+      const snapshot = await msgRef.get();
+      const msg = snapshot.val();
+      if (!msg) return;
+
+      const reactions = msg.reactions || {};
+      const currentUsers = reactions[emoji] || [];
+      const hasReacted = currentUsers.includes(wallet);
+
+      if (hasReacted) {
+        reactions[emoji] = currentUsers.filter(w => w !== wallet);
+        if (reactions[emoji].length === 0) delete reactions[emoji];
+      } else {
+        reactions[emoji] = [...currentUsers, wallet];
+      }
+
+      await msgRef.update({ reactions });
+    });
+
+    reactionRow.appendChild(btn);
+  }
+});
+  
   // ------------------- SEND MESSAGE -------------------
   sendBtn.addEventListener("click", async () => {
   const text = chatInput.value.trim();
