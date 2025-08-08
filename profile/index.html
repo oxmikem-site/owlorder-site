@@ -799,15 +799,12 @@
 
       <div class="chat-actions">
         <!-- Emoji Button -->
-        <div id="emoji-picker-container" style="position: relative;">
-          <button id="toggle-emoji-picker" title="Emoji">
-            <img src="../images2/em.png" alt="emoji" width="20" height="20" />
-          </button>
-          <emoji-picker id="emoji-picker"
-            style="position: absolute; bottom: 45px; right: 0; z-index: 999; display: none;">
-          </emoji-picker>
-        </div>
-
+       <div id="emoji-picker-container" style="position: relative;">
+  <button id="toggle-emoji-picker" title="Emoji">
+    <iconify-icon icon="twemoji:smiling-face" width="20"></iconify-icon>
+  </button>
+  <emoji-picker id="emoji-picker" style="position: absolute; bottom: 45px; right: 0; z-index: 999; display: none;"></emoji-picker>
+</div>
         <!-- Image Upload -->
         <input type="file" id="image-upload" accept="image/*" style="display: none;" />
         <button id="upload-image-btn" title="Attach Image">
@@ -1577,13 +1574,14 @@ toggleBtn.addEventListener("click", () => {
   }
 });
 
-emojiPicker.addEventListener("emoji-click", event => {
-  const emoji = event.detail.unicode;
-  chatInput.value += emoji;
-  chatInput.focus();
-  emojiPicker.style.display = "none";
+customElements.whenDefined('emoji-picker').then(() => {
+  emojiPicker.addEventListener("emoji-click", event => {
+    const emoji = event.detail.unicode;
+    chatInput.value += emoji;
+    chatInput.focus();
+    emojiPicker.style.display = "none";
+  });
 });
-
 
     chatMessagesRef.on("child_removed", (snapshot) => {
   const key = snapshot.key;
