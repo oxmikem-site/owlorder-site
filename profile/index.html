@@ -1272,7 +1272,7 @@ uploadBtn.addEventListener("click", () => {
       populateSidebarUserInfo(null);
     }
 
-      chatMessagesRef.on("child_added", (snapshot) => {
+      dbRef.on("child_added", (snapshot) => {
     const msg = snapshot.val();
     const key = snapshot.key;
 
@@ -1289,7 +1289,7 @@ uploadBtn.addEventListener("click", () => {
 }, 100);
   });
 
-     chatMessagesRef.on("child_changed", (snapshot) => {
+     dbRef.on("child_changed", (snapshot) => {
   const key = snapshot.key;
   const updatedMsg = snapshot.val();
 
