@@ -162,12 +162,12 @@
   min-height: 0;
 }
 
-    #section-general h3 {
+    .profile-section h3 {
   margin-top: 0;
   margin-bottom: 10px;
   font-size: 16px;
-  padding: 0; /* ❌ прибрали внутрішній відступ */
-  margin-left: 4px; /* ✅ підлаштувати вручну для точного вирівнювання */
+  padding: 0;
+  margin-left: 4px;
 }
 
     .panel {
@@ -371,8 +371,8 @@
   justify-content: center;
 }
 
-/* Скріпка */
-#upload-image-btn {
+.upload-image-btn,
+.toggle-emoji-picker {
   background: transparent;
   border: none;
   font-size: 20px;
@@ -383,11 +383,11 @@
   justify-content: center;
 }
 
-#send-btn-general {
-  background: transparent; /* прозорий фон */
+.send-btn {
+  background: transparent;
   border: none;
   cursor: pointer;
-  border-radius: 0px; /* для приємного ховера/тача */
+  border-radius: 0px;
   width: 15px;
   height: 15px;
   display: flex;
@@ -395,28 +395,27 @@
   justify-content: center;
   padding: 0;
 }
-
     .send-icon {
   width: 23px;
   height: 23px;
   display: block;
 }
-    #send-btn-general:hover {
+    .send-btn:hover {
   box-shadow: 0 0 13px rgba(212, 200, 124, 0.6);
 }
 
-    #image-preview-container {
+    .image-preview-container {
   display: none;
   padding: 5px;
 }
 
-#image-preview {
+.image-preview {
   max-width: 180px;
   border-radius: 8px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.4);
 }
 
-#cancel-image {
+.cancel-image {
   position: absolute;
   top: 2px;
   right: 2px;
@@ -429,7 +428,7 @@
   font-size: 12px;
   cursor: pointer;
 }
-#cancel-image:hover {
+.cancel-image:hover {
   background: rgba(255,0,0,0.8);
 }
 
@@ -496,7 +495,7 @@
   background: transparent;
 }
 
-    #chat-messages-general {
+    .chat-messages {
   flex: 1;
   overflow-y: auto;
   min-height: 0;
@@ -781,48 +780,36 @@
 
 <div id="section-links" class="profile-section">
   <h3>Links (Team-only chat)</h3>
-</div>
-
-<div id="section-announcements" class="profile-section">
-  <h3>Announcements (Team-only chat)</h3>
-</div>
-
-<!-- General Chat -->
-<div id="section-general" class="profile-section">
-  <h3>General Chat</h3>
 
   <div class="chat-box">
-    <div id="chat-messages-general" class="chat-messages"></div>
+    <div class="chat-messages" data-section="links"></div>
 
     <div class="chat-input-wrapper">
-      <textarea id="chat-input-general" placeholder="Type a message..."></textarea>
+      <textarea class="chat-input" data-section="links" placeholder="Type a message..."></textarea>
 
       <div class="chat-actions">
-        <!-- Emoji Button -->
-       <div id="emoji-picker-container" style="position: relative;">
-  <button id="toggle-emoji-picker" title="Emoji">
-    <iconify-icon icon="twemoji:smiling-face" width="20"></iconify-icon>
-  </button>
-  <emoji-picker id="emoji-picker" style="position: absolute; bottom: 45px; right: 0; z-index: 999; display: none;"></emoji-picker>
-</div>
-        <!-- Image Upload -->
-        <input type="file" id="image-upload" accept="image/*" style="display: none;" />
-        <button id="upload-image-btn" title="Attach Image">
+        <div class="emoji-picker-container" style="position: relative;">
+          <button class="toggle-emoji-picker" data-section="links" title="Emoji">
+            <iconify-icon icon="twemoji:smiling-face" width="20"></iconify-icon>
+          </button>
+          <emoji-picker class="emoji-picker" data-section="links" style="position: absolute; bottom: 45px; right: 0; z-index: 999; display: none;"></emoji-picker>
+        </div>
+
+        <input type="file" class="image-upload" data-section="links" accept="image/*" style="display: none;" />
+        <button class="upload-image-btn" data-section="links" title="Attach Image">
           <img src="../images2/paperclip.png" alt="attach" width="20" height="20" />
         </button>
 
-        <!-- Send Button -->
-        <button id="send-btn-general">
+        <button class="send-btn" data-section="links">
           <img src="../images2/send.png" alt="Send" class="send-icon" />
         </button>
       </div>
     </div>
 
-    <!-- Image Preview -->
-    <div id="image-preview-container" style="display:none; margin:8px 0;">
+    <div class="image-preview-container" data-section="links" style="display:none; margin:8px 0;">
       <div style="position:relative; display:inline-block;">
-        <img id="image-preview" style="max-width:150px; border-radius:8px;">
-        <button id="cancel-image" style="
+        <img class="image-preview" data-section="links" style="max-width:150px; border-radius:8px;">
+        <button class="cancel-image" data-section="links" style="
           position:absolute;
           top:0;
           right:0;
@@ -838,6 +825,108 @@
     </div>
   </div>
 </div>
+
+<div id="section-announcements" class="profile-section">
+  <h3>Announcements (Team-only chat)</h3>
+
+  <div class="chat-box">
+    <div class="chat-messages" data-section="announcements"></div>
+
+    <div class="chat-input-wrapper">
+      <textarea class="chat-input" data-section="announcements" placeholder="Type a message..."></textarea>
+
+      <div class="chat-actions">
+        <!-- Emoji -->
+        <div class="emoji-picker-container" style="position: relative;">
+          <button class="toggle-emoji-picker" data-section="announcements" title="Emoji">
+            <iconify-icon icon="twemoji:smiling-face" width="20"></iconify-icon>
+          </button>
+          <emoji-picker class="emoji-picker" data-section="announcements" style="position: absolute; bottom: 45px; right: 0; z-index: 999; display: none;"></emoji-picker>
+        </div>
+
+        <!-- Image Upload -->
+        <input type="file" class="image-upload" data-section="announcements" accept="image/*" style="display: none;" />
+        <button class="upload-image-btn" data-section="announcements" title="Attach Image">
+          <img src="../images2/paperclip.png" alt="attach" width="20" height="20" />
+        </button>
+
+        <!-- Send Button -->
+        <button class="send-btn" data-section="announcements">
+          <img src="../images2/send.png" alt="Send" class="send-icon" />
+        </button>
+      </div>
+    </div>
+
+    <!-- Image Preview -->
+    <div class="image-preview-container" data-section="announcements" style="display:none; margin:8px 0;">
+      <div style="position:relative; display:inline-block;">
+        <img class="image-preview" data-section="announcements" style="max-width:150px; border-radius:8px;">
+        <button class="cancel-image" data-section="announcements" style="
+          position:absolute;
+          top:0;
+          right:0;
+          background:rgba(0,0,0,0.6);
+          color:white;
+          border:none;
+          border-radius:50%;
+          width:20px;
+          height:20px;
+          cursor:pointer;
+        ">✖</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- General Chat -->
+<div id="section-general" class="profile-section">
+  <h3>General Chat</h3>
+
+  <div class="chat-box">
+    <div class="chat-messages" data-section="general"></div>
+
+    <div class="chat-input-wrapper">
+      <textarea class="chat-input" data-section="general" placeholder="Type a message..."></textarea>
+
+      <div class="chat-actions">
+        <div class="emoji-picker-container" style="position: relative;">
+          <button class="toggle-emoji-picker" data-section="general" title="Emoji">
+            <iconify-icon icon="twemoji:smiling-face" width="20"></iconify-icon>
+          </button>
+          <emoji-picker class="emoji-picker" data-section="general" style="position: absolute; bottom: 45px; right: 0; z-index: 999; display: none;"></emoji-picker>
+        </div>
+
+        <input type="file" class="image-upload" data-section="general" accept="image/*" style="display: none;" />
+        <button class="upload-image-btn" data-section="general" title="Attach Image">
+          <img src="../images2/paperclip.png" alt="attach" width="20" height="20" />
+        </button>
+
+        <button class="send-btn" data-section="general">
+          <img src="../images2/send.png" alt="Send" class="send-icon" />
+        </button>
+      </div>
+    </div>
+
+    <div class="image-preview-container" data-section="general" style="display:none; margin:8px 0;">
+      <div style="position:relative; display:inline-block;">
+        <img class="image-preview" data-section="general" style="max-width:150px; border-radius:8px;">
+        <button class="cancel-image" data-section="general" style="
+          position:absolute;
+          top:0;
+          right:0;
+          background:rgba(0,0,0,0.6);
+          color:white;
+          border:none;
+          border-radius:50%;
+          width:20px;
+          height:20px;
+          cursor:pointer;
+        ">✖</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 
 <!-- Raffles -->
 <div id="section-raffles" class="profile-section">
@@ -1023,246 +1112,296 @@ function showSection(id) {
   }
 }
 
-    let replyToMessage = null;
+   let replyToMessage = {};
     let currentWallet = null;
 
-    const uploadBtn = document.getElementById("upload-image-btn");
-const fileInput = document.getElementById("image-upload");
+    const chatSections = ["general", "links", "announcements", "share-art", "spot-request"];
 
-uploadBtn.addEventListener("click", () => {
-  fileInput.click();
+chatSections.forEach(section => {
+  const uploadBtn = document.getElementById(`upload-image-btn-${section}`);
+  const fileInput = document.getElementById(`image-upload-${section}`);
+
+  if (uploadBtn && fileInput) {
+    uploadBtn.addEventListener("click", () => {
+      fileInput.click();
+    });
+  }
 });
 
-    fileInput.addEventListener("change", (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
+   chatSections.forEach(section => {
+  const fileInput = document.getElementById(`image-upload-${section}`);
+  const previewContainer = document.getElementById(`image-preview-container-${section}`);
+  const previewImg = document.getElementById(`image-preview-${section}`);
+  const cancelBtn = document.getElementById(`cancel-image-${section}`);
 
-  if (file.size > 5 * 1024 * 1024) {
-    alert("Max image size is 5MB.");
-    return;
-  }
+  if (!fileInput || !previewContainer || !previewImg || !cancelBtn) return;
 
-  // Показуємо прев’ю
-  const previewContainer = document.getElementById("image-preview-container");
-  const previewImg = document.getElementById("image-preview");
-  previewImg.src = URL.createObjectURL(file);
-  previewContainer.style.display = "block";
+  fileInput.addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
-  // Кнопка скасування
-  document.getElementById("cancel-image").onclick = () => {
-    previewContainer.style.display = "none";
-    fileInput.value = "";
-  };
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Max image size is 5MB.");
+      return;
+    }
+
+    previewImg.src = URL.createObjectURL(file);
+    previewContainer.style.display = "block";
+
+    cancelBtn.onclick = () => {
+      previewContainer.style.display = "none";
+      fileInput.value = "";
+    };
+  });
 });
     
     document.addEventListener("DOMContentLoaded", () => {
-    const saved = getConnectedWalletAddress();
-    if (saved) {
-      currentWallet = saved;
-      updateWalletButtons(saved);
-      populateSidebarUserInfo(saved);
-    } else {
-      populateSidebarUserInfo(null);
-    }
-
-      chatMessagesRef.on("child_added", (snapshot) => {
-    const msg = snapshot.val();
-    const key = snapshot.key;
-
-    const uniqueId = `${msg.sender}_${msg.timestamp}`;
-    seenMessages.add(uniqueId);
-
-    if (seenMessages.size > 500) seenMessages.clear();
-
-    appendMessageToChat(msg, key);
-
-    setTimeout(() => {
-  const chatBox = document.getElementById("chat-messages-general");
-  chatBox.scrollTop = 0; // ✅ останнє повідомлення зверху
-}, 100);
-  });
-
-     chatMessagesRef.on("child_changed", (snapshot) => {
-  const key = snapshot.key;
-  const updatedMsg = snapshot.val();
-
-  const msgEl = document.querySelector(`.chat-message[data-key="${key}"]`);
-  if (!msgEl) return;
-
-  // 🔄 Оновити текст
-  const textEl = msgEl.querySelector(".message-text");
-  if (textEl) {
-    textEl.innerHTML = replaceEmojisWithIconify(linkify(updatedMsg.text || ""));
+  const saved = getConnectedWalletAddress();
+  if (saved) {
+    currentWallet = saved;
+    updateWalletButtons(saved);
+    populateSidebarUserInfo(saved);
+  } else {
+    populateSidebarUserInfo(null);
   }
 
-  // 🛠️ Оновити або створити reaction-row
-  let reactionRow = msgEl.querySelector(".reaction-row");
+  // Підписка на всі секції
+  chatSections.forEach(section => {
+    const ref = getChatMessagesRef(section); // 🔸 функція має повертати посилання на Firebase для секції
 
-  if (!reactionRow) {
-    reactionRow = document.createElement("div");
-    reactionRow.className = "reaction-row";
-    msgEl.querySelector(".message-content").appendChild(reactionRow);
-  }
-
-  // 🔁 Очистити і додати всі реакції
-  reactionRow.innerHTML = "";
-
-  for (const [emoji, users] of Object.entries(updatedMsg.reactions || {})) {
-    const btn = document.createElement("button");
-    btn.className = "reaction-btn";
-    btn.textContent = `${emoji} ${users.length}`;
-    if (users.includes(currentWallet)) {
-      btn.classList.add("reacted");
-    }
-
-    btn.addEventListener("click", async () => {
-      const wallet = getConnectedWalletAddress();
-      if (!wallet) return;
-
-      const msgRef = chatMessagesRef.child(key);
-      const snapshot = await msgRef.get();
+    ref.on("child_added", (snapshot) => {
       const msg = snapshot.val();
-      if (!msg) return;
+      const key = snapshot.key;
 
-      const reactions = msg.reactions || {};
-      const currentUsers = reactions[emoji] || [];
-      const hasReacted = currentUsers.includes(wallet);
+      const uniqueId = `${msg.sender}_${msg.timestamp}`;
+      seenMessages.add(uniqueId);
 
-      if (hasReacted) {
-        reactions[emoji] = currentUsers.filter(w => w !== wallet);
-        if (reactions[emoji].length === 0) delete reactions[emoji];
-      } else {
-        reactions[emoji] = [...currentUsers, wallet];
-      }
+      if (seenMessages.size > 500) seenMessages.clear();
 
-      await msgRef.update({ reactions });
+      appendMessageToChat(msg, key, section);
+
+      setTimeout(() => {
+        const chatBox = document.getElementById(`chat-messages-${section}`);
+        if (chatBox) chatBox.scrollTop = 0;
+      }, 100);
     });
-
-    reactionRow.appendChild(btn);
-  }
+  });
 });
 
-    // Показ/сховати дропдаун
-    const wrapper = document.querySelector(".wallet-wrapper");
-    const dropdown = document.getElementById("wallet-header-dropdown");
-    if (wrapper && dropdown) {
-      wrapper.addEventListener("click", (e) => {
-        e.stopPropagation();
-        dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
-      });
+     chatSections.forEach(section => {
+  const ref = getChatMessagesRef(section); // 🔸Функція повинна повертати посилання на Firebase для конкретного чату
+
+  ref.on("child_changed", (snapshot) => {
+    const key = snapshot.key;
+    const updatedMsg = snapshot.val();
+
+    const msgEl = document.querySelector(`.chat-message[data-key="${key}"]`);
+    if (!msgEl) return;
+
+    // 🔄 Оновити текст
+    const textEl = msgEl.querySelector(".message-text");
+    if (textEl) {
+      textEl.innerHTML = replaceEmojisWithIconify(linkify(updatedMsg.text || ""));
     }
 
-    // Закриття дропдауна при кліку поза
-    document.addEventListener("click", () => {
-      document.querySelectorAll(".wallet-dropdown-content").forEach(dd => dd.style.display = "none");
-    });
+    // 🛠️ Оновити або створити reaction-row
+    let reactionRow = msgEl.querySelector(".reaction-row");
 
-    // Обробка кнопки в хедері
-    document.getElementById("wallet-header-btn").addEventListener("click", (e) => {
-      const saved = getConnectedWalletAddress();
-      if (!saved) {
-        e.stopPropagation();
-        connectUniSatWallet();
-      }
-    });
+    if (!reactionRow) {
+      reactionRow = document.createElement("div");
+      reactionRow.className = "reaction-row";
+      msgEl.querySelector(".message-content").appendChild(reactionRow);
+    }
 
-    // Обробка connect в сайдбарі
-    document.getElementById("sidebar-connect-btn").addEventListener("click", (e) => {
+    // 🔁 Оновити emoji-реакції
+    reactionRow.innerHTML = "";
+    if (updatedMsg.reactions) {
+      Object.entries(updatedMsg.reactions).forEach(([emoji, users]) => {
+        const count = Object.keys(users).length;
+        const span = document.createElement("span");
+        span.className = "reaction";
+        span.textContent = `${emoji} ${count}`;
+        reactionRow.appendChild(span);
+      });
+    }
+  });
+});
+
+ // 🔁 Очистити і додати всі реакції
+reactionRow.innerHTML = "";
+
+for (const [emoji, users] of Object.entries(updatedMsg.reactions || {})) {
+  const btn = document.createElement("button");
+  btn.className = "reaction-btn";
+  btn.textContent = `${emoji} ${users.length}`;
+  if (users.includes(currentWallet)) {
+    btn.classList.add("reacted");
+  }
+
+  btn.addEventListener("click", async () => {
+    const wallet = getConnectedWalletAddress();
+    if (!wallet) return;
+
+    const msgRef = getChatMessagesRef(section).child(key); // ✅ ← замість chatMessagesRef
+    const snapshot = await msgRef.get();
+    const msg = snapshot.val();
+    if (!msg) return;
+
+    const reactions = msg.reactions || {};
+    const currentUsers = reactions[emoji] || [];
+    const hasReacted = currentUsers.includes(wallet);
+
+    if (hasReacted) {
+      reactions[emoji] = currentUsers.filter(w => w !== wallet);
+      if (reactions[emoji].length === 0) delete reactions[emoji];
+    } else {
+      reactions[emoji] = [...currentUsers, wallet];
+    }
+
+    await msgRef.update({ reactions });
+  });
+
+  reactionRow.appendChild(btn);
+}
+
+
+   // Показ/сховати дропдаун гаманця
+const wrapper = document.querySelector(".wallet-wrapper");
+const dropdown = document.getElementById("wallet-header-dropdown");
+if (wrapper && dropdown) {
+  wrapper.addEventListener("click", (e) => {
+    e.stopPropagation();
+    dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+  });
+}
+
+// Закриття дропдауна при кліку поза ним
+document.addEventListener("click", () => {
+  document.querySelectorAll(".wallet-dropdown-content").forEach(dd => {
+    dd.style.display = "none";
+  });
+});
+
+// Натиск на кнопку в хедері
+const walletHeaderBtn = document.getElementById("wallet-header-btn");
+if (walletHeaderBtn) {
+  walletHeaderBtn.addEventListener("click", (e) => {
+    const saved = getConnectedWalletAddress();
+    if (!saved) {
       e.stopPropagation();
-      const saved = getConnectedWalletAddress();
-      if (!saved) connectUniSatWallet();
-    });
+      connectUniSatWallet();
+    }
+  });
+}
 
-    // Перемикання між розділами
-    document.querySelectorAll('#sidebar-nav a').forEach(link => {
+// Натиск на кнопку в сайдбарі
+const sidebarConnectBtn = document.getElementById("sidebar-connect-btn");
+if (sidebarConnectBtn) {
+  sidebarConnectBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const saved = getConnectedWalletAddress();
+    if (!saved) connectUniSatWallet();
+  });
+}
+
+// Перемикання між розділами
+document.querySelectorAll('#sidebar-nav a[data-section]').forEach(link => {
   link.addEventListener('click', (e) => {
     const target = link.getAttribute('data-section');
-    if (!target) return; // ⛔️ не чіпаємо зовнішні лінки
-
+    if (!target) return;
     e.preventDefault();
     hideAllSections();
     showSection(target);
   });
 });
+// Logout — кнопки з класом .logout-btn
+document.querySelectorAll(".logout-btn").forEach(btn => {
+  btn.addEventListener('click', () => {
+    localStorage.removeItem("taproot_wallet");
+    location.reload();
+  });
+});
 
-    // Logout
-    document.querySelectorAll(".logout-btn").forEach(btn => {
-      btn.addEventListener('click', () => {
-        localStorage.removeItem("taproot_wallet");
-        location.reload();
-      });
-    });
-
-      document.querySelectorAll(".sidebar-logout").forEach(link => {
+// Logout — посилання в сайдбарі
+document.querySelectorAll(".sidebar-logout").forEach(link => {
   link.addEventListener("click", (e) => {
     e.preventDefault();
     localStorage.removeItem("taproot_wallet");
     location.reload();
   });
 });
-    
-    document.querySelectorAll(".wallet-trigger").forEach(btn => {
-      btn.addEventListener("click", (ev) => {
-        ev.stopPropagation();
-        if (ev.target.id === "wallet-header-btn") return;
-        const savedAddr = getConnectedWalletAddress();
-        if (!savedAddr) connectUniSatWallet();
-      });
-    });
+
+// Натиск на будь-який тригер гаманця (крім основної кнопки)
+document.querySelectorAll(".wallet-trigger").forEach(btn => {
+  btn.addEventListener("click", (ev) => {
+    ev.stopPropagation();
+    if (ev.target.id === "wallet-header-btn") return;
+
+    const savedAddr = getConnectedWalletAddress();
+    if (!savedAddr) {
+      connectUniSatWallet();
+    }
   });
-    const firebaseConfig = {
-    apiKey: "AIzaSyB4w22BYSjUhoGSeAf3GTZCGq_GuVkzFQY",
-    authDomain: "owl-chat-d5d3e.firebaseapp.com",
-    databaseURL: "https://owl-chat-d5d3e-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "owl-chat-d5d3e",
-    storageBucket: "owl-chat-d5d3e.appspot.com",
-    messagingSenderId: "464471442222",
-    appId: "1:464471442222:web:1628d29ef2be5564affb0f",
-    measurementId: "G-MMBR7S9EM1"
-  };
+});
 
-  const app = firebase.initializeApp(firebaseConfig);
-    const db = firebase.database(app);
-    const storage = firebase.storage();
+   const firebaseConfig = {
+  apiKey: "AIzaSyB4w22BYSjUhoGSeAf3GTZCGq_GuVkzFQY",
+  authDomain: "owl-chat-d5d3e.firebaseapp.com",
+  databaseURL: "https://owl-chat-d5d3e-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "owl-chat-d5d3e",
+  storageBucket: "owl-chat-d5d3e.appspot.com",
+  messagingSenderId: "464471442222",
+  appId: "1:464471442222:web:1628d29ef2be5564affb0f",
+  measurementId: "G-MMBR7S9EM1"
+};
 
-    // === CHAT: General section ===
+const app = firebase.initializeApp(firebaseConfig);
+const db = firebase.database(app);
+const storage = firebase.storage();
 
-    const chatMessagesRef = db.ref("chats/general");
-    const localMessageIds = new Set();
-    const userMessageKeys = new Set();
-    const seenMessages = new Set();
+// === Універсальні змінні ===
+const localMessageIds = new Set();
+const userMessageKeys = new Set();
+const seenMessages = new Set();
 
-    const emojiToIconifyMap = {
+// === Emoji Mapping ===
+const emojiToIconifyMap = {
   "😊": "twemoji:smiling-face",
   "😂": "twemoji:face-with-tears-of-joy",
   "🔥": "twemoji:fire",
   "💯": "twemoji:hundred-points",
-  // додай ще ті emoji, які ти точно хочеш підтримати
+  // додай ще emoji, які точно хочеш підтримати
 };
 
+// === Заміна emoji на iconify-ікони ===
 function replaceEmojisWithIconify(text) {
   return text.replace(/[\u{1F300}-\u{1FAFF}]/gu, (match) => {
     const iconName = emojiToIconifyMap[match];
     return iconName
-  ? `<iconify-icon icon="${iconName}" width="18" style="vertical-align: middle;"></iconify-icon>`
-  : match;
+      ? `<iconify-icon icon="${iconName}" width="18" style="vertical-align: middle;"></iconify-icon>`
+      : match;
   });
 }
 
-    function linkify(text) {
+// ✅ Замість const chatMessagesRef = db.ref("chats/general")
+// Універсальна функція для доступу до чату за назвою секції
+function getChatMessagesRef(section) {
+  return db.ref(`chats/${section}`);
+}
+
+   function linkify(text) {
   const urlPattern = /(https?:\/\/[^\s]+)/g;
   return text.replace(urlPattern, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
 }
 
-    
-function appendMessageToChat(messageObj, key = null) {
-  const chatBox = document.getElementById("chat-messages-general");
+function appendMessageToChat(messageObj, key = null, section = "general") {
+  const chatBox = document.getElementById(`chat-messages-${section}`);
+  if (!chatBox) return;
 
   if (key && document.querySelector(`.chat-message[data-key="${key}"]`)) return;
 
   const msgEl = document.createElement("div");
   msgEl.className = "chat-message";
-
   msgEl.dataset.key = key;
 
   const avatar = document.createElement("img");
@@ -1274,9 +1413,9 @@ function appendMessageToChat(messageObj, key = null) {
   const content = document.createElement("div");
   content.className = "message-content";
 
- const header = document.createElement("div");
-header.className = "message-header";
-
+  const header = document.createElement("div");
+  header.className = "message-header";
+  
 // LEFT: sender + time
 const left = document.createElement("div");
 left.style.display = "flex";
@@ -1290,18 +1429,19 @@ nameEl.textContent = shortenAddress(messageObj.sender);
 const timeEl = document.createElement("span");
 timeEl.className = "message-time";
 const time = new Date(messageObj.timestamp);
+
 // Формат: DD.MM.YYYY HH:MM
 const now = Date.now();
 const diffHours = (now - messageObj.timestamp) / (1000 * 60 * 60);
-
 const timeStr = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-// Якщо пройшло більше 24 годин — додаємо дату
 if (diffHours > 24) {
-  const dateStr = time.toLocaleDateString([], { day: '2-digit', month: '2-digit', year: 'numeric' });
-  timeEl.textContent = `${dateStr},  ${timeStr}`;
+  const dateStr = time.toLocaleDateString([], {
+    day: '2-digit', month: '2-digit', year: 'numeric'
+  });
+  timeEl.textContent = `${dateStr}, ${timeStr}`;
 } else {
-  timeEl.textContent = `${timeStr}`;
+  timeEl.textContent = timeStr;
 }
 
 left.appendChild(nameEl);
@@ -1311,17 +1451,17 @@ left.appendChild(timeEl);
 const right = document.createElement("div");
 right.className = "hover-menu";
 right.innerHTML = `
-  <button onclick="openReactionPicker(event, '${key}')">
+  <button onclick="openReactionPicker(event, '${key}', '${section}')">
     <iconify-icon icon="mdi:emoticon-outline" width="14"></iconify-icon>
   </button>
-  <button onclick="replyTo('${key}')">
+  <button onclick="replyTo('${key}', '${section}')">
     <iconify-icon icon="mdi:reply" width="14"></iconify-icon>
   </button>
   ${messageObj.sender?.toLowerCase() === currentWallet?.toLowerCase() ? `
-    <button onclick="editMessage('${key}')">
+    <button onclick="editMessage('${key}', '${section}')">
       <iconify-icon icon="mdi:pencil" width="14"></iconify-icon>
     </button>
-    <button onclick="deleteMessage('${key}')">
+    <button onclick="deleteMessage('${key}', '${section}')">
       <iconify-icon icon="ic:baseline-delete" width="14"></iconify-icon>
     </button>` : ""}
 `;
@@ -1329,13 +1469,13 @@ right.innerHTML = `
 header.appendChild(left);
 content.appendChild(header);
 
-  // TEXT
-  const textEl = document.createElement("div");
-  textEl.className = "message-text";
-  textEl.innerHTML = replaceEmojisWithIconify(linkify(messageObj.text || ""));
-  content.appendChild(textEl);
+ // TEXT
+const textEl = document.createElement("div");
+textEl.className = "message-text";
+textEl.innerHTML = replaceEmojisWithIconify(linkify(messageObj.text || ""));
+content.appendChild(textEl);
 
-  if (messageObj.reactions) {
+if (messageObj.reactions) {
   const reactionRow = document.createElement("div");
   reactionRow.className = "reaction-row";
 
@@ -1345,13 +1485,10 @@ content.appendChild(header);
     btn.textContent = `${emoji} ${users.length}`;
 
     const hasUser = users.includes(currentWallet);
-
-    if (hasUser) {
-      btn.classList.add("reacted");
-    }
+    if (hasUser) btn.classList.add("reacted");
 
     btn.addEventListener("click", async () => {
-      const msgRef = chatMessagesRef.child(key);
+      const msgRef = getChatMessagesRef(section).child(key);
       const snapshot = await msgRef.get();
       const msg = snapshot.val();
       if (!msg) return;
@@ -1361,7 +1498,6 @@ content.appendChild(header);
 
       const reactions = msg.reactions || {};
       const currentUsers = reactions[emoji] || [];
-
       const hasReacted = currentUsers.includes(wallet);
 
       if (hasReacted) {
@@ -1387,7 +1523,6 @@ if (tweetMatch) {
   embedDiv.innerHTML = `<blockquote class="twitter-tweet"><a href="${tweetUrl}"></a></blockquote>`;
   textEl.appendChild(embedDiv);
 
-  // ✅ Єдина правильна функція
   function loadTwitterWidgets() {
     setTimeout(() => {
       if (window.twttr && twttr.widgets) {
@@ -1410,7 +1545,7 @@ if (tweetMatch) {
 msgEl.appendChild(avatar);
 msgEl.appendChild(content);
 
- // WRAPPER (for reply + message)
+// WRAPPER (for reply + message)
 let wrapper = document.createElement("div");
 wrapper.className = "message-wrapper";
 
@@ -1420,7 +1555,7 @@ let replyBlock = null;
 if (messageObj.replyTo) {
   replyBlock = document.createElement("div");
   replyBlock.className = "reply-preview";
-  replyBlock.dataset.replyKey = messageObj.replyTo.key; // 🔹 зберігаємо ключ відповіді
+  replyBlock.dataset.replyKey = messageObj.replyTo.key;
 
   const previewRaw = (messageObj.replyTo?.text || "").trim()
     ? messageObj.replyTo.text.split("\n")[0].slice(0, 250)
@@ -1444,15 +1579,20 @@ if (messageObj.replyTo) {
   wrapper.appendChild(replyBlock);
 }
 
-  // ✅ Підсвітка: якщо повідомлення є відповіддю на моє повідомлення
+ // === Всередині appendMessageToChat(messageObj, key, section) ===
+
+// Підсвітка: якщо відповідь на мій меседж
 if (messageObj.replyTo?.sender?.toLowerCase() === currentWallet?.toLowerCase()) {
   wrapper.classList.add("reply-highlight");
 }
 
 wrapper.appendChild(msgEl);
 wrapper.appendChild(right);
+
+// Використовуємо правильний чат-бокс по section
+const chatBox = document.getElementById(`chat-messages-${section}`);
 chatBox.prepend(wrapper);
-  
+
 // IMAGE if any
 if (messageObj.imageUrl) {
   const imgEl = document.createElement("img");
@@ -1464,7 +1604,7 @@ if (messageObj.imageUrl) {
   content.appendChild(imgEl);
 }
     }
-   function replyTo(key) {
+  function replyTo(key, section) {
   const msgEl = document.querySelector(`.chat-message[data-key="${key}"]`);
   if (!msgEl) return;
 
@@ -1478,150 +1618,202 @@ if (messageObj.imageUrl) {
     imageId = match ? match[1] : null;
   }
 
-  replyToMessage = { key, sender, text, imageId };
+  // Зберігаємо reply окремо для кожного чату
+  replyToMessageBySection[section] = { key, sender, text, imageId };
 
-  const input = document.getElementById("chat-input-general");
+  const input = document.getElementById(`chat-input-${section}`);
   input.placeholder = `Replying to ${sender.slice(0, 6)}: ${text.slice(0, 50)}${text.length > 50 ? "..." : ""}`;
   input.focus();
 }
+
     
-document.getElementById("send-btn-general").addEventListener("click", async () => {
-  const input = document.getElementById("chat-input-general");
-  const text = input.value.trim();
-  const sender = localStorage.getItem("taproot_wallet");
+chatSections.forEach(section => {
+  const sendBtn = document.getElementById(`send-btn-${section}`);
+  const fileInput = document.getElementById(`image-upload-${section}`);
+  const input = document.getElementById(`chat-input-${section}`);
+  const chatRef = db.ref(`chats/${section}`);
 
-  if ((!text && !fileInput.files[0]) || !sender) return;
+  if (!sendBtn || !fileInput || !input) return;
 
-  if (!cachedHolderInfo?.found) {
-    alert("Only verified holders can send messages.");
-    return;
-  }
+  sendBtn.addEventListener("click", async () => {
+    const text = input.value.trim();
+    const sender = localStorage.getItem("taproot_wallet");
 
-  let imageUrl = null;
-if (fileInput.files.length > 0) {
-  try {
-    const file = fileInput.files[0];
-    console.log("Uploading image:", file.name);
+    if ((!text && !fileInput.files[0]) || !sender) return;
 
-    const fileName = `chat_images/${Date.now()}_${file.name}`;
-    const ref = storage.ref().child(fileName);
-    const snapshot = await ref.put(file);
+    if (!cachedHolderInfo?.found) {
+      alert("Only verified holders can send messages.");
+      return;
+    }
 
-    imageUrl = await snapshot.ref.getDownloadURL();
-    console.log("Image uploaded. URL:", imageUrl);
-  } catch (err) {
-    console.error("Image upload failed:", err);
-    alert("Failed to upload image.");
-  }
-}
+    let imageUrl = null;
 
-  const msgData = {
-    sender,
-    text,
-    timestamp: Date.now(),
-    imageId: cachedHolderInfo.imageId || null,
-    imageUrl: imageUrl ? imageUrl : null,
-    ...(replyToMessage && {
-  replyTo: {
-    key: replyToMessage.key,
-    sender: replyToMessage.sender,
-    text: replyToMessage.text,
-    imageId: replyToMessage.imageId || null  // 🔥 додаємо imageId
-  }
-}),
-  };
+    if (fileInput.files.length > 0) {
+      try {
+        const file = fileInput.files[0];
+        console.log("Uploading image:", file.name);
 
-  chatMessagesRef.push(msgData);
+        const fileName = `chat_images/${Date.now()}_${file.name}`;
+        const ref = storage.ref().child(fileName);
+        const snapshot = await ref.put(file);
 
-  input.value = "";
-  input.style.height = "auto";
-  input.placeholder = "Type a message...";
-  replyToMessage = null;
-  fileInput.value = "";
-  document.getElementById("image-preview-container").style.display = "none";
-});
+        imageUrl = await snapshot.ref.getDownloadURL();
+        console.log("Image uploaded. URL:", imageUrl);
+      } catch (err) {
+        console.error("Image upload failed:", err);
+        alert("Failed to upload image.");
+      }
+    }
 
-   const chatInput = document.getElementById("chat-input-general");
+    const replyData = replyToMessageBySection[section];
+    const msgData = {
+      sender,
+      text,
+      timestamp: Date.now(),
+      imageId: cachedHolderInfo.imageId || null,
+      imageUrl: imageUrl || null,
+      ...(replyData && {
+        replyTo: {
+          key: replyData.key,
+          sender: replyData.sender,
+          text: replyData.text,
+          imageId: replyData.imageId || null
+        }
+      })
+    };
 
-chatInput.addEventListener("input", () => {
-  chatInput.style.height = "auto";
-  chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + "px";
-});
+    await chatRef.push(msgData);
 
-chatInput.addEventListener("keydown", function (e) {
-  if (e.key === "Enter" && !e.shiftKey) {
-    e.preventDefault();
-    document.getElementById("send-btn-general").click();
-  } else if (e.key === "Enter" && e.shiftKey) {
-    const start = chatInput.selectionStart;
-    const end = chatInput.selectionEnd;
-    chatInput.value = chatInput.value.slice(0, start) + "\n" + chatInput.value.slice(end);
-    chatInput.selectionStart = chatInput.selectionEnd = start + 1;
-    e.preventDefault();
-  }
-});
-
-    const toggleBtn = document.getElementById("toggle-emoji-picker");
-const emojiPicker = document.getElementById("emoji-picker");
-
-toggleBtn.addEventListener("click", () => {
-  emojiPicker.style.display = emojiPicker.style.display === "none" ? "block" : "none";
-});
-
-    document.addEventListener("click", (e) => {
-  if (!emojiPicker.contains(e.target) && !toggleBtn.contains(e.target)) {
-    emojiPicker.style.display = "none";
-  }
-});
-
-customElements.whenDefined('emoji-picker').then(() => {
-  emojiPicker.addEventListener("emoji-click", event => {
-    const emoji = event.detail.unicode;
-    chatInput.value += emoji;
-    chatInput.focus();
-    emojiPicker.style.display = "none";
+    input.value = "";
+    input.placeholder = "Type a message...";
+    fileInput.value = "";
+    document.getElementById(`image-preview-container-${section}`).style.display = "none";
+    replyToMessageBySection[section] = null;
   });
 });
 
-    chatMessagesRef.on("child_removed", (snapshot) => {
-  const key = snapshot.key;
-  const msg = document.querySelector(`.chat-message[data-key="${key}"]`);
-  if (msg) {
-    msg.closest(".message-wrapper").remove();
+
+  chatSections.forEach(section => {
+  const chatInput = document.getElementById(`chat-input-${section}`);
+  const sendBtn = document.getElementById(`send-btn-${section}`);
+  const toggleBtn = document.getElementById(`toggle-emoji-picker-${section}`);
+  const emojiPicker = document.getElementById(`emoji-picker-${section}`);
+
+  if (!chatInput || !sendBtn || !toggleBtn || !emojiPicker) return;
+
+  // Авто-зміна висоти
+  chatInput.addEventListener("input", () => {
+    chatInput.style.height = "auto";
+    chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + "px";
+  });
+
+  // Enter = відправка, Shift+Enter = новий рядок
+  chatInput.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendBtn.click();
+    } else if (e.key === "Enter" && e.shiftKey) {
+      const start = chatInput.selectionStart;
+      const end = chatInput.selectionEnd;
+      chatInput.value = chatInput.value.slice(0, start) + "\n" + chatInput.value.slice(end);
+      chatInput.selectionStart = chatInput.selectionEnd = start + 1;
+      e.preventDefault();
+    }
+  });
+
+  // Перемикач емодзі
+  toggleBtn.addEventListener("click", () => {
+    emojiPicker.style.display = emojiPicker.style.display === "none" ? "block" : "none";
+  });
+
+  // Закриття емодзі при кліку поза
+  document.addEventListener("click", (e) => {
+    if (!emojiPicker.contains(e.target) && !toggleBtn.contains(e.target)) {
+      emojiPicker.style.display = "none";
+    }
+  });
+
+  // Вставка емодзі у textarea
+  emojiPicker.addEventListener("emoji-click", (event) => {
+    const emoji = event.detail.unicode;
+    const cursorPos = chatInput.selectionStart;
+    const before = chatInput.value.substring(0, cursorPos);
+    const after = chatInput.value.substring(cursorPos);
+    chatInput.value = before + emoji + after;
+    chatInput.selectionStart = chatInput.selectionEnd = cursorPos + emoji.length;
+    chatInput.focus();
+  });
+});
+
+
+chatSections.forEach(section => {
+  const chatInput = document.getElementById(`chat-input-${section}`);
+  const emojiPicker = document.getElementById(`emoji-picker-${section}`);
+  const chatRef = db.ref(`chats/${section}`);
+
+  // === EMOJI PICKER вставка
+  if (emojiPicker && chatInput) {
+    customElements.whenDefined('emoji-picker').then(() => {
+      emojiPicker.addEventListener("emoji-click", event => {
+        const emoji = event.detail.unicode;
+        const cursorPos = chatInput.selectionStart;
+        const before = chatInput.value.substring(0, cursorPos);
+        const after = chatInput.value.substring(cursorPos);
+        chatInput.value = before + emoji + after;
+        chatInput.selectionStart = chatInput.selectionEnd = cursorPos + emoji.length;
+        chatInput.focus();
+        emojiPicker.style.display = "none";
+      });
+    });
   }
-  document.querySelectorAll(`.reply-preview[data-reply-key="${key}"]`).forEach(preview => {
-    const wrapper = preview.closest(".message-wrapper");
-    preview.remove();
-    const chatMsg = wrapper.querySelector(".chat-message");
-    if (chatMsg) {
-      chatMsg.style.borderRadius = "8px"; 
+
+  // === Видалення повідомлення
+  chatRef.on("child_removed", (snapshot) => {
+    const key = snapshot.key;
+    const msg = document.querySelector(`#chat-messages-${section} .chat-message[data-key="${key}"]`);
+    if (msg) {
+      msg.closest(".message-wrapper").remove();
+    }
+
+    document.querySelectorAll(`#chat-messages-${section} .reply-preview[data-reply-key="${key}"]`).forEach(preview => {
+      const wrapper = preview.closest(".message-wrapper");
+      preview.remove();
+      const chatMsg = wrapper.querySelector(".chat-message");
+      if (chatMsg) {
+        chatMsg.style.borderRadius = "8px"; 
+      }
+    });
+  });
+
+  // === Оновлення повідомлення
+  chatRef.on("child_changed", (snapshot) => {
+    const key = snapshot.key;
+    const updatedMsg = snapshot.val();
+
+    const msgEl = document.querySelector(`#chat-messages-${section} .chat-message[data-key="${key}"] .message-text`);
+    if (msgEl) {
+      msgEl.innerHTML = replaceEmojisWithIconify(linkify(updatedMsg.text || ""));
     }
   });
 });
 
-    chatMessagesRef.on("child_changed", (snapshot) => {
-  const key = snapshot.key;
-  const updatedMsg = snapshot.val();
-
-  // Знаходимо повідомлення у DOM
-  const msgEl = document.querySelector(`.chat-message[data-key="${key}"] .message-text`);
-  if (msgEl) {
-    msgEl.innerHTML = replaceEmojisWithIconify(updatedMsg.text || "");
-  }
-});
-
-    function deleteMessage(key) {
+    function deleteMessage(key, section) {
   const confirmDelete = confirm("Are you sure you want to delete this message?");
   if (!confirmDelete) return;
 
-  chatMessagesRef.child(key).remove()
+  const chatRef = db.ref(`chats/${section}`);
+
+  chatRef.child(key).remove()
     .then(() => console.log("Message deleted:", key))
     .catch((error) => console.error("Delete error:", error));
 }
 
-   function editMessage(key, oldText) {
-  const msgEl = document.querySelector(`.chat-message[data-key="${key}"] .message-text`);
+
+function editMessage(key, section) {
+  const msgEl = document.querySelector(`#chat-messages-${section} .chat-message[data-key="${key}"] .message-text`);
   if (!msgEl) return;
+
+  const chatRef = db.ref(`chats/${section}`);
 
   // Зберігаємо старий текст
   const originalText = msgEl.innerHTML;
@@ -1647,7 +1839,7 @@ customElements.whenDefined('emoji-picker').then(() => {
   saveBtn.addEventListener("click", () => {
     const newText = msgEl.innerText.trim();
     if (newText) {
-      chatMessagesRef.child(key).update({ text: newText });
+      chatRef.child(key).update({ text: newText });
     }
     cleanup();
   });
@@ -1666,53 +1858,61 @@ customElements.whenDefined('emoji-picker').then(() => {
   }
 }
     
-    function openReactionPicker(event, msgKey) {
- const picker = document.createElement('emoji-picker');
-picker.style.position = 'absolute';
-picker.style.bottom = '26px'; // показати над кнопкою
-picker.style.right = '0';
-picker.style.zIndex = '1000';
-picker.style.background = '#121212'; // темніший фон
-picker.style.border = '1px solid #333';
-picker.style.borderRadius = '10px';
-picker.style.padding = '4px';
-picker.style.boxShadow = '0 6px 14px rgba(0, 0, 0, 0.45)';
-picker.style.width = '180px'; // чітка ширина
-picker.style.maxHeight = '200px';
-picker.style.overflowY = 'auto';
-picker.style.fontSize = '18px';
+   function openReactionPicker(event, msgKey, section) {
+  const picker = document.createElement('emoji-picker');
+  picker.style.position = 'absolute';
+  picker.style.bottom = '26px';
+  picker.style.right = '0';
+  picker.style.zIndex = '1000';
+  picker.style.background = '#121212';
+  picker.style.border = '1px solid #333';
+  picker.style.borderRadius = '10px';
+  picker.style.padding = '4px';
+  picker.style.boxShadow = '0 6px 14px rgba(0, 0, 0, 0.45)';
+  picker.style.width = '180px';
+  picker.style.maxHeight = '200px';
+  picker.style.overflowY = 'auto';
+  picker.style.fontSize = '18px';
 
   picker.addEventListener('emoji-click', async e => {
-  const emoji = e.detail.unicode;
+    const emoji = e.detail.unicode;
 
-  const messageRef = chatMessagesRef.child(msgKey);
-  const snapshot = await messageRef.get();
-  const msg = snapshot.val();
-  if (!msg) return;
+    const messageRef = db.ref(`chats/${section}`).child(msgKey);
+    const snapshot = await messageRef.get();
+    const msg = snapshot.val();
+    if (!msg) return;
 
-  const wallet = getConnectedWalletAddress();
-  if (!wallet) return;
+    const wallet = getConnectedWalletAddress();
+    if (!wallet) return;
 
-  const reactions = msg.reactions || {};
-  const currentUsers = reactions[emoji] || [];
+    const reactions = msg.reactions || {};
+    const currentUsers = reactions[emoji] || [];
 
-  const hasReacted = currentUsers.includes(wallet);
+    const hasReacted = currentUsers.includes(wallet);
 
-  if (hasReacted) {
-    reactions[emoji] = currentUsers.filter(w => w !== wallet);
-    if (reactions[emoji].length === 0) delete reactions[emoji];
-  } else {
-    if (Object.keys(reactions).length >= 6 && !reactions[emoji]) {
-      alert("Максимум 6 різних реакцій.");
-      return;
+    if (hasReacted) {
+      reactions[emoji] = currentUsers.filter(w => w !== wallet);
+      if (reactions[emoji].length === 0) delete reactions[emoji];
+    } else {
+      if (Object.keys(reactions).length >= 6 && !reactions[emoji]) {
+        alert("Максимум 6 різних реакцій.");
+        return;
+      }
+      reactions[emoji] = [...currentUsers, wallet];
     }
-    reactions[emoji] = [...currentUsers, wallet];
-  }
 
-  await messageRef.update({ reactions });
+    await messageRef.update({ reactions });
+  });
 
-// 🟡 Примусово викликаємо chatMessagesRef.on("child_changed") вручну:
-const updatedSnapshot = await messageRef.get();
+  // Видалити старий, якщо вже відкрито
+  const existing = document.querySelector('emoji-picker');
+  if (existing) existing.remove();
+
+  event.currentTarget.appendChild(picker);
+}
+
+// 🟡 Примусово викликаємо on("child_changed") вручну:
+const updatedSnapshot = await db.ref(`chats/${section}`).child(msgKey).get();
 const updatedMsg = updatedSnapshot.val();
 
 const msgEl = document.querySelector(`.chat-message[data-key="${msgKey}"]`);
@@ -1722,6 +1922,7 @@ const reactionRow = msgEl.querySelector(".reaction-row");
 if (!reactionRow) return;
 
 reactionRow.innerHTML = "";
+
 for (const [emoji, users] of Object.entries(updatedMsg.reactions || {})) {
   const newBtn = document.createElement("button");
   newBtn.className = "reaction-btn";
@@ -1732,11 +1933,10 @@ for (const [emoji, users] of Object.entries(updatedMsg.reactions || {})) {
   }
 
   newBtn.addEventListener("click", async () => {
-    // 🔁 (можна винести це в окрему функцію)
     const wallet = getConnectedWalletAddress();
     if (!wallet) return;
 
-    const msgRef = chatMessagesRef.child(msgKey);
+    const msgRef = db.ref(`chats/${section}`).child(msgKey);
     const snapshot = await msgRef.get();
     const msg = snapshot.val();
     if (!msg) return;
@@ -1758,12 +1958,12 @@ for (const [emoji, users] of Object.entries(updatedMsg.reactions || {})) {
   reactionRow.appendChild(newBtn);
 }
 
-  picker.remove();
-});
+// 🧹 Видалення пікеру
+picker.remove();
+document.querySelectorAll('emoji-picker').forEach(p => p.remove());
 
-  document.querySelectorAll('emoji-picker').forEach(p => p.remove());
-  event.target.parentNode.appendChild(picker);
-}
+// 📌 Додаємо пікер у правильне місце
+event.target.parentNode.appendChild(picker);
 
 </script>
 </body>
