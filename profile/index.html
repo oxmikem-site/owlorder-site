@@ -1210,7 +1210,7 @@
 ];
 
                 chatSections.forEach(section => {
-                    const uploadBtn = document.getElementById(`upload-image-btn-${section}`);
+                    const uploadBtn = document.querySelector(`.upload-image-btn[data-section="${section}"]`);
                     const fileInput       = document.querySelector(`.image-upload[data-section="${section}"]`);
 
                     if (uploadBtn && fileInput) {
@@ -1223,9 +1223,9 @@
                 chatSections.forEach(section => {
                     const fileInput       = document.querySelector(`.image-upload[data-section="${section}"]`);
                     const previewContainer= document.querySelector(`.image-preview-container[data-section="${section}"]`);
-                    const previewImg = document.getElementById(`image-preview-${section}`);
-                    const cancelBtn = document.getElementById(`cancel-image-${section}`);
-
+                    const previewImg = document.querySelector(`.image-preview[data-section="${section}"]`);
+                    const cancelBtn  = document.querySelector(`.cancel-image[data-section="${section}"]`);
+                    
                     if (!fileInput || !previewContainer || !previewImg || !cancelBtn) return;
 
                     fileInput.addEventListener("change", (e) => {
@@ -1246,16 +1246,6 @@
                         };
                     });
                 });
-
-                document.addEventListener("DOMContentLoaded", () => {
-                    const saved = getConnectedWalletAddress();
-                    if (saved) {
-                        currentWallet = saved;
-                        updateWalletButtons(saved);
-                        populateSidebarUserInfo(saved);
-                    } else {
-                        populateSidebarUserInfo(null);
-                    }
 
                     // Підписка на всі секції
                     chatSections.forEach(section => {
@@ -1437,30 +1427,40 @@
                     });
                 });
 
-                const firebaseConfig = {
-                    apiKey: "AIzaSyB4w22BYSjUhoGSeAf3GTZCGq_GuVkzFQY",
-                    authDomain: "owl-chat-d5d3e.firebaseapp.com",
-                    databaseURL: "https://owl-chat-d5d3e-default-rtdb.europe-west1.firebasedatabase.app",
-                    projectId: "owl-chat-d5d3e",
-                    storageBucket: "owl-chat-d5d3e.appspot.com",
-                    messagingSenderId: "464471442222",
-                    appId: "1:464471442222:web:1628d29ef2be5564affb0f",
-                    measurementId: "G-MMBR7S9EM1"
-                };
+               // 🔹 Глобальні змінні
+let app, db, storage;
 
-                window.addEventListener("DOMContentLoaded", () => {
-  const app = firebase.initializeApp(firebaseConfig);
-  const db = firebase.database(app);
-  const storage = firebase.storage();
+// 🔹 Конфігурація Firebase
+const firebaseConfig = {
+    apiKey: "AIzaSyB4w22BYSjUhoGSeAf3GTZCGq_GuVkzFQY",
+    authDomain: "owl-chat-d5d3e.firebaseapp.com",
+    databaseURL: "https://owl-chat-d5d3e-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "owl-chat-d5d3e",
+    storageBucket: "owl-chat-d5d3e.appspot.com",
+    messagingSenderId: "464471442222",
+    appId: "1:464471442222:web:1628d29ef2be5564affb0f",
+    measurementId: "G-MMBR7S9EM1"
+};
 
-                function getChatMessagesRef(section) {
-                    if (!db) throw new Error("Firebase DB не ініціалізований!");
-                    return db.ref(`chats/${section}`);
-                }
+// 🔹 Функція для отримання посилання на чат
+function getChatMessagesRef(section) {
+    if (!db) throw new Error("Firebase DB не ініціалізований!");
+    return db.ref(`chats/${section}`);
+}
 
-                            const localMessageIds = new Set();
-                            const userMessageKeys = new Set();
-                            const seenMessages = new Set();
+// 🔹 Запуск після завантаження сторінки
+window.addEventListener("DOMContentLoaded", () => {
+    app = firebase.initializeApp(firebaseConfig);
+    db = firebase.database(app);
+    storage = firebase.storage();
+
+    // Локальні набори для зберігання стану
+    const localMessageIds = new Set();
+    const userMessageKeys = new Set();
+    const seenMessages = new Set();
+
+    // далі — увесь код чату
+});
 
                             // === Emoji Mapping ===
                             const emojiToIconifyMap = {
@@ -1799,7 +1799,7 @@ if (messageObj.sender?.toLowerCase() === currentWallet?.toLowerCase()) {
                                     input.value = "";
                                     input.placeholder = "Type a message...";
                                     fileInput.value = "";
-                                    document.getElementById(`image-preview-container-${section}`).style.display = "none";
+                                    document.querySelector(`.image-preview-container[data-section="${section}"]`).style.display = "none";
                                     replyToMessageBySection[section] = null;
                                 });
                             });
@@ -1882,12 +1882,12 @@ if (messageObj.sender?.toLowerCase() === currentWallet?.toLowerCase()) {
                                 // === Видалення повідомлення
                                 chatRef.on("child_removed", (snapshot) => {
                                     const key = snapshot.key;
-                                    const msg = document.querySelector(`#chat-messages-${section} .chat-message[data-key="${key}"]`);
+                                    const msg = document.querySelector(`.chat-messages[data-section="${section}"] .chat-message[data-key="${key}"]`);
                                     if (msg) {
                                         msg.closest(".message-wrapper").remove();
                                     }
 
-                                    document.querySelectorAll(`#chat-messages-${section} .reply-preview[data-reply-key="${key}"]`).forEach(preview => {
+                                    document.querySelectorAll(`.chat-messages[data-section="${section}"] .reply-preview[data-reply-key="${key}"]`).forEach(preview => {
                                         const wrapper = preview.closest(".message-wrapper");
                                         preview.remove();
                                         const chatMsg = wrapper.querySelector(".chat-message");
@@ -1902,7 +1902,7 @@ if (messageObj.sender?.toLowerCase() === currentWallet?.toLowerCase()) {
                                     const key = snapshot.key;
                                     const updatedMsg = snapshot.val();
 
-                                    const msgEl = document.querySelector(`#chat-messages-${section} .chat-message[data-key="${key}"] .message-text`);
+                                    const msgEl = document.querySelector(`.chat-messages[data-section="${section}"] .chat-message[data-key="${key}"] .message-text`);
                                     if (msgEl) {
                                         msgEl.innerHTML = replaceEmojisWithIconify(linkify(updatedMsg.text || ""));
   
@@ -1928,7 +1928,7 @@ if (messageObj.sender?.toLowerCase() === currentWallet?.toLowerCase()) {
 
 
                             function editMessage(key, section) {
-                                const msgEl = document.querySelector(`#chat-messages-${section} .chat-message[data-key="${key}"] .message-text`);
+                                const msgEl = document.querySelector(`.chat-messages[data-section="${section}"] .chat-message[data-key="${key}"] .message-text`);
                                 if (!msgEl) return;
 
                                 const chatRef = db.ref(`chats/${section}`);
