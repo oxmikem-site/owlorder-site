@@ -1460,10 +1460,9 @@ function replaceEmojisWithIconify(text) {
 }
 
     
-function appendMessageToChat(messageObj, key = null, chatBox, section) {
-  const chatBox = document.getElementById("chat-messages-general");
-
-  if (key && document.querySelector(`.chat-message[data-key="${key}"]`)) return;
+function appendMessageToChat(messageObj, key = null, section) {
+  const chatBox = document.getElementById(`chat-messages-${section}`);
+  if (!chatBox || (key && document.querySelector(`.chat-message[data-key="${key}"]`))) return;
 
   const msgEl = document.createElement("div");
   msgEl.className = "chat-message";
