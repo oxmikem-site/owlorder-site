@@ -1544,24 +1544,33 @@
                                 left.appendChild(nameEl);
                                 left.appendChild(timeEl);
 
-                                // RIGHT: hover buttons
                                 const right = document.createElement("div");
-                                right.className = "hover-menu";
-                                right.innerHTML = `
-  <button onclick="openReactionPicker(event, '${key}', '${section}')">
-    <iconify-icon icon="mdi:emoticon-outline" width="14"></iconify-icon>
-  </button>
-  <button onclick="replyTo('${key}', '${section}')">
-    <iconify-icon icon="mdi:reply" width="14"></iconify-icon>
-  </button>
-  ${messageObj.sender?.toLowerCase() === currentWallet?.toLowerCase() ? `
-    <button onclick="editMessage('${key}', '${section}')">
-      <iconify-icon icon="mdi:pencil" width="14"></iconify-icon>
-    </button>
-    <button onclick="deleteMessage('${key}', '${section}')">
-      <iconify-icon icon="ic:baseline-delete" width="14"></iconify-icon>
-    </button>` : ""}
-`;
+right.className = "hover-menu";
+
+// кнопка реакцій
+const btnReact = document.createElement("button");
+btnReact.innerHTML = '<iconify-icon icon="mdi:emoticon-outline" width="14"></iconify-icon>';
+btnReact.addEventListener("click", (e) => openReactionPicker(e, key, section));
+right.appendChild(btnReact);
+
+// кнопка reply
+const btnReply = document.createElement("button");
+btnReply.innerHTML = '<iconify-icon icon="mdi:reply" width="14"></iconify-icon>';
+btnReply.addEventListener("click", () => replyTo(key, section));
+right.appendChild(btnReply);
+
+// якщо моє повідомлення – додати edit/delete
+if (messageObj.sender?.toLowerCase() === currentWallet?.toLowerCase()) {
+  const btnEdit = document.createElement("button");
+  btnEdit.innerHTML = '<iconify-icon icon="mdi:pencil" width="14"></iconify-icon>';
+  btnEdit.addEventListener("click", () => editMessage(key, section));
+  right.appendChild(btnEdit);
+
+  const btnDel = document.createElement("button");
+  btnDel.innerHTML = '<iconify-icon icon="ic:baseline-delete" width="14"></iconify-icon>';
+  btnDel.addEventListener("click", () => deleteMessage(key, section));
+  right.appendChild(btnDel);
+}
 
                                 header.appendChild(left);
                                 content.appendChild(header);
@@ -1731,7 +1740,7 @@
 
 
                             chatSections.forEach(section => {
-                                const sendBtn = document.getElementById(`send-btn-${section}`);
+                                const sendBtn = document.querySelector(`.send-btn[data-section="${section}"]`);
                                 const fileInput = document.getElementById(`image-upload-${section}`);
                                 const input = document.getElementById(`chat-input-${section}`);
                                 const chatRef = db.ref(`chats/${section}`);
@@ -1798,7 +1807,7 @@
 
                             chatSections.forEach(section => {
                                 const chatInput = document.getElementById(`chat-input-${section}`);
-                                const sendBtn = document.getElementById(`send-btn-${section}`);
+                                const sendBtn = document.querySelector(`.send-btn[data-section="${section}"]`);
                                 const toggleBtn = document.getElementById(`toggle-emoji-picker-${section}`);
                                 const emojiPicker = document.getElementById(`emoji-picker-${section}`);
 
