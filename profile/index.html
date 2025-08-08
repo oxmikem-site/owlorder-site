@@ -1359,7 +1359,10 @@ const app = firebase.initializeApp(firebaseConfig);
 const db = firebase.database(app);
 const storage = firebase.storage();
 
-// === Універсальні змінні ===
+    function getChatMessagesRef(section) {
+  return db.ref(`chats/${section}`);
+}
+
 const localMessageIds = new Set();
 const userMessageKeys = new Set();
 const seenMessages = new Set();
@@ -1381,12 +1384,6 @@ function replaceEmojisWithIconify(text) {
       ? `<iconify-icon icon="${iconName}" width="18" style="vertical-align: middle;"></iconify-icon>`
       : match;
   });
-}
-
-// ✅ Замість const chatMessagesRef = db.ref("chats/general")
-// Універсальна функція для доступу до чату за назвою секції
-function getChatMessagesRef(section) {
-  return db.ref(`chats/${section}`);
 }
 
    function linkify(text) {
