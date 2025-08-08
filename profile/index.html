@@ -1964,6 +1964,89 @@ for (const [emoji, users] of Object.entries(updatedMsg.reactions || {})) {
   document.querySelectorAll('emoji-picker').forEach(p => p.remove());
   event.target.parentNode.appendChild(picker);
 }
+function initChat(section) {
+  const dbRef = firebase.database().ref(`messages-${section}`);
+  const chatMessages = document.getElementById(`chat-messages-${section}`);
+  const chatInput = document.getElementById(`chat-input-${section}`);
+  const sendBtn = document.getElementById(`send-btn-${section}`);
+  const imageUpload = document.getElementById(`image-upload-${section}`);
+  const imagePreviewContainer = document.getElementById(`image-preview-container-${section}`);
+  const imagePreview = document.getElementById(`image-preview-${section}`);
+  const cancelImage = document.getElementById(`cancel-image-${section}`);
+  const emojiPicker = document.getElementById(`emoji-picker-${section}`);
+  const toggleEmojiBtn = document.getElementById(`toggle-emoji-picker-${section}`);
+
+  let imageFile = null;
+
+  initChat("general");
+initChat("links");
+initChat("announcements");
+initChat("share-art");
+initChat("spot-request");
+
+  // ------------------- LOAD MESSAGES -------------------
+  dbRef.on("child_added", (snapshot) => {
+    const msg = snapshot.val();
+    const key = snapshot.key;
+    appendMessageToChat(msg, key, chatMessages, section); // <- ми додамо цю функцію окремо
+  });
+
+  // ------------------- SEND MESSAGE -------------------
+  sendBtn.addEventListener("click", () => {
+    const text = chatInput.value.trim();
+    if (text === "" && !imageFile) return;
+
+    const newMsg = {
+      sender: window.connectedWallet || "anonymous",
+      text: text || "",
+      timestamp: Date.now()
+    };
+
+    if (imageFile) {
+      const storageRef = firebase.storage().ref(`${section}/${Date.now()}-${imageFile.name}`);
+      storageRef.put(imageFile).then(snapshot => {
+        snapshot.ref.getDownloadURL().then(url => {
+          newMsg.imageUrl = url;
+          dbRef.push(newMsg);
+        });
+      });
+    } else {
+      dbRef.push(newMsg);
+    }
+
+    chatInput.value = "";
+    imageFile = null;
+    imagePreviewContainer.style.display = "none";
+  });
+
+  // ------------------- IMAGE UPLOAD -------------------
+  imageUpload.addEventListener("change", (e) => {
+    imageFile = e.target.files[0];
+    if (imageFile) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        imagePreview.src = e.target.result;
+        imagePreviewContainer.style.display = "block";
+      };
+      reader.readAsDataURL(imageFile);
+    }
+  });
+
+  cancelImage.addEventListener("click", () => {
+    imageFile = null;
+    imagePreviewContainer.style.display = "none";
+  });
+
+  // ------------------- EMOJI PICKER -------------------
+  toggleEmojiBtn.addEventListener("click", () => {
+    emojiPicker.style.display = emojiPicker.style.display === "none" ? "block" : "none";
+  });
+
+  emojiPicker.addEventListener("emoji-click", (e) => {
+    chatInput.value += e.detail.unicode;
+    emojiPicker.style.display = "none";
+  });
+}
 
 </script>
 </body>
