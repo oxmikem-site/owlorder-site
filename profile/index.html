@@ -1223,10 +1223,17 @@ function showSection(id) {
   }
 }
 
-    let replyToMessage = null;
-    let currentWallet = null;
+    const replyStates = {
+  general: null,
+  links: null,
+  announcements: null,
+  "share-art": null,
+  "spot-request": null
+};
 
-    const uploadBtn = document.getElementById("upload-image-btn");
+let currentWallet = null;
+
+const uploadBtn = document.getElementById("upload-image-btn");
 const fileInput = document.getElementById("image-upload");
 
 uploadBtn.addEventListener("click", () => {
@@ -1274,7 +1281,7 @@ uploadBtn.addEventListener("click", () => {
 
     if (seenMessages.size > 500) seenMessages.clear();
 
-    appendMessageToChat(msg, key);
+    appendMessageToChat(msg, key, chatMessages, section);
 
     setTimeout(() => {
   const chatBox = document.getElementById("chat-messages-general");
@@ -1426,8 +1433,6 @@ uploadBtn.addEventListener("click", () => {
     const storage = firebase.storage();
 
     // === CHAT: General section ===
-
-    const chatMessagesRef = db.ref("chats/general");
     const localMessageIds = new Set();
     const userMessageKeys = new Set();
     const seenMessages = new Set();
@@ -1455,7 +1460,7 @@ function replaceEmojisWithIconify(text) {
 }
 
     
-function appendMessageToChat(messageObj, key = null) {
+function appendMessageToChat(messageObj, key = null, chatBox, section) {
   const chatBox = document.getElementById("chat-messages-general");
 
   if (key && document.querySelector(`.chat-message[data-key="${key}"]`)) return;
@@ -1511,17 +1516,17 @@ left.appendChild(timeEl);
 const right = document.createElement("div");
 right.className = "hover-menu";
 right.innerHTML = `
-  <button onclick="openReactionPicker(event, '${key}')">
+  <button onclick="openReactionPicker(event, '${key}', '${section}')">
     <iconify-icon icon="mdi:emoticon-outline" width="14"></iconify-icon>
   </button>
-  <button onclick="replyTo('${key}')">
+  <button onclick="replyTo('${key}', '${section}')">
     <iconify-icon icon="mdi:reply" width="14"></iconify-icon>
   </button>
   ${messageObj.sender?.toLowerCase() === currentWallet?.toLowerCase() ? `
-    <button onclick="editMessage('${key}')">
+    <button onclick="editMessage('${key}', '${section}')">
       <iconify-icon icon="mdi:pencil" width="14"></iconify-icon>
     </button>
-    <button onclick="deleteMessage('${key}')">
+  <button onclick="deleteMessage('${key}', '${section}')">
       <iconify-icon icon="ic:baseline-delete" width="14"></iconify-icon>
     </button>` : ""}
 `;
@@ -1680,13 +1685,13 @@ if (messageObj.imageUrl) {
 
   replyToMessage = { key, sender, text, imageId };
 
-  const input = document.getElementById("chat-input-general");
+  const input = document.getElementById(`chat-input-${section}`);;
   input.placeholder = `Replying to ${sender.slice(0, 6)}: ${text.slice(0, 50)}${text.length > 50 ? "..." : ""}`;
   input.focus();
 }
     
 document.getElementById("send-btn-general").addEventListener("click", async () => {
-  const input = document.getElementById("chat-input-general");
+  const input = document.getElementById(`chat-input-${section}`);;
   const text = input.value.trim();
   const sender = localStorage.getItem("taproot_wallet");
 
@@ -1741,7 +1746,7 @@ if (fileInput.files.length > 0) {
   document.getElementById("image-preview-container").style.display = "none";
 });
 
-   const chatInput = document.getElementById("chat-input-general");
+   const chatInput = document.getElementById(`chat-input-${section}`);;
 
 chatInput.addEventListener("input", () => {
   chatInput.style.height = "auto";
@@ -1783,55 +1788,26 @@ customElements.whenDefined('emoji-picker').then(() => {
   });
 });
 
-    chatMessagesRef.on("child_removed", (snapshot) => {
-  const key = snapshot.key;
-  const msg = document.querySelector(`.chat-message[data-key="${key}"]`);
-  if (msg) {
-    msg.closest(".message-wrapper").remove();
-  }
-  document.querySelectorAll(`.reply-preview[data-reply-key="${key}"]`).forEach(preview => {
-    const wrapper = preview.closest(".message-wrapper");
-    preview.remove();
-    const chatMsg = wrapper.querySelector(".chat-message");
-    if (chatMsg) {
-      chatMsg.style.borderRadius = "8px"; 
-    }
-  });
-});
-
-    chatMessagesRef.on("child_changed", (snapshot) => {
-  const key = snapshot.key;
-  const updatedMsg = snapshot.val();
-
-  // Знаходимо повідомлення у DOM
-  const msgEl = document.querySelector(`.chat-message[data-key="${key}"] .message-text`);
-  if (msgEl) {
-    msgEl.innerHTML = replaceEmojisWithIconify(updatedMsg.text || "");
-  }
-});
-
-    function deleteMessage(key) {
+    function deleteMessage(key, section) {
   const confirmDelete = confirm("Are you sure you want to delete this message?");
   if (!confirmDelete) return;
 
-  chatMessagesRef.child(key).remove()
+  const ref = firebase.database().ref(`chats/${section}`).child(key);
+  ref.remove()
     .then(() => console.log("Message deleted:", key))
     .catch((error) => console.error("Delete error:", error));
 }
 
-   function editMessage(key, oldText) {
+   function editMessage(key, section) {
   const msgEl = document.querySelector(`.chat-message[data-key="${key}"] .message-text`);
   if (!msgEl) return;
 
-  // Зберігаємо старий текст
   const originalText = msgEl.innerHTML;
 
-  // Робимо поле редагованим
   msgEl.contentEditable = "true";
   msgEl.focus();
   msgEl.classList.add("editing-message");
 
-  // Додаємо кнопки збереження / скасування
   const saveBtn = document.createElement("button");
   saveBtn.textContent = "Save";
   saveBtn.className = "save-edit-btn";
@@ -1843,16 +1819,15 @@ customElements.whenDefined('emoji-picker').then(() => {
   msgEl.parentNode.appendChild(saveBtn);
   msgEl.parentNode.appendChild(cancelBtn);
 
-  // Збереження
   saveBtn.addEventListener("click", () => {
     const newText = msgEl.innerText.trim();
     if (newText) {
-      chatMessagesRef.child(key).update({ text: newText });
+      const ref = firebase.database().ref(`chats/${section}`).child(key);
+      ref.update({ text: newText });
     }
     cleanup();
   });
 
-  // Скасування
   cancelBtn.addEventListener("click", () => {
     msgEl.innerHTML = originalText;
     cleanup();
@@ -1866,78 +1841,29 @@ customElements.whenDefined('emoji-picker').then(() => {
   }
 }
     
-    function openReactionPicker(event, msgKey) {
- const picker = document.createElement('emoji-picker');
-picker.style.position = 'absolute';
-picker.style.bottom = '26px'; // показати над кнопкою
-picker.style.right = '0';
-picker.style.zIndex = '1000';
-picker.style.background = '#121212'; // темніший фон
-picker.style.border = '1px solid #333';
-picker.style.borderRadius = '10px';
-picker.style.padding = '4px';
-picker.style.boxShadow = '0 6px 14px rgba(0, 0, 0, 0.45)';
-picker.style.width = '180px'; // чітка ширина
-picker.style.maxHeight = '200px';
-picker.style.overflowY = 'auto';
-picker.style.fontSize = '18px';
+    function openReactionPicker(event, msgKey, section) {
+  const picker = document.createElement('emoji-picker');
+  picker.style.position = 'absolute';
+  picker.style.bottom = '26px';
+  picker.style.right = '0';
+  picker.style.zIndex = '1000';
+  picker.style.background = '#121212';
+  picker.style.border = '1px solid #333';
+  picker.style.borderRadius = '10px';
+  picker.style.padding = '4px';
+  picker.style.boxShadow = '0 6px 14px rgba(0, 0, 0, 0.45)';
+  picker.style.width = '180px';
+  picker.style.maxHeight = '200px';
+  picker.style.overflowY = 'auto';
+  picker.style.fontSize = '18px';
 
   picker.addEventListener('emoji-click', async e => {
-  const emoji = e.detail.unicode;
-
-  const messageRef = chatMessagesRef.child(msgKey);
-  const snapshot = await messageRef.get();
-  const msg = snapshot.val();
-  if (!msg) return;
-
-  const wallet = getConnectedWalletAddress();
-  if (!wallet) return;
-
-  const reactions = msg.reactions || {};
-  const currentUsers = reactions[emoji] || [];
-
-  const hasReacted = currentUsers.includes(wallet);
-
-  if (hasReacted) {
-    reactions[emoji] = currentUsers.filter(w => w !== wallet);
-    if (reactions[emoji].length === 0) delete reactions[emoji];
-  } else {
-    if (Object.keys(reactions).length >= 6 && !reactions[emoji]) {
-      alert("Максимум 6 різних реакцій.");
-      return;
-    }
-    reactions[emoji] = [...currentUsers, wallet];
-  }
-
-  await messageRef.update({ reactions });
-
-// 🟡 Примусово викликаємо chatMessagesRef.on("child_changed") вручну:
-const updatedSnapshot = await messageRef.get();
-const updatedMsg = updatedSnapshot.val();
-
-const msgEl = document.querySelector(`.chat-message[data-key="${msgKey}"]`);
-if (!msgEl) return;
-
-const reactionRow = msgEl.querySelector(".reaction-row");
-if (!reactionRow) return;
-
-reactionRow.innerHTML = "";
-for (const [emoji, users] of Object.entries(updatedMsg.reactions || {})) {
-  const newBtn = document.createElement("button");
-  newBtn.className = "reaction-btn";
-  newBtn.textContent = `${emoji} ${users.length}`;
-
-  if (users.includes(currentWallet)) {
-    newBtn.classList.add("reacted");
-  }
-
-  newBtn.addEventListener("click", async () => {
-    // 🔁 (можна винести це в окрему функцію)
+    const emoji = e.detail.unicode;
     const wallet = getConnectedWalletAddress();
     if (!wallet) return;
 
-    const msgRef = chatMessagesRef.child(msgKey);
-    const snapshot = await msgRef.get();
+    const messageRef = firebase.database().ref(`chats/${section}/${msgKey}`);
+    const snapshot = await messageRef.get();
     const msg = snapshot.val();
     if (!msg) return;
 
@@ -1949,21 +1875,63 @@ for (const [emoji, users] of Object.entries(updatedMsg.reactions || {})) {
       reactions[emoji] = currentUsers.filter(w => w !== wallet);
       if (reactions[emoji].length === 0) delete reactions[emoji];
     } else {
+      if (Object.keys(reactions).length >= 6 && !reactions[emoji]) {
+        alert("Максимум 6 різних реакцій.");
+        return;
+      }
       reactions[emoji] = [...currentUsers, wallet];
     }
 
-    await msgRef.update({ reactions });
+    await messageRef.update({ reactions });
+
+    // Вручну оновлюємо реакції в UI
+    const updatedSnapshot = await messageRef.get();
+    const updatedMsg = updatedSnapshot.val();
+    const msgEl = document.querySelector(`.chat-message[data-key="${msgKey}"]`);
+    if (!msgEl) return;
+
+    const reactionRow = msgEl.querySelector(".reaction-row");
+    if (!reactionRow) return;
+
+    reactionRow.innerHTML = "";
+    for (const [emoji, users] of Object.entries(updatedMsg.reactions || {})) {
+      const newBtn = document.createElement("button");
+      newBtn.className = "reaction-btn";
+      newBtn.textContent = `${emoji} ${users.length}`;
+
+      if (users.includes(currentWallet)) {
+        newBtn.classList.add("reacted");
+      }
+
+      newBtn.addEventListener("click", async () => {
+        const msgRef = firebase.database().ref(`chats/${section}/${msgKey}`);
+        const snapshot = await msgRef.get();
+        const msg = snapshot.val();
+        if (!msg) return;
+
+        const currentUsers = msg.reactions?.[emoji] || [];
+        const hasReacted = currentUsers.includes(wallet);
+
+        if (hasReacted) {
+          msg.reactions[emoji] = currentUsers.filter(w => w !== wallet);
+          if (msg.reactions[emoji].length === 0) delete msg.reactions[emoji];
+        } else {
+          msg.reactions[emoji] = [...currentUsers, wallet];
+        }
+
+        await msgRef.update({ reactions: msg.reactions });
+      });
+
+      reactionRow.appendChild(newBtn);
+    }
+
+    picker.remove();
   });
-
-  reactionRow.appendChild(newBtn);
-}
-
-  picker.remove();
-});
 
   document.querySelectorAll('emoji-picker').forEach(p => p.remove());
   event.target.parentNode.appendChild(picker);
 }
+
 function initChat(section) {
   const dbRef = firebase.database().ref(`messages-${section}`);
   const chatMessages = document.getElementById(`chat-messages-${section}`);
@@ -1975,8 +1943,6 @@ function initChat(section) {
   const cancelImage = document.getElementById(`cancel-image-${section}`);
   const emojiPicker = document.getElementById(`emoji-picker-${section}`);
   const toggleEmojiBtn = document.getElementById(`toggle-emoji-picker-${section}`);
-
-  let imageFile = null;
 
   initChat("general");
 initChat("links");
@@ -1992,32 +1958,52 @@ initChat("spot-request");
   });
 
   // ------------------- SEND MESSAGE -------------------
-  sendBtn.addEventListener("click", () => {
-    const text = chatInput.value.trim();
-    if (text === "" && !imageFile) return;
+  sendBtn.addEventListener("click", async () => {
+  const text = chatInput.value.trim();
+  if (text === "" && !imageFile) return;
 
-    const newMsg = {
-      sender: window.connectedWallet || "anonymous",
-      text: text || "",
-      timestamp: Date.now()
-    };
+  const sender = getConnectedWalletAddress();
+  if (!sender) return;
 
-    if (imageFile) {
+  const reply = replyStates[section];
+
+  const newMsg = {
+    sender,
+    text,
+    timestamp: Date.now(),
+    ...(reply && {
+      replyTo: {
+        key: reply.key,
+        sender: reply.sender,
+        text: reply.text,
+        imageId: reply.imageId || null
+      }
+    })
+  };
+
+  // Якщо є картинка — вантажимо її
+  if (imageFile) {
+    try {
       const storageRef = firebase.storage().ref(`${section}/${Date.now()}-${imageFile.name}`);
-      storageRef.put(imageFile).then(snapshot => {
-        snapshot.ref.getDownloadURL().then(url => {
-          newMsg.imageUrl = url;
-          dbRef.push(newMsg);
-        });
-      });
-    } else {
-      dbRef.push(newMsg);
+      const snapshot = await storageRef.put(imageFile);
+      const url = await snapshot.ref.getDownloadURL();
+      newMsg.imageUrl = url;
+    } catch (err) {
+      console.error("Image upload error:", err);
+      alert("Failed to upload image.");
     }
+  }
 
-    chatInput.value = "";
-    imageFile = null;
-    imagePreviewContainer.style.display = "none";
-  });
+  // Відправляємо
+  dbRef.push(newMsg);
+
+  // Очищаємо все
+  chatInput.value = "";
+  chatInput.placeholder = "Type a message...";
+  imageFile = null;
+  imagePreviewContainer.style.display = "none";
+  replyStates[section] = null;
+});
 
   // ------------------- IMAGE UPLOAD -------------------
   imageUpload.addEventListener("change", (e) => {
