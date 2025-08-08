@@ -1441,9 +1441,10 @@
                     measurementId: "G-MMBR7S9EM1"
                 };
 
-                const app = firebase.initializeApp(firebaseConfig);
-                const db = firebase.database(app);
-                const storage = firebase.storage();
+                window.addEventListener("DOMContentLoaded", () => {
+  const app = firebase.initializeApp(firebaseConfig);
+  const db = firebase.database(app);
+  const storage = firebase.storage();
 
                 function getChatMessagesRef(section) {
                     if (!db) throw new Error("Firebase DB не ініціалізований!");
