@@ -1902,65 +1902,63 @@ function editMessage(key, section) {
     await messageRef.update({ reactions });
   });
 
-  // Видалити старий, якщо вже відкрито
   const existing = document.querySelector('emoji-picker');
   if (existing) existing.remove();
 
   event.currentTarget.appendChild(picker);
 }
 
-// 🟡 Примусово викликаємо on("child_changed") вручну:
-const updatedSnapshot = await db.ref(`chats/${section}`).child(msgKey).get();
-const updatedMsg = updatedSnapshot.val();
+async function updateReactions(msgKey, section) {
+  const updatedSnapshot = await db.ref(`chats/${section}`).child(msgKey).get();
+  const updatedMsg = updatedSnapshot.val();
 
-const msgEl = document.querySelector(`.chat-message[data-key="${msgKey}"]`);
-if (!msgEl) return;
+  const msgEl = document.querySelector(`.chat-message[data-key="${msgKey}"]`);
+  if (!msgEl) return;
 
-const reactionRow = msgEl.querySelector(".reaction-row");
-if (!reactionRow) return;
+  const reactionRow = msgEl.querySelector(".reaction-row");
+  if (!reactionRow) return;
 
-reactionRow.innerHTML = "";
+  reactionRow.innerHTML = "";
 
-for (const [emoji, users] of Object.entries(updatedMsg.reactions || {})) {
-  const newBtn = document.createElement("button");
-  newBtn.className = "reaction-btn";
-  newBtn.textContent = `${emoji} ${users.length}`;
+  for (const [emoji, users] of Object.entries(updatedMsg.reactions || {})) {
+    const newBtn = document.createElement("button");
+    newBtn.className = "reaction-btn";
+    newBtn.textContent = `${emoji} ${users.length}`;
 
-  if (users.includes(currentWallet)) {
-    newBtn.classList.add("reacted");
-  }
-
-  newBtn.addEventListener("click", async () => {
-    const wallet = getConnectedWalletAddress();
-    if (!wallet) return;
-
-    const msgRef = db.ref(`chats/${section}`).child(msgKey);
-    const snapshot = await msgRef.get();
-    const msg = snapshot.val();
-    if (!msg) return;
-
-    const reactions = msg.reactions || {};
-    const currentUsers = reactions[emoji] || [];
-    const hasReacted = currentUsers.includes(wallet);
-
-    if (hasReacted) {
-      reactions[emoji] = currentUsers.filter(w => w !== wallet);
-      if (reactions[emoji].length === 0) delete reactions[emoji];
-    } else {
-      reactions[emoji] = [...currentUsers, wallet];
+    if (users.includes(currentWallet)) {
+      newBtn.classList.add("reacted");
     }
 
-    await msgRef.update({ reactions });
-  });
+    newBtn.addEventListener("click", async () => {
+      const wallet = getConnectedWalletAddress();
+      if (!wallet) return;
 
-  reactionRow.appendChild(newBtn);
+      const msgRef = db.ref(`chats/${section}`).child(msgKey);
+      const snapshot = await msgRef.get();
+      const msg = snapshot.val();
+      if (!msg) return;
+
+      const reactions = msg.reactions || {};
+      const currentUsers = reactions[emoji] || [];
+      const hasReacted = currentUsers.includes(wallet);
+
+      if (hasReacted) {
+        reactions[emoji] = currentUsers.filter(w => w !== wallet);
+        if (reactions[emoji].length === 0) delete reactions[emoji];
+      } else {
+        reactions[emoji] = [...currentUsers, wallet];
+      }
+
+      await msgRef.update({ reactions });
+    });
+
+    reactionRow.appendChild(newBtn);
+  }
 }
 
-// 🧹 Видалення пікеру
 picker.remove();
 document.querySelectorAll('emoji-picker').forEach(p => p.remove());
 
-// 📌 Додаємо пікер у правильне місце
 event.target.parentNode.appendChild(picker);
 
 </script>
