@@ -1272,23 +1272,6 @@ uploadBtn.addEventListener("click", () => {
       populateSidebarUserInfo(null);
     }
 
-      dbRef.on("child_added", (snapshot) => {
-    const msg = snapshot.val();
-    const key = snapshot.key;
-
-    const uniqueId = `${msg.sender}_${msg.timestamp}`;
-    seenMessages.add(uniqueId);
-
-    if (seenMessages.size > 500) seenMessages.clear();
-
-    appendMessageToChat(msg, key, chatMessages, section);
-
-    setTimeout(() => {
-  const chatBox = document.getElementById("chat-messages-general");
-  chatBox.scrollTop = 0; // ✅ останнє повідомлення зверху
-}, 100);
-  });
-
      dbRef.on("child_changed", (snapshot) => {
   const key = snapshot.key;
   const updatedMsg = snapshot.val();
