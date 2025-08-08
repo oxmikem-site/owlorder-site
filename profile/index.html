@@ -1814,9 +1814,9 @@ if (fileInput.files.length > 0) {
 
 function initChat(section) {
   const dbRef = firebase.database().ref(`messages-${section}`);
-  const chatMessages = document.getElementById(`chat-messages-${section}`);
   const chatInput = document.getElementById(`chat-input-${section}`);
   const sendBtn = document.getElementById(`send-btn-${section}`);
+  const chatMessages = document.getElementById(`chat-messages-${section}`);
   const imageUpload = document.getElementById(`image-upload-${section}`);
   const imagePreviewContainer = document.getElementById(`image-preview-container-${section}`);
   const imagePreview = document.getElementById(`image-preview-${section}`);
@@ -1824,97 +1824,155 @@ function initChat(section) {
   const emojiPicker = document.getElementById(`emoji-picker-${section}`);
   const toggleEmojiBtn = document.getElementById(`toggle-emoji-picker-${section}`);
 
-  ["general", "links", "announcements", "share-art", "spot-request"].forEach(initChat);
+  const seenMessages = new Set();
 
-  // ------------------- LOAD MESSAGES -------------------
+  // 🟢 child_added — нові повідомлення
   dbRef.on("child_added", (snapshot) => {
     const msg = snapshot.val();
     const key = snapshot.key;
-    appendMessageToChat(msg, key, chatMessages, section); // <- ми додамо цю функцію окремо
+
+    const uniqueId = `${msg.sender}_${msg.timestamp}`;
+    if (seenMessages.has(uniqueId)) return;
+    seenMessages.add(uniqueId);
+    if (seenMessages.size > 500) seenMessages.clear();
+
+    appendMessageToChat(msg, key, chatMessages, section);
+
+    setTimeout(() => {
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }, 100);
   });
 
+  // 🟡 child_changed — оновлення тексту, реакцій
   dbRef.on("child_changed", (snapshot) => {
-  const key = snapshot.key;
-  const updatedMsg = snapshot.val();
+    const key = snapshot.key;
+    const updatedMsg = snapshot.val();
 
-  const msgEl = document.querySelector(`.chat-message[data-key="${key}"]`);
-  if (!msgEl) return;
+    const msgEl = chatMessages.querySelector(`.chat-message[data-key="${key}"]`);
+    if (!msgEl) return;
 
-  // 🔄 Оновити текст
-  const textEl = msgEl.querySelector(".message-text");
-  if (textEl) {
-    textEl.innerHTML = replaceEmojisWithIconify(linkify(updatedMsg.text || ""));
-  }
-
-  // 🛠️ Оновити або створити reaction-row
-  let reactionRow = msgEl.querySelector(".reaction-row");
-  if (!reactionRow) {
-    reactionRow = document.createElement("div");
-    reactionRow.className = "reaction-row";
-    msgEl.querySelector(".message-content").appendChild(reactionRow);
-  }
-
-  // 🔁 Очистити і додати всі реакції
-  reactionRow.innerHTML = "";
-
-  for (const [emoji, users] of Object.entries(updatedMsg.reactions || {})) {
-    const btn = document.createElement("button");
-    btn.className = "reaction-btn";
-    btn.textContent = `${emoji} ${users.length}`;
-    if (users.includes(currentWallet)) {
-      btn.classList.add("reacted");
+    const textEl = msgEl.querySelector(".message-text");
+    if (textEl) {
+      textEl.innerHTML = replaceEmojisWithIconify(linkify(updatedMsg.text || ""));
     }
 
-    btn.addEventListener("click", async () => {
-      const wallet = getConnectedWalletAddress();
-      if (!wallet) return;
+    let reactionRow = msgEl.querySelector(".reaction-row");
+    if (!reactionRow) {
+      reactionRow = document.createElement("div");
+      reactionRow.className = "reaction-row";
+      msgEl.querySelector(".message-content").appendChild(reactionRow);
+    }
 
-      const msgRef = dbRef.child(key);
-      const snapshot = await msgRef.get();
-      const msg = snapshot.val();
-      if (!msg) return;
+    reactionRow.innerHTML = "";
 
-      const reactions = msg.reactions || {};
-      const currentUsers = reactions[emoji] || [];
-      const hasReacted = currentUsers.includes(wallet);
+    for (const [emoji, users] of Object.entries(updatedMsg.reactions || {})) {
+      const btn = document.createElement("button");
+      btn.className = "reaction-btn";
+      btn.textContent = `${emoji} ${users.length}`;
+      if (users.includes(currentWallet)) btn.classList.add("reacted");
 
-      if (hasReacted) {
-        reactions[emoji] = currentUsers.filter(w => w !== wallet);
-        if (reactions[emoji].length === 0) delete reactions[emoji];
-      } else {
-        reactions[emoji] = [...currentUsers, wallet];
-      }
+      btn.addEventListener("click", async () => {
+        const wallet = getConnectedWalletAddress();
+        if (!wallet) return;
 
-      await msgRef.update({ reactions });
+        const msgRef = dbRef.child(key);
+        const snap = await msgRef.get();
+        const msg = snap.val();
+        if (!msg) return;
+
+        const reactions = msg.reactions || {};
+        const currentUsers = reactions[emoji] || [];
+        const hasReacted = currentUsers.includes(wallet);
+
+        if (hasReacted) {
+          reactions[emoji] = currentUsers.filter(w => w !== wallet);
+          if (reactions[emoji].length === 0) delete reactions[emoji];
+        } else {
+          reactions[emoji] = [...currentUsers, wallet];
+        }
+
+        await msgRef.update({ reactions });
+      });
+
+      reactionRow.appendChild(btn);
+    }
+  });
+
+  // 🖼️ Image upload preview
+  imageUpload.addEventListener("change", () => {
+    const file = imageUpload.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      imagePreview.src = e.target.result;
+      imagePreviewContainer.style.display = "block";
+    };
+    reader.readAsDataURL(file);
+  });
+
+  cancelImage.addEventListener("click", () => {
+    imageUpload.value = "";
+    imagePreviewContainer.style.display = "none";
+    imagePreview.src = "";
+  });
+
+  // 😄 Emoji picker
+  toggleEmojiBtn.addEventListener("click", () => {
+    emojiPicker.style.display = emojiPicker.style.display === "none" ? "block" : "none";
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!emojiPicker.contains(e.target) && !toggleEmojiBtn.contains(e.target)) {
+      emojiPicker.style.display = "none";
+    }
+  });
+
+  customElements.whenDefined('emoji-picker').then(() => {
+    emojiPicker.addEventListener("emoji-click", event => {
+      const emoji = event.detail.unicode;
+      chatInput.value += emoji;
+      chatInput.focus();
+      emojiPicker.style.display = "none";
+    });
+  });
+
+  // ✉️ Send button
+  sendBtn.addEventListener("click", async () => {
+    const wallet = getConnectedWalletAddress();
+    if (!wallet || !chatInput.value.trim()) return;
+
+    const text = chatInput.value.trim();
+    const timestamp = Date.now();
+    const newMessageRef = dbRef.push();
+    const newMessageKey = newMessageRef.key;
+
+    let imageUrl = null;
+    const file = imageUpload.files[0];
+    if (file) {
+      const storageRef = firebase.storage().ref();
+      const fileRef = storageRef.child(`chat-images/${section}/${newMessageKey}_${file.name}`);
+      await fileRef.put(file);
+      imageUrl = await fileRef.getDownloadURL();
+    }
+
+    const replyTo = chatInput.dataset.replyTo || null;
+
+    await newMessageRef.set({
+      sender: wallet,
+      text,
+      timestamp,
+      imageUrl,
+      replyTo
     });
 
-    reactionRow.appendChild(btn);
-  }
-});
-  
-  // ------------------- SEND MESSAGE -------------------
-  sendBtn.addEventListener("click", async () => {
-  const text = chatInput.value.trim();
-  if (text === "" && !imageFile) return;
-
-  const sender = getConnectedWalletAddress();
-  if (!sender) return;
-
-  const reply = replyStates[section];
-
-  const newMsg = {
-    sender,
-    text,
-    timestamp: Date.now(),
-    ...(reply && {
-      replyTo: {
-        key: reply.key,
-        sender: reply.sender,
-        text: reply.text,
-        imageId: reply.imageId || null
-      }
-    })
-  };
+    chatInput.value = "";
+    chatInput.removeAttribute("data-reply-to");
+    imageUpload.value = "";
+    imagePreviewContainer.style.display = "none";
+    imagePreview.src = "";
+  });
+}
 
   // Якщо є картинка — вантажимо її
   if (imageFile) {
