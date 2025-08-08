@@ -2010,6 +2010,7 @@
 
                                 event.currentTarget.appendChild(picker);
                             }
+                    }
 
                             async function updateReactions(msgKey, section) {
                                 const updatedSnapshot = await db.ref(`chats/${section}`).child(msgKey).get();
