@@ -1359,7 +1359,10 @@ const app = firebase.initializeApp(firebaseConfig);
 const db = firebase.database(app);
 const storage = firebase.storage();
 
-    function getChatMessagesRef(section) {
+   function getChatMessagesRef(section) {
+  if (!db) {
+    throw new Error("Firebase DB не ініціалізований!");
+  }
   return db.ref(`chats/${section}`);
 }
 
