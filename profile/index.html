@@ -1745,48 +1745,6 @@ if (fileInput.files.length > 0) {
   document.getElementById("image-preview-container").style.display = "none";
 });
 
-   const chatInput = document.getElementById(`chat-input-${section}`);;
-
-chatInput.addEventListener("input", () => {
-  chatInput.style.height = "auto";
-  chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + "px";
-});
-
-chatInput.addEventListener("keydown", function (e) {
-  if (e.key === "Enter" && !e.shiftKey) {
-    e.preventDefault();
-    document.getElementById("send-btn-general").click();
-  } else if (e.key === "Enter" && e.shiftKey) {
-    const start = chatInput.selectionStart;
-    const end = chatInput.selectionEnd;
-    chatInput.value = chatInput.value.slice(0, start) + "\n" + chatInput.value.slice(end);
-    chatInput.selectionStart = chatInput.selectionEnd = start + 1;
-    e.preventDefault();
-  }
-});
-
-    const toggleBtn = document.getElementById("toggle-emoji-picker");
-const emojiPicker = document.getElementById("emoji-picker");
-
-toggleBtn.addEventListener("click", () => {
-  emojiPicker.style.display = emojiPicker.style.display === "none" ? "block" : "none";
-});
-
-    document.addEventListener("click", (e) => {
-  if (!emojiPicker.contains(e.target) && !toggleBtn.contains(e.target)) {
-    emojiPicker.style.display = "none";
-  }
-});
-
-customElements.whenDefined('emoji-picker').then(() => {
-  emojiPicker.addEventListener("emoji-click", event => {
-    const emoji = event.detail.unicode;
-    chatInput.value += emoji;
-    chatInput.focus();
-    emojiPicker.style.display = "none";
-  });
-});
-
     function deleteMessage(key, section) {
   const confirmDelete = confirm("Are you sure you want to delete this message?");
   if (!confirmDelete) return;
