@@ -1589,8 +1589,6 @@ if (messageObj.replyTo?.sender?.toLowerCase() === currentWallet?.toLowerCase()) 
 wrapper.appendChild(msgEl);
 wrapper.appendChild(right);
 
-// Використовуємо правильний чат-бокс по section
-const chatBox = document.getElementById(`chat-messages-${section}`);
 chatBox.prepend(wrapper);
 
 // IMAGE if any
