@@ -1211,7 +1211,7 @@
 
                 chatSections.forEach(section => {
                     const uploadBtn = document.getElementById(`upload-image-btn-${section}`);
-                    const fileInput = document.getElementById(`image-upload-${section}`);
+                    const fileInput       = document.querySelector(`.image-upload[data-section="${section}"]`);
 
                     if (uploadBtn && fileInput) {
                         uploadBtn.addEventListener("click", () => {
@@ -1221,8 +1221,8 @@
                 });
 
                 chatSections.forEach(section => {
-                    const fileInput = document.getElementById(`image-upload-${section}`);
-                    const previewContainer = document.getElementById(`image-preview-container-${section}`);
+                    const fileInput       = document.querySelector(`.image-upload[data-section="${section}"]`);
+                    const previewContainer= document.querySelector(`.image-preview-container[data-section="${section}"]`);
                     const previewImg = document.getElementById(`image-preview-${section}`);
                     const cancelBtn = document.getElementById(`cancel-image-${section}`);
 
@@ -1741,7 +1741,7 @@ if (messageObj.sender?.toLowerCase() === currentWallet?.toLowerCase()) {
 
                             chatSections.forEach(section => {
                                 const sendBtn = document.querySelector(`.send-btn[data-section="${section}"]`);
-                                const fileInput = document.getElementById(`image-upload-${section}`);
+                                const fileInput       = document.querySelector(`.image-upload[data-section="${section}"]`);
                                 const input = document.getElementById(`chat-input-${section}`);
                                 const chatRef = db.ref(`chats/${section}`);
 
@@ -1808,8 +1808,8 @@ if (messageObj.sender?.toLowerCase() === currentWallet?.toLowerCase()) {
                             chatSections.forEach(section => {
                                 const chatInput = document.getElementById(`chat-input-${section}`);
                                 const sendBtn = document.querySelector(`.send-btn[data-section="${section}"]`);
-                                const toggleBtn = document.getElementById(`toggle-emoji-picker-${section}`);
-                                const emojiPicker = document.getElementById(`emoji-picker-${section}`);
+                                const toggleBtn       = document.querySelector(`.toggle-emoji-picker[data-section="${section}"]`);
+                                const emojiPicker     = document.querySelector(`.emoji-picker[data-section="${section}"]`);
 
                                 if (!chatInput || !sendBtn || !toggleBtn || !emojiPicker) return;
 
@@ -1860,7 +1860,7 @@ if (messageObj.sender?.toLowerCase() === currentWallet?.toLowerCase()) {
 
                             chatSections.forEach(section => {
                                 const chatInput = document.getElementById(`chat-input-${section}`);
-                                const emojiPicker = document.getElementById(`emoji-picker-${section}`);
+                                const emojiPicker     = document.querySelector(`.emoji-picker[data-section="${section}"]`);
                                 const chatRef = db.ref(`chats/${section}`);
 
                                 // === EMOJI PICKER вставка
