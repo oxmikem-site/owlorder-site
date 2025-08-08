@@ -1033,6 +1033,7 @@
                 const SNAPSHOT_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?output=csv&gid=0";
                 const imageBaseURL = "https://raw.githubusercontent.com/oxmikem-site/owlorder-site/main/images2/";
                 const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?gid=1127131432&single=true&output=csv";
+                const replyToMessageBySection = {};
                 let cachedHolderInfo = null;
                 let cachedSnapshotRows = null;
                 let cachedPointsRows = null;
@@ -1265,7 +1266,7 @@
                             appendMessageToChat(msg, key, section);
 
                             setTimeout(() => {
-                                const chatBox = document.getElementById(`chat-messages-${section}`);
+                                const chatBox = document.querySelector(`.chat-messages[data-section="${section}"]`);
                                 if (chatBox) chatBox.scrollTop = 0;
                             }, 100);
                         });
@@ -1311,45 +1312,44 @@
                     });
                 });
 
-                // 🔁 Очистити і додати всі реакції
-                reactionRow.innerHTML = "";
+               function updateReactionButtons(reactionRow, updatedMsg, section, key) {
+  reactionRow.innerHTML = "";
 
-                for (const [emoji, users] of Object.entries(updatedMsg.reactions || {})) {
-                    const btn = document.createElement("button");
-                    btn.className = "reaction-btn";
-                    btn.textContent = `${emoji} ${users.length}`;
-                    if (users.includes(currentWallet)) {
-                        btn.classList.add("reacted");
-                    }
+  for (const [emoji, users] of Object.entries(updatedMsg.reactions || {})) {
+    const btn = document.createElement("button");
+    btn.className = "reaction-btn";
+    btn.textContent = `${emoji} ${users.length}`;
 
-                    btn.addEventListener("click", async () => {
-                        const wallet = getConnectedWalletAddress();
-                        if (!wallet) return;
+    if (users.includes(currentWallet)) {
+      btn.classList.add("reacted");
+    }
 
-                        const msgRef = getChatMessagesRef(section).child(key); // ✅ ← замість chatMessagesRef
-                        const snapshot = await msgRef.get();
-                        const msg = snapshot.val();
-                        if (!msg) return;
+    btn.addEventListener("click", async () => {
+      const wallet = getConnectedWalletAddress();
+      if (!wallet) return;
 
-                        const reactions = msg.reactions || {};
-                        const currentUsers = reactions[emoji] || [];
-                        const hasReacted = currentUsers.includes(wallet);
+      const msgRef = getChatMessagesRef(section).child(key);
+      const snapshot = await msgRef.get();
+      const msg = snapshot.val();
+      if (!msg) return;
 
-                        if (hasReacted) {
-                            reactions[emoji] = currentUsers.filter(w => w !== wallet);
-                            if (reactions[emoji].length === 0) delete reactions[emoji];
-                        } else {
-                            reactions[emoji] = [...currentUsers, wallet];
-                        }
+      const reactions = msg.reactions || {};
+      const currentUsers = reactions[emoji] || [];
+      const hasReacted = currentUsers.includes(wallet);
 
-                        await msgRef.update({
-                            reactions
-                        });
-                    });
+      if (hasReacted) {
+        reactions[emoji] = currentUsers.filter(w => w !== wallet);
+        if (reactions[emoji].length === 0) delete reactions[emoji];
+      } else {
+        reactions[emoji] = [...currentUsers, wallet];
+      }
 
-                    reactionRow.appendChild(btn);
-                }
+      await msgRef.update({ reactions });
+    });
 
+    reactionRow.appendChild(btn);
+  }
+}
 
                 // Показ/сховати дропдаун гаманця
                 const wrapper = document.querySelector(".wallet-wrapper");
@@ -1450,8 +1450,6 @@
                     return db.ref(`chats/${section}`);
                 }
 
-                document.addEventListener("DOMContentLoaded", () => {
-
                             const localMessageIds = new Set();
                             const userMessageKeys = new Set();
                             const seenMessages = new Set();
@@ -1481,7 +1479,7 @@
                             }
 
                             function appendMessageToChat(messageObj, key = null, section = "general") {
-                                const chatBox = document.getElementById(`chat-messages-${section}`);
+                                const chatBox = document.querySelector(`.chat-messages[data-section="${section}"]`);
                                 if (!chatBox) return;
 
                                 if (key && document.querySelector(`.chat-message[data-key="${key}"]`)) return;
@@ -1890,6 +1888,12 @@
                                     const msgEl = document.querySelector(`#chat-messages-${section} .chat-message[data-key="${key}"] .message-text`);
                                     if (msgEl) {
                                         msgEl.innerHTML = replaceEmojisWithIconify(linkify(updatedMsg.text || ""));
+  
+                                    const reactionRow = msgEl.querySelector(".reaction-row");
+                                      if (!reactionRow) return;
+
+                                      updateReactionButtons(reactionRow, updatedMsg, section, key);
+                                
                                     }
                                 });
                             });
