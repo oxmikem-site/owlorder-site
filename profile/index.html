@@ -1944,11 +1944,7 @@ function initChat(section) {
   const emojiPicker = document.getElementById(`emoji-picker-${section}`);
   const toggleEmojiBtn = document.getElementById(`toggle-emoji-picker-${section}`);
 
-  initChat("general");
-initChat("links");
-initChat("announcements");
-initChat("share-art");
-initChat("spot-request");
+  ["general", "links", "announcements", "share-art", "spot-request"].forEach(initChat);
 
   // ------------------- LOAD MESSAGES -------------------
   dbRef.on("child_added", (snapshot) => {
