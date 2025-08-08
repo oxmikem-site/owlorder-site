@@ -1200,7 +1200,14 @@
                 let replyToMessage = {};
                 let currentWallet = null;
 
-                const chatSections = ["general", "links", "announcements", "share-art", "spot-request"];
+                const chatSections = [
+  "collection",
+  "links",
+  "announcements",
+  "general",
+  "raffles",
+  "settings"
+];
 
                 chatSections.forEach(section => {
                     const uploadBtn = document.getElementById(`upload-image-btn-${section}`);
