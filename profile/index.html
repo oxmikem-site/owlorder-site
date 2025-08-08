@@ -1957,110 +1957,107 @@
                                 }
                             }
 
-                            function openReactionPicker(event, msgKey, section) {
-                                const picker = document.createElement('emoji-picker');
-                                picker.style.position = 'absolute';
-                                picker.style.bottom = '26px';
-                                picker.style.right = '0';
-                                picker.style.zIndex = '1000';
-                                picker.style.background = '#121212';
-                                picker.style.border = '1px solid #333';
-                                picker.style.borderRadius = '10px';
-                                picker.style.padding = '4px';
-                                picker.style.boxShadow = '0 6px 14px rgba(0, 0, 0, 0.45)';
-                                picker.style.width = '180px';
-                                picker.style.maxHeight = '200px';
-                                picker.style.overflowY = 'auto';
-                                picker.style.fontSize = '18px';
+  function openReactionPicker(event, msgKey, section) {
+    const picker = document.createElement('emoji-picker');
+    picker.style.position = 'absolute';
+    picker.style.bottom = '26px';
+    picker.style.right = '0';
+    picker.style.zIndex = '1000';
+    picker.style.background = '#121212';
+    picker.style.border = '1px solid #333';
+    picker.style.borderRadius = '10px';
+    picker.style.padding = '4px';
+    picker.style.boxShadow = '0 6px 14px rgba(0, 0, 0, 0.45)';
+    picker.style.width = '180px';
+    picker.style.maxHeight = '200px';
+    picker.style.overflowY = 'auto';
+    picker.style.fontSize = '18px';
 
-                                picker.addEventListener('emoji-click', async e => {
-                                    const emoji = e.detail.unicode;
+    picker.addEventListener('emoji-click', async e => {
+      const emoji = e.detail.unicode;
 
-                                    const messageRef = db.ref(`chats/${section}`).child(msgKey);
-                                    const snapshot = await messageRef.get();
-                                    const msg = snapshot.val();
-                                    if (!msg) return;
+      const messageRef = db.ref(`chats/${section}`).child(msgKey);
+      const snapshot = await messageRef.get();
+      const msg = snapshot.val();
+      if (!msg) return;
 
-                                    const wallet = getConnectedWalletAddress();
-                                    if (!wallet) return;
+      const wallet = getConnectedWalletAddress();
+      if (!wallet) return;
 
-                                    const reactions = msg.reactions || {};
-                                    const currentUsers = reactions[emoji] || [];
+      const reactions = msg.reactions || {};
+      const currentUsers = reactions[emoji] || [];
 
-                                    const hasReacted = currentUsers.includes(wallet);
+      const hasReacted = currentUsers.includes(wallet);
 
-                                    if (hasReacted) {
-                                        reactions[emoji] = currentUsers.filter(w => w !== wallet);
-                                        if (reactions[emoji].length === 0) delete reactions[emoji];
-                                    } else {
-                                        if (Object.keys(reactions).length >= 6 && !reactions[emoji]) {
-                                            alert("Максимум 6 різних реакцій.");
-                                            return;
-                                        }
-                                        reactions[emoji] = [...currentUsers, wallet];
-                                    }
+      if (hasReacted) {
+        reactions[emoji] = currentUsers.filter(w => w !== wallet);
+        if (reactions[emoji].length === 0) delete reactions[emoji];
+      } else {
+        if (Object.keys(reactions).length >= 6 && !reactions[emoji]) {
+          alert("Максимум 6 різних реакцій.");
+          return;
+        }
+        reactions[emoji] = [...currentUsers, wallet];
+      }
 
-                                    await messageRef.update({
-                                        reactions
-                                    });
-                                });
+      await messageRef.update({ reactions });
+    });
 
-                                const existing = document.querySelector('emoji-picker');
-                                if (existing) existing.remove();
+    const existing = document.querySelector('emoji-picker');
+    if (existing) existing.remove();
 
-                                event.currentTarget.appendChild(picker);
-                            }
+    event.currentTarget.appendChild(picker);
+  }
 
-                            async function updateReactions(msgKey, section) {
-                                const updatedSnapshot = await db.ref(`chats/${section}`).child(msgKey).get();
-                                const updatedMsg = updatedSnapshot.val();
+  async function updateReactions(msgKey, section) {
+    const updatedSnapshot = await db.ref(`chats/${section}`).child(msgKey).get();
+    const updatedMsg = updatedSnapshot.val();
 
-                                const msgEl = document.querySelector(`.chat-message[data-key="${msgKey}"]`);
-                                if (!msgEl) return;
+    const msgEl = document.querySelector(`.chat-message[data-key="${msgKey}"]`);
+    if (!msgEl) return;
 
-                                const reactionRow = msgEl.querySelector(".reaction-row");
-                                if (!reactionRow) return;
+    const reactionRow = msgEl.querySelector(".reaction-row");
+    if (!reactionRow) return;
 
-                                reactionRow.innerHTML = "";
+    reactionRow.innerHTML = "";
 
-                                for (const [emoji, users] of Object.entries(updatedMsg.reactions || {})) {
-                                    const newBtn = document.createElement("button");
-                                    newBtn.className = "reaction-btn";
-                                    newBtn.textContent = `${emoji} ${users.length}`;
+    for (const [emoji, users] of Object.entries(updatedMsg.reactions || {})) {
+      const newBtn = document.createElement("button");
+      newBtn.className = "reaction-btn";
+      newBtn.textContent = `${emoji} ${users.length}`;
 
-                                    if (users.includes(currentWallet)) {
-                                        newBtn.classList.add("reacted");
-                                    }
+      if (users.includes(currentWallet)) {
+        newBtn.classList.add("reacted");
+      }
 
-                                    newBtn.addEventListener("click", async () => {
-                                        const wallet = getConnectedWalletAddress();
-                                        if (!wallet) return;
+      newBtn.addEventListener("click", async () => {
+        const wallet = getConnectedWalletAddress();
+        if (!wallet) return;
 
-                                        const msgRef = db.ref(`chats/${section}`).child(msgKey);
-                                        const snapshot = await msgRef.get();
-                                        const msg = snapshot.val();
-                                        if (!msg) return;
+        const msgRef = db.ref(`chats/${section}`).child(msgKey);
+        const snapshot = await msgRef.get();
+        const msg = snapshot.val();
+        if (!msg) return;
 
-                                        const reactions = msg.reactions || {};
-                                        const currentUsers = reactions[emoji] || [];
-                                        const hasReacted = currentUsers.includes(wallet);
+        const reactions = msg.reactions || {};
+        const currentUsers = reactions[emoji] || [];
+        const hasReacted = currentUsers.includes(wallet);
 
-                                        if (hasReacted) {
-                                            reactions[emoji] = currentUsers.filter(w => w !== wallet);
-                                            if (reactions[emoji].length === 0) delete reactions[emoji];
-                                        } else {
-                                            reactions[emoji] = [...currentUsers, wallet];
-                                        }
+        if (hasReacted) {
+          reactions[emoji] = currentUsers.filter(w => w !== wallet);
+          if (reactions[emoji].length === 0) delete reactions[emoji];
+        } else {
+          reactions[emoji] = [...currentUsers, wallet];
+        }
 
-                                        await msgRef.update({
-                                            reactions
-                                        });
-                                    });
+        await msgRef.update({ reactions });
+      });
 
-                                    reactionRow.appendChild(newBtn);
-                                    }
+      reactionRow.appendChild(newBtn);
+    }
+  }
 
-                                    console.log("END OF SCRIPT");
-            </script>
+  console.log("END OF SCRIPT");
+</script>
 </body>
 </html>
