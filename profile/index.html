@@ -869,6 +869,8 @@
                         <li><a href="#" data-section="links">Links</a></li>
                         <li><a href="#" data-section="announcements">Announcements</a></li>
                         <li><a href="#" data-section="general">General</a></li>
+                        <li><a href="#" data-section="share-art">Share Art</a></li>
+                        <li><a href="#" data-section="spot-request">Spot request</a></li>
                         <li><a href="#" data-section="raffles">Raffles</a></li>
                         <li><a href="#" data-section="settings">Settings</a></li>
                         <li><a href="#" class="sidebar-logout">Logout</a></li>
@@ -1037,6 +1039,79 @@
                 </div>
             </div>
 
+            <!-- Share Art -->
+<div id="section-share-art" class="profile-section">
+  <h3>Share Art</h3>
+  <div class="chat-box">
+    <div class="chat-messages" data-section="share-art"></div>
+
+    <div class="chat-input-wrapper">
+      <textarea class="chat-input" id="chat-input-share-art" name="chat-share-art" data-section="share-art" placeholder="Type a message..."></textarea>
+
+      <div class="chat-actions">
+        <div class="emoji-picker-container" style="position: relative;">
+          <button class="toggle-emoji-picker" data-section="share-art" title="Emoji">
+            <img src="/images2/em.png" alt="Emoji" />
+          </button>
+          <emoji-picker class="emoji-picker" data-section="share-art" style="position: absolute; bottom: 45px; right: 0; z-index: 999; display: none;"></emoji-picker>
+        </div>
+
+        <input type="file" class="image-upload" data-section="share-art" accept="image/*" style="display: none;" />
+        <button class="upload-image-btn" data-section="share-art" title="Attach Image">
+          <img src="../images2/paperclip.png" alt="attach" width="20" height="20" />
+        </button>
+
+        <button class="send-btn" data-section="share-art">
+          <img src="../images2/send.png" alt="Send" class="send-icon" />
+        </button>
+      </div>
+    </div>
+
+    <div class="image-preview-container" data-section="share-art" style="display:none; margin:8px 0;">
+      <div style="position:relative; display:inline-block;">
+        <img class="image-preview" data-section="share-art" style="max-width:150px; border-radius:8px;">
+        <button class="cancel-image" data-section="share-art" style="position:absolute; top:0; right:0; background:rgba(0,0,0,0.6); color:white; border:none; border-radius:50%; width:20px; height:20px; cursor:pointer;">✖</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Spot request -->
+<div id="section-spot-request" class="profile-section">
+  <h3>Spot request</h3>
+  <div class="chat-box">
+    <div class="chat-messages" data-section="spot-request"></div>
+
+    <div class="chat-input-wrapper">
+      <textarea class="chat-input" id="chat-input-spot-request" name="chat-spot-request" data-section="spot-request" placeholder="Type a message..."></textarea>
+
+      <div class="chat-actions">
+        <div class="emoji-picker-container" style="position: relative;">
+          <button class="toggle-emoji-picker" data-section="spot-request" title="Emoji">
+            <img src="/images2/em.png" alt="Emoji" />
+          </button>
+          <emoji-picker class="emoji-picker" data-section="spot-request" style="position: absolute; bottom: 45px; right: 0; z-index: 999; display: none;"></emoji-picker>
+        </div>
+
+        <input type="file" class="image-upload" data-section="spot-request" accept="image/*" style="display: none;" />
+        <button class="upload-image-btn" data-section="spot-request" title="Attach Image">
+          <img src="../images2/paperclip.png" alt="attach" width="20" height="20" />
+        </button>
+
+        <button class="send-btn" data-section="spot-request">
+          <img src="../images2/send.png" alt="Send" class="send-icon" />
+        </button>
+      </div>
+    </div>
+
+    <div class="image-preview-container" data-section="spot-request" style="display:none; margin:8px 0;">
+      <div style="position:relative; display:inline-block;">
+        <img class="image-preview" data-section="spot-request" style="max-width:150px; border-radius:8px;">
+        <button class="cancel-image" data-section="spot-request" style="position:absolute; top:0; right:0; background:rgba(0,0,0,0.6); color:white; border:none; border-radius:50%; width:20px; height:20px; cursor:pointer;">✖</button>
+      </div>
+    </div>
+  </div>
+</div>
 
             <!-- Raffles -->
             <div id="section-raffles" class="profile-section">
@@ -1068,7 +1143,7 @@ const imageBaseURL = "https://raw.githubusercontent.com/oxmikem-site/owlorder-si
 const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?gid=1127131432&single=true&output=csv";
 
 /* Перелік секцій, де є чат */
-const chatSections = ["links", "announcements", "general"];
+const chatSections = ["links", "announcements", "general", "share-art", "spot-request"];
 
 /* Сховище reply для кожної секції */
 const replyToMessageBySection = {};
@@ -1306,7 +1381,7 @@ function getChatMessagesRef(section) {
 
 async function initUnreadTracking(wallet) {
   const walletLower = wallet.toLowerCase();
-  const trackingSections = ["collection","links","announcements","general","raffles","settings"];
+  const trackingSections = ["collection","links","announcements","general","share-art","spot-request","raffles","settings"];
 
   for (const section of trackingSections) {
     const badges = ensureSidebarBadges(section);
