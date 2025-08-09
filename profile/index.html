@@ -1116,43 +1116,60 @@ async function fetchProfileImage(wallet) {
   }
 }
 
-/* Перевірка, чи власник (holder), + поінти */
+/* Перевірка, чи власник (holder), + поінти — як у дашборді */
 async function checkHolderInSheet(address) {
+  if (!address) return { found: false };
+
+  // 1) Перевіряємо, чи адреса є у SNAPSHOT (і беремо imageId)
   let imageId = null;
-  let points = "-";
   try {
-    // SNAPSHOT
     const resImg = await fetch(SNAPSHOT_CSV_URL);
     const csvImg = await resImg.text();
     const rowsImg = csvImg.split("\n").slice(1);
+
     for (const row of rowsImg) {
       const cols = row.split(",");
-      const rowAddress = (cols[1] || "").trim().toLowerCase();
-      if (rowAddress === address.toLowerCase()) {
-        imageId = (cols[9] || "").trim(); // колонка J
+      const rowAddress = (cols[1] || "").trim().toLowerCase(); // колонка B — адреса
+      if (rowAddress === address.trim().toLowerCase()) {
+        imageId = (cols[9] || "").trim(); // колонка J — номер сови
         break;
       }
     }
+  } catch (e) {
+    console.warn("SNAPSHOT fetch error:", e);
+  }
 
-    // POINTS
-    const resPoints = await fetch(sheetURL);
-    const csvPoints = await resPoints.text();
-    const rowsPoints = csvPoints.split("\n").slice(1);
-    for (const row of rowsPoints) {
-      const cols = row.split(",");
-      const rowAddress = (cols[1] || "").trim().toLowerCase();
-      if (rowAddress === address.toLowerCase()) {
-        points = (cols[3] || "").trim() || "-"; // колонка D
-        break;
-      }
-    }
-
-    return { found: !!imageId, address, imageId, points };
-  } catch {
+  // якщо не знайшли у snapshot — це не холдер => поінти не показуємо
+  if (!imageId) {
     return { found: false };
   }
-}
 
+  // 2) Тягнемо поінти лише для холдерів (як у дашборді по header-ах)
+  let points = "-";
+  try {
+    const res = await fetch(sheetURL);
+    const text = await res.text();
+    const rows = text.trim().split("\n").map(r => r.split(","));
+
+    const headers = rows[0].map(h => h.trim());
+    const addrIndex = headers.indexOf("Holder Address");
+    const pointsIndex = headers.indexOf("Total Points");
+
+    if (addrIndex !== -1 && pointsIndex !== -1) {
+      const row = rows.find(r => (r[addrIndex] || "").trim().toLowerCase() === address.trim().toLowerCase());
+      if (row) {
+        // якщо в таблиці є тисячні розділювачі — прибираємо їх для відображення/числа
+        const raw = (row[pointsIndex] || "").trim();
+        points = raw.replace(/,/g, "") || "-";
+      }
+    }
+  } catch (e) {
+    console.warn("Points sheet fetch error:", e);
+  }
+
+  return { found: true, address, imageId, points };
+}
+                
 /* Заповнення сайдбару профілю */
 async function populateSidebarUserInfo(address) {
   const addrEl = document.getElementById("sidebar-wallet-addr");
