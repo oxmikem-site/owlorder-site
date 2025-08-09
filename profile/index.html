@@ -1306,41 +1306,62 @@ function getChatMessagesRef(section) {
 
 async function initUnreadTracking(wallet) {
   const walletLower = wallet.toLowerCase();
-  const trackingSections = ["collection","links","announcements","general","raffles","settings"]; // ✅ нова назва
+  const trackingSections = ["collection","links","announcements","general","raffles","settings"];
 
   for (const section of trackingSections) {
     const badges = ensureSidebarBadges(section);
     if (!badges) continue;
 
-    // 1) поточні lastSeen / lastReplySeen
+    // 1) lastSeen / lastReplySeen
     const readsSnap = await getReadsRef(wallet, section).get();
     const reads = readsSnap.val() || {};
     let lastSeen = reads.lastSeen || 0;
     let lastReplySeen = reads.lastReplySeen || 0;
 
-    // 2) початковий підрахунок
+    // 2) первинний підрахунок
     let unreadCount = 0;
     let replyCount = 0;
 
     const existing = await getChatMessagesRef(section).get();
     existing.forEach(snap => {
       const m = snap.val(); if (!m) return;
-      if (m.timestamp > lastSeen && (m.sender||'').toLowerCase() !== walletLower) unreadCount++;
-      if (m.replyTo?.sender && m.replyTo.sender.toLowerCase() === walletLower && m.timestamp > lastReplySeen) replyCount++;
+
+      // непрочитані (не мої і новіші за lastSeen)
+      if (m.timestamp > lastSeen && (m.sender || '').toLowerCase() !== walletLower) {
+        unreadCount++;
+      }
+
+      // реплаї на мене (порівнюємо по повній адресі)
+      const replySender = (m.replyTo?.sender || '').toLowerCase();
+      const isReplyToMe = replySender === walletLower;
+      if (isReplyToMe && m.timestamp > lastReplySeen) {
+        replyCount++;
+      }
     });
+
     setBadgeCount(badges.unread, unreadCount);
     setBadgeCount(badges.replies, replyCount);
 
-    // 3) live-підписка (інкрементуємо від поточного DOM-значення бейджа)
+    // 2.5) скільки child_added треба ПРОПУСТИТИ (щоб не подвоїти після підписки)
+    let toSkip = existing.numChildren();
+
+    // 3) live-підписка
     getChatMessagesRef(section).on('child_added', snap => {
+      // пропускаємо перші "старі" події
+      if (toSkip > 0) { toSkip--; return; }
+
       const m = snap.val(); if (!m) return;
       const isActive = document.getElementById(`section-${section}`)?.classList.contains('active');
 
-      if (!isActive && m.timestamp > lastSeen && (m.sender||'').toLowerCase() !== walletLower) {
+      // непрочитані
+      if (!isActive && m.timestamp > lastSeen && (m.sender || '').toLowerCase() !== walletLower) {
         const cur = parseInt(badges.unread.textContent) || 0;
         setBadgeCount(badges.unread, cur + 1);
       }
-      const isReplyToMe = m.replyTo?.sender && m.replyTo.sender.toLowerCase() === walletLower;
+
+      // реплаї на мене
+      const replySender = (m.replyTo?.sender || '').toLowerCase();
+      const isReplyToMe = replySender === walletLower; // ← правильна змінна
       if (!isActive && isReplyToMe && m.timestamp > lastReplySeen) {
         const curR = parseInt(badges.replies.textContent) || 0;
         setBadgeCount(badges.replies, curR + 1);
