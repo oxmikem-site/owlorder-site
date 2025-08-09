@@ -1223,12 +1223,34 @@ function ensureSidebarBadges(section) {
 function setBadgeCount(el, count) {
   if (!el) return;
   if (!count || count <= 0) {
+    el.textContent = '';
     el.style.display = 'none';
   } else {
     el.textContent = count > 99 ? '99+' : String(count);
     el.style.display = 'inline-flex';
   }
 }
+ 
+async function markAsRead(section, wallet) {
+  // 1. Знайти бейджі для цієї секції
+  const badges = ensureSidebarBadges(section);
+
+  // 2. Скинути кількість непрочитаних і реплаїв у DOM
+  if (badges) {
+    setBadgeCount(badges.unread, 0);
+    setBadgeCount(badges.replies, 0);
+  }
+
+  // 3. Оновити у Firebase "остання прочитана позиція"
+  if (wallet && db) {
+    const now = Date.now();
+    await getReadsRef(wallet, section).update({
+      lastSeen: now,
+      lastReplySeen: now
+    });
+  }
+}
+
                 
 /* ==== Firebase ==== */
 let app, db, storage;
@@ -1253,12 +1275,11 @@ function getChatMessagesRef(section) {
   return db.ref(`chats/${section}`);
 }
 
-                // === запуск трекінгу непрочитаних/реплаїв для всіх секцій ===
 async function initUnreadTracking(wallet) {
   const walletLower = wallet.toLowerCase();
-  const chatSections = ["collection","links","announcements","general","raffles","settings"];
+  const trackingSections = ["collection","links","announcements","general","raffles","settings"]; // ✅ нова назва
 
-  for (const section of chatSections) {
+  for (const section of trackingSections) {
     const badges = ensureSidebarBadges(section);
     if (!badges) continue;
 
@@ -1268,11 +1289,10 @@ async function initUnreadTracking(wallet) {
     let lastSeen = reads.lastSeen || 0;
     let lastReplySeen = reads.lastReplySeen || 0;
 
-    // 2) локальні лічильники
+    // 2) початковий підрахунок
     let unreadCount = 0;
     let replyCount = 0;
 
-    // 3) початковий підрахунок
     const existing = await getChatMessagesRef(section).get();
     existing.forEach(snap => {
       const m = snap.val(); if (!m) return;
@@ -1282,32 +1302,21 @@ async function initUnreadTracking(wallet) {
     setBadgeCount(badges.unread, unreadCount);
     setBadgeCount(badges.replies, replyCount);
 
-    // 4) live-підписка
+    // 3) live-підписка (інкрементуємо від поточного DOM-значення бейджа)
     getChatMessagesRef(section).on('child_added', snap => {
       const m = snap.val(); if (!m) return;
       const isActive = document.getElementById(`section-${section}`)?.classList.contains('active');
 
       if (!isActive && m.timestamp > lastSeen && (m.sender||'').toLowerCase() !== walletLower) {
-        unreadCount++; setBadgeCount(badges.unread, unreadCount);
+        const cur = parseInt(badges.unread.textContent) || 0;
+        setBadgeCount(badges.unread, cur + 1);
       }
       const isReplyToMe = m.replyTo?.sender && m.replyTo.sender.toLowerCase() === walletLower;
       if (!isActive && isReplyToMe && m.timestamp > lastReplySeen) {
-        replyCount++; setBadgeCount(badges.replies, replyCount);
+        const curR = parseInt(badges.replies.textContent) || 0;
+        setBadgeCount(badges.replies, curR + 1);
       }
     });
-
-    // 5) клік по пункту меню — скидаємо лічильники, оновлюємо lastSeen/lastReplySeen
-    const link = document.querySelector(`#sidebar-nav a[data-section="${section}"]`);
-    if (link && !link._owlBound) {
-      link._owlBound = true;
-      link.addEventListener('click', async () => {
-        const now = Date.now();
-        lastSeen = now; lastReplySeen = now;
-        setBadgeCount(badges.unread, 0);
-        setBadgeCount(badges.replies, 0);
-        await getReadsRef(wallet, section).update({ lastSeen, lastReplySeen });
-      });
-    }
   }
 }
 
@@ -1658,7 +1667,7 @@ picker.style.overflowY = "auto";
 }
 
 /* ==== Старт програми ==== */
-window.addEventListener("DOMContentLoaded", () => {
+window.addEventListener("DOMContentLoaded", async () => {
   // Firebase
   app = firebase.initializeApp(firebaseConfig);
   db = firebase.database(app);
@@ -1671,6 +1680,14 @@ if (currentWallet) {
   populateSidebarUserInfo(currentWallet);
   initUnreadTracking(currentWallet); // ✅ Запускаємо відслідковування непрочитаних
 }
+
+    // якщо на старті якась секція вже активна — познач її прочитаною
+const initiallyActive = document.querySelector('.profile-section.active');
+if (initiallyActive && initiallyActive.id?.startsWith('section-') && currentWallet) {
+  const activeSection = initiallyActive.id.replace('section-', '');
+  await markAsRead(activeSection, currentWallet);
+}
+
   // Збережені сети
   const localMessageIds = new Set();
   const userMessageKeys = new Set();
@@ -1728,16 +1745,20 @@ if (currentWallet) {
     });
   }
 
-  // Навігація секцій
   document.querySelectorAll('#sidebar-nav a[data-section]').forEach(link => {
-    link.addEventListener('click', (e) => {
-      const target = link.getAttribute('data-section');
-      if (!target) return;
-      e.preventDefault();
-      hideAllSections();
-      showSection(target);
-    });
+  link.addEventListener('click', async (e) => {
+    const target = link.getAttribute('data-section');
+    if (!target) return;
+    e.preventDefault();
+    hideAllSections();
+    showSection(target);
+
+    // одразу позначаємо секцію прочитаною
+    if (currentWallet) {
+      await markAsRead(target, currentWallet);
+    }
   });
+});
 
   // Logout
   document.querySelectorAll(".logout-btn, .sidebar-logout").forEach(el => {
@@ -1747,6 +1768,28 @@ if (currentWallet) {
       location.reload();
     });
   });
+
+    // коли секція активна і користувач прокрутив донизу (нові повідомлення переглянуті) — скидаємо бейдж
+chatSections.forEach(section => {
+  const box = document.querySelector(`.chat-messages[data-section="${section}"]`);
+  if (!box) return;
+
+  let scrollTimer = null;
+  box.addEventListener('scroll', async () => {
+    // перевіряємо, що секція відкрита
+    const isActive = document.getElementById(`section-${section}`)?.classList.contains('active');
+    if (!isActive || !currentWallet) return;
+
+    // для column-reverse: "низ" візуально = scrollTop близько 0
+    // ставимо невелику затримку, щоб не спамити
+    if (scrollTimer) clearTimeout(scrollTimer);
+    scrollTimer = setTimeout(async () => {
+      if (box.scrollTop >= -4 && box.scrollTop <= 4) {
+        await markAsRead(section, currentWallet);
+      }
+    }, 120);
+  });
+});
 
   // === CHAT UI: скрепка відкриває file input
   chatSections.forEach(section => {
