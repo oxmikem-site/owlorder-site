@@ -1407,7 +1407,10 @@ function appendMessageToChat(messageObj, key = null, section = "general", curren
 
   const btnReact = document.createElement("button");
   btnReact.innerHTML = '<iconify-icon icon="mdi:emoticon-outline" width="14"></iconify-icon>';
-  btnReact.addEventListener("click", (e) => openReactionPicker(e, key, section));
+  btnReact.addEventListener("click", (e) => {
+    e.stopPropagation(); // щоб клік по кнопці не закривав пікер
+    openReactionPicker(e, key, section);
+});
   right.appendChild(btnReact);
 
   const btnReply = document.createElement("button");
