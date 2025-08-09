@@ -1708,12 +1708,6 @@ if (currentWallet) {
     }
   }
 
-  let currentWallet = getConnectedWalletAddress() || null;
-  if (currentWallet) {
-    updateWalletButtons(currentWallet);
-    populateSidebarUserInfo(currentWallet);
-  }
-
   const walletHeaderBtn = document.getElementById("wallet-header-btn");
   if (walletHeaderBtn) {
     walletHeaderBtn.addEventListener("click", (e) => {
