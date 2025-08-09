@@ -1029,1055 +1029,810 @@
 
             <!-- Скрипти -->
             <script>
-                /* === CONFIG === */
-                const SNAPSHOT_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?output=csv&gid=0";
-                const imageBaseURL = "https://raw.githubusercontent.com/oxmikem-site/owlorder-site/main/images2/";
-                const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?gid=1127131432&single=true&output=csv";
-                const replyToMessageBySection = {};
-                let cachedHolderInfo = null;
-                let cachedSnapshotRows = null;
-                let cachedPointsRows = null;
+/* === CONFIG (дані для NFT/поінтів) === */
+const SNAPSHOT_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?output=csv&gid=0";
+const imageBaseURL = "https://raw.githubusercontent.com/oxmikem-site/owlorder-site/main/images2/";
+const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?gid=1127131432&single=true&output=csv";
 
+/* Перелік секцій, де є чат */
+const chatSections = ["links", "announcements", "general"];
 
-                function shortenAddress(addr) {
-                    return addr.slice(0, 6) + '...' + addr.slice(-4);
-                }
+/* Сховище reply для кожної секції */
+const replyToMessageBySection = {};
 
-                function getConnectedWalletAddress() {
-                    return localStorage.getItem('taproot_wallet');
-                }
+let cachedHolderInfo = null;
 
-                function updateWalletButtons(address) {
-                    const short = shortenAddress(address);
-                    document.getElementById("wallet-header-btn").textContent = short;
-                }
+/* === Хелпери інтерфейсу === */
+function shortenAddress(addr) {
+  return addr ? addr.slice(0, 6) + "..." + addr.slice(-4) : "";
+}
+function getConnectedWalletAddress() {
+  return localStorage.getItem("taproot_wallet");
+}
+function updateWalletButtons(address) {
+  const short = shortenAddress(address);
+  const btn = document.getElementById("wallet-header-btn");
+  if (btn) btn.textContent = short || "CONNECT WALLET";
+}
 
-                async function fetchProfileImage(wallet) {
-                    const img = document.getElementById("profile-image");
-                    try {
-                        const res = await fetch(SNAPSHOT_CSV_URL);
-                        const csv = await res.text();
-                        const rows = csv.split("\n").slice(1);
+/* Аватар користувача за snapshot */
+async function fetchProfileImage(wallet) {
+  const img = document.getElementById("profile-image");
+  try {
+    const res = await fetch(SNAPSHOT_CSV_URL);
+    const csv = await res.text();
+    const rows = csv.split("\n").slice(1);
+    let match = null;
+    for (const row of rows) {
+      const cols = row.split(",");
+      const address = (cols[1] || "").trim().toLowerCase();
+      const nftNumber = (cols[9] || "").trim();
+      if (address === wallet.toLowerCase() && nftNumber) {
+        match = nftNumber;
+        break;
+      }
+    }
+    img.src = match ? `${imageBaseURL}${match}.webp` : "../logo1.png";
+    img.onerror = () => (img.src = "../logo1.png");
+    img.style.display = "block";
+  } catch {
+    if (img) {
+      img.src = "../logo1.png";
+      img.style.display = "block";
+    }
+  }
+}
 
-                        let match = null;
-                        for (const row of rows) {
-                            const cols = row.split(",");
-                            const address = cols[1]?.trim().toLowerCase();
-                            const nftNumber = cols[9]?.trim();
-                            if (address === wallet.toLowerCase() && nftNumber) {
-                                match = nftNumber;
-                                break;
-                            }
-                        }
+/* Перевірка, чи власник (holder), + поінти */
+async function checkHolderInSheet(address) {
+  let imageId = null;
+  let points = "-";
+  try {
+    // SNAPSHOT
+    const resImg = await fetch(SNAPSHOT_CSV_URL);
+    const csvImg = await resImg.text();
+    const rowsImg = csvImg.split("\n").slice(1);
+    for (const row of rowsImg) {
+      const cols = row.split(",");
+      const rowAddress = (cols[1] || "").trim().toLowerCase();
+      if (rowAddress === address.toLowerCase()) {
+        imageId = (cols[9] || "").trim(); // колонка J
+        break;
+      }
+    }
 
-                        img.src = match ?
-    `${imageBaseURL}${match}.webp` :
-    "../logo1.png";
-                        img.onerror = () => img.src = "../logo1.png";
-                        img.style.display = "block";
-                    } catch (err) {
-                        console.error("fetchProfileImage error", err);
-                        img.src = "../logo1.png";
-                        img.style.display = "block";
-                    }
-                }
+    // POINTS
+    const resPoints = await fetch(sheetURL);
+    const csvPoints = await resPoints.text();
+    const rowsPoints = csvPoints.split("\n").slice(1);
+    for (const row of rowsPoints) {
+      const cols = row.split(",");
+      const rowAddress = (cols[1] || "").trim().toLowerCase();
+      if (rowAddress === address.toLowerCase()) {
+        points = (cols[3] || "").trim() || "-"; // колонка D
+        break;
+      }
+    }
 
-                async function checkHolderInSheet(address) {
-                    let imageId = null;
-                    let points = "-";
+    return { found: !!imageId, address, imageId, points };
+  } catch {
+    return { found: false };
+  }
+}
 
-                    try {
-                        // === SNAPSHOT (imageId)
-                        const resImg = await fetch(SNAPSHOT_CSV_URL);
-                        const csvImg = await resImg.text();
-                        const rowsImg = csvImg.split("\n").slice(1);
+/* Заповнення сайдбару профілю */
+async function populateSidebarUserInfo(address) {
+  const addrEl = document.getElementById("sidebar-wallet-addr");
+  const ptsEl  = document.getElementById("sidebar-total-points");
+  const connectBtn = document.getElementById("sidebar-connect-btn");
+  const img = document.getElementById("profile-image");
 
-                        for (const row of rowsImg) {
-                            const cols = row.split(",");
-                            const rowAddress = cols[1]?.trim().toLowerCase();
-                            if (rowAddress === address.toLowerCase()) {
-                                imageId = cols[9]?.trim(); // колонка J
-                                break;
-                            }
-                        }
+  if (addrEl) addrEl.style.display = "none";
+  if (ptsEl)  ptsEl.style.display = "none";
+  if (connectBtn) connectBtn.style.display = "none";
 
-                        // === POINTS
-                        const resPoints = await fetch(sheetURL);
-                        const csvPoints = await resPoints.text();
-                        const rowsPoints = csvPoints.split("\n").slice(1);
+  if (!address) {
+    if (img) img.style.display = "none";
+    if (connectBtn) connectBtn.style.display = "inline-block";
+    return;
+  }
 
-                        for (const row of rowsPoints) {
-                            const cols = row.split(",");
-                            const rowAddress = cols[1]?.trim().toLowerCase();
-                            if (rowAddress === address.toLowerCase()) {
-                                points = cols[3]?.trim() || "-"; // колонка D
-                                break;
-                            }
-                        }
+  if (addrEl) {
+    addrEl.textContent = shortenAddress(address);
+    addrEl.style.display = "block";
+  }
 
-                        return {
-                            found: !!imageId,
-                            address,
-                            imageId,
-                            points
-                        };
+  cachedHolderInfo = await checkHolderInSheet(address);
+  if (cachedHolderInfo.found) {
+    if (ptsEl) {
+      ptsEl.innerHTML = `<strong>Total Points:</strong> ${cachedHolderInfo.points}`;
+      ptsEl.style.display = "block";
+    }
+    await fetchProfileImage(address);
+  } else {
+    if (img) img.style.display = "none";
+    if (connectBtn) {
+      connectBtn.textContent = "Get your OWL";
+      connectBtn.onclick = () => window.open("https://owlbtc.art/collection", "_blank");
+      connectBtn.style.display = "inline-block";
+    }
+  }
+}
 
-                    } catch (err) {
-                        console.error("checkHolderInSheet error", err);
-                        return {
-                            found: false
-                        };
-                    }
-                }
+/* Перемикання секцій */
+function hideAllSections() {
+  document.querySelectorAll(".profile-section").forEach(sec => {
+    sec.classList.remove("active");
+    sec.classList.add("hidden");
+    sec.style.display = "none";
+  });
+}
+function showSection(id) {
+  const section = document.getElementById("section-" + id);
+  if (section) {
+    section.classList.remove("hidden");
+    section.classList.add("active");
+    section.style.display = "flex";
+  }
+}
 
-                async function populateSidebarUserInfo(address) {
-                    const addrEl = document.getElementById("sidebar-wallet-addr");
-                    const ptsEl = document.getElementById("sidebar-total-points");
-                    const connectBtn = document.getElementById("sidebar-connect-btn");
-                    const img = document.getElementById("profile-image");
+/* ==== Firebase ==== */
+let app, db, storage;
 
-                    addrEl.style.display = "none";
-                    ptsEl.style.display = "none";
-                    connectBtn.style.display = "none";
+const firebaseConfig = {
+  apiKey: "AIzaSyB4w22BYSjUhoGSeAf3GTZCGq_GuVkzFQY",
+  authDomain: "owl-chat-d5d3e.firebaseapp.com",
+  databaseURL: "https://owl-chat-d5d3e-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "owl-chat-d5d3e",
+  storageBucket: "owl-chat-d5d3e.appspot.com",
+  messagingSenderId: "464471442222",
+  appId: "1:464471442222:web:1628d29ef2be5564affb0f",
+  measurementId: "G-MMBR7S9EM1"
+};
 
-                    if (!address) {
-                        img.style.display = "none";
-                        connectBtn.style.display = "inline-block";
-                        return;
-                    }
+function getChatMessagesRef(section) {
+  if (!db) throw new Error("Firebase DB не ініціалізований!");
+  return db.ref(`chats/${section}`);
+}
 
-                    addrEl.textContent = shortenAddress(address);
-                    addrEl.style.display = "block";
+/* ==== Emoji utils ==== */
+const emojiToIconifyMap = {
+  "😊": "twemoji:smiling-face",
+  "😂": "twemoji:face-with-tears-of-joy",
+  "🔥": "twemoji:fire",
+  "💯": "twemoji:hundred-points"
+};
+function replaceEmojisWithIconify(text) {
+  return text.replace(/[\u{1F300}-\u{1FAFF}]/gu, (match) => {
+    const iconName = emojiToIconifyMap[match];
+    return iconName
+      ? `<iconify-icon icon="${iconName}" width="18" style="vertical-align: middle;"></iconify-icon>`
+      : match;
+  });
+}
+function linkify(text) {
+  const urlPattern = /(https?:\/\/[^\s]+)/g;
+  return (text || "").replace(urlPattern, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
+}
 
-                    cachedHolderInfo = await checkHolderInSheet(address);
-                    const result = cachedHolderInfo;
-                    if (result.found) {
-                        ptsEl.innerHTML = `<strong>Total Points:</strong> ${result.points}`;
-                        ptsEl.style.display = "block";
-                        await fetchProfileImage(address);
-                    } else {
-                        img.style.display = "none";
-                        connectBtn.textContent = "Get your OWL";
-                        connectBtn.onclick = () => window.open("https://owlbtc.art/collection", "_blank");
-                        connectBtn.style.display = "inline-block";
-                    }
-                }
+/* ==== UI рендер повідомлення ==== */
+function appendMessageToChat(messageObj, key = null, section = "general", currentWallet = null) {
+  const chatBox = document.querySelector(`.chat-messages[data-section="${section}"]`);
+  if (!chatBox) return;
 
-                async function connectUniSatWallet() {
-                    if (!window.unisat) {
-                        alert("UniSat Wallet not found.");
-                        return;
-                    }
-                    try {
-                        await window.unisat.requestAccounts();
-                        const address = (await window.unisat.getAccounts())[0];
-                        localStorage.setItem('taproot_wallet', address);
-                        updateWalletButtons(address);
-                        populateSidebarUserInfo(address);
-                        currentWallet = address;
-                    } catch (err) {
-                        alert("Failed to connect wallet.");
-                    }
-                }
+  if (key && document.querySelector(`.chat-message[data-key="${key}"]`)) return;
 
-                function hideAllSections() {
-                    document.querySelectorAll('.profile-section').forEach(sec => {
-                        sec.classList.remove('active');
-                        sec.classList.add('hidden');
-                        sec.style.display = "none"; // 🔥 примусово ховає
-                    });
-                }
+  const msgEl = document.createElement("div");
+  msgEl.className = "chat-message";
+  if (key) msgEl.dataset.key = key;
 
-                function showSection(id) {
-                    const section = document.getElementById('section-' + id);
-                    if (section) {
-                        section.classList.remove('hidden');
-                        section.classList.add('active');
-                        section.style.display = "flex"; // 🔥 примусово показує секцію
-                    }
-                }
+  const avatar = document.createElement("img");
+  avatar.className = "avatar";
+  avatar.src = messageObj.imageId ? `${imageBaseURL}${messageObj.imageId}.webp` : "../logo1.png";
 
-                let replyToMessage = {};
-                let currentWallet = null;
+  const content = document.createElement("div");
+  content.className = "message-content";
 
-                const chatSections = [
-  "collection",
-  "links",
-  "announcements",
-  "general",
-  "raffles",
-  "settings"
-];
+  const header = document.createElement("div");
+  header.className = "message-header";
 
-                chatSections.forEach(section => {
-                    const uploadBtn = document.querySelector(`.upload-image-btn[data-section="${section}"]`);
-                    const fileInput       = document.querySelector(`.image-upload[data-section="${section}"]`);
+  // LEFT
+  const left = document.createElement("div");
+  left.style.display = "flex";
+  left.style.gap = "6px";
+  left.style.alignItems = "center";
 
-                    if (uploadBtn && fileInput) {
-                        uploadBtn.addEventListener("click", () => {
-                            fileInput.click();
-                        });
-                    }
-                });
+  const nameEl = document.createElement("span");
+  nameEl.className = "sender-name";
+  nameEl.textContent = shortenAddress(messageObj.sender);
 
-                chatSections.forEach(section => {
-                    const fileInput       = document.querySelector(`.image-upload[data-section="${section}"]`);
-                    const previewContainer= document.querySelector(`.image-preview-container[data-section="${section}"]`);
-                    const previewImg = document.querySelector(`.image-preview[data-section="${section}"]`);
-                    const cancelBtn  = document.querySelector(`.cancel-image[data-section="${section}"]`);
-                    
-                    if (!fileInput || !previewContainer || !previewImg || !cancelBtn) return;
+  const timeEl = document.createElement("span");
+  timeEl.className = "message-time";
+  const time = new Date(messageObj.timestamp);
+  const now = Date.now();
+  const diffHours = (now - messageObj.timestamp) / (1000 * 60 * 60);
+  const timeStr = time.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  if (diffHours > 24) {
+    const dateStr = time.toLocaleDateString([], { day: "2-digit", month: "2-digit", year: "numeric" });
+    timeEl.textContent = `${dateStr}, ${timeStr}`;
+  } else {
+    timeEl.textContent = timeStr;
+  }
 
-                    fileInput.addEventListener("change", (e) => {
-                        const file = e.target.files[0];
-                        if (!file) return;
+  left.appendChild(nameEl);
+  left.appendChild(timeEl);
 
-                        if (file.size > 5 * 1024 * 1024) {
-                            alert("Max image size is 5MB.");
-                            return;
-                        }
+  // RIGHT (hover menu)
+  const right = document.createElement("div");
+  right.className = "hover-menu";
 
-                        previewImg.src = URL.createObjectURL(file);
-                        previewContainer.style.display = "block";
+  const btnReact = document.createElement("button");
+  btnReact.innerHTML = '<iconify-icon icon="mdi:emoticon-outline" width="14"></iconify-icon>';
+  btnReact.addEventListener("click", (e) => openReactionPicker(e, key, section));
+  right.appendChild(btnReact);
 
-                        cancelBtn.onclick = () => {
-                            previewContainer.style.display = "none";
-                            fileInput.value = "";
-                        };
-                    });
-                });
+  const btnReply = document.createElement("button");
+  btnReply.innerHTML = '<iconify-icon icon="mdi:reply" width="14"></iconify-icon>';
+  btnReply.addEventListener("click", () => replyTo(key, section));
+  right.appendChild(btnReply);
 
-                    // Підписка на всі секції
-                    chatSections.forEach(section => {
-                        const ref = getChatMessagesRef(section); // 🔸 функція має повертати посилання на Firebase для секції
+  if (messageObj.sender?.toLowerCase() === (currentWallet || "").toLowerCase()) {
+    const btnEdit = document.createElement("button");
+    btnEdit.innerHTML = '<iconify-icon icon="mdi:pencil" width="14"></iconify-icon>';
+    btnEdit.addEventListener("click", () => editMessage(key, section));
+    right.appendChild(btnEdit);
 
-                        ref.on("child_added", (snapshot) => {
-                            const msg = snapshot.val();
-                            const key = snapshot.key;
+    const btnDel = document.createElement("button");
+    btnDel.innerHTML = '<iconify-icon icon="ic:baseline-delete" width="14"></iconify-icon>';
+    btnDel.addEventListener("click", () => deleteMessage(key, section));
+    right.appendChild(btnDel);
+  }
 
-                            const uniqueId = `${msg.sender}_${msg.timestamp}`;
-                            seenMessages.add(uniqueId);
+  header.appendChild(left);
+  content.appendChild(header);
 
-                            if (seenMessages.size > 500) seenMessages.clear();
+  const textEl = document.createElement("div");
+  textEl.className = "message-text";
+  textEl.innerHTML = replaceEmojisWithIconify(linkify(messageObj.text || ""));
+  content.appendChild(textEl);
 
-                            appendMessageToChat(msg, key, section);
+  // reactions row (якщо вже є)
+  if (messageObj.reactions) {
+    const reactionRow = document.createElement("div");
+    reactionRow.className = "reaction-row";
+    for (const [emoji, users] of Object.entries(messageObj.reactions)) {
+      const btn = document.createElement("button");
+      btn.className = "reaction-btn";
+      const arr = Array.isArray(users) ? users : [];
+      btn.textContent = `${emoji} ${arr.length}`;
+      if (arr.includes(getConnectedWalletAddress())) btn.classList.add("reacted");
+      btn.addEventListener("click", async () => {
+        const wallet = getConnectedWalletAddress();
+        if (!wallet) return;
+        const msgRef = getChatMessagesRef(section).child(key);
+        const snapshot = await msgRef.get();
+        const msg = snapshot.val();
+        if (!msg) return;
+        const reactions = msg.reactions || {};
+        const currentUsers = Array.isArray(reactions[emoji]) ? reactions[emoji] : [];
+        const hasReacted = currentUsers.includes(wallet);
+        reactions[emoji] = hasReacted
+          ? currentUsers.filter(w => w !== wallet)
+          : [...currentUsers, wallet];
+        if (Array.isArray(reactions[emoji]) && reactions[emoji].length === 0) delete reactions[emoji];
+        await msgRef.update({ reactions });
+      });
+      reactionRow.appendChild(btn);
+    }
+    content.appendChild(reactionRow);
+  }
 
-                            setTimeout(() => {
-                                const chatBox = document.querySelector(`.chat-messages[data-section="${section}"]`);
-                                if (chatBox) chatBox.scrollTop = 0;
-                            }, 100);
-                        });
-                    });
-                });
+  // Tweet embedding
+  const match = (messageObj.text || "").match(/https:\/\/(twitter|x)\.com\/[^/]+\/status\/\d+/);
+  if (match) {
+    const tweetUrl = match[0];
+    const embedDiv = document.createElement("div");
+    embedDiv.innerHTML = `<blockquote class="twitter-tweet"><a href="${tweetUrl}"></a></blockquote>`;
+    textEl.appendChild(embedDiv);
+    setTimeout(() => {
+      if (window.twttr && window.twttr.widgets) window.twttr.widgets.load();
+    }, 200);
+  }
 
-                chatSections.forEach(section => {
-                    const ref = getChatMessagesRef(section); // 🔸Функція повинна повертати посилання на Firebase для конкретного чату
+  msgEl.appendChild(avatar);
+  msgEl.appendChild(content);
 
-                    ref.on("child_changed", (snapshot) => {
-                        const key = snapshot.key;
-                        const updatedMsg = snapshot.val();
+  // WRAPPER (для reply + меню)
+  const wrapper = document.createElement("div");
+  wrapper.className = "message-wrapper";
 
-                        const msgEl = document.querySelector(`.chat-message[data-key="${key}"]`);
-                        if (!msgEl) return;
+  if (messageObj.replyTo) {
+    const replyBlock = document.createElement("div");
+    replyBlock.className = "reply-preview";
+    replyBlock.dataset.replyKey = messageObj.replyTo.key;
 
-                        // 🔄 Оновити текст
-                        const textEl = msgEl.querySelector(".message-text");
-                        if (textEl) {
-                            textEl.innerHTML = replaceEmojisWithIconify(linkify(updatedMsg.text || ""));
-                        }
+    const previewRaw = (messageObj.replyTo.text || "").trim()
+      ? messageObj.replyTo.text.split("\n")[0].slice(0, 250)
+      : "(image)";
+    const previewText = replaceEmojisWithIconify(previewRaw);
 
-                        // 🛠️ Оновити або створити reaction-row
-                        let reactionRow = msgEl.querySelector(".reaction-row");
+    const avatarSrc = messageObj.replyTo.imageId
+      ? `${imageBaseURL}${messageObj.replyTo.imageId}.webp`
+      : "../logo1.png";
 
-                        if (!reactionRow) {
-                            reactionRow = document.createElement("div");
-                            reactionRow.className = "reaction-row";
-                            msgEl.querySelector(".message-content").appendChild(reactionRow);
-                        }
+    replyBlock.innerHTML = `
+      <div class="reply-container">
+        <img src="${avatarSrc}" class="avatar-small" />
+        <div class="reply-text">
+          <span class="reply-to-name">${shortenAddress(messageObj.replyTo.sender)}</span>
+          <span class="reply-to-preview">${previewText}</span>
+        </div>
+      </div>
+    `;
+    wrapper.appendChild(replyBlock);
+  }
 
-                        // 🔁 Оновити emoji-реакції
-                        reactionRow.innerHTML = "";
-                        if (updatedMsg.reactions) {
-                            Object.entries(updatedMsg.reactions).forEach(([emoji, users]) => {
-                                const count = Object.keys(users).length;
-                                const span = document.createElement("span");
-                                span.className = "reaction";
-                                span.textContent = `${emoji} ${count}`;
-                                reactionRow.appendChild(span);
-                            });
-                        }
-                    });
-                });
+  if (messageObj.replyTo?.sender?.toLowerCase() === (getConnectedWalletAddress() || "").toLowerCase()) {
+    wrapper.classList.add("reply-highlight");
+  }
 
-               function updateReactionButtons(reactionRow, updatedMsg, section, key) {
+  wrapper.appendChild(msgEl);
+  wrapper.appendChild(right);
+
+  chatBox.prepend(wrapper);
+
+  if (messageObj.imageUrl) {
+    const imgEl = document.createElement("img");
+    imgEl.src = messageObj.imageUrl;
+    imgEl.style.maxWidth = "240px";
+    imgEl.style.borderRadius = "8px";
+    imgEl.style.marginTop = "6px";
+    imgEl.style.display = "block";
+    content.appendChild(imgEl);
+  }
+}
+
+/* ==== Дії над повідомленням ==== */
+function replyTo(key, section) {
+  const msgEl = document.querySelector(`.chat-message[data-key="${key}"]`);
+  if (!msgEl) return;
+
+  const sender = msgEl.querySelector(".sender-name")?.textContent || "";
+  const text   = msgEl.querySelector(".message-text")?.innerText || "";
+  const avatarImg = msgEl.querySelector("img.avatar")?.src;
+  let imageId = null;
+  if (avatarImg) {
+    const m = avatarImg.match(/(\d+)\.webp$/);
+    imageId = m ? m[1] : null;
+  }
+  replyToMessageBySection[section] = { key, sender, text, imageId };
+  const input = document.getElementById(`chat-input-${section}`);
+  if (input) {
+    input.placeholder = `Replying to ${sender.slice(0, 6)}: ${text.slice(0, 50)}${text.length > 50 ? "..." : ""}`;
+    input.focus();
+  }
+}
+
+function updateReactionButtons(reactionRow, updatedMsg, section, key) {
   reactionRow.innerHTML = "";
-
   for (const [emoji, users] of Object.entries(updatedMsg.reactions || {})) {
     const btn = document.createElement("button");
     btn.className = "reaction-btn";
-    btn.textContent = `${emoji} ${users.length}`;
-
-    if (users.includes(currentWallet)) {
-      btn.classList.add("reacted");
-    }
-
+    const list = Array.isArray(users) ? users : [];
+    btn.textContent = `${emoji} ${list.length}`;
+    if (list.includes(getConnectedWalletAddress())) btn.classList.add("reacted");
     btn.addEventListener("click", async () => {
       const wallet = getConnectedWalletAddress();
       if (!wallet) return;
-
       const msgRef = getChatMessagesRef(section).child(key);
-      const snapshot = await msgRef.get();
-      const msg = snapshot.val();
+      const snap = await msgRef.get();
+      const msg = snap.val();
       if (!msg) return;
-
       const reactions = msg.reactions || {};
-      const currentUsers = reactions[emoji] || [];
-      const hasReacted = currentUsers.includes(wallet);
-
-      if (hasReacted) {
-        reactions[emoji] = currentUsers.filter(w => w !== wallet);
-        if (reactions[emoji].length === 0) delete reactions[emoji];
-      } else {
-        reactions[emoji] = [...currentUsers, wallet];
-      }
-
+      const cur = Array.isArray(reactions[emoji]) ? reactions[emoji] : [];
+      const has = cur.includes(wallet);
+      reactions[emoji] = has ? cur.filter(w => w !== wallet) : [...cur, wallet];
+      if (Array.isArray(reactions[emoji]) && reactions[emoji].length === 0) delete reactions[emoji];
       await msgRef.update({ reactions });
     });
-
     reactionRow.appendChild(btn);
   }
 }
 
-                // Показ/сховати дропдаун гаманця
-                const wrapper = document.querySelector(".wallet-wrapper");
-                const dropdown = document.getElementById("wallet-header-dropdown");
-                if (wrapper && dropdown) {
-                    wrapper.addEventListener("click", (e) => {
-                        e.stopPropagation();
-                        dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
-                    });
-                }
-
-                // Закриття дропдауна при кліку поза ним
-                document.addEventListener("click", () => {
-                    document.querySelectorAll(".wallet-dropdown-content").forEach(dd => {
-                        dd.style.display = "none";
-                    });
-                });
-
-                // Натиск на кнопку в хедері
-                const walletHeaderBtn = document.getElementById("wallet-header-btn");
-                if (walletHeaderBtn) {
-                    walletHeaderBtn.addEventListener("click", (e) => {
-                        const saved = getConnectedWalletAddress();
-                        if (!saved) {
-                            e.stopPropagation();
-                            connectUniSatWallet();
-                        }
-                    });
-                }
-
-                // Натиск на кнопку в сайдбарі
-                const sidebarConnectBtn = document.getElementById("sidebar-connect-btn");
-                if (sidebarConnectBtn) {
-                    sidebarConnectBtn.addEventListener("click", (e) => {
-                        e.stopPropagation();
-                        const saved = getConnectedWalletAddress();
-                        if (!saved) connectUniSatWallet();
-                    });
-                }
-
-                // Перемикання між розділами
-                document.querySelectorAll('#sidebar-nav a[data-section]').forEach(link => {
-                    link.addEventListener('click', (e) => {
-                        const target = link.getAttribute('data-section');
-                        if (!target) return;
-                        e.preventDefault();
-                        hideAllSections();
-                        showSection(target);
-                    });
-                });
-                // Logout — кнопки з класом .logout-btn
-                document.querySelectorAll(".logout-btn").forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        localStorage.removeItem("taproot_wallet");
-                        location.reload();
-                    });
-                });
-
-                // Logout — посилання в сайдбарі
-                document.querySelectorAll(".sidebar-logout").forEach(link => {
-                    link.addEventListener("click", (e) => {
-                        e.preventDefault();
-                        localStorage.removeItem("taproot_wallet");
-                        location.reload();
-                    });
-                });
-
-                // Натиск на будь-який тригер гаманця (крім основної кнопки)
-                document.querySelectorAll(".wallet-trigger").forEach(btn => {
-                    btn.addEventListener("click", (ev) => {
-                        ev.stopPropagation();
-                        if (ev.target.id === "wallet-header-btn") return;
-
-                        const savedAddr = getConnectedWalletAddress();
-                        if (!savedAddr) {
-                            connectUniSatWallet();
-                        }
-                    });
-                });
-
-               // 🔹 Глобальні змінні
-let app, db, storage;
-
-// 🔹 Конфігурація Firebase
-const firebaseConfig = {
-    apiKey: "AIzaSyB4w22BYSjUhoGSeAf3GTZCGq_GuVkzFQY",
-    authDomain: "owl-chat-d5d3e.firebaseapp.com",
-    databaseURL: "https://owl-chat-d5d3e-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "owl-chat-d5d3e",
-    storageBucket: "owl-chat-d5d3e.appspot.com",
-    messagingSenderId: "464471442222",
-    appId: "1:464471442222:web:1628d29ef2be5564affb0f",
-    measurementId: "G-MMBR7S9EM1"
-};
-
-// 🔹 Функція для отримання посилання на чат
-function getChatMessagesRef(section) {
-    if (!db) throw new Error("Firebase DB не ініціалізований!");
-    return db.ref(`chats/${section}`);
+function deleteMessage(key, section) {
+  if (!confirm("Are you sure you want to delete this message?")) return;
+  const chatRef = getChatMessagesRef(section);
+  chatRef.child(key).remove().catch(console.error);
 }
 
-// 🔹 Запуск після завантаження сторінки
-window.addEventListener("DOMContentLoaded", () => {
-    app = firebase.initializeApp(firebaseConfig);
-    db = firebase.database(app);
-    storage = firebase.storage();
-
-    // Локальні набори для зберігання стану
-    const localMessageIds = new Set();
-    const userMessageKeys = new Set();
-    const seenMessages = new Set();
-
-    // далі — увесь код чату
-});
-
-                            // === Emoji Mapping ===
-                            const emojiToIconifyMap = {
-                                "😊": "twemoji:smiling-face",
-                                "😂": "twemoji:face-with-tears-of-joy",
-                                "🔥": "twemoji:fire",
-                                "💯": "twemoji:hundred-points",
-                                // додай ще emoji, які точно хочеш підтримати
-                            };
-
-                            // === Заміна emoji на iconify-ікони ===
-                            function replaceEmojisWithIconify(text) {
-                                return text.replace(/[\u{1F300}-\u{1FAFF}]/gu, (match) => {
-                                    const iconName = emojiToIconifyMap[match];
-                                    return iconName ?
-                                        `<iconify-icon icon="${iconName}" width="18" style="vertical-align: middle;"></iconify-icon>` :
-                                        match;
-                                });
-                            }
-
-                            function linkify(text) {
-                                const urlPattern = /(https?:\/\/[^\s]+)/g;
-                                return text.replace(urlPattern, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
-                            }
-
-                            function appendMessageToChat(messageObj, key = null, section = "general") {
-                                const chatBox = document.querySelector(`.chat-messages[data-section="${section}"]`);
-                                if (!chatBox) return;
-
-                                if (key && document.querySelector(`.chat-message[data-key="${key}"]`)) return;
-
-                                const msgEl = document.createElement("div");
-                                msgEl.className = "chat-message";
-                                msgEl.dataset.key = key;
-
-                                const avatar = document.createElement("img");
-                                avatar.className = "avatar";
-                                avatar.src = messageObj.imageId ?
-                                    `${imageBaseURL}${messageObj.imageId}.webp` :
-                                    "../logo1.png";
-
-                                const content = document.createElement("div");
-                                content.className = "message-content";
-
-                                const header = document.createElement("div");
-                                header.className = "message-header";
-
-                                // LEFT: sender + time
-                                const left = document.createElement("div");
-                                left.style.display = "flex";
-                                left.style.gap = "6px";
-                                left.style.alignItems = "center";
-
-                                const nameEl = document.createElement("span");
-                                nameEl.className = "sender-name";
-                                nameEl.textContent = shortenAddress(messageObj.sender);
-
-                                const timeEl = document.createElement("span");
-                                timeEl.className = "message-time";
-                                const time = new Date(messageObj.timestamp);
-
-                                // Формат: DD.MM.YYYY HH:MM
-                                const now = Date.now();
-                                const diffHours = (now - messageObj.timestamp) / (1000 * 60 * 60);
-                                const timeStr = time.toLocaleTimeString([], {
-                                    hour: '2-digit',
-                                    minute: '2-digit'
-                                });
-
-                                if (diffHours > 24) {
-                                    const dateStr = time.toLocaleDateString([], {
-                                        day: '2-digit',
-                                        month: '2-digit',
-                                        year: 'numeric'
-                                    });
-                                    timeEl.textContent = `${dateStr}, ${timeStr}`;
-                                } else {
-                                    timeEl.textContent = timeStr;
-                                }
-
-                                left.appendChild(nameEl);
-                                left.appendChild(timeEl);
-
-                                const right = document.createElement("div");
-right.className = "hover-menu";
-
-// кнопка реакцій
-const btnReact = document.createElement("button");
-btnReact.innerHTML = '<iconify-icon icon="mdi:emoticon-outline" width="14"></iconify-icon>';
-btnReact.addEventListener("click", (e) => openReactionPicker(e, key, section));
-right.appendChild(btnReact);
-
-// кнопка reply
-const btnReply = document.createElement("button");
-btnReply.innerHTML = '<iconify-icon icon="mdi:reply" width="14"></iconify-icon>';
-btnReply.addEventListener("click", () => replyTo(key, section));
-right.appendChild(btnReply);
-
-// якщо моє повідомлення – додати edit/delete
-if (messageObj.sender?.toLowerCase() === currentWallet?.toLowerCase()) {
-  const btnEdit = document.createElement("button");
-  btnEdit.innerHTML = '<iconify-icon icon="mdi:pencil" width="14"></iconify-icon>';
-  btnEdit.addEventListener("click", () => editMessage(key, section));
-  right.appendChild(btnEdit);
-
-  const btnDel = document.createElement("button");
-  btnDel.innerHTML = '<iconify-icon icon="ic:baseline-delete" width="14"></iconify-icon>';
-  btnDel.addEventListener("click", () => deleteMessage(key, section));
-  right.appendChild(btnDel);
-}
-
-                                header.appendChild(left);
-                                content.appendChild(header);
-
-                                // TEXT
-                                const textEl = document.createElement("div");
-                                textEl.className = "message-text";
-                                textEl.innerHTML = replaceEmojisWithIconify(linkify(messageObj.text || ""));
-                                content.appendChild(textEl);
-
-                                if (messageObj.reactions) {
-                                    const reactionRow = document.createElement("div");
-                                    reactionRow.className = "reaction-row";
-
-                                    for (const [emoji, users] of Object.entries(messageObj.reactions)) {
-                                        const btn = document.createElement("button");
-                                        btn.className = "reaction-btn";
-                                        btn.textContent = `${emoji} ${users.length}`;
-
-                                        const hasUser = users.includes(currentWallet);
-                                        if (hasUser) btn.classList.add("reacted");
-
-                                        btn.addEventListener("click", async () => {
-                                            const msgRef = getChatMessagesRef(section).child(key);
-                                            const snapshot = await msgRef.get();
-                                            const msg = snapshot.val();
-                                            if (!msg) return;
-
-                                            const wallet = getConnectedWalletAddress();
-                                            if (!wallet) return;
-
-                                            const reactions = msg.reactions || {};
-                                            const currentUsers = reactions[emoji] || [];
-                                            const hasReacted = currentUsers.includes(wallet);
-
-                                            if (hasReacted) {
-                                                reactions[emoji] = currentUsers.filter(w => w !== wallet);
-                                                if (reactions[emoji].length === 0) delete reactions[emoji];
-                                            } else {
-                                                reactions[emoji] = [...currentUsers, wallet];
-                                            }
-
-                                            await msgRef.update({
-                                                reactions
-                                            });
-                                        });
-
-                                        reactionRow.appendChild(btn);
-                                    }
-
-                                    content.appendChild(reactionRow);
-                                }
-
-                                const tweetMatch = messageObj.text.match(/https:\/\/(twitter|x)\.com\/[^\/]+\/status\/\d+/);
-                                if (tweetMatch) {
-                                    const tweetUrl = tweetMatch[0];
-                                    const embedDiv = document.createElement("div");
-                                    embedDiv.innerHTML = `<blockquote class="twitter-tweet"><a href="${tweetUrl}"></a></blockquote>`;
-                                    textEl.appendChild(embedDiv);
-
-                                    function loadTwitterWidgets() {
-                                        setTimeout(() => {
-                                            if (window.twttr && twttr.widgets) {
-                                                twttr.widgets.load();
-                                            }
-                                        }, 200);
-                                    }
-
-                                    if (window.twttr && twttr.widgets) {
-                                        loadTwitterWidgets();
-                                    } else {
-                                        const script = document.createElement("script");
-                                        script.src = "https://platform.twitter.com/widgets.js";
-                                        script.async = true;
-                                        script.onload = loadTwitterWidgets;
-                                        document.body.appendChild(script);
-                                    }
-                                }
-
-                                msgEl.appendChild(avatar);
-                                msgEl.appendChild(content);
-
-                                // WRAPPER (for reply + message)
-                                let wrapper = document.createElement("div");
-                                wrapper.className = "message-wrapper";
-
-                                // Створюємо блок відповіді, якщо є
-                                let replyBlock = null;
-
-                                if (messageObj.replyTo) {
-                                    replyBlock = document.createElement("div");
-                                    replyBlock.className = "reply-preview";
-                                    replyBlock.dataset.replyKey = messageObj.replyTo.key;
-
-                                    const previewRaw = (messageObj.replyTo?.text || "").trim() ?
-                                        messageObj.replyTo.text.split("\n")[0].slice(0, 250) :
-                                        "(image)";
-                                    const previewText = replaceEmojisWithIconify(previewRaw);
-
-                                    const avatarSrc = messageObj.replyTo.imageId ?
-                                        `${imageBaseURL}${messageObj.replyTo.imageId}.webp` :
-                                        "../logo1.png";
-
-                                    replyBlock.innerHTML = `
-    <div class="reply-container">
-      <img src="${avatarSrc}" class="avatar-small" />
-      <div class="reply-text">
-        <span class="reply-to-name">${shortenAddress(messageObj.replyTo.sender)}</span>
-        <span class="reply-to-preview">${previewText}</span>
-      </div>
-    </div>
-  `;
-
-                                    wrapper.appendChild(replyBlock);
-                                }
-
-                                // === Всередині appendMessageToChat(messageObj, key, section) ===
-
-                                // Підсвітка: якщо відповідь на мій меседж
-                                if (messageObj.replyTo?.sender?.toLowerCase() === currentWallet?.toLowerCase()) {
-                                    wrapper.classList.add("reply-highlight");
-                                }
-
-                                wrapper.appendChild(msgEl);
-                                wrapper.appendChild(right);
-
-                                chatBox.prepend(wrapper);
-
-                                // IMAGE if any
-                                if (messageObj.imageUrl) {
-                                    const imgEl = document.createElement("img");
-                                    imgEl.src = messageObj.imageUrl;
-                                    imgEl.style.maxWidth = "240px";
-                                    imgEl.style.borderRadius = "8px";
-                                    imgEl.style.marginTop = "6px";
-                                    imgEl.style.display = "block";
-                                    content.appendChild(imgEl);
-                                }
-                            }
-
-                            function replyTo(key, section) {
-                                const msgEl = document.querySelector(`.chat-message[data-key="${key}"]`);
-                                if (!msgEl) return;
-
-                                const sender = msgEl.querySelector(".sender-name")?.textContent || "";
-                                const text = msgEl.querySelector(".message-text")?.innerText || "";
-                                const avatarImg = msgEl.querySelector("img.avatar")?.src;
-
-                                let imageId = null;
-                                if (avatarImg) {
-                                    const match = avatarImg.match(/(\d+)\.webp$/);
-                                    imageId = match ? match[1] : null;
-                                }
-
-                                // Зберігаємо reply окремо для кожного чату
-                                replyToMessageBySection[section] = {
-                                    key,
-                                    sender,
-                                    text,
-                                    imageId
-                                };
-
-                                const input = document.getElementById(`chat-input-${section}`);
-                                input.placeholder = `Replying to ${sender.slice(0, 6)}: ${text.slice(0, 50)}${text.length > 50 ? "..." : ""}`;
-                                input.focus();
-                            }
-
-
-                            chatSections.forEach(section => {
-                                const sendBtn = document.querySelector(`.send-btn[data-section="${section}"]`);
-                                const fileInput       = document.querySelector(`.image-upload[data-section="${section}"]`);
-                                const input = document.getElementById(`chat-input-${section}`);
-                                const chatRef = db.ref(`chats/${section}`);
-
-                                if (!sendBtn || !fileInput || !input) return;
-
-                                sendBtn.addEventListener("click", async () => {
-                                    const text = input.value.trim();
-                                    const sender = localStorage.getItem("taproot_wallet");
-
-                                    if ((!text && !fileInput.files[0]) || !sender) return;
-
-                                    if (!cachedHolderInfo?.found) {
-                                        alert("Only verified holders can send messages.");
-                                        return;
-                                    }
-
-                                    let imageUrl = null;
-
-                                    if (fileInput.files.length > 0) {
-                                        try {
-                                            const file = fileInput.files[0];
-                                            console.log("Uploading image:", file.name);
-
-                                            const fileName = `chat_images/${Date.now()}_${file.name}`;
-                                            const ref = storage.ref().child(fileName);
-                                            const snapshot = await ref.put(file);
-
-                                            imageUrl = await snapshot.ref.getDownloadURL();
-                                            console.log("Image uploaded. URL:", imageUrl);
-                                        } catch (err) {
-                                            console.error("Image upload failed:", err);
-                                            alert("Failed to upload image.");
-                                        }
-                                    }
-
-                                    const replyData = replyToMessageBySection[section];
-                                    const msgData = {
-                                        sender,
-                                        text,
-                                        timestamp: Date.now(),
-                                        imageId: cachedHolderInfo.imageId || null,
-                                        imageUrl: imageUrl || null,
-                                        ...(replyData && {
-                                            replyTo: {
-                                                key: replyData.key,
-                                                sender: replyData.sender,
-                                                text: replyData.text,
-                                                imageId: replyData.imageId || null
-                                            }
-                                        })
-                                    };
-
-                                    await chatRef.push(msgData);
-
-                                    input.value = "";
-                                    input.placeholder = "Type a message...";
-                                    fileInput.value = "";
-                                    document.querySelector(`.image-preview-container[data-section="${section}"]`).style.display = "none";
-                                    replyToMessageBySection[section] = null;
-                                });
-                            });
-
-
-                            chatSections.forEach(section => {
-                                const chatInput = document.getElementById(`chat-input-${section}`);
-                                const sendBtn = document.querySelector(`.send-btn[data-section="${section}"]`);
-                                const toggleBtn       = document.querySelector(`.toggle-emoji-picker[data-section="${section}"]`);
-                                const emojiPicker     = document.querySelector(`.emoji-picker[data-section="${section}"]`);
-
-                                if (!chatInput || !sendBtn || !toggleBtn || !emojiPicker) return;
-
-                                // Авто-зміна висоти
-                                chatInput.addEventListener("input", () => {
-                                    chatInput.style.height = "auto";
-                                    chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + "px";
-                                });
-
-                                // Enter = відправка, Shift+Enter = новий рядок
-                                chatInput.addEventListener("keydown", function(e) {
-                                    if (e.key === "Enter" && !e.shiftKey) {
-                                        e.preventDefault();
-                                        sendBtn.click();
-                                    } else if (e.key === "Enter" && e.shiftKey) {
-                                        const start = chatInput.selectionStart;
-                                        const end = chatInput.selectionEnd;
-                                        chatInput.value = chatInput.value.slice(0, start) + "\n" + chatInput.value.slice(end);
-                                        chatInput.selectionStart = chatInput.selectionEnd = start + 1;
-                                        e.preventDefault();
-                                    }
-                                });
-
-                                // Перемикач емодзі
-                                toggleBtn.addEventListener("click", () => {
-                                    emojiPicker.style.display = emojiPicker.style.display === "none" ? "block" : "none";
-                                });
-
-                                // Закриття емодзі при кліку поза
-                                document.addEventListener("click", (e) => {
-                                    if (!emojiPicker.contains(e.target) && !toggleBtn.contains(e.target)) {
-                                        emojiPicker.style.display = "none";
-                                    }
-                                });
-
-                                // Вставка емодзі у textarea
-                                emojiPicker.addEventListener("emoji-click", (event) => {
-                                    const emoji = event.detail.unicode;
-                                    const cursorPos = chatInput.selectionStart;
-                                    const before = chatInput.value.substring(0, cursorPos);
-                                    const after = chatInput.value.substring(cursorPos);
-                                    chatInput.value = before + emoji + after;
-                                    chatInput.selectionStart = chatInput.selectionEnd = cursorPos + emoji.length;
-                                    chatInput.focus();
-                                });
-                            });
-
-
-                            chatSections.forEach(section => {
-                                const chatInput = document.getElementById(`chat-input-${section}`);
-                                const emojiPicker     = document.querySelector(`.emoji-picker[data-section="${section}"]`);
-                                const chatRef = db.ref(`chats/${section}`);
-
-                                // === EMOJI PICKER вставка
-                                if (emojiPicker && chatInput) {
-                                    customElements.whenDefined('emoji-picker').then(() => {
-                                        emojiPicker.addEventListener("emoji-click", event => {
-                                            const emoji = event.detail.unicode;
-                                            const cursorPos = chatInput.selectionStart;
-                                            const before = chatInput.value.substring(0, cursorPos);
-                                            const after = chatInput.value.substring(cursorPos);
-                                            chatInput.value = before + emoji + after;
-                                            chatInput.selectionStart = chatInput.selectionEnd = cursorPos + emoji.length;
-                                            chatInput.focus();
-                                            emojiPicker.style.display = "none";
-                                        });
-                                    });
-                                }
-
-                                // === Видалення повідомлення
-                                chatRef.on("child_removed", (snapshot) => {
-                                    const key = snapshot.key;
-                                    const msg = document.querySelector(`.chat-messages[data-section="${section}"] .chat-message[data-key="${key}"]`);
-                                    if (msg) {
-                                        msg.closest(".message-wrapper").remove();
-                                    }
-
-                                    document.querySelectorAll(`.chat-messages[data-section="${section}"] .reply-preview[data-reply-key="${key}"]`).forEach(preview => {
-                                        const wrapper = preview.closest(".message-wrapper");
-                                        preview.remove();
-                                        const chatMsg = wrapper.querySelector(".chat-message");
-                                        if (chatMsg) {
-                                            chatMsg.style.borderRadius = "8px";
-                                        }
-                                    });
-                                });
-
-                                // === Оновлення повідомлення
-                                chatRef.on("child_changed", (snapshot) => {
-                                    const key = snapshot.key;
-                                    const updatedMsg = snapshot.val();
-
-                                    const msgEl = document.querySelector(`.chat-messages[data-section="${section}"] .chat-message[data-key="${key}"] .message-text`);
-                                    if (msgEl) {
-                                        msgEl.innerHTML = replaceEmojisWithIconify(linkify(updatedMsg.text || ""));
-  
-                                    const reactionRow = msgEl.querySelector(".reaction-row");
-                                      if (!reactionRow) return;
-
-                                      updateReactionButtons(reactionRow, updatedMsg, section, key);
-                                
-                                    }
-                                });
-                            });
-
-                            function deleteMessage(key, section) {
-                                const confirmDelete = confirm("Are you sure you want to delete this message?");
-                                if (!confirmDelete) return;
-
-                                const chatRef = db.ref(`chats/${section}`);
-
-                                chatRef.child(key).remove()
-                                    .then(() => console.log("Message deleted:", key))
-                                    .catch((error) => console.error("Delete error:", error));
-                            }
-
-
-                            function editMessage(key, section) {
-                                const msgEl = document.querySelector(`.chat-messages[data-section="${section}"] .chat-message[data-key="${key}"] .message-text`);
-                                if (!msgEl) return;
-
-                                const chatRef = db.ref(`chats/${section}`);
-
-                                // Зберігаємо старий текст
-                                const originalText = msgEl.innerHTML;
-
-                                // Робимо поле редагованим
-                                msgEl.contentEditable = "true";
-                                msgEl.focus();
-                                msgEl.classList.add("editing-message");
-
-                                // Додаємо кнопки збереження / скасування
-                                const saveBtn = document.createElement("button");
-                                saveBtn.textContent = "Save";
-                                saveBtn.className = "save-edit-btn";
-
-                                const cancelBtn = document.createElement("button");
-                                cancelBtn.textContent = "Cancel";
-                                cancelBtn.className = "cancel-edit-btn";
-
-                                msgEl.parentNode.appendChild(saveBtn);
-                                msgEl.parentNode.appendChild(cancelBtn);
-
-                                // Збереження
-                                saveBtn.addEventListener("click", () => {
-                                    const newText = msgEl.innerText.trim();
-                                    if (newText) {
-                                        chatRef.child(key).update({
-                                            text: newText
-                                        });
-                                    }
-                                    cleanup();
-                                });
-
-                                // Скасування
-                                cancelBtn.addEventListener("click", () => {
-                                    msgEl.innerHTML = originalText;
-                                    cleanup();
-                                });
-
-                                function cleanup() {
-                                    msgEl.contentEditable = "false";
-                                    msgEl.classList.remove("editing-message");
-                                    saveBtn.remove();
-                                    cancelBtn.remove();
-                                }
-                            }
-
-  function openReactionPicker(event, msgKey, section) {
-    const picker = document.createElement('emoji-picker');
-    picker.style.position = 'absolute';
-    picker.style.bottom = '26px';
-    picker.style.right = '0';
-    picker.style.zIndex = '1000';
-    picker.style.background = '#121212';
-    picker.style.border = '1px solid #333';
-    picker.style.borderRadius = '10px';
-    picker.style.padding = '4px';
-    picker.style.boxShadow = '0 6px 14px rgba(0, 0, 0, 0.45)';
-    picker.style.width = '180px';
-    picker.style.maxHeight = '200px';
-    picker.style.overflowY = 'auto';
-    picker.style.fontSize = '18px';
-
-    picker.addEventListener('emoji-click', async e => {
-      const emoji = e.detail.unicode;
-
-      const messageRef = db.ref(`chats/${section}`).child(msgKey);
-      const snapshot = await messageRef.get();
-      const msg = snapshot.val();
-      if (!msg) return;
-
-      const wallet = getConnectedWalletAddress();
-      if (!wallet) return;
-
-      const reactions = msg.reactions || {};
-      const currentUsers = reactions[emoji] || [];
-
-      const hasReacted = currentUsers.includes(wallet);
-
-      if (hasReacted) {
-        reactions[emoji] = currentUsers.filter(w => w !== wallet);
-        if (reactions[emoji].length === 0) delete reactions[emoji];
-      } else {
-        if (Object.keys(reactions).length >= 6 && !reactions[emoji]) {
-          alert("Максимум 6 різних реакцій.");
-          return;
-        }
-        reactions[emoji] = [...currentUsers, wallet];
-      }
-
-      await messageRef.update({ reactions });
-    });
-
-    const existing = document.querySelector('emoji-picker');
-    if (existing) existing.remove();
-
-    event.currentTarget.appendChild(picker);
+function editMessage(key, section) {
+  const textEl = document.querySelector(`.chat-messages[data-section="${section}"] .chat-message[data-key="${key}"] .message-text`);
+  if (!textEl) return;
+
+  const chatRef = getChatMessagesRef(section);
+  const originalText = textEl.innerHTML;
+
+  textEl.contentEditable = "true";
+  textEl.focus();
+  textEl.classList.add("editing-message");
+
+  const saveBtn = document.createElement("button");
+  saveBtn.textContent = "Save";
+  saveBtn.className = "save-edit-btn";
+
+  const cancelBtn = document.createElement("button");
+  cancelBtn.textContent = "Cancel";
+  cancelBtn.className = "cancel-edit-btn";
+
+  textEl.parentNode.appendChild(saveBtn);
+  textEl.parentNode.appendChild(cancelBtn);
+
+  function cleanup() {
+    textEl.contentEditable = "false";
+    textEl.classList.remove("editing-message");
+    saveBtn.remove();
+    cancelBtn.remove();
   }
 
-  async function updateReactions(msgKey, section) {
-    const updatedSnapshot = await db.ref(`chats/${section}`).child(msgKey).get();
-    const updatedMsg = updatedSnapshot.val();
+  saveBtn.addEventListener("click", () => {
+    const newText = textEl.innerText.trim();
+    if (newText) chatRef.child(key).update({ text: newText });
+    else textEl.innerHTML = originalText;
+    cleanup();
+  });
+  cancelBtn.addEventListener("click", () => {
+    textEl.innerHTML = originalText;
+    cleanup();
+  });
+}
 
-    const msgEl = document.querySelector(`.chat-message[data-key="${msgKey}"]`);
-    if (!msgEl) return;
+/* ==== Пікер реакцій (окремий від інпут-пікерів!) ==== */
+function openReactionPicker(event, msgKey, section) {
+  // приберемо попередній саме реакційний пікер
+  const existing = document.querySelector('emoji-picker[data-role="react-picker"]');
+  if (existing) existing.remove();
 
-    const reactionRow = msgEl.querySelector(".reaction-row");
-    if (!reactionRow) return;
+  const picker = document.createElement("emoji-picker");
+  picker.setAttribute("data-role", "react-picker");
+  picker.style.position = "absolute";
+  picker.style.bottom = "26px";
+  picker.style.right = "0";
+  picker.style.zIndex = "1000";
+  picker.style.background = "#121212";
+  picker.style.border = "1px solid #333";
+  picker.style.borderRadius = "10px";
+  picker.style.padding = "4px";
+  picker.style.width = "180px";
+  picker.style.maxHeight = "200px";
+  picker.style.overflowY = "auto";
 
-    reactionRow.innerHTML = "";
+  picker.addEventListener("emoji-click", async e => {
+    const emoji = e.detail.unicode;
+    const messageRef = getChatMessagesRef(section).child(msgKey);
+    const snapshot = await messageRef.get();
+    const msg = snapshot.val();
+    if (!msg) return;
 
-    for (const [emoji, users] of Object.entries(updatedMsg.reactions || {})) {
-      const newBtn = document.createElement("button");
-      newBtn.className = "reaction-btn";
-      newBtn.textContent = `${emoji} ${users.length}`;
+    const wallet = getConnectedWalletAddress();
+    if (!wallet) return;
 
-      if (users.includes(currentWallet)) {
-        newBtn.classList.add("reacted");
+    const reactions = msg.reactions || {};
+    const cur = Array.isArray(reactions[emoji]) ? reactions[emoji] : [];
+    const has = cur.includes(wallet);
+
+    if (has) {
+      reactions[emoji] = cur.filter(w => w !== wallet);
+      if (reactions[emoji].length === 0) delete reactions[emoji];
+    } else {
+      if (Object.keys(reactions).length >= 6 && !reactions[emoji]) {
+        alert("Максимум 6 різних реакцій.");
+        return;
+      }
+      reactions[emoji] = [...cur, wallet];
+    }
+    await messageRef.update({ reactions });
+    picker.remove();
+  });
+
+  event.currentTarget.appendChild(picker);
+}
+
+/* ==== Старт програми ==== */
+window.addEventListener("DOMContentLoaded", () => {
+  // Firebase
+  app = firebase.initializeApp(firebaseConfig);
+  db = firebase.database(app);
+  storage = firebase.storage();
+
+  // Збережені сети
+  const localMessageIds = new Set();
+  const userMessageKeys = new Set();
+  const seenMessages = new Set();
+
+  // Wallet dropdown
+  const wrapper = document.querySelector(".wallet-wrapper");
+  const dropdown = document.getElementById("wallet-header-dropdown");
+  if (wrapper && dropdown) {
+    wrapper.addEventListener("click", (e) => {
+      e.stopPropagation();
+      dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+    });
+  }
+  document.addEventListener("click", () => {
+    document.querySelectorAll(".wallet-dropdown-content").forEach(dd => dd.style.display = "none");
+  });
+
+  // Wallet connect
+  async function connectUniSatWallet() {
+    if (!window.unisat) {
+      alert("UniSat Wallet not found.");
+      return;
+    }
+    try {
+      await window.unisat.requestAccounts();
+      const address = (await window.unisat.getAccounts())[0];
+      localStorage.setItem("taproot_wallet", address);
+      updateWalletButtons(address);
+      await populateSidebarUserInfo(address);
+      currentWallet = address;
+    } catch {
+      alert("Failed to connect wallet.");
+    }
+  }
+
+  let currentWallet = getConnectedWalletAddress() || null;
+  if (currentWallet) {
+    updateWalletButtons(currentWallet);
+    populateSidebarUserInfo(currentWallet);
+  }
+
+  const walletHeaderBtn = document.getElementById("wallet-header-btn");
+  if (walletHeaderBtn) {
+    walletHeaderBtn.addEventListener("click", (e) => {
+      const saved = getConnectedWalletAddress();
+      if (!saved) {
+        e.stopPropagation();
+        connectUniSatWallet();
+      }
+    });
+  }
+
+  const sidebarConnectBtn = document.getElementById("sidebar-connect-btn");
+  if (sidebarConnectBtn) {
+    sidebarConnectBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const saved = getConnectedWalletAddress();
+      if (!saved) connectUniSatWallet();
+    });
+  }
+
+  // Навігація секцій
+  document.querySelectorAll('#sidebar-nav a[data-section]').forEach(link => {
+    link.addEventListener('click', (e) => {
+      const target = link.getAttribute('data-section');
+      if (!target) return;
+      e.preventDefault();
+      hideAllSections();
+      showSection(target);
+    });
+  });
+
+  // Logout
+  document.querySelectorAll(".logout-btn, .sidebar-logout").forEach(el => {
+    el.addEventListener("click", (e) => {
+      e.preventDefault();
+      localStorage.removeItem("taproot_wallet");
+      location.reload();
+    });
+  });
+
+  // === CHAT UI: скрепка відкриває file input
+  chatSections.forEach(section => {
+    const uploadBtn = document.querySelector(`.upload-image-btn[data-section="${section}"]`);
+    const fileInput = document.querySelector(`.image-upload[data-section="${section}"]`);
+    if (uploadBtn && fileInput) {
+      uploadBtn.addEventListener("click", () => fileInput.click());
+    }
+  });
+
+  // Прев’ю/скасування картинки
+  chatSections.forEach(section => {
+    const fileInput = document.querySelector(`.image-upload[data-section="${section}"]`);
+    const previewContainer = document.querySelector(`.image-preview-container[data-section="${section}"]`);
+    const previewImg = document.querySelector(`.image-preview[data-section="${section}"]`);
+    const cancelBtn = document.querySelector(`.cancel-image[data-section="${section}"]`);
+    if (!fileInput || !previewContainer || !previewImg || !cancelBtn) return;
+
+    fileInput.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      if (file.size > 5 * 1024 * 1024) { alert("Max image size is 5MB."); return; }
+      previewImg.src = URL.createObjectURL(file);
+      previewContainer.style.display = "block";
+    });
+
+    cancelBtn.addEventListener("click", () => {
+      previewContainer.style.display = "none";
+      fileInput.value = "";
+    });
+  });
+
+  // Підписка на нові повідомлення
+  chatSections.forEach(section => {
+    const ref = getChatMessagesRef(section);
+    ref.on("child_added", (snapshot) => {
+      const msg = snapshot.val();
+      const key = snapshot.key;
+
+      const uniqueId = `${msg.sender}_${msg.timestamp}`;
+      if (seenMessages.has(uniqueId)) return;
+      seenMessages.add(uniqueId);
+      if (seenMessages.size > 500) seenMessages.clear();
+
+      appendMessageToChat(msg, key, section, currentWallet);
+
+      setTimeout(() => {
+        const chatBox = document.querySelector(`.chat-messages[data-section="${section}"]`);
+        if (chatBox) chatBox.scrollTop = 0;
+      }, 100);
+    });
+  });
+
+  // Оновлення повідомлення
+  chatSections.forEach(section => {
+    const ref = getChatMessagesRef(section);
+    ref.on("child_changed", (snapshot) => {
+      const key = snapshot.key;
+      const updatedMsg = snapshot.val();
+
+      const msgCard = document.querySelector(`.chat-messages[data-section="${section}"] .chat-message[data-key="${key}"]`);
+      if (!msgCard) return;
+
+      const textEl = msgCard.querySelector(".message-text");
+      if (textEl) {
+        textEl.innerHTML = replaceEmojisWithIconify(linkify(updatedMsg.text || ""));
       }
 
-      newBtn.addEventListener("click", async () => {
-        const wallet = getConnectedWalletAddress();
-        if (!wallet) return;
+      const contentEl = msgCard.querySelector(".message-content");
+      let reactionRow = msgCard.querySelector(".reaction-row");
+      if (!reactionRow) {
+        reactionRow = document.createElement("div");
+        reactionRow.className = "reaction-row";
+        contentEl.appendChild(reactionRow);
+      }
+      updateReactionButtons(reactionRow, updatedMsg, section, key);
+    });
+  });
 
-        const msgRef = db.ref(`chats/${section}`).child(msgKey);
-        const snapshot = await msgRef.get();
-        const msg = snapshot.val();
-        if (!msg) return;
+  // Видалення повідомлення
+  chatSections.forEach(section => {
+    const chatRef = getChatMessagesRef(section);
+    chatRef.on("child_removed", (snapshot) => {
+      const key = snapshot.key;
+      const msg = document.querySelector(`.chat-messages[data-section="${section}"] .chat-message[data-key="${key}"]`);
+      if (msg) msg.closest(".message-wrapper")?.remove();
 
-        const reactions = msg.reactions || {};
-        const currentUsers = reactions[emoji] || [];
-        const hasReacted = currentUsers.includes(wallet);
+      document.querySelectorAll(`.chat-messages[data-section="${section}"] .reply-preview[data-reply-key="${key}"]`)
+        .forEach(preview => {
+          const wrapper = preview.closest(".message-wrapper");
+          preview.remove();
+          const chatMsg = wrapper?.querySelector(".chat-message");
+          if (chatMsg) chatMsg.style.borderRadius = "8px";
+        });
+    });
+  });
 
-        if (hasReacted) {
-          reactions[emoji] = currentUsers.filter(w => w !== wallet);
-          if (reactions[emoji].length === 0) delete reactions[emoji];
-        } else {
-          reactions[emoji] = [...currentUsers, wallet];
+  // Надсилання повідомлення
+  chatSections.forEach(section => {
+    const sendBtn  = document.querySelector(`.send-btn[data-section="${section}"]`);
+    const fileInput = document.querySelector(`.image-upload[data-section="${section}"]`);
+    const input    = document.getElementById(`chat-input-${section}`);
+    const chatRef  = getChatMessagesRef(section);
+    if (!sendBtn || !fileInput || !input) return;
+
+    sendBtn.addEventListener("click", async () => {
+      const text = input.value.trim();
+      const sender = getConnectedWalletAddress();
+
+      if ((!text && !fileInput.files[0]) || !sender) return;
+
+      if (!cachedHolderInfo?.found) {
+        alert("Only verified holders can send messages.");
+        return;
+      }
+
+      let imageUrl = null;
+      if (fileInput.files.length > 0) {
+        try {
+          const file = fileInput.files[0];
+          const fileName = `chat_images/${Date.now()}_${file.name}`;
+          const sref = storage.ref().child(fileName);
+          const snap = await sref.put(file);
+          imageUrl = await snap.ref.getDownloadURL();
+        } catch (err) {
+          console.error("Image upload failed:", err);
+          alert("Failed to upload image.");
         }
+      }
 
-        await msgRef.update({ reactions });
+      const replyData = replyToMessageBySection[section];
+      const msgData = {
+        sender,
+        text,
+        timestamp: Date.now(),
+        imageId: cachedHolderInfo.imageId || null,
+        imageUrl: imageUrl || null,
+        ...(replyData && {
+          replyTo: {
+            key: replyData.key,
+            sender: replyData.sender,
+            text: replyData.text,
+            imageId: replyData.imageId || null
+          }
+        })
+      };
+
+      await chatRef.push(msgData);
+
+      input.value = "";
+      input.placeholder = "Type a message...";
+      fileInput.value = "";
+      const preview = document.querySelector(`.image-preview-container[data-section="${section}"]`);
+      if (preview) preview.style.display = "none";
+      replyToMessageBySection[section] = null;
+    });
+  });
+
+  // Інпут: авто-висота, Enter/Shift+Enter, emoji
+  chatSections.forEach(section => {
+    const chatInput = document.getElementById(`chat-input-${section}`);
+    const sendBtn = document.querySelector(`.send-btn[data-section="${section}"]`);
+    const toggleBtn = document.querySelector(`.toggle-emoji-picker[data-section="${section}"]`);
+    const emojiPicker = document.querySelector(`.emoji-picker[data-section="${section}"]`);
+    if (!chatInput || !sendBtn || !toggleBtn || !emojiPicker) return;
+
+    chatInput.addEventListener("input", () => {
+      chatInput.style.height = "auto";
+      chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + "px";
+    });
+    chatInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        sendBtn.click();
+      } else if (e.key === "Enter" && e.shiftKey) {
+        const start = chatInput.selectionStart;
+        const end = chatInput.selectionEnd;
+        chatInput.value = chatInput.value.slice(0, start) + "\n" + chatInput.value.slice(end);
+        chatInput.selectionStart = chatInput.selectionEnd = start + 1;
+        e.preventDefault();
+      }
+    });
+
+    toggleBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      emojiPicker.style.display = emojiPicker.style.display === "none" ? "block" : "none";
+    });
+
+    document.addEventListener("click", (e) => {
+      if (!emojiPicker.contains(e.target) && !toggleBtn.contains(e.target)) {
+        emojiPicker.style.display = "none";
+      }
+    });
+
+    customElements.whenDefined("emoji-picker").then(() => {
+      emojiPicker.addEventListener("emoji-click", (event) => {
+        const emoji = event.detail.unicode;
+        const cursorPos = chatInput.selectionStart;
+        const before = chatInput.value.substring(0, cursorPos);
+        const after  = chatInput.value.substring(cursorPos);
+        chatInput.value = before + emoji + after;
+        chatInput.selectionStart = chatInput.selectionEnd = cursorPos + emoji.length;
+        chatInput.focus();
+        emojiPicker.style.display = "none";
       });
-
-      reactionRow.appendChild(newBtn);
-    } 
-
-}); 
+    });
+  });
+});
 </script>
 </body>
 </html>
