@@ -793,6 +793,9 @@
             color: black;
             font-weight: bold;
         }
+        emoji-picker[data-role="react-picker"]::part(emoji) {
+    font-size: 18px; /* менший розмір емодзі */
+}
     </style>
 </head>
 
@@ -1493,18 +1496,22 @@ function openReactionPicker(event, msgKey, section) {
   if (existing) existing.remove();
 
   const picker = document.createElement("emoji-picker");
-  picker.setAttribute("data-role", "react-picker");
-  picker.style.position = "absolute";
-  picker.style.bottom = "26px";
-  picker.style.right = "0";
-  picker.style.zIndex = "1000";
-  picker.style.background = "#121212";
-  picker.style.border = "1px solid #333";
-  picker.style.borderRadius = "10px";
-  picker.style.padding = "4px";
-  picker.style.width = "180px";
-  picker.style.maxHeight = "200px";
-  picker.style.overflowY = "auto";
+picker.setAttribute("data-role", "react-picker");
+
+picker.style.transform = "scale(1.2)";
+picker.style.transformOrigin = "top left";
+picker.style.position = "absolute";
+picker.style.bottom = "26px";
+picker.style.right = "0";
+picker.style.zIndex = "1000";
+picker.style.background = "#121212";
+picker.style.border = "1px solid #333";
+picker.style.borderRadius = "10px";
+picker.style.padding = "4px";
+picker.style.width = "180px";
+picker.style.maxHeight = "200px";
+picker.style.overflowY = "auto";
+
 
   picker.addEventListener("emoji-click", async e => {
     const emoji = e.detail.unicode;
