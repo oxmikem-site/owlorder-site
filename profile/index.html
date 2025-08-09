@@ -1625,55 +1625,60 @@ function editMessage(key, section) {
 
 /* ==== Пікер реакцій (окремий від інпут-пікерів!) ==== */
 function openReactionPicker(event, msgKey, section) {
-  // приберемо попередній саме реакційний пікер
-  const existing = document.querySelector('emoji-picker[data-role="react-picker"]');
-  if (existing) existing.remove();
+    // Прибираємо попередній пікер реакцій
+    const existing = document.querySelector('emoji-picker[data-role="react-picker"]');
+    if (existing) existing.remove();
 
-  const picker = document.createElement("emoji-picker");
-picker.setAttribute("data-role", "react-picker");
+    const picker = document.createElement("emoji-picker");
+    picker.setAttribute("data-role", "react-picker");
 
-picker.style.transform = "scale(1.2)";
-picker.style.transformOrigin = "top left";
-picker.style.position = "absolute";
-picker.style.bottom = "26px";
-picker.style.right = "0";
-picker.style.zIndex = "1000";
-picker.style.background = "#121212";
-picker.style.border = "1px solid #333";
-picker.style.borderRadius = "10px";
-picker.style.padding = "4px";
-picker.style.width = "270px";
-picker.style.maxHeight = "300px";
-picker.style.overflowY = "auto";
+    // === Стилі як у пікера для повідомлень ===
+    picker.style.position = "absolute";
+    picker.style.bottom = "50px"; // трохи вище, щоб не обрізався
+    picker.style.right = "10px";
+    picker.style.background = "#121212";
+    picker.style.border = "1px solid #333";
+    picker.style.borderRadius = "10px";
+    picker.style.padding = "4px";
+    picker.style.width = "220px";
+    picker.style.maxHeight = "260px";
+    picker.style.overflowY = "auto";
+    picker.style.zIndex = "1000";
+    picker.style.boxShadow = "0 6px 24px rgba(0,0,0,0.45)";
 
+    // Додаємо у DOM поруч із кнопкою реакцій
+    event.target.closest(".message-actions").appendChild(picker);
 
-  picker.addEventListener("emoji-click", async e => {
-    const emoji = e.detail.unicode;
-    const messageRef = getChatMessagesRef(section).child(msgKey);
-    const snapshot = await messageRef.get();
-    const msg = snapshot.val();
-    if (!msg) return;
+    picker.addEventListener("emoji-click", async e => {
+        const emoji = e.detail.unicode;
+        const messageRef = getChatMessagesRef(section).child(msgKey);
+        const snapshot = await messageRef.get();
+        const msg = snapshot.val();
+        if (!msg) return;
 
-    const wallet = getConnectedWalletAddress();
-    if (!wallet) return;
+        const wallet = getConnectedWalletAddress();
+        if (!wallet) return;
 
-    const reactions = msg.reactions || {};
-    const cur = Array.isArray(reactions[emoji]) ? reactions[emoji] : [];
-    const has = cur.includes(wallet);
+        const reactions = msg.reactions || {};
+        const cur = Array.isArray(reactions[emoji]) ? reactions[emoji] : [];
+        const has = cur.includes(wallet);
 
-    if (has) {
-      reactions[emoji] = cur.filter(w => w !== wallet);
-      if (reactions[emoji].length === 0) delete reactions[emoji];
-    } else {
-      if (Object.keys(reactions).length >= 6 && !reactions[emoji]) {
-        alert("Максимум 6 різних реакцій.");
-        return;
-      }
-      reactions[emoji] = [...cur, wallet];
-    }
-    await messageRef.update({ reactions });
-    picker.remove();
-  });
+        if (has) {
+            // Знімаємо реакцію
+            reactions[emoji] = cur.filter(w => w !== wallet);
+            if (reactions[emoji].length === 0) delete reactions[emoji];
+        } else {
+            // Обмеження 6 різних реакцій
+            if (Object.keys(reactions).length >= 6 && !reactions[emoji]) {
+                alert("Максимум 6 різних реакцій.");
+                return;
+            }
+            reactions[emoji] = [...cur, wallet];
+        }
+        await messageRef.update({ reactions });
+        picker.remove();
+    });
+}
 
   event.currentTarget.appendChild(picker);
 }
