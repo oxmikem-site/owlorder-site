@@ -796,6 +796,24 @@
         emoji-picker[data-role="react-picker"]::part(emoji) {
     font-size: 18px; /* менший розмір емодзі */
 }
+
+        /* універсальний бейдж */
+.sidebar-badge {
+  display:inline-flex; align-items:center; justify-content:center;
+  min-width:18px; height:18px; padding:0 6px; margin-left:8px;
+  border-radius:999px; font-size:12px; font-weight:700;
+  background:#444; color:#fff; box-shadow: inset 0 1px 0 rgba(255,255,255,.12);
+}
+
+/* бейдж «непрочитаних» */
+.sidebar-badge.unread { background:#d14545; }            /* червоний */
+
+/* бейдж «реплаїв на мене» */
+.sidebar-badge.replies {
+  background: #d4c87c; color:#000;                       /* золотий */
+  box-shadow: 0 0 10px rgba(212,200,124,.75), 0 0 2px #000 inset;
+}
+
     </style>
 </head>
 
@@ -1179,6 +1197,39 @@ function showSection(id) {
   }
 }
 
+                // === helpers: badges in sidebar ===
+function ensureSidebarBadges(section) {
+  const link = document.querySelector(`#sidebar-nav a[data-section="${section}"]`);
+  if (!link) return null;
+
+  let unread = link.querySelector('.sidebar-badge.unread');
+  let replies = link.querySelector('.sidebar-badge.replies');
+
+  if (!unread) {
+    unread = document.createElement('span');
+    unread.className = 'sidebar-badge unread';
+    unread.style.display = 'none';
+    link.appendChild(unread);
+  }
+  if (!replies) {
+    replies = document.createElement('span');
+    replies.className = 'sidebar-badge replies';
+    replies.style.display = 'none';
+    link.appendChild(replies);
+  }
+  return { unread, replies };
+}
+
+function setBadgeCount(el, count) {
+  if (!el) return;
+  if (!count || count <= 0) {
+    el.style.display = 'none';
+  } else {
+    el.textContent = count > 99 ? '99+' : String(count);
+    el.style.display = 'inline-flex';
+  }
+}
+                
 /* ==== Firebase ==== */
 let app, db, storage;
 
@@ -1192,10 +1243,72 @@ const firebaseConfig = {
   appId: "1:464471442222:web:1628d29ef2be5564affb0f",
   measurementId: "G-MMBR7S9EM1"
 };
+                // збереження останніх переглядів для кожного гаманця/секції
+function getReadsRef(wallet, section) {
+  return db.ref(`reads/${wallet}/${section}`);
+}
 
 function getChatMessagesRef(section) {
   if (!db) throw new Error("Firebase DB не ініціалізований!");
   return db.ref(`chats/${section}`);
+}
+
+                // === запуск трекінгу непрочитаних/реплаїв для всіх секцій ===
+async function initUnreadTracking(wallet) {
+  const walletLower = wallet.toLowerCase();
+  const chatSections = ["collection","links","announcements","general","raffles","settings"];
+
+  for (const section of chatSections) {
+    const badges = ensureSidebarBadges(section);
+    if (!badges) continue;
+
+    // 1) поточні lastSeen / lastReplySeen
+    const readsSnap = await getReadsRef(wallet, section).get();
+    const reads = readsSnap.val() || {};
+    let lastSeen = reads.lastSeen || 0;
+    let lastReplySeen = reads.lastReplySeen || 0;
+
+    // 2) локальні лічильники
+    let unreadCount = 0;
+    let replyCount = 0;
+
+    // 3) початковий підрахунок
+    const existing = await getChatMessagesRef(section).get();
+    existing.forEach(snap => {
+      const m = snap.val(); if (!m) return;
+      if (m.timestamp > lastSeen && (m.sender||'').toLowerCase() !== walletLower) unreadCount++;
+      if (m.replyTo?.sender && m.replyTo.sender.toLowerCase() === walletLower && m.timestamp > lastReplySeen) replyCount++;
+    });
+    setBadgeCount(badges.unread, unreadCount);
+    setBadgeCount(badges.replies, replyCount);
+
+    // 4) live-підписка
+    getChatMessagesRef(section).on('child_added', snap => {
+      const m = snap.val(); if (!m) return;
+      const isActive = document.getElementById(`section-${section}`)?.classList.contains('active');
+
+      if (!isActive && m.timestamp > lastSeen && (m.sender||'').toLowerCase() !== walletLower) {
+        unreadCount++; setBadgeCount(badges.unread, unreadCount);
+      }
+      const isReplyToMe = m.replyTo?.sender && m.replyTo.sender.toLowerCase() === walletLower;
+      if (!isActive && isReplyToMe && m.timestamp > lastReplySeen) {
+        replyCount++; setBadgeCount(badges.replies, replyCount);
+      }
+    });
+
+    // 5) клік по пункту меню — скидаємо лічильники, оновлюємо lastSeen/lastReplySeen
+    const link = document.querySelector(`#sidebar-nav a[data-section="${section}"]`);
+    if (link && !link._owlBound) {
+      link._owlBound = true;
+      link.addEventListener('click', async () => {
+        const now = Date.now();
+        lastSeen = now; lastReplySeen = now;
+        setBadgeCount(badges.unread, 0);
+        setBadgeCount(badges.replies, 0);
+        await getReadsRef(wallet, section).update({ lastSeen, lastReplySeen });
+      });
+    }
+  }
 }
 
 /* ==== Emoji utils ==== */
@@ -1551,6 +1664,13 @@ window.addEventListener("DOMContentLoaded", () => {
   db = firebase.database(app);
   storage = firebase.storage();
 
+    let currentWallet = getConnectedWalletAddress() || null;
+
+if (currentWallet) {
+  updateWalletButtons(currentWallet);
+  populateSidebarUserInfo(currentWallet);
+  initUnreadTracking(currentWallet); // ✅ Запускаємо відслідковування непрочитаних
+}
   // Збережені сети
   const localMessageIds = new Set();
   const userMessageKeys = new Set();
@@ -1582,6 +1702,7 @@ window.addEventListener("DOMContentLoaded", () => {
       updateWalletButtons(address);
       await populateSidebarUserInfo(address);
       currentWallet = address;
+      initUnreadTracking(address);
     } catch {
       alert("Failed to connect wallet.");
     }
