@@ -1362,6 +1362,8 @@ function appendMessageToChat(messageObj, key = null, section = "general", curren
   const msgEl = document.createElement("div");
   msgEl.className = "chat-message";
   if (key) msgEl.dataset.key = key;
+  msgEl.dataset.senderFull = messageObj.sender || "";
+
 
   const avatar = document.createElement("img");
   avatar.className = "avatar";
@@ -1509,9 +1511,13 @@ function appendMessageToChat(messageObj, key = null, section = "general", curren
     wrapper.appendChild(replyBlock);
   }
 
-  if (messageObj.replyTo?.sender?.toLowerCase() === (getConnectedWalletAddress() || "").toLowerCase()) {
-    wrapper.classList.add("reply-highlight");
-  }
+  const myFull = (getConnectedWalletAddress() || "").toLowerCase();
+const myShort = shortenAddress(getConnectedWalletAddress() || "").toLowerCase();
+const replySender = (messageObj.replyTo?.sender || "").toLowerCase();
+
+if (replySender === myFull || replySender === myShort) {
+  wrapper.classList.add("reply-highlight");
+}
 
   wrapper.appendChild(msgEl);
   wrapper.appendChild(right);
@@ -1529,23 +1535,27 @@ function appendMessageToChat(messageObj, key = null, section = "general", curren
   }
 }
 
-/* ==== Дії над повідомленням ==== */
 function replyTo(key, section) {
   const msgEl = document.querySelector(`.chat-message[data-key="${key}"]`);
   if (!msgEl) return;
 
-  const sender = msgEl.querySelector(".sender-name")?.textContent || "";
+  // беремо повну адресу з data-атрибуту, а не скорочений текст у .sender-name
+  const senderFull = msgEl.dataset.senderFull || "";
   const text   = msgEl.querySelector(".message-text")?.innerText || "";
+
   const avatarImg = msgEl.querySelector("img.avatar")?.src;
   let imageId = null;
   if (avatarImg) {
     const m = avatarImg.match(/(\d+)\.webp$/);
     imageId = m ? m[1] : null;
   }
-  replyToMessageBySection[section] = { key, sender, text, imageId };
+
+  // зберігаємо саме повну адресу в replyTo
+  replyToMessageBySection[section] = { key, sender: senderFull, text, imageId };
+
   const input = document.getElementById(`chat-input-${section}`);
   if (input) {
-    input.placeholder = `Replying to ${sender.slice(0, 6)}: ${text.slice(0, 50)}${text.length > 50 ? "..." : ""}`;
+    input.placeholder = `Replying to ${shortenAddress(senderFull)}: ${text.slice(0, 50)}${text.length > 50 ? "..." : ""}`;
     input.focus();
   }
 }
