@@ -9,7 +9,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
-    <script type="module" src="https://cdn.jsdelivr.net/npm/-element@1.9.0/index.js"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@1.9.0/index.js"></script>
     <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
     <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
 
@@ -387,20 +387,20 @@
             /* тільки внутрішня */
         }
 
-        .chat-input-wrapper button#upload-image-btn,
-        .chat-input-wrapper button#toggle- {
-            background: transparent;
-            border: none;
-            font-size: 20px;
-            cursor: pointer;
-            padding: 4px;
-            line-height: 1;
-        }
-
-        .chat-input-wrapper button#upload-image-btn:hover,
-        .chat-input-wrapper button#toggle-emoji-picker:hover {
-            transform: scale(1.1);
-        }
+        /* універсальні стилі для обох кнопок у чаті */
+.chat-input-wrapper .upload-image-btn,
+.chat-input-wrapper .toggle-emoji-picker {
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+}
+.chat-input-wrapper .upload-image-btn:hover,
+.chat-input-wrapper .toggle-emoji-picker:hover {
+  transform: scale(1.1);
+}
 
         /* Обгортка з emoji, скріпкою та кнопкою */
         .chat-actions {
@@ -1635,62 +1635,74 @@ function editMessage(key, section) {
 
 /* ==== Пікер реакцій (окремий від інпут-пікерів!) ==== */
 function openReactionPicker(event, msgKey, section) {
-    // Прибираємо попередній пікер реакцій
-    const existing = document.querySelector('emoji-picker[data-role="react-picker"]');
-    if (existing) existing.remove();
+  // прибираємо попередній саме реакційний пікер
+  const existing = document.querySelector('emoji-picker[data-role="react-picker"]');
+  if (existing) existing.remove();
 
-    const picker = document.createElement("emoji-picker");
-    picker.setAttribute("data-role", "react-picker");
+  const picker = document.createElement("emoji-picker");
+  picker.setAttribute("data-role", "react-picker");
 
-    // === Стилі як у пікера для повідомлень ===
-    picker.style.position = "absolute";
-    picker.style.bottom = "50px"; // трохи вище, щоб не обрізався
-    picker.style.right = "10px";
-    picker.style.background = "#121212";
-    picker.style.border = "1px solid #333";
-    picker.style.borderRadius = "10px";
-    picker.style.padding = "4px";
-    picker.style.width = "220px";
-    picker.style.maxHeight = "260px";
-    picker.style.overflowY = "auto";
-    picker.style.zIndex = "1000";
-    picker.style.boxShadow = "0 6px 24px rgba(0,0,0,0.45)";
+  // стилі під "як у пікера для повідомлень"
+  picker.style.position = "absolute";
+  picker.style.bottom = "45px";
+  picker.style.right = "0";
+  picker.style.background = "#121212";
+  picker.style.border = "1px solid #333";
+  picker.style.borderRadius = "10px";
+  picker.style.padding = "4px";
+  picker.style.width = "220px";
+  picker.style.maxHeight = "260px";
+  picker.style.overflowY = "auto";
+  picker.style.zIndex = "1000";
+  picker.style.boxShadow = "0 6px 24px rgba(0,0,0,0.45)";
 
-    // Додаємо у DOM поруч із кнопкою реакцій
-    event.target.closest(".message-actions").appendChild(picker);
+  // якір — у межах повідомлення, щоб не “вистрибував” з чату
+  const anchor = event.currentTarget.closest(".message-wrapper") || event.currentTarget;
+  // гарантуємо контекст позиціонування
+  if (anchor && getComputedStyle(anchor).position === "static") {
+    anchor.style.position = "relative";
+  }
+  (anchor || event.currentTarget).appendChild(picker);
 
-    picker.addEventListener("emoji-click", async e => {
-        const emoji = e.detail.unicode;
-        const messageRef = getChatMessagesRef(section).child(msgKey);
-        const snapshot = await messageRef.get();
-        const msg = snapshot.val();
-        if (!msg) return;
+  // клік по емодзі
+  picker.addEventListener("emoji-click", async e => {
+    const emoji = e.detail.unicode;
+    const messageRef = getChatMessagesRef(section).child(msgKey);
+    const snapshot = await messageRef.get();
+    const msg = snapshot.val();
+    if (!msg) return;
 
-        const wallet = getConnectedWalletAddress();
-        if (!wallet) return;
+    const wallet = getConnectedWalletAddress();
+    if (!wallet) return;
 
-        const reactions = msg.reactions || {};
-        const cur = Array.isArray(reactions[emoji]) ? reactions[emoji] : [];
-        const has = cur.includes(wallet);
+    const reactions = msg.reactions || {};
+    const cur = Array.isArray(reactions[emoji]) ? reactions[emoji] : [];
+    const has = cur.includes(wallet);
 
-        if (has) {
-            // Знімаємо реакцію
-            reactions[emoji] = cur.filter(w => w !== wallet);
-            if (reactions[emoji].length === 0) delete reactions[emoji];
-        } else {
-            // Обмеження 6 різних реакцій
-            if (Object.keys(reactions).length >= 6 && !reactions[emoji]) {
-                alert("Максимум 6 різних реакцій.");
-                return;
-            }
-            reactions[emoji] = [...cur, wallet];
-        }
-        await messageRef.update({ reactions });
+    if (has) {
+      reactions[emoji] = cur.filter(w => w !== wallet);
+      if (reactions[emoji].length === 0) delete reactions[emoji];
+    } else {
+      if (Object.keys(reactions).length >= 6 && !reactions[emoji]) {
+        alert("Максимум 6 різних реакцій.");
+        return;
+      }
+      reactions[emoji] = [...cur, wallet];
+    }
+    await messageRef.update({ reactions });
+    picker.remove();
+  });
+
+  // закриття при кліку поза пікером
+  setTimeout(() => {
+    const onDocClick = (ev) => {
+      if (!picker.contains(ev.target)) {
         picker.remove();
-    });
-}
-
-  event.currentTarget.appendChild(picker);
+        document.removeEventListener("click", onDocClick);
+      }
+    };
+    document.addEventListener("click", onDocClick);
+  }, 0);
 }
 
 /* ==== Старт програми ==== */
