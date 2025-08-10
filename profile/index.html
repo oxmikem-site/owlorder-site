@@ -1236,6 +1236,33 @@ const chatSections = ["links", "announcements", "general", "share-art", "spot-re
 const replyToMessageBySection = {};
 
 let cachedHolderInfo = null;
+
+                // кеш холдера з TTL
+const HOLDER_CACHE_TTL = 6 * 60 * 60 * 1000; // 6 год
+
+function readHolderCache(address){
+  try {
+    const raw = localStorage.getItem(`holder:${(address||'').toLowerCase()}`);
+    if (!raw) return null;
+    const obj = JSON.parse(raw);
+    if (!obj?.ts || (Date.now() - obj.ts) > HOLDER_CACHE_TTL) return null;
+    return obj; // {found, address, imageId, points, ts}
+  } catch { return null; }
+}
+
+function writeHolderCache(address, data){
+  try {
+    if (data && data.found) {
+      localStorage.setItem(
+        `holder:${address.toLowerCase()}`,
+        JSON.stringify({ ...data, ts: Date.now() })
+      );
+    } else {
+      localStorage.removeItem(`holder:${address.toLowerCase()}`);
+    }
+  } catch {}
+}
+
                 // === Мій профіль
 let currentUserNickname = "";
 
@@ -1299,32 +1326,28 @@ function updateWalletButtons(address) {
   if (btn) btn.textContent = short || "CONNECT WALLET";
 }
 
-/* Аватар користувача за snapshot */
-async function fetchProfileImage(wallet) {
+// БІЛЬШЕ НЕ ТЯГНЕ МЕРЕЖУ
+function setProfileImageById(imageId) {
   const img = document.getElementById("profile-image");
-  try {
-    const res = await fetch(SNAPSHOT_CSV_URL);
-    const csv = await res.text();
-    const rows = csv.split("\n").slice(1);
-    let match = null;
-    for (const row of rows) {
-      const cols = row.split(",");
-      const address = (cols[1] || "").trim().toLowerCase();
-      const nftNumber = (cols[9] || "").trim();
-      if (address === wallet.toLowerCase() && nftNumber) {
-        match = nftNumber;
-        break;
-      }
-    }
-    img.src = match ? `${imageBaseURL}${match}.webp` : "../logo1.png";
+  if (!img) return;
+  if (imageId) {
+    img.src = `${imageBaseURL}${imageId}.webp`;
     img.onerror = () => (img.src = "../logo1.png");
-    img.style.display = "block";
-  } catch {
-    if (img) {
-      img.src = "../logo1.png";
-      img.style.display = "block";
-    }
+  } else {
+    img.src = "../logo1.png";
   }
+  img.style.display = "block";
+}
+
+                async function getHolderInfo(address){
+  // 1) спершу кеш
+  const cached = readHolderCache(address);
+  if (cached) return cached;
+
+  // 2) мережа
+  const fresh = await checkHolderInSheet(address);
+  writeHolderCache(address, fresh);
+  return fresh;
 }
 
 /* Перевірка, чи власник (holder), + поінти — як у дашборді */
@@ -1411,21 +1434,46 @@ async function populateSidebarUserInfo(address) {
   addrEl.style.display = "block";
 }
 
-  cachedHolderInfo = await checkHolderInSheet(address);
-  if (cachedHolderInfo.found) {
-    if (ptsEl) {
-      ptsEl.innerHTML = `<strong>Total Points:</strong> ${cachedHolderInfo.points}`;
-      ptsEl.style.display = "block";
-    }
-    await fetchProfileImage(address);
-  } else {
+  // спочатку сховаємо картинку, щоб не блимала
+if (img) img.style.display = "none";
+
+// миттєво показуємо із локального кешу, якщо є
+cachedHolderInfo = readHolderCache(address) || { found: false };
+if (cachedHolderInfo.found) {
+  setProfileImageById(cachedHolderInfo.imageId);
+  if (ptsEl) {
+    ptsEl.innerHTML = `<strong>Total Points:</strong> ${cachedHolderInfo.points}`;
+    ptsEl.style.display = "block";
+  }
+} else {
+  if (ptsEl) ptsEl.style.display = "none";
+  if (connectBtn) {
+    connectBtn.textContent = "Get your OWL";
+    connectBtn.onclick = () => window.open("https://owlbtc.art/collection", "_blank");
+    connectBtn.style.display = "inline-block";
+  }
+}
+
+// тихо оновимо з мережі й, якщо змінились дані — перерендераємо
+getHolderInfo(address).then(info => {
+  cachedHolderInfo = info;
+  if (!info.found) {
     if (img) img.style.display = "none";
+    if (ptsEl) ptsEl.style.display = "none";
     if (connectBtn) {
       connectBtn.textContent = "Get your OWL";
       connectBtn.onclick = () => window.open("https://owlbtc.art/collection", "_blank");
       connectBtn.style.display = "inline-block";
     }
+    return;
   }
+    setProfileImageById(info.imageId);
+  if (ptsEl) {
+    ptsEl.innerHTML = `<strong>Total Points:</strong> ${info.points}`;
+    ptsEl.style.display = "block";
+  }
+});
+
 }
 
 /* Перемикання секцій */
