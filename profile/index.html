@@ -826,6 +826,49 @@
   box-shadow: 0 0 10px rgba(212,200,124,.75), 0 0 2px #000 inset;
 }
 
+        .settings-grid {
+  display:grid; grid-template-columns: 1fr 1fr; gap:16px;
+}
+.setting-card {
+  background: var(--bg-panel);
+  border: 1px solid rgba(255,255,255,.05);
+  border-radius: 12px; padding:12px;
+  box-shadow: 0 4px 10px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.05), inset 0 -1px 0 rgba(0,0,0,.4);
+}
+.setting-card h4 { margin: 0 0 10px 0; font-size:16px; color: var(--accent-color); }
+.setting-card .row { display:flex; gap:8px; align-items:center; margin:8px 0; }
+.setting-card input[type="text"] {
+  flex:1; background:#222; border:none; color:#fff; border-radius:8px; padding:8px 10px;
+  box-shadow: inset 3px 3px 6px #0c0c0c, inset -3px -3px 6px #2a2a2a;
+}
+.link-btn {
+  background:transparent; border:none; color:var(--text-primary); cursor:pointer; font-weight:600;
+}
+.link-btn:hover { color: var(--accent-color); }
+.muted { color:#aaa; opacity:.8; }
+
+.wallet-section { margin-top:8px; }
+.wallet-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+
+.wallet-list { display:flex; flex-wrap:wrap; gap:6px; }
+.wallet-chip {
+  display:inline-flex; align-items:center; gap:6px;
+  background:#222; border:1px solid rgba(255,255,255,.06);
+  border-radius:999px; padding:4px 8px; font-size:12px;
+}
+.wallet-chip .addr { font-family: monospace; }
+.wallet-chip .remove {
+  background:transparent; border:none; color:#aaa; cursor:pointer; font-size:14px; line-height:1;
+}
+.wallet-chip .remove:hover { color:#fff; }
+
+/* адаптив */
+@media (max-width:1024px){
+  .settings-grid{ grid-template-columns:1fr; }
+}
+
+        
+
     </style>
 </head>
 
@@ -1120,13 +1163,57 @@
 
             <!-- Settings -->
             <div id="section-settings" class="profile-section">
-                <h3>Settings</h3>
-                <ul>
-                    <li>Connect Twitter</li>
-                    <li>Connect Discord</li>
-                    <li>Add Wallet (up to 10 per type: EVM & Ordinals)</li>
-                </ul>
-            </div>
+  <h3>Settings</h3>
+
+  <div class="settings-grid">
+    <!-- Socials -->
+    <div class="setting-card">
+      <h4>Socials</h4>
+      <div class="row">
+        <span>Twitter</span>
+        <button id="btn-connect-twitter" class="connect-wallet">Connect</button>
+      </div>
+      <div class="row">
+        <span>Discord</span>
+        <button id="btn-connect-discord" class="connect-wallet">Connect</button>
+      </div>
+      <small id="settings-social-status" class="muted"></small>
+    </div>
+
+    <!-- Nickname -->
+    <div class="setting-card">
+      <h4>Nickname</h4>
+      <div class="row">
+        <input id="inp-nickname" type="text" placeholder="Your nickname" maxlength="24" />
+        <button id="btn-save-nickname" class="connect-wallet">Save</button>
+      </div>
+      <small class="muted">This will replace the shortened wallet in chats (only for you for now).</small>
+    </div>
+
+    <!-- Wallets -->
+    <div class="setting-card">
+      <h4>Mint Wallets</h4>
+
+      <div class="wallet-section">
+        <div class="wallet-header">
+          <span>Bitcoin addresses</span>
+          <button id="btn-add-btc" class="link-btn">+ Add</button>
+        </div>
+        <div id="list-btc" class="wallet-list"></div>
+      </div>
+
+      <div class="wallet-section">
+        <div class="wallet-header">
+          <span>Ethereum addresses</span>
+          <button id="btn-add-evm" class="link-btn">+ Add</button>
+        </div>
+        <div id="list-evm" class="wallet-list"></div>
+      </div>
+
+      <small class="muted">Up to 10 per chain. You can remove any time.</small>
+    </div>
+  </div>
+</div>
 
             <!-- Logout -->
             <div id="section-logout" class="profile-section">
@@ -1444,6 +1531,120 @@ async function initUnreadTracking(wallet) {
     });
   }
 }
+                function getUserProfileRef(wallet) {
+  return db.ref(`users/${wallet}/profile`);
+}
+
+                async function loadSettings(wallet) {
+  if (!wallet) return {nickname:'', socials:{twitter:false, discord:false}, wallets:{btc:[], evm:[]}};
+
+  const snap = await getUserProfileRef(wallet).get();
+  const data = snap.val() || {};
+  const nickname = data.nickname || '';
+  const socials  = data.socials || { twitter:false, discord:false };
+  const wallets  = data.wallets || { btc:[], evm:[] };
+
+  // UI fill
+  const nickInp = document.getElementById('inp-nickname');
+  if (nickInp) nickInp.value = nickname;
+
+  const socialStatus = document.getElementById('settings-social-status');
+  if (socialStatus) {
+    socialStatus.textContent = `Twitter: ${socials.twitter ? 'connected' : 'not connected'} · Discord: ${socials.discord ? 'connected' : 'not connected'}`;
+  }
+
+  renderWallets('btc', wallets.btc || []);
+  renderWallets('evm', wallets.evm || []);
+
+  return { nickname, socials, wallets };
+}
+
+function renderWallets(type, list) {
+  const el = document.getElementById(type === 'btc' ? 'list-btc' : 'list-evm');
+  if (!el) return;
+  el.innerHTML = '';
+  (list || []).slice(0,10).forEach((addr, idx) => {
+    const chip = document.createElement('div');
+    chip.className = 'wallet-chip';
+    chip.innerHTML = `
+      <span class="addr">${shortenAddress(addr)}</span>
+      <button class="remove" title="Remove" data-type="${type}" data-index="${idx}">×</button>
+    `;
+    el.appendChild(chip);
+  });
+
+  // remove handlers
+  el.querySelectorAll('.remove').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const t = btn.getAttribute('data-type');
+      const i = parseInt(btn.getAttribute('data-index'),10);
+      const wallet = getConnectedWalletAddress();
+      if (!wallet) return;
+
+      const snap = await getUserProfileRef(wallet).child('wallets').get();
+      const wallets = snap.val() || {btc:[], evm:[]};
+      const arr = Array.isArray(wallets[t]) ? wallets[t] : [];
+      arr.splice(i,1);
+      await getUserProfileRef(wallet).child('wallets').update({ [t]: arr });
+      renderWallets(t, arr);
+    });
+  });
+}
+
+async function addWallet(type) {
+  const wallet = getConnectedWalletAddress();
+  if (!wallet) return alert('Connect wallet first');
+
+  const addr = prompt(`Enter a ${type === 'btc' ? 'Bitcoin' : 'Ethereum'} address:`, '');
+  if (!addr) return;
+
+  if (type === 'btc' && !isValidBTC(addr)) return alert('Invalid Bitcoin address');
+  if (type === 'evm' && !isValidETH(addr)) return alert('Invalid Ethereum address');
+
+  const ref = getUserProfileRef(wallet).child('wallets');
+  const snap = await ref.get();
+  const wallets = snap.val() || { btc:[], evm:[] };
+
+  const list = Array.isArray(wallets[type]) ? wallets[type] : [];
+  if (list.length >= 10) return alert('Limit is 10 addresses.');
+  if (list.some(a => a.toLowerCase() === addr.trim().toLowerCase())) return alert('Already added.');
+
+  const next = [...list, addr.trim()];
+  await ref.update({ [type]: next });
+  renderWallets(type, next);
+}
+
+async function saveNickname() {
+  const wallet = getConnectedWalletAddress();
+  if (!wallet) return alert('Connect wallet first');
+  const inp = document.getElementById('inp-nickname');
+  if (!inp) return;
+  const nickname = (inp.value || '').trim().slice(0,24);
+
+  await getUserProfileRef(wallet).update({ nickname });
+  alert('Nickname saved');
+}
+
+function initSettingsUI(wallet) {
+  // buttons
+  const tw = document.getElementById('btn-connect-twitter');
+  if (tw) tw.onclick = () => { window.location.href = '/auth/twitter2'; };
+
+  const dc = document.getElementById('btn-connect-discord');
+  if (dc) dc.onclick = () => { window.location.href = '/auth/discord'; };
+
+  const saveNick = document.getElementById('btn-save-nickname');
+  if (saveNick) saveNick.onclick = saveNickname;
+
+  const addBtc = document.getElementById('btn-add-btc');
+  if (addBtc) addBtc.onclick = () => addWallet('btc');
+
+  const addEvm = document.getElementById('btn-add-evm');
+  if (addEvm) addEvm.onclick = () => addWallet('evm');
+
+  // initial load
+  loadSettings(wallet);
+}
 
 /* ==== Emoji utils ==== */
 const emojiToIconifyMap = {
@@ -1631,7 +1832,7 @@ function appendMessageToChat(messageObj, key = null, section = "general", curren
 const myShort = shortenAddress(getConnectedWalletAddress() || "").toLowerCase();
 const replySender = (messageObj.replyTo?.sender || "").toLowerCase();
 
-if (replySender === myFull || replySender === myShort) {
+if (replySender === myFull) {
   wrapper.classList.add("reply-highlight");
 }
 
@@ -1674,6 +1875,13 @@ function replyTo(key, section) {
     input.placeholder = `Replying to ${shortenAddress(senderFull)}: ${text.slice(0, 50)}${text.length > 50 ? "..." : ""}`;
     input.focus();
   }
+}
+                function isValidETH(addr) {
+  return /^0x[a-fA-F0-9]{40}$/.test(addr.trim());
+}
+function isValidBTC(addr) {
+  // P2PKH/NP2WPKH/P2TR/bech32 (спрощено)
+  return /^(bc1|[13])[a-zA-HJ-NP-Z0-9]{25,62}$/.test(addr.trim());
 }
 
 function updateReactionButtons(reactionRow, updatedMsg, section, key) {
@@ -1836,6 +2044,8 @@ if (currentWallet) {
   initUnreadTracking(currentWallet); // ✅ Запускаємо відслідковування непрочитаних
 }
 
+    if (currentWallet) initSettingsUI(currentWallet);
+
     // якщо на старті якась секція вже активна — познач її прочитаною
 const initiallyActive = document.querySelector('.profile-section.active');
 if (initiallyActive && initiallyActive.id?.startsWith('section-') && currentWallet) {
@@ -1875,6 +2085,7 @@ if (initiallyActive && initiallyActive.id?.startsWith('section-') && currentWall
       await populateSidebarUserInfo(address);
       currentWallet = address;
       initUnreadTracking(address);
+      initSettingsUI(address);
     } catch {
       alert("Failed to connect wallet.");
     }
