@@ -2355,9 +2355,8 @@ window.addEventListener("DOMContentLoaded", async () => {
         }
     });
 
-    if (currentWallet) { renderMyCollection(currentWallet); }
-
     let currentWallet = getConnectedWalletAddress() || null;
+    if (currentWallet) { renderMyCollection(currentWallet); }
 
 if (currentWallet) {
   updateWalletButtons(currentWallet);
