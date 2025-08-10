@@ -16,13 +16,14 @@
 
     <style>
         :root {
-            --bg-dark: #0b0b0b;
-            --bg-panel: linear-gradient(145deg, #1d1d1d, #111111);
-            --text-primary: #ffffff;
-            --text-secondary: #ffffff;
-            --accent: linear-gradient(90deg, #bfa758, #d4c87c);
-            --accent-color: #8a7f5a;
-        }
+  --bg-dark: #0b0b0b;
+  --bg-panel: linear-gradient(145deg, #1d1d1d, #111111);
+  --text-primary: #ffffff;
+  --text-secondary: #ffffff;
+  --accent: linear-gradient(90deg, #bfa758, #d4c87c);
+  --accent-color: #8a7f5a;
+  --container-max: 1200px;
+}
 
         * {
             box-sizing: border-box;
@@ -43,15 +44,15 @@
         }
 
         .container {
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 0 20px;
-            padding-bottom: 30px;
-            height: 100%;
-            min-height: 0;
-            display: flex;
-            flex-direction: column;
-        }
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: 0 20px;
+  padding-bottom: 30px;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
 
         header {
             height: 64px;
@@ -156,15 +157,14 @@
             background: rgba(255, 255, 255, 0.05);
         }
 
-        /* --- Main layout for profile --- */
-        .profile-main {
-            flex: 1;
-            display: grid;
-            grid-template-columns: 280px calc(100% - 304px);
-            gap: 24px;
-            min-height: 0;
-            overflow: hidden;
-        }
+      .profile-main {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr); /* <-- простіше і надійніше */
+  gap: 24px;
+  min-height: 0;
+  overflow: hidden;
+}
 
         .profile-section {
             display: none;
@@ -1236,6 +1236,27 @@ const chatSections = ["links", "announcements", "general", "share-art", "spot-re
 const replyToMessageBySection = {};
 
 let cachedHolderInfo = null;
+                // === Мій профіль
+let currentUserNickname = "";
+
+/** Повертає, що показувати як ім'я автора повідомлення */
+function getDisplayName(addr) {
+  if (!addr) return "";
+  const me = (getConnectedWalletAddress() || "").toLowerCase();
+  if (addr.toLowerCase() === me && currentUserNickname) {
+    return currentUserNickname;            // мій нікнейм замість скороченої адреси
+  }
+  return shortenAddress(addr);             // інші — як і було
+}
+
+                function isReplyToMe(replySenderRaw) {
+  const me      = (getConnectedWalletAddress() || "");
+  const myFull  = me.toLowerCase();
+  const myShort = shortenAddress(me).toLowerCase();
+  const myNick  = (currentUserNickname || "").toLowerCase();
+  const val     = (replySenderRaw || "").toLowerCase();
+  return val === myFull || val === myShort || (myNick && val === myNick);
+}
 
 /* === Хелпери інтерфейсу === */
 function shortenAddress(addr) {
@@ -1350,9 +1371,17 @@ async function populateSidebarUserInfo(address) {
   }
 
   if (addrEl) {
+  // пробуємо прочитати нік із БД (users/{wallet}/profile/nickname)
+  try {
+    const nickSnap = await db.ref(`users/${address}/profile/nickname`).get();
+    const nickname = (nickSnap && nickSnap.val()) || "";
+    if (nickname) currentUserNickname = nickname;     // тримаємо в глобальній
+    addrEl.textContent = nickname || shortenAddress(address);
+  } catch(e) {
     addrEl.textContent = shortenAddress(address);
-    addrEl.style.display = "block";
   }
+  addrEl.style.display = "block";
+}
 
   cachedHolderInfo = await checkHolderInSheet(address);
   if (cachedHolderInfo.found) {
@@ -1486,17 +1515,16 @@ async function initUnreadTracking(wallet) {
 
     const existing = await getChatMessagesRef(section).get();
     existing.forEach(snap => {
-      const m = snap.val(); if (!m) return;
+      const m = snap.val(); 
+      if (!m) return;
 
       // непрочитані (не мої і новіші за lastSeen)
       if (m.timestamp > lastSeen && (m.sender || '').toLowerCase() !== walletLower) {
         unreadCount++;
       }
 
-      // реплаї на мене (порівнюємо по повній адресі)
-      const replySender = (m.replyTo?.sender || '').toLowerCase();
-      const isReplyToMe = replySender === walletLower;
-      if (isReplyToMe && m.timestamp > lastReplySeen) {
+      // реплаї на мене (порівнюємо усі варіанти: full/short/nick)
+      if (m.replyTo && isReplyToMe(m.replyTo.sender) && m.timestamp > lastReplySeen) {
         replyCount++;
       }
     });
@@ -1512,7 +1540,9 @@ async function initUnreadTracking(wallet) {
       // пропускаємо перші "старі" події
       if (toSkip > 0) { toSkip--; return; }
 
-      const m = snap.val(); if (!m) return;
+      const m = snap.val(); 
+      if (!m) return;
+
       const isActive = document.getElementById(`section-${section}`)?.classList.contains('active');
 
       // непрочитані
@@ -1521,16 +1551,16 @@ async function initUnreadTracking(wallet) {
         setBadgeCount(badges.unread, cur + 1);
       }
 
-      // реплаї на мене
-      const replySender = (m.replyTo?.sender || '').toLowerCase();
-      const isReplyToMe = replySender === walletLower; // ← правильна змінна
-      if (!isActive && isReplyToMe && m.timestamp > lastReplySeen) {
+      // реплаї на мене (через утиліту)
+      const replyIsToMe = m.replyTo && isReplyToMe(m.replyTo.sender);
+      if (!isActive && replyIsToMe && m.timestamp > lastReplySeen) {
         const curR = parseInt(badges.replies.textContent) || 0;
         setBadgeCount(badges.replies, curR + 1);
       }
     });
   }
 }
+
                 function getUserProfileRef(wallet) {
   return db.ref(`users/${wallet}/profile`);
 }
@@ -1547,6 +1577,7 @@ async function initUnreadTracking(wallet) {
   // UI fill
   const nickInp = document.getElementById('inp-nickname');
   if (nickInp) nickInp.value = nickname;
+  currentUserNickname = nickname || "";
 
   const socialStatus = document.getElementById('settings-social-status');
   if (socialStatus) {
@@ -1622,6 +1653,8 @@ async function saveNickname() {
   const nickname = (inp.value || '').trim().slice(0,24);
 
   await getUserProfileRef(wallet).update({ nickname });
+  currentUserNickname = nickname;        // <-- ТУТ
+  await populateSidebarUserInfo(wallet); // <-- ТУТ
   alert('Nickname saved');
 }
 
@@ -1697,7 +1730,7 @@ function appendMessageToChat(messageObj, key = null, section = "general", curren
 
   const nameEl = document.createElement("span");
   nameEl.className = "sender-name";
-  nameEl.textContent = shortenAddress(messageObj.sender);
+  nameEl.textContent = getDisplayName(messageObj.sender);
 
   const timeEl = document.createElement("span");
   timeEl.className = "message-time";
@@ -1820,7 +1853,7 @@ function appendMessageToChat(messageObj, key = null, section = "general", curren
       <div class="reply-container">
         <img src="${avatarSrc}" class="avatar-small" />
         <div class="reply-text">
-          <span class="reply-to-name">${shortenAddress(messageObj.replyTo.sender)}</span>
+          <span class="reply-to-name">${getDisplayName(messageObj.replyTo.sender)}</span>
           <span class="reply-to-preview">${previewText}</span>
         </div>
       </div>
@@ -1828,13 +1861,11 @@ function appendMessageToChat(messageObj, key = null, section = "general", curren
     wrapper.appendChild(replyBlock);
   }
 
-  const myFull = (getConnectedWalletAddress() || "").toLowerCase();
-const myShort = shortenAddress(getConnectedWalletAddress() || "").toLowerCase();
-const replySender = (messageObj.replyTo?.sender || "").toLowerCase();
-
-if (replySender === myFull) {
-  wrapper.classList.add("reply-highlight");
+    if (messageObj.replyTo && isReplyToMe(messageObj.replyTo.sender)) {
+  wrapper.classList.add('reply-highlight');
 }
+
+  const myFull = (getConnectedWalletAddress() || "").toLowerCase();
 
   wrapper.appendChild(msgEl);
   wrapper.appendChild(right);
@@ -1872,7 +1903,7 @@ function replyTo(key, section) {
 
   const input = document.getElementById(`chat-input-${section}`);
   if (input) {
-    input.placeholder = `Replying to ${shortenAddress(senderFull)}: ${text.slice(0, 50)}${text.length > 50 ? "..." : ""}`;
+    input.placeholder = `Replying to ${getDisplayName(senderFull)}: ${text.slice(0,50)}${text.length>50?'...':''}`;
     input.focus();
   }
 }
