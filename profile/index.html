@@ -1239,6 +1239,34 @@ let cachedHolderInfo = null;
                 // === Мій профіль
 let currentUserNickname = "";
 
+                // кеш ніків інших користувачів
+const nicknameCache = {};
+
+// синхронний варіант (повертає що є зараз у кеші або short)
+function getDisplayNameSync(addr) {
+  if (!addr) return "";
+  const me = (getConnectedWalletAddress() || "").toLowerCase();
+  if (addr.toLowerCase() === me && currentUserNickname) return currentUserNickname;
+  const cached = nicknameCache[addr.toLowerCase()];
+  return cached ? cached : shortenAddress(addr);
+}
+
+// асинхронно підвантажує нік і оновлює кеш
+async function prefetchNickname(addr) {
+  if (!addr) return null;
+  const key = addr.toLowerCase();
+  if (nicknameCache[key] !== undefined) return nicknameCache[key];
+  try {
+    const snap = await db.ref(`users/${addr}/profile/nickname`).get();
+    const nick = (snap && snap.val()) || "";
+    nicknameCache[key] = nick || null;
+    return nicknameCache[key];
+  } catch {
+    nicknameCache[key] = null;
+    return null;
+  }
+}
+
 /** Повертає, що показувати як ім'я автора повідомлення */
 function getDisplayName(addr) {
   if (!addr) return "";
@@ -1730,7 +1758,10 @@ function appendMessageToChat(messageObj, key = null, section = "general", curren
 
   const nameEl = document.createElement("span");
   nameEl.className = "sender-name";
-  nameEl.textContent = getDisplayName(messageObj.sender);
+  nameEl.textContent = getDisplayNameSync(messageObj.sender);   // миттєво (short/нік із кешу)
+prefetchNickname(messageObj.sender).then(nick => {            // догружаємо і оновлюємо
+  if (nick) nameEl.textContent = nick;
+});
 
   const timeEl = document.createElement("span");
   timeEl.className = "message-time";
@@ -1849,15 +1880,26 @@ function appendMessageToChat(messageObj, key = null, section = "general", curren
       ? `${imageBaseURL}${messageObj.replyTo.imageId}.webp`
       : "../logo1.png";
 
-    replyBlock.innerHTML = `
-      <div class="reply-container">
+    // Спершу синхронно
+const replyName = getDisplayNameSync(messageObj.replyTo.sender);
+
+replyBlock.innerHTML = `
+    <div class="reply-container">
         <img src="${avatarSrc}" class="avatar-small" />
         <div class="reply-text">
-          <span class="reply-to-name">${getDisplayName(messageObj.replyTo.sender)}</span>
-          <span class="reply-to-preview">${previewText}</span>
+            <span class="reply-to-name">${replyName}</span>
+            <span class="reply-to-preview">${previewText}</span>
         </div>
-      </div>
-    `;
+    </div>
+`;
+
+// А потім — оновити, якщо підтягнеться нік
+prefetchNickname(messageObj.replyTo.sender).then(nick => {
+    if (!nick) return;
+    const el = replyBlock.querySelector('.reply-to-name');
+    if (el) el.textContent = nick;
+});
+
     wrapper.appendChild(replyBlock);
   }
 
@@ -1903,7 +1945,12 @@ function replyTo(key, section) {
 
   const input = document.getElementById(`chat-input-${section}`);
   if (input) {
-    input.placeholder = `Replying to ${getDisplayName(senderFull)}: ${text.slice(0,50)}${text.length>50?'...':''}`;
+    const display = getDisplayNameSync(senderFull);
+input.placeholder = `Replying to ${display}: ${text.slice(0,50)}${text.length>50?'...':''}`;
+
+prefetchNickname(senderFull).then(nick => {
+    if (nick) input.placeholder = `Replying to ${nick}: ${text.slice(0,50)}${text.length>50?'...':''}`;
+});
     input.focus();
   }
 }
@@ -2067,6 +2114,20 @@ window.addEventListener("DOMContentLoaded", async () => {
   db = firebase.database(app);
   storage = firebase.storage();
 
+     db.ref('users').on('child_changed', snap => {
+        const addr = (snap.key || '').toLowerCase();
+        const nick = (snap.val()?.profile?.nickname) || null;
+        if (addr) nicknameCache[addr] = nick;
+    });
+
+    db.ref('users').on('child_added', snap => {
+        const addr = (snap.key || '').toLowerCase();
+        const nick = (snap.val()?.profile?.nickname) || null;
+        if (addr && nicknameCache[addr] === undefined) {
+            nicknameCache[addr] = nick;
+        }
+    });
+    
     let currentWallet = getConnectedWalletAddress() || null;
 
 if (currentWallet) {
