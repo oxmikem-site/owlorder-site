@@ -1635,20 +1635,18 @@ async function renderMyCollection(address){
   if (cnt) cnt.textContent = `${mine.length} item(s)`;
 
   grid.innerHTML = mine.map(({number, rarity})=>{
-    const cls = rarityToClass(rarity);
-    const label = rarity || 'Legendary';
-    return `
-      <div class="owl-card">
-        <img class="owl-img" src="${imageBaseURL}${number}.webp" alt="#${number}" onerror="this.src='../logo1.png'">
-        <div class="owl-meta">
-          <span class="owl-num">#${number}</span>
-          <span class="rarity-badge ${cls}">${label}</span>
-        </div>
+  const cls = rarityToClass(rarity);
+  const label = rarity || 'Legendary';
+  return `
+    <div class="owl-card">
+      <img class="owl-img" src="${imageBaseURL}${number}.webp" alt="OWL #${number}" onerror="this.src='../logo1.png'">
+      <div class="owl-meta">
+        <span class="owl-num">OWL #${number}</span>
+        <span class="rarity-badge ${cls}">${label}</span>
       </div>
-    `;
-  }).join('');
-}
-
+    </div>
+  `;
+}).join('');
 
 /* Заповнення сайдбару профілю */
 async function populateSidebarUserInfo(address) {
