@@ -1,11 +1,2852 @@
-<!doctype html><meta charset="utf-8"><title>inject test</title>
-<script>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Profile | OWL</title>
+    <link rel="icon" type="image/png" href="../logo2.png" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@1.9.0/index.js"></script>
+    <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+    <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+
+    <style>
+        :root {
+  --bg-dark: #0b0b0b;
+  --bg-panel: linear-gradient(145deg, #1d1d1d, #111111);
+  --text-primary: #ffffff;
+  --text-secondary: #ffffff;
+  --accent: linear-gradient(90deg, #bfa758, #d4c87c);
+  --accent-color: #8a7f5a;
+  --container-max: 1200px;
+}
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+
+        .container {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: 0 20px;
+  padding-bottom: 30px;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+        header {
+            height: 64px;
+            background: var(--bg-panel);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            border-radius: 20px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.4);
+            background: linear-gradient(145deg, #1b1b1b, #101010);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            flex-shrink: 0;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo img {
+            width: 50px;
+            height: 50px;
+        }
+
+        .nav-buttons {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            height: 100%;
+        }
+
+        .button {
+            padding: 8px 10px;
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 18px;
+            cursor: pointer;
+            transition: color 0.3s ease;
+            height: 40px;
+            display: flex;
+            align-items: center;
+        }
+
+        .button:hover {
+            color: var(--accent-color);
+        }
+
+        .connect-wallet {
+            max-width: 200px;
+            text-align: center;
+            padding: 6px 14px;
+            border-radius: 12px;
+            border: none;
+            font-weight: 600;
+            font-size: 15px;
+            background: var(--accent);
+            color: black;
+            cursor: pointer;
+            transition: filter 0.3s ease;
+        }
+
+        .connect-wallet:hover {
+            filter: brightness(1.15);
+        }
+
+        .wallet-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        .wallet-dropdown-content {
+            display: none;
+            position: absolute;
+            top: 44px;
+            right: 0;
+            background: var(--bg-panel);
+            min-width: 160px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .wallet-dropdown-content a {
+            display: block;
+            padding: 10px 14px;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .wallet-dropdown-content a:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+      .profile-main {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr); /* <-- простіше і надійніше */
+  gap: 24px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+        .profile-section {
+            display: none;
+            background: var(--bg-panel);
+            border-radius: 16px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.4);
+            background: linear-gradient(145deg, #1b1b1b, #101010);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 16px;
+        }
+
+        .profile-section.active {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            min-height: 0;
+        }
+
+        .profile-section h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 16px;
+            padding: 0;
+            margin-left: 4px;
+        }
+
+        .panel {
+            background: var(--bg-panel);
+            padding: 16px;
+            border-radius: 16px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.4);
+            background: linear-gradient(145deg, #1b1b1b, #101010);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            /* для правильного flex/grid скролу */
+        }
+
+        .panel h2 {
+            color: var(--accent-color);
+            margin: 0 0 12px 0;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .overlay {
+            border-radius: 12px;
+            padding: 12px 14px;
+            box-shadow:
+                0 4px 10px rgba(0, 0, 0, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.4);
+            background: linear-gradient(145deg, #1b1b1b, #101010);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .user-info-block {
+            text-align: left;
+            align-items: flex-start;
+        }
+
+        .user-info-block img.profile-picture {
+            border-radius: 50%;
+            border: 1px solid #d4c87c;
+            box-shadow: 0 0 12px 4px rgba(212, 200, 124, 0.6);
+            width: 96px;
+            height: 96px;
+            object-fit: cover;
+            display: none;
+        }
+
+        .user-info-block .wallet-address {
+            margin-top: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--accent-color);
+            word-break: break-all;
+        }
+
+        .user-info-block .total-points {
+            margin-top: 8px;
+            font-size: 15px;
+        }
+
+        .user-info-block .get-owl-btn {
+            margin-top: 12px;
+        }
+
+        .profile-sidebar .sections-list {
+            margin-top: 0;
+        }
+
+        .profile-sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .profile-sidebar li {
+            padding: 8px 0;
+        }
+
+        .profile-sidebar li+li {
+            border-top: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .profile-sidebar a {
+            text-decoration: none;
+            color: var(--text-primary);
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .profile-sidebar a:hover {
+            color: var(--accent-color);
+        }
+
+
+
+        /* Make content overlay fill */
+        .profile-content .content-body {
+            flex: 1;
+            overflow-y: auto;
+            max-height: 100%;
+        }
+
+        #section-general {
+            flex-direction: column;
+            justify-content: space-between;
+            height: 100%;
+        }
+
+        .chat-box {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            height: 100%;
+        }
+
+        #general-chat {
+            margin-left: 0;
+            margin-right: 0;
+            width: 100%;
+        }
+
+        .chat-messages {
+            flex: 1;
+            display: flex;
+            /* ✅ додаємо flex */
+            flex-direction: column-reverse;
+            /* ✅ останні повідомлення внизу */
+            overflow-y: auto;
+            height: 100%;
+            padding: 10px;
+            border-radius: 10px;
+            background: #151515;
+            font-size: 14px;
+            margin-bottom: 8px;
+            padding-right: 5px;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .chat-messages a {
+            color: var(--accent-color);
+            /* або інший колір */
+            text-decoration: none;
+        }
+
+        .chat-messages a:hover {
+            text-decoration: underline;
+        }
+
+        .chat-messages::-webkit-scrollbar,
+        .chat-input-wrapper textarea::-webkit-scrollbar {
+            display: none;
+        }
+
+        .chat-input-wrapper {
+            display: flex;
+            align-items: center;
+            padding: 6px 8px;
+            background: transparent;
+            border-radius: 8px;
+            margin-left: 0;
+            margin-right: 0;
+        }
+
+        .chat-input-wrapper textarea {
+            flex: 1;
+            resize: none;
+            overflow-y: auto;
+            max-height: 60px;
+            /* ⬅️ обмежуємо max */
+            min-height: 20px;
+            /* ⬅️ базова висота */
+            padding: 3px 6px;
+            border-radius: 8px;
+            background: #222;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            border: none;
+            scrollbar-width: none;
+            /* Firefox */
+            -ms-overflow-style: none;
+            /* IE */
+            box-shadow: inset 3px 3px 6px #0c0c0c, inset -3px -3px 6px #2a2a2a;
+        }
+
+        .chat-input-wrapper textarea:focus {
+            outline: none;
+            box-shadow: inset 3px 3px 6px #0c0c0c, inset -3px -3px 6px #2a2a2a;
+            /* тільки внутрішня */
+        }
+
+        /* універсальні стилі для обох кнопок у чаті */
+.chat-input-wrapper .upload-image-btn,
+.chat-input-wrapper .toggle-emoji-picker {
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+}
+.chat-input-wrapper .upload-image-btn:hover,
+.chat-input-wrapper .toggle-emoji-picker:hover {
+  transform: scale(1.1);
+}
+
+        /* Обгортка з emoji, скріпкою та кнопкою */
+        .chat-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-left: 6px;
+        }
+
+        /* Кнопка емодзі */
+        #toggle-emoji-picker {
+            background: transparent;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 4px;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .upload-image-btn,
+        .toggle-emoji-picker {
+            background: transparent;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .toggle-emoji-picker img {
+  width: 18px;   /* підбери під розмір */
+  height: 18px;
+  object-fit: contain;
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+}
+
+.toggle-emoji-picker:hover img {
+  opacity: 1;
+}
+
+        .send-btn {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            border-radius: 0px;
+            width: 15px;
+            height: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+        }
+
+        .send-icon {
+            width: 23px;
+            height: 23px;
+            display: block;
+        }
+
+        .send-btn:hover {
+            box-shadow: 0 0 13px rgba(212, 200, 124, 0.6);
+        }
+
+        .image-preview-container {
+            display: none;
+            padding: 5px;
+        }
+
+        .image-preview {
+            max-width: 180px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+        }
+
+        .cancel-image {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .cancel-image:hover {
+            background: rgba(255, 0, 0, 0.8);
+        }
+
+        .chat-message button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #aaa;
+            margin-left: 8px;
+        }
+
+        .chat-message button:hover {
+            color: white;
+        }
+
+        .profile-sidebar .overlay+.overlay {
+            margin-top: 16px;
+        }
+
+        .hover-menu {
+            position: absolute;
+            top: 2px;
+            right: 4px;
+            display: none;
+            flex-direction: row;
+            gap: 2px;
+            z-index: 10;
+        }
+
+        .hover-menu button {
+            padding: 2px;
+            /* прибираємо великі відступи */
+            margin: 0;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .hover-menu button iconify-icon {
+            color: #aaa;
+            /* світло-сірий */
+            transition: color 0.2s ease;
+        }
+
+        .hover-menu button:hover iconify-icon {
+            color: white;
+            /* білий при наведенні */
+        }
+
+        .message-wrapper:hover .hover-menu {
+            display: flex;
+        }
+
+        .avatar {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .chat-message {
+            position: relative;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 5px 8px 5px 8px;
+            border-radius: 0 0 8px 8px;
+            background: transparent;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            min-height: 0;
+            padding: 10px;
+            border-radius: 10px;
+            background: #151515;
+            font-size: 14px;
+            white-space: pre-wrap;
+            word-break: break-word;
+            scroll-behavior: smooth;
+            box-shadow: inset 4px 4px 8px #0d0d0d, inset -4px -4px 8px #1d1d1d;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .message-content {
+            flex: 1;
+            word-break: break-word;
+            white-space: pre-wrap;
+        }
+
+        .message-wrapper {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 12px;
+            border-radius: 8px;
+            background: transparent;
+            transition: background 0.2s ease;
+        }
+
+        .message-wrapper:hover {
+            background: #1e1e1e;
+            /* трохи світліший ніж чат */
+        }
+
+        .reply-preview {
+            font-size: 10px;
+            line-height: 1.1;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-left: 3px solid var(--accent-color);
+            border-radius: 8px 8px 0 0;
+            padding: 6px 10px;
+            margin-left: 25px;
+            margin-bottom: 0;
+            background: transparent;
+        }
+
+        .reply-text {
+            display: flex;
+            flex: 1;
+            min-width: 0;
+            /* дозволяє обрізати текст всередині flex */
+            gap: 4px;
+            font-size: 10px;
+            overflow: hidden;
+        }
+
+        .reply-to-preview {
+            font-size: 10px;
+            opacity: 0.8;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            /* додає три крапки */
+            white-space: nowrap;
+            /* в один рядок */
+            max-width: 120px;
+            /* або інше значення під твій дизайн */
+        }
+
+        .message-wrapper.reply-highlight {
+            background: rgb(66, 63, 46, 0.2);
+            /* світлий фон */
+            border-left: 3px solid var(--accent-color);
+            border-radius: 8px;
+            padding: 4px;
+            transition: background 0.05s ease;
+        }
+
+        .reply-container {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .avatar-small {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+        }
+
+        .reply-text {
+            display: flex;
+            gap: 4px;
+            font-size: 10px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .reply-to-name {
+            font-size: 10px;
+            font-weight: bold;
+            color: var(--accent-color);
+        }
+
+        .reply-to-preview {
+            font-size: 10px;
+            opacity: 0.8;
+        }
+
+        .message-content img {
+            margin-top: 6px;
+            border-radius: 10px;
+            max-width: 100%;
+            height: auto;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+        }
+
+        .message-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 2px;
+            font-size: 13px;
+        }
+
+        .sender-name {
+            font-weight: 600;
+            background: var(--accent);
+            /* золотий градієнт */
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .message-time {
+            font-size: 12px;
+            color: #aaa;
+            opacity: 0.6;
+        }
+
+        .message-text {
+            font-size: 14px;
+            white-space: pre-wrap;
+            word-break: break-word;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .editing-message {
+            background: #222;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            padding: 4px;
+            outline: none;
+        }
+
+        .save-edit-btn,
+        .cancel-edit-btn {
+            background: #333;
+            color: white;
+            border: none;
+            padding: 2px 6px;
+            margin-left: 4px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .save-edit-btn:hover {
+            background: #4caf50;
+        }
+
+        .cancel-edit-btn:hover {
+            background: #f44336;
+        }
+
+        .chat-messages blockquote.twitter-tweet {
+            margin: 10px auto;
+            padding: 0;
+            border-left: none;
+            background: transparent;
+            max-width: 100%;
+        }
+
+        .chat-messages iframe {
+            max-width: 100% !important;
+        }
+
+        .reaction-row {
+            display: flex;
+            gap: 6px;
+            margin-top: 6px;
+            padding-left: 4px;
+            flex-wrap: wrap;
+        }
+
+        .reaction-bubble {
+            background: #333;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 13px;
+            color: white;
+            box-shadow: inset 1px 1px 2px #111, inset -1px -1px 2px #222;
+        }
+
+        .reaction-btn {
+            background: #333;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 13px;
+            color: white;
+            border: none;
+            cursor: pointer;
+            box-shadow: inset 1px 1px 2px #111, inset -1px -1px 2px #222;
+            transition: background 0.2s ease;
+        }
+
+        .reaction-btn:hover {
+            background: #555;
+        }
+
+        .reaction-btn.reacted {
+            background: var(--accent-color);
+            color: black;
+            font-weight: bold;
+        }
+        emoji-picker[data-role="react-picker"]::part(emoji) {
+    font-size: 18px; /* менший розмір емодзі */
+}
+
+        /* універсальний бейдж */
+.sidebar-badge {
+  display:inline-flex; align-items:center; justify-content:center;
+  min-width:18px; height:18px; padding:0 6px; margin-left:8px;
+  border-radius:999px; font-size:12px; font-weight:700;
+  background:#444; color:#fff; box-shadow: inset 0 1px 0 rgba(255,255,255,.12);
+}
+
+/* бейдж «непрочитаних» */
+.sidebar-badge.unread { background:#0f0f0f; }  
+
+/* бейдж «реплаїв на мене» */
+.sidebar-badge.replies {
+  background: #d4c87c; color:#000;                       /* золотий */
+  box-shadow: 0 0 10px rgba(212,200,124,.75), 0 0 2px #000 inset;
+}
+
+        .settings-grid {
+  display:grid; grid-template-columns: 1fr 1fr; gap:16px;
+}
+.setting-card {
+  background: var(--bg-panel);
+  border: 1px solid rgba(255,255,255,.05);
+  border-radius: 12px; padding:12px;
+  box-shadow: 0 4px 10px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.05), inset 0 -1px 0 rgba(0,0,0,.4);
+}
+.setting-card h4 { margin: 0 0 10px 0; font-size:16px; color: var(--accent-color); }
+.setting-card .row { display:flex; gap:8px; align-items:center; margin:8px 0; }
+.setting-card input[type="text"] {
+  flex:1; background:#222; border:none; color:#fff; border-radius:8px; padding:8px 10px;
+  box-shadow: inset 3px 3px 6px #0c0c0c, inset -3px -3px 6px #2a2a2a;
+}
+.link-btn {
+  background:transparent; border:none; color:var(--text-primary); cursor:pointer; font-weight:600;
+}
+.link-btn:hover { color: var(--accent-color); }
+.muted { color:#aaa; opacity:.8; }
+
+.wallet-section { margin-top:8px; }
+.wallet-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+
+.wallet-list { display:flex; flex-wrap:wrap; gap:6px; }
+.wallet-chip {
+  display:inline-flex; align-items:center; gap:6px;
+  background:#222; border:1px solid rgba(255,255,255,.06);
+  border-radius:999px; padding:4px 8px; font-size:12px;
+}
+.wallet-chip .addr { font-family: monospace; }
+.wallet-chip .remove {
+  background:transparent; border:none; color:#aaa; cursor:pointer; font-size:14px; line-height:1;
+}
+.wallet-chip .remove:hover { color:#fff; }
+
+/* адаптив */
+@media (max-width:1024px){
+  .settings-grid{ grid-template-columns:1fr; }
+}
+
+        /* === My Collection === */
+.collection-wrap { display:flex; flex-direction:column; gap:14px; min-height:0; }
+.collection-header { display:flex; justify-content:space-between; align-items:center; }
+.collection-header .count { opacity:.85; }
+
+.collection-grid {
+  display:grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap:14px;
+}
+
+.owl-card {
+  position:relative;
+  overflow:hidden;
+  border-radius:16px;
+  background: linear-gradient(145deg, #1b1b1b, #0f0f0f);
+  border:1px solid rgba(255,255,255,.06);
+  box-shadow: 0 8px 24px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.06);
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+.owl-card:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(0,0,0,.6); }
+
+.owl-img {
+  width:100%; aspect-ratio:1/1; object-fit:cover; display:block;
+  background:#0e0e0e;
+}
+
+.owl-meta {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:10px 12px;
+}
+.owl-num { font-weight:700; letter-spacing:.3px; }
+.rarity-badge {
+  padding:4px 10px; border-radius:999px; font-size:12px; font-weight:800;
+  color:#000; text-transform:uppercase; letter-spacing:.4px;
+  box-shadow: 0 0 12px rgba(212,200,124,.35), inset 0 1px 0 rgba(255,255,255,.25);
+}
+
+/* кольори під рарності (можеш підкрутити) */
+.rarity-common     { background:#cfcfcf; }
+.rarity-uncommon   { background:#a7f0ba; }
+.rarity-rare       { background:#7ec8ff; }
+.rarity-epic       { background:#c095ff; }
+.rarity-legendary  { background: linear-gradient(90deg,#bfa758,#d4c87c); color:#000; }
+.rarity-mythic     { background: linear-gradient(90deg,#ff7ad9,#ffd36b); color:#000; }
+
+/* skeleton */
+.skel {
+  border-radius:14px; height: 244px;
+  background: linear-gradient(90deg,#1a1a1a 25%, #242424 37%, #1a1a1a 63%);
+  background-size: 400% 100%; animation: shimmer 1.1s infinite;
+  border:1px solid rgba(255,255,255,.04);
+}
+@keyframes shimmer { 0%{background-position:100% 0} 100%{background-position:-100% 0} }
+.empty-state{
+  padding:18px; border:1px dashed rgba(255,255,255,.12); border-radius:12px; text-align:center; opacity:.9;
+}
+
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Хедер -->
+        <header>
+            <div class="logo"><img src="../logo1.png" alt="logo" /></div>
+            <div class="nav-buttons">
+                <a href="https://owlbtc.art/leaderboard/" class="button" target="_blank">LEADERBOARD</a>
+                <a href="https://owlbtc.art/collection/" class="button" target="_blank">COLLECTION</a>
+                <div class="wallet-wrapper">
+                    <button class="connect-wallet wallet-trigger" id="wallet-header-btn">CONNECT WALLET</button>
+                    <div class="wallet-dropdown-content" id="wallet-header-dropdown">
+                        <a href="/profile">Profile</a>
+                        <a href="#" class="logout-btn">Logout</a>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Головна секція профілю -->
+        <div class="profile-main">
+            <!-- Sidebar -->
+            <div class="panel profile-sidebar">
+                <h2>Profile</h2>
+
+                <!-- USER INFO BLOCK -->
+                <div class="overlay user-info-block" id="user-info-block">
+                    <img id="profile-image" class="profile-picture" src="" alt="Profile Picture" />
+                    <div class="wallet-address" id="sidebar-wallet-addr" style="display:none;"></div>
+                    <div class="total-points" id="sidebar-total-points" style="display:none;"></div>
+                    <button id="sidebar-connect-btn" class="connect-wallet wallet-trigger">CONNECT WALLET</button>
+                </div>
+
+                <!-- Sections list -->
+                <div class="overlay sections-list">
+                    <ul id="sidebar-nav">
+                        <li><a href="#" data-section="collection">My Collection</a></li>
+                        <li><a href="https://owlbtc.art/test/index.html">Dashboard</a></li>
+                        <li><a href="#" data-section="links">Links</a></li>
+                        <li><a href="#" data-section="announcements">Announcements</a></li>
+                        <li><a href="#" data-section="general">General</a></li>
+                        <li><a href="#" data-section="share-art">Share Art</a></li>
+                        <li><a href="#" data-section="spot-request">Spot request</a></li>
+                        <li><a href="#" data-section="raffles">Raffles</a></li>
+                        <li><a href="#" data-section="settings">Settings</a></li>
+                        <li><a href="#" class="sidebar-logout">Logout</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <!-- Central content sections -->
+            <div id="section-collection" class="profile-section active">
+                <h3>My Collection</h3>
+                <p>This section will display all NFTs found in your connected wallet based on the snapshot table.</p>
+            </div>
+
+            <div id="section-dashboard" class="profile-section">
+                <h3>Dashboard</h3>
+                <p><a href="https://owlbtc.art/test/index.html" target="_blank">Dashboard</a></p>
+            </div>
+
+            <div id="section-links" class="profile-section">
+                <h3>Links</h3>
+
+                <div class="chat-box">
+                    <div class="chat-messages" data-section="links"></div>
+
+                    <div class="chat-input-wrapper">
+                        <textarea class="chat-input" id="chat-input-links" name="chat-links" data-section="links" placeholder="Type a message..."></textarea>
+
+                        <div class="chat-actions">
+                            <div class="emoji-picker-container" style="position: relative;">
+                                <button class="toggle-emoji-picker" data-section="links" title="Emoji">
+                                    <img src="/images2/em.png" alt="Emoji" />
+                                </button>
+                                <emoji-picker class="emoji-picker" data-section="links" style="position: absolute; bottom: 45px; right: 0; z-index: 999; display: none;"></emoji-picker>
+                            </div>
+
+                            <input type="file" class="image-upload" data-section="links" accept="image/*" style="display: none;" />
+                            <button class="upload-image-btn" data-section="links" title="Attach Image">
+                                <img src="../images2/paperclip.png" alt="attach" width="20" height="20" />
+                            </button>
+
+                            <button class="send-btn" data-section="links">
+                                <img src="../images2/send.png" alt="Send" class="send-icon" />
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="image-preview-container" data-section="links" style="display:none; margin:8px 0;">
+                        <div style="position:relative; display:inline-block;">
+                            <img class="image-preview" data-section="links" style="max-width:150px; border-radius:8px;">
+                            <button class="cancel-image" data-section="links" style="
+          position:absolute;
+          top:0;
+          right:0;
+          background:rgba(0,0,0,0.6);
+          color:white;
+          border:none;
+          border-radius:50%;
+          width:20px;
+          height:20px;
+          cursor:pointer;
+        ">✖</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="section-announcements" class="profile-section">
+                <h3>Announcements</h3>
+
+                <div class="chat-box">
+                    <div class="chat-messages" data-section="announcements"></div>
+
+                    <div class="chat-input-wrapper">
+                        <textarea class="chat-input" id="chat-input-announcements" name="chat-announcements" data-section="announcements" placeholder="Type a message..."></textarea>
+
+                        <div class="chat-actions">
+                            <!-- Emoji -->
+                            <div class="emoji-picker-container" style="position: relative;">
+                                <button class="toggle-emoji-picker" data-section="announcements" title="Emoji">
+                                    <img src="/images2/em.png" alt="Emoji" />
+                                </button>
+                                <emoji-picker class="emoji-picker" data-section="announcements" style="position: absolute; bottom: 45px; right: 0; z-index: 999; display: none;"></emoji-picker>
+                            </div>
+
+                            <!-- Image Upload -->
+                            <input type="file" class="image-upload" data-section="announcements" accept="image/*" style="display: none;" />
+                            <button class="upload-image-btn" data-section="announcements" title="Attach Image">
+                                <img src="../images2/paperclip.png" alt="attach" width="20" height="20" />
+                            </button>
+
+                            <!-- Send Button -->
+                            <button class="send-btn" data-section="announcements">
+                                <img src="../images2/send.png" alt="Send" class="send-icon" />
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Image Preview -->
+                    <div class="image-preview-container" data-section="announcements" style="display:none; margin:8px 0;">
+                        <div style="position:relative; display:inline-block;">
+                            <img class="image-preview" data-section="announcements" style="max-width:150px; border-radius:8px;">
+                            <button class="cancel-image" data-section="announcements" style="
+          position:absolute;
+          top:0;
+          right:0;
+          background:rgba(0,0,0,0.6);
+          color:white;
+          border:none;
+          border-radius:50%;
+          width:20px;
+          height:20px;
+          cursor:pointer;
+        ">✖</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- General Chat -->
+            <div id="section-general" class="profile-section">
+                <h3>General Chat</h3>
+
+                <div class="chat-box">
+                    <div class="chat-messages" data-section="general"></div>
+
+                    <div class="chat-input-wrapper">
+                        <textarea class="chat-input" id="chat-input-general" name="chat-general" data-section="general" placeholder="Type a message..."></textarea>
+
+                        <div class="chat-actions">
+                            <div class="emoji-picker-container" style="position: relative;">
+                                <button class="toggle-emoji-picker" data-section="general" title="Emoji">
+                                    <img src="/images2/em.png" alt="Emoji" />
+                                </button>
+                                <emoji-picker class="emoji-picker" data-section="general" style="position: absolute; bottom: 45px; right: 0; z-index: 999; display: none;"></emoji-picker>
+                            </div>
+
+                            <input type="file" class="image-upload" data-section="general" accept="image/*" style="display: none;" />
+                            <button class="upload-image-btn" data-section="general" title="Attach Image">
+                                <img src="../images2/paperclip.png" alt="attach" width="20" height="20" />
+                            </button>
+
+                            <button class="send-btn" data-section="general">
+                                <img src="../images2/send.png" alt="Send" class="send-icon" />
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="image-preview-container" data-section="general" style="display:none; margin:8px 0;">
+                        <div style="position:relative; display:inline-block;">
+                            <img class="image-preview" data-section="general" style="max-width:150px; border-radius:8px;">
+                            <button class="cancel-image" data-section="general" style="
+          position:absolute;
+          top:0;
+          right:0;
+          background:rgba(0,0,0,0.6);
+          color:white;
+          border:none;
+          border-radius:50%;
+          width:20px;
+          height:20px;
+          cursor:pointer;
+        ">✖</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Share Art -->
+<div id="section-share-art" class="profile-section">
+  <h3>Share Art</h3>
+  <div class="chat-box">
+    <div class="chat-messages" data-section="share-art"></div>
+
+    <div class="chat-input-wrapper">
+      <textarea class="chat-input" id="chat-input-share-art" name="chat-share-art" data-section="share-art" placeholder="Type a message..."></textarea>
+
+      <div class="chat-actions">
+        <div class="emoji-picker-container" style="position: relative;">
+          <button class="toggle-emoji-picker" data-section="share-art" title="Emoji">
+            <img src="/images2/em.png" alt="Emoji" />
+          </button>
+          <emoji-picker class="emoji-picker" data-section="share-art" style="position: absolute; bottom: 45px; right: 0; z-index: 999; display: none;"></emoji-picker>
+        </div>
+
+        <input type="file" class="image-upload" data-section="share-art" accept="image/*" style="display: none;" />
+        <button class="upload-image-btn" data-section="share-art" title="Attach Image">
+          <img src="../images2/paperclip.png" alt="attach" width="20" height="20" />
+        </button>
+
+        <button class="send-btn" data-section="share-art">
+          <img src="../images2/send.png" alt="Send" class="send-icon" />
+        </button>
+      </div>
+    </div>
+
+    <div class="image-preview-container" data-section="share-art" style="display:none; margin:8px 0;">
+      <div style="position:relative; display:inline-block;">
+        <img class="image-preview" data-section="share-art" style="max-width:150px; border-radius:8px;">
+        <button class="cancel-image" data-section="share-art" style="position:absolute; top:0; right:0; background:rgba(0,0,0,0.6); color:white; border:none; border-radius:50%; width:20px; height:20px; cursor:pointer;">✖</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Spot request -->
+<div id="section-spot-request" class="profile-section">
+  <h3>Spot request</h3>
+  <div class="chat-box">
+    <div class="chat-messages" data-section="spot-request"></div>
+
+    <div class="chat-input-wrapper">
+      <textarea class="chat-input" id="chat-input-spot-request" name="chat-spot-request" data-section="spot-request" placeholder="Type a message..."></textarea>
+
+      <div class="chat-actions">
+        <div class="emoji-picker-container" style="position: relative;">
+          <button class="toggle-emoji-picker" data-section="spot-request" title="Emoji">
+            <img src="/images2/em.png" alt="Emoji" />
+          </button>
+          <emoji-picker class="emoji-picker" data-section="spot-request" style="position: absolute; bottom: 45px; right: 0; z-index: 999; display: none;"></emoji-picker>
+        </div>
+
+        <input type="file" class="image-upload" data-section="spot-request" accept="image/*" style="display: none;" />
+        <button class="upload-image-btn" data-section="spot-request" title="Attach Image">
+          <img src="../images2/paperclip.png" alt="attach" width="20" height="20" />
+        </button>
+
+        <button class="send-btn" data-section="spot-request">
+          <img src="../images2/send.png" alt="Send" class="send-icon" />
+        </button>
+      </div>
+    </div>
+
+    <div class="image-preview-container" data-section="spot-request" style="display:none; margin:8px 0;">
+      <div style="position:relative; display:inline-block;">
+        <img class="image-preview" data-section="spot-request" style="max-width:150px; border-radius:8px;">
+        <button class="cancel-image" data-section="spot-request" style="position:absolute; top:0; right:0; background:rgba(0,0,0,0.6); color:white; border:none; border-radius:50%; width:20px; height:20px; cursor:pointer;">✖</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+            <!-- Raffles -->
+            <div id="section-raffles" class="profile-section">
+                <h3>Raffles</h3>
+            </div>
+
+            <!-- Settings -->
+            <div id="section-settings" class="profile-section">
+  <h3>Settings</h3>
+
+  <div class="settings-grid">
+    <!-- Socials -->
+    <div class="setting-card">
+      <h4>Socials</h4>
+      <div class="row">
+        <span>Twitter</span>
+        <button id="btn-connect-twitter" class="connect-wallet">Connect</button>
+      </div>
+      <div class="row">
+        <span>Discord</span>
+        <button id="btn-connect-discord" class="connect-wallet">Connect</button>
+      </div>
+      <small id="settings-social-status" class="muted"></small>
+    </div>
+
+    <!-- Nickname -->
+    <div class="setting-card">
+      <h4>Nickname</h4>
+      <div class="row">
+        <input id="inp-nickname" type="text" placeholder="Your nickname" maxlength="24" />
+        <button id="btn-save-nickname" class="connect-wallet">Save</button>
+      </div>
+      <small class="muted">This will replace the shortened wallet in chats (only for you for now).</small>
+    </div>
+
+    <!-- Wallets -->
+    <div class="setting-card">
+      <h4>Mint Wallets</h4>
+
+      <div class="wallet-section">
+        <div class="wallet-header">
+          <span>Bitcoin addresses</span>
+          <button id="btn-add-btc" class="link-btn">+ Add</button>
+        </div>
+        <div id="list-btc" class="wallet-list"></div>
+      </div>
+
+      <div class="wallet-section">
+        <div class="wallet-header">
+          <span>Ethereum addresses</span>
+          <button id="btn-add-evm" class="link-btn">+ Add</button>
+        </div>
+        <div id="list-evm" class="wallet-list"></div>
+      </div>
+
+      <small class="muted">Up to 10 per chain. You can remove any time.</small>
+    </div>
+  </div>
+</div>
+
+            <!-- Logout -->
+            <div id="section-logout" class="profile-section">
+                <h3>Logout</h3>
+                <p>You have been logged out.</p>
+            </div>
+            
+<!-- Wallet chooser modal -->
+<div id="wallet-modal" style="display:none; position:fixed; inset:0; z-index:2000; background:rgba(0,0,0,.6);">
+  <div style="
+    width: 420px; max-width:calc(100% - 32px);
+    margin: 12vh auto; padding:16px; border-radius:16px;
+    background: linear-gradient(145deg, #1b1b1b, #101010);
+    border:1px solid rgba(255,255,255,.06);
+    box-shadow: 0 12px 30px rgba(0,0,0,.6);
+  ">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+      <h3 style="margin:0; color:#d4c87c;">Connect wallet</h3>
+      <button id="wallet-modal-close" style="background:transparent;border:none;color:#fff;font-size:18px;cursor:pointer;">✕</button>
+    </div>
+
+    <p style="margin:6px 0 14px 0; opacity:.85;">Choose a Taproot wallet (bc1p…):</p>
+
+    <div style="display:grid; gap:10px;">
+      <button class="connect-wallet" id="btn-connect-unisat">Connect UniSat</button>
+      <button class="connect-wallet" id="btn-connect-xverse">Connect Xverse</button>
+      <button class="connect-wallet" id="btn-connect-mew">Connect Magic Eden Wallet</button>
+    </div>
+
+    <small style="display:block; margin-top:10px; opacity:.75;">
+      Tip: Xverse та Magic Eden використовують спільний інтерфейс <code>window.btc</code>.
+    </small>
+  </div>
+</div>
+
+
+            <!-- Скрипти -->
+            <script>
+/* === CONFIG (дані для NFT/поінтів) === */
+const SNAPSHOT_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?output=csv&gid=0";
+const imageBaseURL = "https://raw.githubusercontent.com/oxmikem-site/owlorder-site/main/images2/";
+const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?gid=1127131432&single=true&output=csv";
+
+/* Перелік секцій, де є чат */
+const chatSections = ["links", "announcements", "general", "share-art", "spot-request"];
+
+/* Сховище reply для кожної секції */
+const replyToMessageBySection = {};
+
+let cachedHolderInfo = null;
+
+                // кеш холдера з TTL
+const HOLDER_CACHE_TTL = 6 * 60 * 60 * 1000; // 6 год
+
+function readHolderCache(address){
+  try {
+    const raw = localStorage.getItem(`holder:${(address||'').toLowerCase()}`);
+    if (!raw) return null;
+    const obj = JSON.parse(raw);
+    if (!obj?.ts || (Date.now() - obj.ts) > HOLDER_CACHE_TTL) return null;
+    return obj; // {found, address, imageId, points, ts}
+  } catch { return null; }
+}
+
+function writeHolderCache(address, data){
+  try {
+    if (data && data.found) {
+      localStorage.setItem(
+        `holder:${address.toLowerCase()}`,
+        JSON.stringify({ ...data, ts: Date.now() })
+      );
+    } else {
+      localStorage.removeItem(`holder:${address.toLowerCase()}`);
+    }
+  } catch {}
+}
+
+                // === Мій профіль
+let currentUserNickname = "";
+
+                // кеш ніків інших користувачів
+const nicknameCache = {};
+
+// синхронний варіант (повертає що є зараз у кеші або short)
+function getDisplayNameSync(addr) {
+  if (!addr) return "";
+  const me = (getConnectedWalletAddress() || "").toLowerCase();
+  if (addr.toLowerCase() === me && currentUserNickname) return currentUserNickname;
+  const cached = nicknameCache[addr.toLowerCase()];
+  return cached ? cached : shortenAddress(addr);
+}
+
+// асинхронно підвантажує нік і оновлює кеш
+async function prefetchNickname(addr) {
+  if (!addr) return null;
+  const key = addr.toLowerCase();
+  if (nicknameCache[key] !== undefined) return nicknameCache[key];
+  try {
+    const snap = await db.ref(`users/${addr}/profile/nickname`).get();
+    const nick = (snap && snap.val()) || "";
+    nicknameCache[key] = nick || null;
+    return nicknameCache[key];
+  } catch {
+    nicknameCache[key] = null;
+    return null;
+  }
+}
+
+/** Повертає, що показувати як ім'я автора повідомлення */
+function getDisplayName(addr) {
+  if (!addr) return "";
+  const me = (getConnectedWalletAddress() || "").toLowerCase();
+  if (addr.toLowerCase() === me && currentUserNickname) {
+    return currentUserNickname;            // мій нікнейм замість скороченої адреси
+  }
+  return shortenAddress(addr);             // інші — як і було
+}
+
+                function isReplyToMe(replySenderRaw) {
+  const me      = (getConnectedWalletAddress() || "");
+  const myFull  = me.toLowerCase();
+  const myShort = shortenAddress(me).toLowerCase();
+  const myNick  = (currentUserNickname || "").toLowerCase();
+  const val     = (replySenderRaw || "").toLowerCase();
+  return val === myFull || val === myShort || (myNick && val === myNick);
+}
+
+/* === Хелпери інтерфейсу === */
+function shortenAddress(addr) {
+  return addr ? addr.slice(0, 6) + "..." + addr.slice(-4) : "";
+}
+function getConnectedWalletAddress() {
+  return localStorage.getItem("taproot_wallet");
+}
+function updateWalletButtons(address) {
+  const short = shortenAddress(address);
+  const btn = document.getElementById("wallet-header-btn");
+  if (btn) btn.textContent = short || "CONNECT WALLET";
+}
+
+ function isTaproot(addr=""){ return /^bc1p/i.test((addr||'').trim()); }
+
+               function getBtcProvider() {
+  // хто б не інжектнув — беремо першого з request
+  if (window.btc && typeof window.btc.request === 'function') return { name: 'window.btc', obj: window.btc };
+  if (window.XverseProviders?.bitcoin?.request)  return { name: 'XverseProviders.bitcoin', obj: window.XverseProviders.bitcoin };
+  if (window.xverseProviders?.bitcoin?.request)  return { name: 'xverseProviders.bitcoin', obj: window.xverseProviders.bitcoin };
+  if (window.magicEden?.bitcoin?.request)        return { name: 'magicEden.bitcoin', obj: window.magicEden.bitcoin };
+  if (window.okxwallet?.bitcoin?.request)        return { name: 'okxwallet.bitcoin', obj: window.okxwallet.bitcoin };
+  return null;
+}
+
+// чекаємо до 8с + ще раз пробуємо після фокусу вікна (коли користувач тицяє на іконку розширення)
+function waitForBtcProvider(maxWaitMs = 8000) {
+  return new Promise(resolve => {
+    const existing = getBtcProvider();
+    if (existing) return resolve(existing);
+
+    let done = false;
+    const finish = (res) => { if (!done) { done = true; resolve(res); cleanup(); } };
+    const cleanup = () => {
+      window.removeEventListener('btc#initialized', onInit);
+      window.removeEventListener('bitcoin#initialized', onInit);
+      window.removeEventListener('wallet#initialized', onInit);
+      window.removeEventListener('focus', onFocus);
+      clearInterval(iv);
+      clearTimeout(to);
+    };
+    const onInit = () => { const p = getBtcProvider(); if (p) finish(p); };
+    const onFocus = () => { const p = getBtcProvider(); if (p) finish(p); };
+
+    window.addEventListener('btc#initialized', onInit, { once:true });
+    window.addEventListener('bitcoin#initialized', onInit, { once:true });
+    window.addEventListener('wallet#initialized', onInit, { once:true });
+    window.addEventListener('focus', onFocus);
+
+    const iv = setInterval(() => {
+      const p = getBtcProvider();
+      if (p) finish(p);
+    }, 150);
+
+    const to = setTimeout(() => finish(null), maxWaitMs);
+  });
+}
+
+function openWalletModal(){
+  const m = document.getElementById('wallet-modal');
+  if (m) m.style.display = 'block';
+}
+function closeWalletModal(){
+  const m = document.getElementById('wallet-modal');
+  if (m) m.style.display = 'none';
+}
+
+/** UniSat */
+async function connectWithUniSat(){
+  if (!window.unisat) { alert('UniSat not found'); return null; }
+  try{
+    await window.unisat.requestAccounts();
+    const addr = (await window.unisat.getAccounts())[0];
+    return isTaproot(addr) ? addr : (alert('Need a Taproot (bc1p…) address'), null);
+  }catch(e){ console.warn('Unisat error',e); return null; }
+}
+
+async function connectWithBtc(preferredName = 'Bitcoin wallet'){
+  // спроба №1: чекаємо
+  const prov = await waitForBtcProvider();
+  if (!prov || !prov.obj) {
+    // діагностика у консоль
+    console.log('[OWL] Provider not found. Diagnostics:', {
+      has_window_btc: !!window.btc,
+      has_XverseProviders: !!(window.XverseProviders?.bitcoin),
+      has_xverseProviders: !!(window.xverseProviders?.bitcoin),
+      has_magicEden: !!(window.magicEden?.bitcoin),
+      has_okxwallet: !!(window.okxwallet?.bitcoin),
+      location: location.href,
+      ua: navigator.userAgent
+    });
+    alert(`${preferredName} not found`);
+    return null;
+  }
+
+  try {
+    const res = await prov.obj.request('getAccounts', {
+      purposes: ['payment','ordinals'],
+      message: 'Connect to OWL',
+      network: { type: 'Mainnet' }
+    });
+    const list = res?.result || res?.accounts || [];
+    const ord = list.find(a => (a.purpose||'').toLowerCase()==='ordinals');
+    const pay = list.find(a => (a.purpose||'').toLowerCase()==='payment');
+    const addr = (ord?.address || pay?.address || '').trim();
+    return /^bc1p/i.test(addr) ? addr : (alert('Need a Taproot (bc1p…) address'), null);
+  } catch(e) {
+    console.warn('btc provider error', e);
+    alert(e?.message || 'Failed to connect');
+    return null;
+  }
+}
+async function finishConnect(address){
+  if (!address) return;
+  localStorage.setItem("taproot_wallet", address);
+  updateWalletButtons(address);
+  await populateSidebarUserInfo(address);
+  initUnreadTracking(address);
+  initSettingsUI(address);
+  await renderMyCollection(address);
+  closeWalletModal();
+}
+
+// БІЛЬШЕ НЕ ТЯГНЕ МЕРЕЖУ
+function setProfileImageById(imageId) {
+  const img = document.getElementById("profile-image");
+  if (!img) return;
+  if (imageId) {
+    img.src = `${imageBaseURL}${imageId}.webp`;
+    img.onerror = () => (img.src = "../logo1.png");
+  } else {
+    img.src = "../logo1.png";
+  }
+  img.style.display = "block";
+}
+
+                async function getHolderInfo(address){
+  // 1) спершу кеш
+  const cached = readHolderCache(address);
+  if (cached) return cached;
+
+  // 2) мережа
+  const fresh = await checkHolderInSheet(address);
+  writeHolderCache(address, fresh);
+  return fresh;
+}
+
+/* Перевірка, чи власник (holder), + поінти — як у дашборді */
+async function checkHolderInSheet(address) {
+  if (!address) return { found: false };
+
+  // 1) Перевіряємо, чи адреса є у SNAPSHOT (і беремо imageId)
+  let imageId = null;
+  try {
+    const resImg = await fetch(SNAPSHOT_CSV_URL);
+    const csvImg = await resImg.text();
+    const rowsImg = csvImg.split("\n").slice(1);
+
+    for (const row of rowsImg) {
+      const cols = row.split(",");
+      const rowAddress = (cols[1] || "").trim().toLowerCase(); // колонка B — адреса
+      if (rowAddress === address.trim().toLowerCase()) {
+        imageId = (cols[9] || "").trim(); // колонка J — номер сови
+        break;
+      }
+    }
+  } catch (e) {
+    console.warn("SNAPSHOT fetch error:", e);
+  }
+
+  // якщо не знайшли у snapshot — це не холдер => поінти не показуємо
+  if (!imageId) {
+    return { found: false };
+  }
+
+  // 2) Тягнемо поінти лише для холдерів (як у дашборді по header-ах)
+  let points = "-";
+  try {
+    const res = await fetch(sheetURL);
+    const text = await res.text();
+    const rows = text.trim().split("\n").map(r => r.split(","));
+
+    const headers = rows[0].map(h => h.trim());
+    const addrIndex = headers.indexOf("Holder Address");
+    const pointsIndex = headers.indexOf("Total Points");
+
+    if (addrIndex !== -1 && pointsIndex !== -1) {
+      const row = rows.find(r => (r[addrIndex] || "").trim().toLowerCase() === address.trim().toLowerCase());
+      if (row) {
+        // якщо в таблиці є тисячні розділювачі — прибираємо їх для відображення/числа
+        const raw = (row[pointsIndex] || "").trim();
+        points = raw.replace(/,/g, "") || "-";
+      }
+    }
+  } catch (e) {
+    console.warn("Points sheet fetch error:", e);
+  }
+
+  return { found: true, address, imageId, points };
+}
+                /* === SNAPSHOT кеш для колекції === */
+const SNAPSHOT_CACHE_TTL = 30 * 60 * 1000; // 30 хв — щоб не тягнути часто
+
+function readSnapshotCache(){
+  try{
+    const raw = localStorage.getItem('snapshot:csv');
+    if(!raw) return null;
+    const {ts, rows} = JSON.parse(raw);
+    if(!ts || Date.now()-ts > SNAPSHOT_CACHE_TTL) return null;
+    return rows; // масив рядків CSV (без заголовка)
+  }catch{ return null; }
+}
+function writeSnapshotCache(rows){
+  try{ localStorage.setItem('snapshot:csv', JSON.stringify({ts:Date.now(), rows})); }catch{}
+}
+
+/* Парсимо CSV і повертаємо масив {address, number, rarity?} */
+function parseSnapshotRows(rows){
+  if(!rows || !rows.length) return [];
+
+  // Спроба зрозуміти чи є заголовок
+  const first = rows[0].split(',');
+  const headerLooksLike = /address|holder/i.test(first.join(' ')) || /rarity/i.test(first.join(' '));
+
+  let body = rows;
+  let addrIdx = 1;     // B — як у тебе раніше
+  let numIdx  = 9;     // J — номер сови
+  let rarIdx  = 10;    // K — (якщо є), інакше не буде
+
+  if (headerLooksLike) {
+    const headers = first.map(h => h.trim().toLowerCase());
+    addrIdx = Math.max(headers.indexOf('holder address'), headers.indexOf('address'));
+    numIdx  = Math.max(headers.indexOf('number'), headers.indexOf('nft number'), headers.indexOf('owl'));
+    rarIdx  = headers.indexOf('rarity');
+    body = rows.slice(1);
+  }
+
+  return body.map(r => {
+    const c = r.split(',');
+    return {
+      address: (c[addrIdx]||'').trim().toLowerCase(),
+      number:  (c[numIdx]||'').trim(),
+      rarity:  rarIdx>=0 ? (c[rarIdx]||'').trim() : ''
+    };
+  }).filter(x => x.address && x.number);
+}
+
+/* Завантажуємо/кешуємо snapshot */
+async function loadSnapshot(){
+  const cached = readSnapshotCache();
+  if (cached) return cached;
+  const res = await fetch(SNAPSHOT_CSV_URL);
+  const csv = await res.text();
+  const rows = csv.trim().split('\n'); // з можливим заголовком
+  // кешуємо без змін, щоб не плодити пам'ять
+  writeSnapshotCache(rows);
+  return rows;
+}
+
+/* Класи під бейдж рарності */
+function rarityToClass(r){
+  const t = (r||'').toLowerCase();
+  if (t.includes('myth')) return 'rarity-mythic';
+  if (t.includes('legen')) return 'rarity-legendary';
+  if (t.includes('epic')) return 'rarity-epic';
+  if (t.includes('rare')) return 'rarity-rare';
+  if (t.includes('uncommon')) return 'rarity-uncommon';
+  if (t) return 'rarity-common';
+  return 'rarity-legendary'; // якщо рарності нема — зробимо “золоту” (можеш змінити)
+}
+
+/* Рендеримо мою колекцію у #section-collection */
+async function renderMyCollection(address){
+  const wrap = document.getElementById('section-collection');
+  if (!wrap) return;
+
+  // каркас
+  wrap.innerHTML = `
+    <div class="collection-wrap">
+      <div class="collection-header">
+        <h3 style="margin:0">My Collection</h3>
+        <div class="count" id="my-owls-count"></div>
+      </div>
+      <div class="collection-grid" id="my-owls-grid">
+        ${Array.from({length: 8}).map(()=>'<div class="skel"></div>').join('')}
+      </div>
+    </div>
+  `;
+
+  const rows = await loadSnapshot();
+  const parsed = parseSnapshotRows(rows);
+  const me = (address||'').toLowerCase();
+
+  const mine = parsed.filter(r => r.address === me);
+
+  const grid = document.getElementById('my-owls-grid');
+  const cnt  = document.getElementById('my-owls-count');
+
+  if (cnt) cnt.textContent = mine.length ? `${mine.length} item(s)` : '';
+
+  if (!mine.length) {
+    grid.innerHTML = `<div class="empty-state">No items found for your wallet in the snapshot.</div>`;
+    return;
+  }
+
+  // Сортуємо по номеру
+  mine.sort((a,b)=> Number(a.number)-Number(b.number));
+
+  // Рендер карток
+  grid.innerHTML = mine.map(({number, rarity})=>{
+    const cls = rarityToClass(rarity);
+    const label = rarity || 'Legendary'; // якщо не прийшло — показуємо “Legendary”
+    return `
+      <div class="owl-card">
+        <img class="owl-img" src="${imageBaseURL}${number}.webp" alt="#${number}" onerror="this.src='../logo1.png'">
+        <div class="owl-meta">
+          <span class="owl-num">#${number}</span>
+          <span class="rarity-badge ${cls}">${label}</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+/* Заповнення сайдбару профілю */
+async function populateSidebarUserInfo(address) {
+  const addrEl = document.getElementById("sidebar-wallet-addr");
+  const ptsEl  = document.getElementById("sidebar-total-points");
+  const connectBtn = document.getElementById("sidebar-connect-btn");
+  const img = document.getElementById("profile-image");
+
+  if (addrEl) addrEl.style.display = "none";
+  if (ptsEl)  ptsEl.style.display = "none";
+  if (connectBtn) connectBtn.style.display = "none";
+
+  if (!address) {
+    if (img) img.style.display = "none";
+    if (connectBtn) connectBtn.style.display = "inline-block";
+    return;
+  }
+
+  if (addrEl) {
+  // пробуємо прочитати нік із БД (users/{wallet}/profile/nickname)
+  try {
+    const nickSnap = await db.ref(`users/${address}/profile/nickname`).get();
+    const nickname = (nickSnap && nickSnap.val()) || "";
+    if (nickname) currentUserNickname = nickname;     // тримаємо в глобальній
+    addrEl.textContent = nickname || shortenAddress(address);
+  } catch(e) {
+    addrEl.textContent = shortenAddress(address);
+  }
+  addrEl.style.display = "block";
+}
+
+  // спочатку сховаємо картинку, щоб не блимала
+if (img) img.style.display = "none";
+
+// миттєво показуємо із локального кешу, якщо є
+cachedHolderInfo = readHolderCache(address) || { found: false };
+if (cachedHolderInfo.found) {
+  setProfileImageById(cachedHolderInfo.imageId);
+  if (ptsEl) {
+    ptsEl.innerHTML = `<strong>Total Points:</strong> ${cachedHolderInfo.points}`;
+    ptsEl.style.display = "block";
+  }
+} else {
+  if (ptsEl) ptsEl.style.display = "none";
+  if (connectBtn) {
+    connectBtn.textContent = "Get your OWL";
+    connectBtn.onclick = () => window.open("https://owlbtc.art/collection", "_blank");
+    connectBtn.style.display = "inline-block";
+  }
+}
+
+// тихо оновимо з мережі й, якщо змінились дані — перерендераємо
+getHolderInfo(address).then(info => {
+  cachedHolderInfo = info;
+  if (!info.found) {
+    if (img) img.style.display = "none";
+    if (ptsEl) ptsEl.style.display = "none";
+    if (connectBtn) {
+      connectBtn.textContent = "Get your OWL";
+      connectBtn.onclick = () => window.open("https://owlbtc.art/collection", "_blank");
+      connectBtn.style.display = "inline-block";
+    }
+    return;
+  }
+    setProfileImageById(info.imageId);
+  if (ptsEl) {
+    ptsEl.innerHTML = `<strong>Total Points:</strong> ${info.points}`;
+    ptsEl.style.display = "block";
+  }
+});
+
+}
+
+/* Перемикання секцій */
+function hideAllSections() {
+  document.querySelectorAll(".profile-section").forEach(sec => {
+    sec.classList.remove("active");
+    sec.classList.add("hidden");
+    sec.style.display = "none";
+  });
+}
+function showSection(id) {
+  const section = document.getElementById("section-" + id);
+  if (section) {
+    section.classList.remove("hidden");
+    section.classList.add("active");
+    section.style.display = "flex";
+  }
+}
+
+                // === helpers: badges in sidebar ===
+function ensureSidebarBadges(section) {
+  const link = document.querySelector(`#sidebar-nav a[data-section="${section}"]`);
+  if (!link) return null;
+
+  let unread = link.querySelector('.sidebar-badge.unread');
+  let replies = link.querySelector('.sidebar-badge.replies');
+
+  if (!unread) {
+    unread = document.createElement('span');
+    unread.className = 'sidebar-badge unread';
+    unread.style.display = 'none';
+    link.appendChild(unread);
+  }
+  if (!replies) {
+    replies = document.createElement('span');
+    replies.className = 'sidebar-badge replies';
+    replies.style.display = 'none';
+    link.appendChild(replies);
+  }
+  return { unread, replies };
+}
+
+function setBadgeCount(el, count) {
+  if (!el) return;
+  if (!count || count <= 0) {
+    el.textContent = '';
+    el.style.display = 'none';
+  } else {
+    el.textContent = count > 99 ? '99+' : String(count);
+    el.style.display = 'inline-flex';
+  }
+}
+ 
+async function markAsRead(section, wallet) {
+  // 1. Знайти бейджі для цієї секції
+  const badges = ensureSidebarBadges(section);
+
+  // 2. Скинути кількість непрочитаних і реплаїв у DOM
+  if (badges) {
+    setBadgeCount(badges.unread, 0);
+    setBadgeCount(badges.replies, 0);
+  }
+
+  // 3. Оновити у Firebase "остання прочитана позиція"
+  if (wallet && db) {
+    const now = Date.now();
+    await getReadsRef(wallet, section).update({
+      lastSeen: now,
+      lastReplySeen: now
+    });
+  }
+}
+
+                
+/* ==== Firebase ==== */
+let app, db, storage;
+
+const firebaseConfig = {
+  apiKey: "AIzaSyB4w22BYSjUhoGSeAf3GTZCGq_GuVkzFQY",
+  authDomain: "owl-chat-d5d3e.firebaseapp.com",
+  databaseURL: "https://owl-chat-d5d3e-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "owl-chat-d5d3e",
+  storageBucket: "owl-chat-d5d3e.appspot.com",
+  messagingSenderId: "464471442222",
+  appId: "1:464471442222:web:1628d29ef2be5564affb0f",
+  measurementId: "G-MMBR7S9EM1"
+};
+                // збереження останніх переглядів для кожного гаманця/секції
+function getReadsRef(wallet, section) {
+  return db.ref(`reads/${wallet}/${section}`);
+}
+
+function getChatMessagesRef(section) {
+  if (!db) throw new Error("Firebase DB не ініціалізований!");
+  return db.ref(`chats/${section}`);
+}
+
+async function initUnreadTracking(wallet) {
+  const walletLower = wallet.toLowerCase();
+  const trackingSections = ["collection","links","announcements","general","share-art","spot-request","raffles","settings"];
+
+  for (const section of trackingSections) {
+    const badges = ensureSidebarBadges(section);
+    if (!badges) continue;
+
+    // 1) lastSeen / lastReplySeen
+    const readsSnap = await getReadsRef(wallet, section).get();
+    const reads = readsSnap.val() || {};
+    let lastSeen = reads.lastSeen || 0;
+    let lastReplySeen = reads.lastReplySeen || 0;
+
+    // 2) первинний підрахунок
+    let unreadCount = 0;
+    let replyCount = 0;
+
+    const existing = await getChatMessagesRef(section).get();
+    existing.forEach(snap => {
+      const m = snap.val(); 
+      if (!m) return;
+
+      // непрочитані (не мої і новіші за lastSeen)
+      if (m.timestamp > lastSeen && (m.sender || '').toLowerCase() !== walletLower) {
+        unreadCount++;
+      }
+
+      // реплаї на мене (порівнюємо усі варіанти: full/short/nick)
+      if (m.replyTo && isReplyToMe(m.replyTo.sender) && m.timestamp > lastReplySeen) {
+        replyCount++;
+      }
+    });
+
+    setBadgeCount(badges.unread, unreadCount);
+    setBadgeCount(badges.replies, replyCount);
+
+    // 2.5) скільки child_added треба ПРОПУСТИТИ (щоб не подвоїти після підписки)
+    let toSkip = existing.numChildren();
+
+    // 3) live-підписка
+    getChatMessagesRef(section).on('child_added', snap => {
+      // пропускаємо перші "старі" події
+      if (toSkip > 0) { toSkip--; return; }
+
+      const m = snap.val(); 
+      if (!m) return;
+
+      const isActive = document.getElementById(`section-${section}`)?.classList.contains('active');
+
+      // непрочитані
+      if (!isActive && m.timestamp > lastSeen && (m.sender || '').toLowerCase() !== walletLower) {
+        const cur = parseInt(badges.unread.textContent) || 0;
+        setBadgeCount(badges.unread, cur + 1);
+      }
+
+      // реплаї на мене (через утиліту)
+      const replyIsToMe = m.replyTo && isReplyToMe(m.replyTo.sender);
+      if (!isActive && replyIsToMe && m.timestamp > lastReplySeen) {
+        const curR = parseInt(badges.replies.textContent) || 0;
+        setBadgeCount(badges.replies, curR + 1);
+      }
+    });
+  }
+}
+
+                function getUserProfileRef(wallet) {
+  return db.ref(`users/${wallet}/profile`);
+}
+
+                async function loadSettings(wallet) {
+  if (!wallet) return {nickname:'', socials:{twitter:false, discord:false}, wallets:{btc:[], evm:[]}};
+
+  const snap = await getUserProfileRef(wallet).get();
+  const data = snap.val() || {};
+  const nickname = data.nickname || '';
+  const socials  = data.socials || { twitter:false, discord:false };
+  const wallets  = data.wallets || { btc:[], evm:[] };
+
+  // UI fill
+  const nickInp = document.getElementById('inp-nickname');
+  if (nickInp) nickInp.value = nickname;
+  currentUserNickname = nickname || "";
+
+  const socialStatus = document.getElementById('settings-social-status');
+  if (socialStatus) {
+    socialStatus.textContent = `Twitter: ${socials.twitter ? 'connected' : 'not connected'} · Discord: ${socials.discord ? 'connected' : 'not connected'}`;
+  }
+
+  renderWallets('btc', wallets.btc || []);
+  renderWallets('evm', wallets.evm || []);
+
+  return { nickname, socials, wallets };
+}
+
+function renderWallets(type, list) {
+  const el = document.getElementById(type === 'btc' ? 'list-btc' : 'list-evm');
+  if (!el) return;
+  el.innerHTML = '';
+  (list || []).slice(0,10).forEach((addr, idx) => {
+    const chip = document.createElement('div');
+    chip.className = 'wallet-chip';
+    chip.innerHTML = `
+      <span class="addr">${shortenAddress(addr)}</span>
+      <button class="remove" title="Remove" data-type="${type}" data-index="${idx}">×</button>
+    `;
+    el.appendChild(chip);
+  });
+
+  // remove handlers
+  el.querySelectorAll('.remove').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const t = btn.getAttribute('data-type');
+      const i = parseInt(btn.getAttribute('data-index'),10);
+      const wallet = getConnectedWalletAddress();
+      if (!wallet) return;
+
+      const snap = await getUserProfileRef(wallet).child('wallets').get();
+      const wallets = snap.val() || {btc:[], evm:[]};
+      const arr = Array.isArray(wallets[t]) ? wallets[t] : [];
+      arr.splice(i,1);
+      await getUserProfileRef(wallet).child('wallets').update({ [t]: arr });
+      renderWallets(t, arr);
+    });
+  });
+}
+
+async function addWallet(type) {
+  const wallet = getConnectedWalletAddress();
+  if (!wallet) return alert('Connect wallet first');
+
+  const addr = prompt(`Enter a ${type === 'btc' ? 'Bitcoin' : 'Ethereum'} address:`, '');
+  if (!addr) return;
+
+  if (type === 'btc' && !isValidBTC(addr)) return alert('Invalid Bitcoin address');
+  if (type === 'evm' && !isValidETH(addr)) return alert('Invalid Ethereum address');
+
+  const ref = getUserProfileRef(wallet).child('wallets');
+  const snap = await ref.get();
+  const wallets = snap.val() || { btc:[], evm:[] };
+
+  const list = Array.isArray(wallets[type]) ? wallets[type] : [];
+  if (list.length >= 10) return alert('Limit is 10 addresses.');
+  if (list.some(a => a.toLowerCase() === addr.trim().toLowerCase())) return alert('Already added.');
+
+  const next = [...list, addr.trim()];
+  await ref.update({ [type]: next });
+  renderWallets(type, next);
+}
+
+async function saveNickname() {
+  const wallet = getConnectedWalletAddress();
+  if (!wallet) return alert('Connect wallet first');
+  const inp = document.getElementById('inp-nickname');
+  if (!inp) return;
+  const nickname = (inp.value || '').trim().slice(0,24);
+
+  await getUserProfileRef(wallet).update({ nickname });
+  currentUserNickname = nickname;        // <-- ТУТ
+  await populateSidebarUserInfo(wallet); // <-- ТУТ
+  alert('Nickname saved');
+}
+
+function initSettingsUI(wallet) {
+  // buttons
+  const tw = document.getElementById('btn-connect-twitter');
+  if (tw) tw.onclick = () => { window.location.href = '/auth/twitter2'; };
+
+  const dc = document.getElementById('btn-connect-discord');
+  if (dc) dc.onclick = () => { window.location.href = '/auth/discord'; };
+
+  const saveNick = document.getElementById('btn-save-nickname');
+  if (saveNick) saveNick.onclick = saveNickname;
+
+  const addBtc = document.getElementById('btn-add-btc');
+  if (addBtc) addBtc.onclick = () => addWallet('btc');
+
+  const addEvm = document.getElementById('btn-add-evm');
+  if (addEvm) addEvm.onclick = () => addWallet('evm');
+
+  // initial load
+  loadSettings(wallet);
+}
+
+/* ==== Emoji utils ==== */
+const emojiToIconifyMap = {
+  "😊": "twemoji:smiling-face",
+  "😂": "twemoji:face-with-tears-of-joy",
+  "🔥": "twemoji:fire",
+  "💯": "twemoji:hundred-points"
+};
+function replaceEmojisWithIconify(text) {
+  return text.replace(/[\u{1F300}-\u{1FAFF}]/gu, (match) => {
+    const iconName = emojiToIconifyMap[match];
+    return iconName
+      ? `<iconify-icon icon="${iconName}" width="18" style="vertical-align: middle;"></iconify-icon>`
+      : match;
+  });
+}
+function linkify(text) {
+  const urlPattern = /(https?:\/\/[^\s]+)/g;
+  return (text || "").replace(urlPattern, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
+}
+
+/* ==== UI рендер повідомлення ==== */
+function appendMessageToChat(messageObj, key = null, section = "general", currentWallet = null) {
+  const chatBox = document.querySelector(`.chat-messages[data-section="${section}"]`);
+  if (!chatBox) return;
+
+  if (key && document.querySelector(`.chat-message[data-key="${key}"]`)) return;
+
+  const msgEl = document.createElement("div");
+  msgEl.className = "chat-message";
+  if (key) msgEl.dataset.key = key;
+  msgEl.dataset.senderFull = messageObj.sender || "";
+
+
+  const avatar = document.createElement("img");
+  avatar.className = "avatar";
+  avatar.src = messageObj.imageId ? `${imageBaseURL}${messageObj.imageId}.webp` : "../logo1.png";
+
+  const content = document.createElement("div");
+  content.className = "message-content";
+
+  const header = document.createElement("div");
+  header.className = "message-header";
+
+  // LEFT
+  const left = document.createElement("div");
+  left.style.display = "flex";
+  left.style.gap = "6px";
+  left.style.alignItems = "center";
+
+  const nameEl = document.createElement("span");
+  nameEl.className = "sender-name";
+  nameEl.textContent = getDisplayNameSync(messageObj.sender);   // миттєво (short/нік із кешу)
+prefetchNickname(messageObj.sender).then(nick => {            // догружаємо і оновлюємо
+  if (nick) nameEl.textContent = nick;
+});
+
+  const timeEl = document.createElement("span");
+  timeEl.className = "message-time";
+  const time = new Date(messageObj.timestamp);
+  const now = Date.now();
+  const diffHours = (now - messageObj.timestamp) / (1000 * 60 * 60);
+  const timeStr = time.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  if (diffHours > 24) {
+    const dateStr = time.toLocaleDateString([], { day: "2-digit", month: "2-digit", year: "numeric" });
+    timeEl.textContent = `${dateStr}, ${timeStr}`;
+  } else {
+    timeEl.textContent = timeStr;
+  }
+
+  left.appendChild(nameEl);
+  left.appendChild(timeEl);
+
+  // RIGHT (hover menu)
+  const right = document.createElement("div");
+  right.className = "hover-menu";
+
+  const btnReact = document.createElement("button");
+  btnReact.innerHTML = '<iconify-icon icon="mdi:emoticon-outline" width="14"></iconify-icon>';
+  btnReact.addEventListener("click", (e) => {
+    e.stopPropagation(); // щоб клік по кнопці не закривав пікер
+    openReactionPicker(e, key, section);
+});
+  right.appendChild(btnReact);
+
+  const btnReply = document.createElement("button");
+  btnReply.innerHTML = '<iconify-icon icon="mdi:reply" width="14"></iconify-icon>';
+  btnReply.addEventListener("click", () => replyTo(key, section));
+  right.appendChild(btnReply);
+
+  if (messageObj.sender?.toLowerCase() === (currentWallet || "").toLowerCase()) {
+    const btnEdit = document.createElement("button");
+    btnEdit.innerHTML = '<iconify-icon icon="mdi:pencil" width="14"></iconify-icon>';
+    btnEdit.addEventListener("click", () => editMessage(key, section));
+    right.appendChild(btnEdit);
+
+    const btnDel = document.createElement("button");
+    btnDel.innerHTML = '<iconify-icon icon="ic:baseline-delete" width="14"></iconify-icon>';
+    btnDel.addEventListener("click", () => deleteMessage(key, section));
+    right.appendChild(btnDel);
+  }
+
+  header.appendChild(left);
+  content.appendChild(header);
+
+  const textEl = document.createElement("div");
+  textEl.className = "message-text";
+  textEl.innerHTML = replaceEmojisWithIconify(linkify(messageObj.text || ""));
+  content.appendChild(textEl);
+
+  // reactions row (якщо вже є)
+  if (messageObj.reactions) {
+    const reactionRow = document.createElement("div");
+    reactionRow.className = "reaction-row";
+    for (const [emoji, users] of Object.entries(messageObj.reactions)) {
+      const btn = document.createElement("button");
+      btn.className = "reaction-btn";
+      const arr = Array.isArray(users) ? users : [];
+      btn.textContent = `${emoji} ${arr.length}`;
+      if (arr.includes(getConnectedWalletAddress())) btn.classList.add("reacted");
+      btn.addEventListener("click", async () => {
+        const wallet = getConnectedWalletAddress();
+        if (!wallet) return;
+        const msgRef = getChatMessagesRef(section).child(key);
+        const snapshot = await msgRef.get();
+        const msg = snapshot.val();
+        if (!msg) return;
+        const reactions = msg.reactions || {};
+        const currentUsers = Array.isArray(reactions[emoji]) ? reactions[emoji] : [];
+        const hasReacted = currentUsers.includes(wallet);
+        reactions[emoji] = hasReacted
+          ? currentUsers.filter(w => w !== wallet)
+          : [...currentUsers, wallet];
+        if (Array.isArray(reactions[emoji]) && reactions[emoji].length === 0) delete reactions[emoji];
+        await msgRef.update({ reactions });
+      });
+      reactionRow.appendChild(btn);
+    }
+    content.appendChild(reactionRow);
+  }
+
+  // Tweet embedding
+  const match = (messageObj.text || "").match(/https:\/\/(twitter|x)\.com\/[^/]+\/status\/\d+/);
+  if (match) {
+    const tweetUrl = match[0];
+    const embedDiv = document.createElement("div");
+    embedDiv.innerHTML = `<blockquote class="twitter-tweet"><a href="${tweetUrl}"></a></blockquote>`;
+    textEl.appendChild(embedDiv);
+    setTimeout(() => {
+      if (window.twttr && window.twttr.widgets) window.twttr.widgets.load();
+    }, 200);
+  }
+
+  msgEl.appendChild(avatar);
+  msgEl.appendChild(content);
+
+  // WRAPPER (для reply + меню)
+  const wrapper = document.createElement("div");
+  wrapper.className = "message-wrapper";
+
+  if (messageObj.replyTo) {
+    const replyBlock = document.createElement("div");
+    replyBlock.className = "reply-preview";
+    replyBlock.dataset.replyKey = messageObj.replyTo.key;
+
+    const previewRaw = (messageObj.replyTo.text || "").trim()
+      ? messageObj.replyTo.text.split("\n")[0].slice(0, 250)
+      : "(image)";
+    const previewText = replaceEmojisWithIconify(previewRaw);
+
+    const avatarSrc = messageObj.replyTo.imageId
+      ? `${imageBaseURL}${messageObj.replyTo.imageId}.webp`
+      : "../logo1.png";
+
+    // Спершу синхронно
+const replyName = getDisplayNameSync(messageObj.replyTo.sender);
+
+replyBlock.innerHTML = `
+    <div class="reply-container">
+        <img src="${avatarSrc}" class="avatar-small" />
+        <div class="reply-text">
+            <span class="reply-to-name">${replyName}</span>
+            <span class="reply-to-preview">${previewText}</span>
+        </div>
+    </div>
+`;
+
+// А потім — оновити, якщо підтягнеться нік
+prefetchNickname(messageObj.replyTo.sender).then(nick => {
+    if (!nick) return;
+    const el = replyBlock.querySelector('.reply-to-name');
+    if (el) el.textContent = nick;
+});
+
+    wrapper.appendChild(replyBlock);
+  }
+
+    if (messageObj.replyTo && isReplyToMe(messageObj.replyTo.sender)) {
+  wrapper.classList.add('reply-highlight');
+}
+
+  const myFull = (getConnectedWalletAddress() || "").toLowerCase();
+
+  wrapper.appendChild(msgEl);
+  wrapper.appendChild(right);
+
+  chatBox.prepend(wrapper);
+
+  if (messageObj.imageUrl) {
+    const imgEl = document.createElement("img");
+    imgEl.src = messageObj.imageUrl;
+    imgEl.style.maxWidth = "240px";
+    imgEl.style.borderRadius = "8px";
+    imgEl.style.marginTop = "6px";
+    imgEl.style.display = "block";
+    content.appendChild(imgEl);
+  }
+}
+
+function replyTo(key, section) {
+  const msgEl = document.querySelector(`.chat-message[data-key="${key}"]`);
+  if (!msgEl) return;
+
+  // беремо повну адресу з data-атрибуту, а не скорочений текст у .sender-name
+  const senderFull = msgEl.dataset.senderFull || "";
+  const text   = msgEl.querySelector(".message-text")?.innerText || "";
+
+  const avatarImg = msgEl.querySelector("img.avatar")?.src;
+  let imageId = null;
+  if (avatarImg) {
+    const m = avatarImg.match(/(\d+)\.webp$/);
+    imageId = m ? m[1] : null;
+  }
+
+  // зберігаємо саме повну адресу в replyTo
+  replyToMessageBySection[section] = { key, sender: senderFull, text, imageId };
+
+  const input = document.getElementById(`chat-input-${section}`);
+  if (input) {
+    const display = getDisplayNameSync(senderFull);
+input.placeholder = `Replying to ${display}: ${text.slice(0,50)}${text.length>50?'...':''}`;
+
+prefetchNickname(senderFull).then(nick => {
+    if (nick) input.placeholder = `Replying to ${nick}: ${text.slice(0,50)}${text.length>50?'...':''}`;
+});
+    input.focus();
+  }
+}
+                function isValidETH(addr) {
+  return /^0x[a-fA-F0-9]{40}$/.test(addr.trim());
+}
+function isValidBTC(addr) {
+  // P2PKH/NP2WPKH/P2TR/bech32 (спрощено)
+  return /^(bc1|[13])[a-zA-HJ-NP-Z0-9]{25,62}$/.test(addr.trim());
+}
+
+function updateReactionButtons(reactionRow, updatedMsg, section, key) {
+  reactionRow.innerHTML = "";
+  for (const [emoji, users] of Object.entries(updatedMsg.reactions || {})) {
+    const btn = document.createElement("button");
+    btn.className = "reaction-btn";
+    const list = Array.isArray(users) ? users : [];
+    btn.textContent = `${emoji} ${list.length}`;
+    if (list.includes(getConnectedWalletAddress())) btn.classList.add("reacted");
+    btn.addEventListener("click", async () => {
+      const wallet = getConnectedWalletAddress();
+      if (!wallet) return;
+      const msgRef = getChatMessagesRef(section).child(key);
+      const snap = await msgRef.get();
+      const msg = snap.val();
+      if (!msg) return;
+      const reactions = msg.reactions || {};
+      const cur = Array.isArray(reactions[emoji]) ? reactions[emoji] : [];
+      const has = cur.includes(wallet);
+      reactions[emoji] = has ? cur.filter(w => w !== wallet) : [...cur, wallet];
+      if (Array.isArray(reactions[emoji]) && reactions[emoji].length === 0) delete reactions[emoji];
+      await msgRef.update({ reactions });
+    });
+    reactionRow.appendChild(btn);
+  }
+}
+
+function deleteMessage(key, section) {
+  if (!confirm("Are you sure you want to delete this message?")) return;
+  const chatRef = getChatMessagesRef(section);
+  chatRef.child(key).remove().catch(console.error);
+}
+
+function editMessage(key, section) {
+  const textEl = document.querySelector(`.chat-messages[data-section="${section}"] .chat-message[data-key="${key}"] .message-text`);
+  if (!textEl) return;
+
+  const chatRef = getChatMessagesRef(section);
+  const originalText = textEl.innerHTML;
+
+  textEl.contentEditable = "true";
+  textEl.focus();
+  textEl.classList.add("editing-message");
+
+  const saveBtn = document.createElement("button");
+  saveBtn.textContent = "Save";
+  saveBtn.className = "save-edit-btn";
+
+  const cancelBtn = document.createElement("button");
+  cancelBtn.textContent = "Cancel";
+  cancelBtn.className = "cancel-edit-btn";
+
+  textEl.parentNode.appendChild(saveBtn);
+  textEl.parentNode.appendChild(cancelBtn);
+
+  function cleanup() {
+    textEl.contentEditable = "false";
+    textEl.classList.remove("editing-message");
+    saveBtn.remove();
+    cancelBtn.remove();
+  }
+
+  saveBtn.addEventListener("click", () => {
+    const newText = textEl.innerText.trim();
+    if (newText) chatRef.child(key).update({ text: newText });
+    else textEl.innerHTML = originalText;
+    cleanup();
+  });
+  cancelBtn.addEventListener("click", () => {
+    textEl.innerHTML = originalText;
+    cleanup();
+  });
+}
+
+/* ==== Пікер реакцій (окремий від інпут-пікерів!) ==== */
+function openReactionPicker(event, msgKey, section) {
+  // прибираємо попередній саме реакційний пікер
+  const existing = document.querySelector('emoji-picker[data-role="react-picker"]');
+  if (existing) existing.remove();
+
+  const picker = document.createElement("emoji-picker");
+  picker.setAttribute("data-role", "react-picker");
+
+  // стилі під "як у пікера для повідомлень"
+  picker.style.position = "absolute";
+  picker.style.bottom = "45px";
+  picker.style.right = "0";
+  picker.style.background = "#121212";
+  picker.style.border = "1px solid #333";
+  picker.style.borderRadius = "10px";
+  picker.style.padding = "4px";
+  picker.style.width = "220px";
+  picker.style.maxHeight = "260px";
+  picker.style.overflowY = "auto";
+  picker.style.zIndex = "1000";
+  picker.style.boxShadow = "0 6px 24px rgba(0,0,0,0.45)";
+
+  // якір — у межах повідомлення, щоб не “вистрибував” з чату
+  const anchor = event.currentTarget.closest(".message-wrapper") || event.currentTarget;
+  // гарантуємо контекст позиціонування
+  if (anchor && getComputedStyle(anchor).position === "static") {
+    anchor.style.position = "relative";
+  }
+  (anchor || event.currentTarget).appendChild(picker);
+
+  // клік по емодзі
+  picker.addEventListener("emoji-click", async e => {
+    const emoji = e.detail.unicode;
+    const messageRef = getChatMessagesRef(section).child(msgKey);
+    const snapshot = await messageRef.get();
+    const msg = snapshot.val();
+    if (!msg) return;
+
+    const wallet = getConnectedWalletAddress();
+    if (!wallet) return;
+
+    const reactions = msg.reactions || {};
+    const cur = Array.isArray(reactions[emoji]) ? reactions[emoji] : [];
+    const has = cur.includes(wallet);
+
+    if (has) {
+      reactions[emoji] = cur.filter(w => w !== wallet);
+      if (reactions[emoji].length === 0) delete reactions[emoji];
+    } else {
+      if (Object.keys(reactions).length >= 6 && !reactions[emoji]) {
+        alert("Максимум 6 різних реакцій.");
+        return;
+      }
+      reactions[emoji] = [...cur, wallet];
+    }
+    await messageRef.update({ reactions });
+    picker.remove();
+  });
+
+  // закриття при кліку поза пікером
   setTimeout(() => {
-    console.log('btc:', !!window.btc,
-                'btc_request:', typeof window.btc?.request==='function',
-                'xverseProviders:', !!window.XverseProviders?.bitcoin?.request,
-                'mew:', !!window.magicEden?.bitcoin?.request,
-                'unisat:', !!window.unisat);
-  }, 1500);
+    const onDocClick = (ev) => {
+      if (!picker.contains(ev.target)) {
+        picker.remove();
+        document.removeEventListener("click", onDocClick);
+      }
+    };
+    document.addEventListener("click", onDocClick);
+  }, 0);
+}
+
+/* ==== Старт програми ==== */
+window.addEventListener("DOMContentLoaded", async () => {
+  // Firebase
+  app = firebase.initializeApp(firebaseConfig);
+  db = firebase.database(app);
+  storage = firebase.storage();
+
+     db.ref('users').on('child_changed', snap => {
+        const addr = (snap.key || '').toLowerCase();
+        const nick = (snap.val()?.profile?.nickname) || null;
+        if (addr) nicknameCache[addr] = nick;
+    });
+
+    db.ref('users').on('child_added', snap => {
+        const addr = (snap.key || '').toLowerCase();
+        const nick = (snap.val()?.profile?.nickname) || null;
+        if (addr && nicknameCache[addr] === undefined) {
+            nicknameCache[addr] = nick;
+        }
+    });
+
+    let currentWallet = getConnectedWalletAddress() || null;
+    if (currentWallet) { renderMyCollection(currentWallet); }
+
+if (currentWallet) {
+  updateWalletButtons(currentWallet);
+  populateSidebarUserInfo(currentWallet);
+  initUnreadTracking(currentWallet); // ✅ Запускаємо відслідковування непрочитаних
+}
+
+    if (currentWallet) initSettingsUI(currentWallet);
+
+    // якщо на старті якась секція вже активна — познач її прочитаною
+const initiallyActive = document.querySelector('.profile-section.active');
+if (initiallyActive && initiallyActive.id?.startsWith('section-') && currentWallet) {
+  const activeSection = initiallyActive.id.replace('section-', '');
+  await markAsRead(activeSection, currentWallet);
+}
+
+  // Збережені сети
+  const localMessageIds = new Set();
+  const userMessageKeys = new Set();
+  const seenMessages = new Set();
+
+  // Wallet dropdown / open connect modal
+const wrapper = document.querySelector(".wallet-wrapper");
+const dropdown = document.getElementById("wallet-header-dropdown");
+if (wrapper && dropdown) {
+  wrapper.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const saved = getConnectedWalletAddress();
+    if (!saved) { 
+      openWalletModal(); 
+      return; 
+    }
+    dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+  });
+}
+
+// окремо — для кнопки в сайдбарі (вона не в .wallet-wrapper)
+document.querySelectorAll('.wallet-trigger').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (!getConnectedWalletAddress()) openWalletModal();
+  });
+});
+
+  // Wallet connect
+  async function connectUniSatWallet() {
+    if (!window.unisat) {
+      alert("UniSat Wallet not found.");
+      return;
+    }
+    try {
+      await window.unisat.requestAccounts();
+      const address = (await window.unisat.getAccounts())[0];
+      localStorage.setItem("taproot_wallet", address);
+      updateWalletButtons(address);
+      await populateSidebarUserInfo(address);
+      currentWallet = address;
+      initUnreadTracking(address);
+      initSettingsUI(address);
+      renderMyCollection(address);
+    } catch {
+      alert("Failed to connect wallet.");
+    }
+  }
+
+  // modal buttons
+const mClose = document.getElementById('wallet-modal-close');
+if (mClose) mClose.onclick = closeWalletModal;
+
+// UniSat
+const btnUnisat = document.getElementById('btn-connect-unisat');
+if (btnUnisat) btnUnisat.onclick = async () => {
+  const addr = await connectWithUniSat();
+  await finishConnect(addr);
+};
+
+// Xverse
+const btnXverse = document.getElementById('btn-connect-xverse');
+if (btnXverse) btnXverse.onclick = async () => {
+  const addr = await connectWithBtc('Xverse');
+  await finishConnect(addr);
+};
+
+// Magic Eden Wallet
+const btnMEW = document.getElementById('btn-connect-mew');
+if (btnMEW) btnMEW.onclick = async () => {
+  const addr = await connectWithBtc('Magic Eden Wallet');
+  await finishConnect(addr);
+};
+
+// клік по фону — закрити модалку
+document.getElementById('wallet-modal')?.addEventListener('click', (e)=>{
+  if (e.target.id === 'wallet-modal') closeWalletModal();
+});
+
+  document.querySelectorAll('#sidebar-nav a[data-section]').forEach(link => {
+  link.addEventListener('click', async (e) => {
+    const target = link.getAttribute('data-section');
+    if (!target) return;
+    e.preventDefault();
+    hideAllSections();
+    showSection(target);
+
+      if (target === 'collection' && currentWallet) {
+  renderMyCollection(currentWallet);
+}
+
+    // одразу позначаємо секцію прочитаною
+    if (currentWallet) {
+      await markAsRead(target, currentWallet);
+    }
+  });
+});
+
+  // Logout
+  document.querySelectorAll(".logout-btn, .sidebar-logout").forEach(el => {
+    el.addEventListener("click", (e) => {
+      e.preventDefault();
+      localStorage.removeItem("taproot_wallet");
+      location.reload();
+    });
+  });
+
+    // коли секція активна і користувач прокрутив донизу (нові повідомлення переглянуті) — скидаємо бейдж
+chatSections.forEach(section => {
+  const box = document.querySelector(`.chat-messages[data-section="${section}"]`);
+  if (!box) return;
+
+  let scrollTimer = null;
+  box.addEventListener('scroll', async () => {
+    // перевіряємо, що секція відкрита
+    const isActive = document.getElementById(`section-${section}`)?.classList.contains('active');
+    if (!isActive || !currentWallet) return;
+
+    // для column-reverse: "низ" візуально = scrollTop близько 0
+    // ставимо невелику затримку, щоб не спамити
+    if (scrollTimer) clearTimeout(scrollTimer);
+    scrollTimer = setTimeout(async () => {
+      if (box.scrollTop >= -4 && box.scrollTop <= 4) {
+        await markAsRead(section, currentWallet);
+      }
+    }, 120);
+  });
+});
+
+  // === CHAT UI: скрепка відкриває file input
+  chatSections.forEach(section => {
+    const uploadBtn = document.querySelector(`.upload-image-btn[data-section="${section}"]`);
+    const fileInput = document.querySelector(`.image-upload[data-section="${section}"]`);
+    if (uploadBtn && fileInput) {
+      uploadBtn.addEventListener("click", () => fileInput.click());
+    }
+  });
+
+  // Прев’ю/скасування картинки
+  chatSections.forEach(section => {
+    const fileInput = document.querySelector(`.image-upload[data-section="${section}"]`);
+    const previewContainer = document.querySelector(`.image-preview-container[data-section="${section}"]`);
+    const previewImg = document.querySelector(`.image-preview[data-section="${section}"]`);
+    const cancelBtn = document.querySelector(`.cancel-image[data-section="${section}"]`);
+    if (!fileInput || !previewContainer || !previewImg || !cancelBtn) return;
+
+    fileInput.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      if (file.size > 5 * 1024 * 1024) { alert("Max image size is 5MB."); return; }
+      previewImg.src = URL.createObjectURL(file);
+      previewContainer.style.display = "block";
+    });
+
+    cancelBtn.addEventListener("click", () => {
+      previewContainer.style.display = "none";
+      fileInput.value = "";
+    });
+  });
+
+  // Підписка на нові повідомлення
+  chatSections.forEach(section => {
+    const ref = getChatMessagesRef(section);
+    ref.on("child_added", (snapshot) => {
+      const msg = snapshot.val();
+      const key = snapshot.key;
+
+      const uniqueId = `${msg.sender}_${msg.timestamp}`;
+      if (seenMessages.has(uniqueId)) return;
+      seenMessages.add(uniqueId);
+      if (seenMessages.size > 500) seenMessages.clear();
+
+      appendMessageToChat(msg, key, section, currentWallet);
+
+      setTimeout(() => {
+        const chatBox = document.querySelector(`.chat-messages[data-section="${section}"]`);
+        if (chatBox) chatBox.scrollTop = 0;
+      }, 100);
+    });
+  });
+
+  // Оновлення повідомлення
+  chatSections.forEach(section => {
+    const ref = getChatMessagesRef(section);
+    ref.on("child_changed", (snapshot) => {
+      const key = snapshot.key;
+      const updatedMsg = snapshot.val();
+
+      const msgCard = document.querySelector(`.chat-messages[data-section="${section}"] .chat-message[data-key="${key}"]`);
+      if (!msgCard) return;
+
+      const textEl = msgCard.querySelector(".message-text");
+      if (textEl) {
+        textEl.innerHTML = replaceEmojisWithIconify(linkify(updatedMsg.text || ""));
+      }
+
+      const contentEl = msgCard.querySelector(".message-content");
+      let reactionRow = msgCard.querySelector(".reaction-row");
+      if (!reactionRow) {
+        reactionRow = document.createElement("div");
+        reactionRow.className = "reaction-row";
+        contentEl.appendChild(reactionRow);
+      }
+      updateReactionButtons(reactionRow, updatedMsg, section, key);
+    });
+  });
+
+  // Видалення повідомлення
+  chatSections.forEach(section => {
+    const chatRef = getChatMessagesRef(section);
+    chatRef.on("child_removed", (snapshot) => {
+      const key = snapshot.key;
+      const msg = document.querySelector(`.chat-messages[data-section="${section}"] .chat-message[data-key="${key}"]`);
+      if (msg) msg.closest(".message-wrapper")?.remove();
+
+      document.querySelectorAll(`.chat-messages[data-section="${section}"] .reply-preview[data-reply-key="${key}"]`)
+        .forEach(preview => {
+          const wrapper = preview.closest(".message-wrapper");
+          preview.remove();
+          const chatMsg = wrapper?.querySelector(".chat-message");
+          if (chatMsg) chatMsg.style.borderRadius = "8px";
+        });
+    });
+  });
+
+  // Надсилання повідомлення
+  chatSections.forEach(section => {
+    const sendBtn  = document.querySelector(`.send-btn[data-section="${section}"]`);
+    const fileInput = document.querySelector(`.image-upload[data-section="${section}"]`);
+    const input    = document.getElementById(`chat-input-${section}`);
+    const chatRef  = getChatMessagesRef(section);
+    if (!sendBtn || !fileInput || !input) return;
+
+    sendBtn.addEventListener("click", async () => {
+      const text = input.value.trim();
+      const sender = getConnectedWalletAddress();
+
+      if ((!text && !fileInput.files[0]) || !sender) return;
+
+      if (!cachedHolderInfo?.found) {
+        alert("Only verified holders can send messages.");
+        return;
+      }
+
+      let imageUrl = null;
+      if (fileInput.files.length > 0) {
+        try {
+          const file = fileInput.files[0];
+          const fileName = `chat_images/${Date.now()}_${file.name}`;
+          const sref = storage.ref().child(fileName);
+          const snap = await sref.put(file);
+          imageUrl = await snap.ref.getDownloadURL();
+        } catch (err) {
+          console.error("Image upload failed:", err);
+          alert("Failed to upload image.");
+        }
+      }
+
+      const replyData = replyToMessageBySection[section];
+      const msgData = {
+        sender,
+        text,
+        timestamp: Date.now(),
+        imageId: cachedHolderInfo.imageId || null,
+        imageUrl: imageUrl || null,
+        ...(replyData && {
+          replyTo: {
+            key: replyData.key,
+            sender: replyData.sender,
+            text: replyData.text,
+            imageId: replyData.imageId || null
+          }
+        })
+      };
+
+      await chatRef.push(msgData);
+
+      input.value = "";
+      input.placeholder = "Type a message...";
+      fileInput.value = "";
+      const preview = document.querySelector(`.image-preview-container[data-section="${section}"]`);
+      if (preview) preview.style.display = "none";
+      replyToMessageBySection[section] = null;
+    });
+  });
+
+  // Інпут: авто-висота, Enter/Shift+Enter, emoji
+  chatSections.forEach(section => {
+    const chatInput = document.getElementById(`chat-input-${section}`);
+    const sendBtn = document.querySelector(`.send-btn[data-section="${section}"]`);
+    const toggleBtn = document.querySelector(`.toggle-emoji-picker[data-section="${section}"]`);
+    const emojiPicker = document.querySelector(`.emoji-picker[data-section="${section}"]`);
+    if (!chatInput || !sendBtn || !toggleBtn || !emojiPicker) return;
+
+    chatInput.addEventListener("input", () => {
+      chatInput.style.height = "auto";
+      chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + "px";
+    });
+    chatInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        sendBtn.click();
+      } else if (e.key === "Enter" && e.shiftKey) {
+        const start = chatInput.selectionStart;
+        const end = chatInput.selectionEnd;
+        chatInput.value = chatInput.value.slice(0, start) + "\n" + chatInput.value.slice(end);
+        chatInput.selectionStart = chatInput.selectionEnd = start + 1;
+        e.preventDefault();
+      }
+    });
+
+    toggleBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      emojiPicker.style.display = emojiPicker.style.display === "none" ? "block" : "none";
+    });
+
+    document.addEventListener("click", (e) => {
+      if (!emojiPicker.contains(e.target) && !toggleBtn.contains(e.target)) {
+        emojiPicker.style.display = "none";
+      }
+    });
+
+    customElements.whenDefined("emoji-picker").then(() => {
+      emojiPicker.addEventListener("emoji-click", (event) => {
+        const emoji = event.detail.unicode;
+        const cursorPos = chatInput.selectionStart;
+        const before = chatInput.value.substring(0, cursorPos);
+        const after  = chatInput.value.substring(cursorPos);
+        chatInput.value = before + emoji + after;
+        chatInput.selectionStart = chatInput.selectionEnd = cursorPos + emoji.length;
+        chatInput.focus();
+        emojiPicker.style.display = "none";
+      });
+    });
+  });
+});
 </script>
-<body>open console</body>
+</body>
+</html>
