@@ -1455,6 +1455,7 @@ async function finishConnect(address){
   await populateSidebarUserInfo(address);
   initUnreadTracking(address);
   initSettingsUI(address);
+  await renderMyCollection(address);
   closeWalletModal();
 }
 
@@ -2454,18 +2455,28 @@ if (initiallyActive && initiallyActive.id?.startsWith('section-') && currentWall
   const userMessageKeys = new Set();
   const seenMessages = new Set();
 
-  // Wallet dropdown
-  const wrapper = document.querySelector(".wallet-wrapper");
-  const dropdown = document.getElementById("wallet-header-dropdown");
-  if (wrapper && dropdown) {
-    wrapper.addEventListener("click", (e) => {
-      e.stopPropagation();
-      dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
-    });
-  }
-  document.addEventListener("click", () => {
-    document.querySelectorAll(".wallet-dropdown-content").forEach(dd => dd.style.display = "none");
+  // Wallet dropdown / open connect modal
+const wrapper = document.querySelector(".wallet-wrapper");
+const dropdown = document.getElementById("wallet-header-dropdown");
+if (wrapper && dropdown) {
+  wrapper.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const saved = getConnectedWalletAddress();
+    if (!saved) { 
+      openWalletModal(); 
+      return; 
+    }
+    dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
   });
+}
+
+// окремо — для кнопки в сайдбарі (вона не в .wallet-wrapper)
+document.querySelectorAll('.wallet-trigger').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (!getConnectedWalletAddress()) openWalletModal();
+  });
+});
 
   // Wallet connect
   async function connectUniSatWallet() {
