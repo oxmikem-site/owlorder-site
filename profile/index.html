@@ -1411,23 +1411,34 @@ async function checkHolderInSheet(address) {
   if (!address) return { found: false };
 
   // 1) Перевіряємо, чи адреса є у SNAPSHOT (і беремо imageId)
-  let imageId = null;
-  try {
-    const resImg = await fetch(SNAPSHOT_CSV_URL);
-    const csvImg = await resImg.text();
-    const rowsImg = csvImg.split("\n").slice(1);
-
-    for (const row of rowsImg) {
-      const cols = row.split(",");
-      const rowAddress = (cols[1] || "").trim().toLowerCase(); // колонка B — адреса
-      if (rowAddress === address.trim().toLowerCase()) {
-        imageId = (cols[9] || "").trim(); // колонка J — номер сови
+let imageId = null;
+try {
+  const resImg = await fetch(SNAPSHOT_CSV_URL, { cache: 'no-store' });
+  const csvImg = await resImg.text();
+  const rows = parseCSV(csvImg);
+  if (rows.length) {
+    // визначимо індекси з хедера
+    let body = rows, addrIdx = 1, numIdx = 9;
+    const header = rows[0].map(h => (h||'').trim().toLowerCase());
+    const hasHeader = header.join(' ').includes('address') || header.join(' ').includes('holder');
+    if (hasHeader) {
+      addrIdx = Math.max(header.indexOf('holder address'), header.indexOf('address'));
+      numIdx  = Math.max(header.indexOf('number'), header.indexOf('nft number'), header.indexOf('owl'));
+      body    = rows.slice(1);
+    }
+    const addrLc = address.trim().toLowerCase();
+    for (const cols of body) {
+      const rowAddress = (cols[addrIdx] || '').trim().toLowerCase();
+      if (rowAddress === addrLc) {
+        imageId = (cols[numIdx] || '').trim().replace(/^"#|^#|"/g, '');
         break;
       }
     }
-  } catch (e) {
-    console.warn("SNAPSHOT fetch error:", e);
   }
+} catch (e) {
+  console.warn("SNAPSHOT fetch error:", e);
+}
+
 
   // якщо не знайшли у snapshot — це не холдер => поінти не показуємо
   if (!imageId) {
