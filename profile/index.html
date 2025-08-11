@@ -1412,40 +1412,46 @@ function updateWalletButtons(address) {
 
  function isTaproot(addr=""){ return /^bc1p/i.test((addr||'').trim()); }
 
-                function getBtcProvider() {
-  if (window.btc && typeof window.btc.request === 'function') return { name: 'Bitcoin Provider', obj: window.btc };
-  if (window.XverseProviders?.bitcoin?.request)  return { name: 'Xverse', obj: window.XverseProviders.bitcoin };
-  if (window.xverseProviders?.bitcoin?.request)  return { name: 'Xverse', obj: window.xverseProviders.bitcoin };
-  if (window.magicEden?.bitcoin?.request)        return { name: 'Magic Eden Wallet', obj: window.magicEden.bitcoin };
-  if (window.okxwallet?.bitcoin?.request)        return { name: 'OKX', obj: window.okxwallet.bitcoin };
+               function getBtcProvider() {
+  // хто б не інжектнув — беремо першого з request
+  if (window.btc && typeof window.btc.request === 'function') return { name: 'window.btc', obj: window.btc };
+  if (window.XverseProviders?.bitcoin?.request)  return { name: 'XverseProviders.bitcoin', obj: window.XverseProviders.bitcoin };
+  if (window.xverseProviders?.bitcoin?.request)  return { name: 'xverseProviders.bitcoin', obj: window.xverseProviders.bitcoin };
+  if (window.magicEden?.bitcoin?.request)        return { name: 'magicEden.bitcoin', obj: window.magicEden.bitcoin };
+  if (window.okxwallet?.bitcoin?.request)        return { name: 'okxwallet.bitcoin', obj: window.okxwallet.bitcoin };
   return null;
 }
 
-// Чекає, поки гаманець вколе провайдера у window (до 2.5с)
-function waitForBtcProvider(maxWaitMs = 5000) {
+// чекаємо до 8с + ще раз пробуємо після фокусу вікна (коли користувач тицяє на іконку розширення)
+function waitForBtcProvider(maxWaitMs = 8000) {
   return new Promise(resolve => {
     const existing = getBtcProvider();
     if (existing) return resolve(existing);
 
     let done = false;
-    const finish = (res) => { if (!done) { done = true; resolve(res); } };
-
-    // деякі гаманці шлють події ініціалізації
-    const onInit = () => {
-      const p = getBtcProvider();
-      if (p) finish(p);
+    const finish = (res) => { if (!done) { done = true; resolve(res); cleanup(); } };
+    const cleanup = () => {
+      window.removeEventListener('btc#initialized', onInit);
+      window.removeEventListener('bitcoin#initialized', onInit);
+      window.removeEventListener('wallet#initialized', onInit);
+      window.removeEventListener('focus', onFocus);
+      clearInterval(iv);
+      clearTimeout(to);
     };
+    const onInit = () => { const p = getBtcProvider(); if (p) finish(p); };
+    const onFocus = () => { const p = getBtcProvider(); if (p) finish(p); };
+
     window.addEventListener('btc#initialized', onInit, { once:true });
     window.addEventListener('bitcoin#initialized', onInit, { once:true });
     window.addEventListener('wallet#initialized', onInit, { once:true });
+    window.addEventListener('focus', onFocus);
 
-    // періодичний полінг
-    const start = Date.now();
     const iv = setInterval(() => {
       const p = getBtcProvider();
-      if (p) { clearInterval(iv); finish(p); }
-      else if (Date.now() - start > maxWaitMs) { clearInterval(iv); finish(null); }
-    }, 100);
+      if (p) finish(p);
+    }, 150);
+
+    const to = setTimeout(() => finish(null), maxWaitMs);
   });
 }
 
@@ -1469,9 +1475,19 @@ async function connectWithUniSat(){
 }
 
 async function connectWithBtc(preferredName = 'Bitcoin wallet'){
-  // чекаємо провайдера (навіть якщо інжектнеться із затримкою)
+  // спроба №1: чекаємо
   const prov = await waitForBtcProvider();
   if (!prov || !prov.obj) {
+    // діагностика у консоль
+    console.log('[OWL] Provider not found. Diagnostics:', {
+      has_window_btc: !!window.btc,
+      has_XverseProviders: !!(window.XverseProviders?.bitcoin),
+      has_xverseProviders: !!(window.xverseProviders?.bitcoin),
+      has_magicEden: !!(window.magicEden?.bitcoin),
+      has_okxwallet: !!(window.okxwallet?.bitcoin),
+      location: location.href,
+      ua: navigator.userAgent
+    });
     alert(`${preferredName} not found`);
     return null;
   }
@@ -1482,20 +1498,17 @@ async function connectWithBtc(preferredName = 'Bitcoin wallet'){
       message: 'Connect to OWL',
       network: { type: 'Mainnet' }
     });
-
     const list = res?.result || res?.accounts || [];
     const ord = list.find(a => (a.purpose||'').toLowerCase()==='ordinals');
     const pay = list.find(a => (a.purpose||'').toLowerCase()==='payment');
     const addr = (ord?.address || pay?.address || '').trim();
-
-    return isTaproot(addr) ? addr : (alert('Need a Taproot (bc1p…) address'), null);
+    return /^bc1p/i.test(addr) ? addr : (alert('Need a Taproot (bc1p…) address'), null);
   } catch(e) {
     console.warn('btc provider error', e);
     alert(e?.message || 'Failed to connect');
     return null;
   }
 }
-
 async function finishConnect(address){
   if (!address) return;
   localStorage.setItem("taproot_wallet", address);
