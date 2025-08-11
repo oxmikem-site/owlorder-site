@@ -1406,44 +1406,89 @@ function setProfileImageById(imageId) {
   return fresh;
 }
 
+// збирає всі OWL для гаманця з SNAPSHOT (враховує колонку "№" і "Rank")
+async function getAllOwlsForAddress(address) {
+  if (!address) return [];
+
+  const rows = await loadSnapshot();
+  const table = parseCSV(rows.join('\n'));
+  if (!table.length) return [];
+
+  // індекси колонок (за замовчуванням: B=Holder Address, J=№)
+  let body = table;
+  let addrIdx = 1, numIdx = 9, rarIdx = -1;
+
+  // якщо є хедер — визначаємо індекси з назв
+  const hdr = table[0].map(c => (c || '').trim().toLowerCase());
+  const hasHeader = hdr.join(' ').length > 0 && (
+    hdr.includes('holder address') || hdr.includes('address') || hdr.includes('№') || hdr.includes('rank')
+  );
+  if (hasHeader) {
+    addrIdx = Math.max(hdr.indexOf('holder address'), hdr.indexOf('address'));
+    // шукаємо саме "№", а якщо нема — інші варіанти
+    numIdx  = hdr.indexOf('№') !== -1 ? hdr.indexOf('№')
+            : Math.max(hdr.indexOf('number'), hdr.indexOf('nft number'), hdr.indexOf('owl'), hdr.indexOf('#'));
+    // "rarity" або "rank"
+    rarIdx  = hdr.indexOf('rarity') !== -1 ? hdr.indexOf('rarity') : hdr.indexOf('rank');
+    body = table.slice(1);
+  }
+
+  const me = address.trim().toLowerCase();
+  const items = [];
+  for (const row of body) {
+    const a = ((row[addrIdx] || '') + '').trim().toLowerCase();
+    if (a !== me) continue;
+
+    // чистимо номер від #, лапок і т.п.
+    const numberRaw = ((row[numIdx] || '') + '').trim();
+    const number    = numberRaw.replace(/[^\d]/g, '');
+    const rarity    = rarIdx >= 0 ? ((row[rarIdx] || '') + '').trim() : '';
+
+    if (number) items.push({ number, rarity });
+  }
+
+  // унікалізуємо за номером
+  const seen = new Set();
+  return items.filter(it => !seen.has(it.number) && seen.add(it.number));
+}
+
 /* Перевірка, чи власник (holder), + поінти — як у дашборді */
 async function checkHolderInSheet(address) {
   if (!address) return { found: false };
 
-  // 1) Перевіряємо, чи адреса є у SNAPSHOT (і беремо imageId)
-let imageId = null;
-try {
-  const resImg = await fetch(SNAPSHOT_CSV_URL, { cache: 'no-store' });
-  const csvImg = await resImg.text();
-  const rows = parseCSV(csvImg);
-  if (rows.length) {
-    // визначимо індекси з хедера
-    let body = rows, addrIdx = 1, numIdx = 9;
-    const header = rows[0].map(h => (h||'').trim().toLowerCase());
-    const hasHeader = header.join(' ').includes('address') || header.join(' ').includes('holder');
-    if (hasHeader) {
-      addrIdx = Math.max(header.indexOf('holder address'), header.indexOf('address'));
-      numIdx  = Math.max(header.indexOf('number'), header.indexOf('nft number'), header.indexOf('owl'));
-      body    = rows.slice(1);
-    }
-    const addrLc = address.trim().toLowerCase();
-    for (const cols of body) {
-      const rowAddress = (cols[addrIdx] || '').trim().toLowerCase();
-      if (rowAddress === addrLc) {
-        imageId = (cols[numIdx] || '').trim().replace(/^"#|^#|"/g, '');
-        break;
+  // 1) Перевіряємо, чи адреса є у SNAPSHOT (і беремо imageId = №)
+  let imageId = null;
+  try {
+    const resImg = await fetch(SNAPSHOT_CSV_URL, { cache: 'no-store' });
+    const csvImg = await resImg.text();
+    const rows = parseCSV(csvImg);
+    if (rows.length) {
+      let body = rows, addrIdx = 1, numIdx = 9;
+
+      const header = rows[0].map(h => (h || '').trim().toLowerCase());
+      const hasHeader = header.join(' ').includes('address') || header.join(' ').includes('holder') || header.includes('№');
+      if (hasHeader) {
+        addrIdx = Math.max(header.indexOf('holder address'), header.indexOf('address'));
+        numIdx  = header.indexOf('№') !== -1 ? header.indexOf('№')
+               : Math.max(header.indexOf('number'), header.indexOf('nft number'), header.indexOf('owl'), header.indexOf('#'));
+        body    = rows.slice(1);
+      }
+
+      const addrLc = address.trim().toLowerCase();
+      for (const cols of body) {
+        const rowAddress = ((cols[addrIdx] || '') + '').trim().toLowerCase();
+        if (rowAddress === addrLc) {
+          const raw = ((cols[numIdx] || '') + '').trim();
+          imageId = raw.replace(/[^\d]/g, '');
+          break;
+        }
       }
     }
+  } catch (e) {
+    console.warn("SNAPSHOT fetch error:", e);
   }
-} catch (e) {
-  console.warn("SNAPSHOT fetch error:", e);
-}
 
-
-  // якщо не знайшли у snapshot — це не холдер => поінти не показуємо
-  if (!imageId) {
-    return { found: false };
-  }
+  if (!imageId) return { found: false };
 
   // 2) Тягнемо поінти лише для холдерів (як у дашборді по header-ах)
   let points = "-";
@@ -1459,7 +1504,6 @@ try {
     if (addrIndex !== -1 && pointsIndex !== -1) {
       const row = rows.find(r => (r[addrIndex] || "").trim().toLowerCase() === address.trim().toLowerCase());
       if (row) {
-        // якщо в таблиці є тисячні розділювачі — прибираємо їх для відображення/числа
         const raw = (row[pointsIndex] || "").trim();
         points = raw.replace(/,/g, "") || "-";
       }
@@ -1515,23 +1559,22 @@ function parseSnapshotRows(csvText){
   const rows = parseCSV(csvText);
   if (!rows.length) return [];
 
-  // Пробуємо зчитати індекси з хедера
   let body = rows, addrIdx = 1, numIdx = 9, rarIdx = -1;
   const header = rows[0].map(h => (h || '').trim().toLowerCase());
-  const hasHeader = header.join(' ').includes('address') || header.join(' ').includes('holder');
+  const hasHeader = header.join(' ').includes('address') || header.join(' ').includes('holder') || header.includes('№');
 
   if (hasHeader) {
     addrIdx = Math.max(header.indexOf('holder address'), header.indexOf('address'));
-    numIdx  = Math.max(header.indexOf('number'), header.indexOf('nft number'), header.indexOf('owl'));
-    rarIdx  = header.indexOf('rarity');
+    numIdx  = header.indexOf('№') !== -1 ? header.indexOf('№')
+           : Math.max(header.indexOf('number'), header.indexOf('nft number'), header.indexOf('owl'), header.indexOf('#'));
+    rarIdx  = header.indexOf('rarity') !== -1 ? header.indexOf('rarity') : header.indexOf('rank');
     body    = rows.slice(1);
   }
 
   return body.map(cols => {
-    const address = (cols[addrIdx] || '').trim().toLowerCase();
-    // інколи номер приходить з # або в лапках
-    const number  = (cols[numIdx] || '').trim().replace(/^"#|^#|"/g, '');
-    const rarity  = rarIdx >= 0 ? (cols[rarIdx] || '').trim() : '';
+    const address = ((cols[addrIdx] || '') + '').trim().toLowerCase();
+    const number  = (((cols[numIdx] || '') + '').trim()).replace(/[^\d]/g, '');
+    const rarity  = rarIdx >= 0 ? ((cols[rarIdx] || '') + '').trim() : '';
     return address && number ? { address, number, rarity } : null;
   }).filter(Boolean);
 }
@@ -1560,7 +1603,6 @@ function rarityToClass(r){
   return 'rarity-legendary'; // якщо рарності нема — зробимо “золоту” (можеш змінити)
 }
 
-/* Рендеримо мою колекцію у #section-collection */
 async function renderMyCollection(address){
   const wrap = document.getElementById('section-collection');
   if (!wrap) return;
@@ -1577,28 +1619,21 @@ async function renderMyCollection(address){
     </div>
   `;
 
-  // дістаємо СИРИЙ CSV із кешу/мережі та парсимо robust парсером
-  const rawRows = await loadSnapshot();                 // це масив рядків
-  const csvText = rawRows.join('\n');
-  const parsed  = parseSnapshotRows(csvText);
-
-  const me = (address||'').toLowerCase();
-  const mine = parsed.filter(r => r.address === me);
-
   const grid = document.getElementById('my-owls-grid');
   const cnt  = document.getElementById('my-owls-count');
-  if (cnt) cnt.textContent = mine.length ? `${mine.length} item(s)` : '';
+
+  const mine = await getAllOwlsForAddress(address);
 
   if (!mine.length) {
-    console.warn('[Collection] Nothing found for', me, 'Rows parsed:', parsed.length);
-    // допоміжний пошук: показати перші 3 рядки, де збігається початок адреси
-    const probe = parsed.filter(r => me && r.address.startsWith(me.slice(0,6))).slice(0,3);
-    console.warn('[Collection] Probe rows (prefix match):', probe);
     grid.innerHTML = `<div class="empty-state">No items found for your wallet in the snapshot.</div>`;
+    if (cnt) cnt.textContent = '';
     return;
   }
 
+  // сортуємо по номеру
   mine.sort((a,b)=> Number(a.number)-Number(b.number));
+  if (cnt) cnt.textContent = `${mine.length} item(s)`;
+
   grid.innerHTML = mine.map(({number, rarity})=>{
     const cls = rarityToClass(rarity);
     const label = rarity || 'Legendary';
@@ -1613,6 +1648,7 @@ async function renderMyCollection(address){
     `;
   }).join('');
 }
+
 
 /* Заповнення сайдбару профілю */
 async function populateSidebarUserInfo(address) {
