@@ -1276,34 +1276,6 @@
                 <h3>Logout</h3>
                 <p>You have been logged out.</p>
             </div>
-            
-<!-- Wallet chooser modal -->
-<div id="wallet-modal" style="display:none; position:fixed; inset:0; z-index:2000; background:rgba(0,0,0,.6);">
-  <div style="
-    width: 420px; max-width:calc(100% - 32px);
-    margin: 12vh auto; padding:16px; border-radius:16px;
-    background: linear-gradient(145deg, #1b1b1b, #101010);
-    border:1px solid rgba(255,255,255,.06);
-    box-shadow: 0 12px 30px rgba(0,0,0,.6);
-  ">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-      <h3 style="margin:0; color:#d4c87c;">Connect wallet</h3>
-      <button id="wallet-modal-close" style="background:transparent;border:none;color:#fff;font-size:18px;cursor:pointer;">✕</button>
-    </div>
-
-    <p style="margin:6px 0 14px 0; opacity:.85;">Choose a Taproot wallet (bc1p…):</p>
-
-    <div style="display:grid; gap:10px;">
-      <button class="connect-wallet" id="btn-connect-unisat">Connect UniSat</button>
-      <button class="connect-wallet" id="btn-connect-xverse">Connect Xverse</button>
-      <button class="connect-wallet" id="btn-connect-mew">Connect Magic Eden Wallet</button>
-    </div>
-
-    <small style="display:block; margin-top:10px; opacity:.75;">
-      Tip: Xverse та Magic Eden використовують спільний інтерфейс <code>window.btc</code>.
-    </small>
-  </div>
-</div>
 
 
             <!-- Скрипти -->
@@ -1408,116 +1380,6 @@ function updateWalletButtons(address) {
   const short = shortenAddress(address);
   const btn = document.getElementById("wallet-header-btn");
   if (btn) btn.textContent = short || "CONNECT WALLET";
-}
-
- function isTaproot(addr=""){ return /^bc1p/i.test((addr||'').trim()); }
-
-               function getBtcProvider() {
-  // хто б не інжектнув — беремо першого з request
-  if (window.btc && typeof window.btc.request === 'function') return { name: 'window.btc', obj: window.btc };
-  if (window.XverseProviders?.bitcoin?.request)  return { name: 'XverseProviders.bitcoin', obj: window.XverseProviders.bitcoin };
-  if (window.xverseProviders?.bitcoin?.request)  return { name: 'xverseProviders.bitcoin', obj: window.xverseProviders.bitcoin };
-  if (window.magicEden?.bitcoin?.request)        return { name: 'magicEden.bitcoin', obj: window.magicEden.bitcoin };
-  if (window.okxwallet?.bitcoin?.request)        return { name: 'okxwallet.bitcoin', obj: window.okxwallet.bitcoin };
-  return null;
-}
-
-// чекаємо до 8с + ще раз пробуємо після фокусу вікна (коли користувач тицяє на іконку розширення)
-function waitForBtcProvider(maxWaitMs = 8000) {
-  return new Promise(resolve => {
-    const existing = getBtcProvider();
-    if (existing) return resolve(existing);
-
-    let done = false;
-    const finish = (res) => { if (!done) { done = true; resolve(res); cleanup(); } };
-    const cleanup = () => {
-      window.removeEventListener('btc#initialized', onInit);
-      window.removeEventListener('bitcoin#initialized', onInit);
-      window.removeEventListener('wallet#initialized', onInit);
-      window.removeEventListener('focus', onFocus);
-      clearInterval(iv);
-      clearTimeout(to);
-    };
-    const onInit = () => { const p = getBtcProvider(); if (p) finish(p); };
-    const onFocus = () => { const p = getBtcProvider(); if (p) finish(p); };
-
-    window.addEventListener('btc#initialized', onInit, { once:true });
-    window.addEventListener('bitcoin#initialized', onInit, { once:true });
-    window.addEventListener('wallet#initialized', onInit, { once:true });
-    window.addEventListener('focus', onFocus);
-
-    const iv = setInterval(() => {
-      const p = getBtcProvider();
-      if (p) finish(p);
-    }, 150);
-
-    const to = setTimeout(() => finish(null), maxWaitMs);
-  });
-}
-
-function openWalletModal(){
-  const m = document.getElementById('wallet-modal');
-  if (m) m.style.display = 'block';
-}
-function closeWalletModal(){
-  const m = document.getElementById('wallet-modal');
-  if (m) m.style.display = 'none';
-}
-
-/** UniSat */
-async function connectWithUniSat(){
-  if (!window.unisat) { alert('UniSat not found'); return null; }
-  try{
-    await window.unisat.requestAccounts();
-    const addr = (await window.unisat.getAccounts())[0];
-    return isTaproot(addr) ? addr : (alert('Need a Taproot (bc1p…) address'), null);
-  }catch(e){ console.warn('Unisat error',e); return null; }
-}
-
-async function connectWithBtc(preferredName = 'Bitcoin wallet'){
-  // спроба №1: чекаємо
-  const prov = await waitForBtcProvider();
-  if (!prov || !prov.obj) {
-    // діагностика у консоль
-    console.log('[OWL] Provider not found. Diagnostics:', {
-      has_window_btc: !!window.btc,
-      has_XverseProviders: !!(window.XverseProviders?.bitcoin),
-      has_xverseProviders: !!(window.xverseProviders?.bitcoin),
-      has_magicEden: !!(window.magicEden?.bitcoin),
-      has_okxwallet: !!(window.okxwallet?.bitcoin),
-      location: location.href,
-      ua: navigator.userAgent
-    });
-    alert(`${preferredName} not found`);
-    return null;
-  }
-
-  try {
-    const res = await prov.obj.request('getAccounts', {
-      purposes: ['payment','ordinals'],
-      message: 'Connect to OWL',
-      network: { type: 'Mainnet' }
-    });
-    const list = res?.result || res?.accounts || [];
-    const ord = list.find(a => (a.purpose||'').toLowerCase()==='ordinals');
-    const pay = list.find(a => (a.purpose||'').toLowerCase()==='payment');
-    const addr = (ord?.address || pay?.address || '').trim();
-    return /^bc1p/i.test(addr) ? addr : (alert('Need a Taproot (bc1p…) address'), null);
-  } catch(e) {
-    console.warn('btc provider error', e);
-    alert(e?.message || 'Failed to connect');
-    return null;
-  }
-}
-async function finishConnect(address){
-  if (!address) return;
-  localStorage.setItem("taproot_wallet", address);
-  updateWalletButtons(address);
-  await populateSidebarUserInfo(address);
-  initUnreadTracking(address);
-  initSettingsUI(address);
-  await renderMyCollection(address);
-  closeWalletModal();
 }
 
 // БІЛЬШЕ НЕ ТЯГНЕ МЕРЕЖУ
@@ -2516,28 +2378,18 @@ if (initiallyActive && initiallyActive.id?.startsWith('section-') && currentWall
   const userMessageKeys = new Set();
   const seenMessages = new Set();
 
-  // Wallet dropdown / open connect modal
-const wrapper = document.querySelector(".wallet-wrapper");
-const dropdown = document.getElementById("wallet-header-dropdown");
-if (wrapper && dropdown) {
-  wrapper.addEventListener("click", (e) => {
-    e.stopPropagation();
-    const saved = getConnectedWalletAddress();
-    if (!saved) { 
-      openWalletModal(); 
-      return; 
-    }
-    dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+  // Wallet dropdown
+  const wrapper = document.querySelector(".wallet-wrapper");
+  const dropdown = document.getElementById("wallet-header-dropdown");
+  if (wrapper && dropdown) {
+    wrapper.addEventListener("click", (e) => {
+      e.stopPropagation();
+      dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+    });
+  }
+  document.addEventListener("click", () => {
+    document.querySelectorAll(".wallet-dropdown-content").forEach(dd => dd.style.display = "none");
   });
-}
-
-// окремо — для кнопки в сайдбарі (вона не в .wallet-wrapper)
-document.querySelectorAll('.wallet-trigger').forEach(btn => {
-  btn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    if (!getConnectedWalletAddress()) openWalletModal();
-  });
-});
 
   // Wallet connect
   async function connectUniSatWallet() {
@@ -2560,35 +2412,25 @@ document.querySelectorAll('.wallet-trigger').forEach(btn => {
     }
   }
 
-  // modal buttons
-const mClose = document.getElementById('wallet-modal-close');
-if (mClose) mClose.onclick = closeWalletModal;
+  const walletHeaderBtn = document.getElementById("wallet-header-btn");
+  if (walletHeaderBtn) {
+    walletHeaderBtn.addEventListener("click", (e) => {
+      const saved = getConnectedWalletAddress();
+      if (!saved) {
+        e.stopPropagation();
+        connectUniSatWallet();
+      }
+    });
+  }
 
-// UniSat
-const btnUnisat = document.getElementById('btn-connect-unisat');
-if (btnUnisat) btnUnisat.onclick = async () => {
-  const addr = await connectWithUniSat();
-  await finishConnect(addr);
-};
-
-// Xverse
-const btnXverse = document.getElementById('btn-connect-xverse');
-if (btnXverse) btnXverse.onclick = async () => {
-  const addr = await connectWithBtc('Xverse');
-  await finishConnect(addr);
-};
-
-// Magic Eden Wallet
-const btnMEW = document.getElementById('btn-connect-mew');
-if (btnMEW) btnMEW.onclick = async () => {
-  const addr = await connectWithBtc('Magic Eden Wallet');
-  await finishConnect(addr);
-};
-
-// клік по фону — закрити модалку
-document.getElementById('wallet-modal')?.addEventListener('click', (e)=>{
-  if (e.target.id === 'wallet-modal') closeWalletModal();
-});
+  const sidebarConnectBtn = document.getElementById("sidebar-connect-btn");
+  if (sidebarConnectBtn) {
+    sidebarConnectBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const saved = getConnectedWalletAddress();
+      if (!saved) connectUniSatWallet();
+    });
+  }
 
   document.querySelectorAll('#sidebar-nav a[data-section]').forEach(link => {
   link.addEventListener('click', async (e) => {
