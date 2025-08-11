@@ -9,6 +9,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
     <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@1.9.0/index.js"></script>
     <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
     <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
@@ -1647,6 +1648,7 @@ async function renderMyCollection(address){
     </div>
   `;
 }).join('');
+}
 
 /* Заповнення сайдбару профілю */
 async function populateSidebarUserInfo(address) {
@@ -1796,14 +1798,14 @@ async function markAsRead(section, wallet) {
 let app, db, storage;
 
 const firebaseConfig = {
-  apiKey: "AIzaSyB4w22BYSjUhoGSeAf3GTZCGq_GuVkzFQY",
-  authDomain: "owl-chat-d5d3e.firebaseapp.com",
-  databaseURL: "https://owl-chat-d5d3e-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "owl-chat-d5d3e",
-  storageBucket: "owl-chat-d5d3e.appspot.com",
-  messagingSenderId: "464471442222",
-  appId: "1:464471442222:web:1628d29ef2be5564affb0f",
-  measurementId: "G-MMBR7S9EM1"
+  apiKey: "AIzaSyD2v-w99aaVgKYrycfIV515BEbjaTOp7z4",
+  authDomain: "owl-chat-e4233.firebaseapp.com",
+  databaseURL: "https://owl-chat-e4233-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "owl-chat-e4233",
+  storageBucket: "owl-chat-e4233.firebasestorage.app",
+  messagingSenderId: "671987704789",
+  appId: "1:671987704789:web:5ffad58bc9c00ba772935c",
+  measurementId: "G-ELQRLCLGZT"
 };
                 // збереження останніх переглядів для кожного гаманця/секції
 function getReadsRef(wallet, section) {
@@ -1968,15 +1970,29 @@ async function addWallet(type) {
 async function saveNickname() {
   const wallet = getConnectedWalletAddress();
   if (!wallet) return alert('Connect wallet first');
+
   const inp = document.getElementById('inp-nickname');
   if (!inp) return;
+
   const nickname = (inp.value || '').trim().slice(0,24);
 
-  await getUserProfileRef(wallet).update({ nickname });
-  currentUserNickname = nickname;        // <-- ТУТ
-  await populateSidebarUserInfo(wallet); // <-- ТУТ
+  const uid = window.CURRENT_UID;
+  if (!uid) return alert('Auth not ready');
+
+  const ref = getUserProfileRef(wallet);
+  const snap = await ref.get();
+  const hasOwner = !!(snap.val() && snap.val().ownerUid);
+
+  await ref.update({
+    nickname,
+    ...(hasOwner ? {} : { ownerUid: uid }) // перша фіксація власника
+  });
+
+  currentUserNickname = nickname;
+  await populateSidebarUserInfo(wallet);
   alert('Nickname saved');
 }
+
 
 function initSettingsUI(wallet) {
   // buttons
@@ -2455,12 +2471,20 @@ async function prepareImageForUpload(file){
   return blob;
 }
 
+    window.CURRENT_UID = null;
 /* ==== Старт програми ==== */
 window.addEventListener("DOMContentLoaded", async () => {
   // Firebase
-  app = firebase.initializeApp(firebaseConfig);
-  db = firebase.database(app);
-  storage = firebase.storage();
+ app = firebase.initializeApp(firebaseConfig);
+db = firebase.database(app);
+storage = firebase.storage();
+
+const auth = firebase.auth();
+await auth.signInAnonymously().catch(console.error);
+
+auth.onAuthStateChanged(u => {
+  window.CURRENT_UID = u ? u.uid : null;
+});
 
      db.ref('users').on('child_changed', snap => {
         const addr = (snap.key || '').toLowerCase();
@@ -2623,7 +2647,6 @@ chatSections.forEach(section => {
     fileInput.addEventListener("change", (e) => {
       const file = e.target.files[0];
       if (!file) return;
-      if (file.size > 5 * 1024 * 1024) { alert("Max image size is 5MB."); return; }
       previewImg.src = URL.createObjectURL(file);
       previewContainer.style.display = "block";
     });
@@ -2740,25 +2763,38 @@ chatSections.forEach(section => {
     alert(err.message || "Failed to upload image.");
   }
 }
-
+      const uid = window.CURRENT_UID;
+      if (!uid) { alert("Auth not ready, try again."); return; }
+      const msgKey = db.ref().child(`chats/${section}`).push().key;
       const replyData = replyToMessageBySection[section];
       const msgData = {
-        sender,
-        text,
-        timestamp: Date.now(),
-        imageId: cachedHolderInfo.imageId || null,
-        imageUrl: imageUrl || null,
-        ...(replyData && {
-          replyTo: {
-            key: replyData.key,
-            sender: replyData.sender,
-            text: replyData.text,
-            imageId: replyData.imageId || null
-          }
-        })
-      };
+  uid,                          // <— додаємо UID
+  sender,
+  text,
+  timestamp: Date.now(),
+  imageId: cachedHolderInfo.imageId || null,
+  imageUrl: imageUrl || null,
+  ...(replyData && {
+    replyTo: {
+      key: replyData.key,
+      sender: replyData.sender,
+      text: replyData.text,
+      imageId: replyData.imageId || null
+    }
+  })
+};
 
-      await chatRef.push(msgData);
+const updates = {};
+updates[`/chats/${section}/${msgKey}`] = msgData;
+updates[`/rateLimit/${uid}`] = Date.now();
+
+try {
+  await db.ref().update(updates);
+} catch (e) {
+  console.error(e);
+  alert('Too fast. Please wait a moment and try again.');
+  return;
+}
 
       input.value = "";
       input.placeholder = "Type a message...";
