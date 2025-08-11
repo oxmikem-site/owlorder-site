@@ -2399,6 +2399,62 @@ function openReactionPicker(event, msgKey, section) {
   }, 0);
 }
 
+    // ---- image utils (валідація + компресія) ----
+const MAX_UPLOAD_MB = 5;
+const MAX_W = 1600, MAX_H = 1600;
+
+function cryptoRand(len=6){
+  const abc = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  let s=''; for(let i=0;i<len;i++) s += abc[Math.floor(Math.random()*abc.length)];
+  return s;
+}
+
+function isImage(file){
+  return /^image\/(png|jpe?g|webp|gif)$/i.test(file.type);
+}
+
+async function compressImage(file, maxW=MAX_W, maxH=MAX_H, outType='image/webp', quality=0.9){
+  const img = await new Promise((res, rej) => {
+    const i = new Image();
+    i.onload = () => res(i);
+    i.onerror = rej;
+    i.src = URL.createObjectURL(file);
+  });
+
+  let { width:w, height:h } = img;
+  const k = Math.min(1, maxW / w, maxH / h);
+  const cw = Math.round(w * k), ch = Math.round(h * k);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = cw; canvas.height = ch;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(img, 0, 0, cw, ch);
+
+  return await new Promise(resolve => {
+    canvas.toBlob(b => resolve(b), outType, quality);
+  });
+}
+
+// готуємо файл: перевіряємо тип/розмір і стискаємо
+async function prepareImageForUpload(file){
+  if (!isImage(file)) throw new Error('Only PNG/JPG/WEBP/GIF are allowed.');
+  if (file.size > MAX_UPLOAD_MB * 1024 * 1024) {
+    // спробуємо стиснути; якщо й після компресії > 5MB — відхиляємо
+    const blob = await compressImage(file);
+    if (!blob || blob.size > MAX_UPLOAD_MB * 1024 * 1024) {
+      throw new Error('Max image size is 5MB.');
+    }
+    blob.name = (file.name || 'img') + '.webp';
+    blob.lastModified = Date.now();
+    return blob;
+  }
+  // невелике зображення — все одно проганяємо через webp, щоб легше кешилось
+  const blob = await compressImage(file);
+  blob.name = (file.name || 'img') + '.webp';
+  blob.lastModified = Date.now();
+  return blob;
+}
+
 /* ==== Старт програми ==== */
 window.addEventListener("DOMContentLoaded", async () => {
   // Firebase
@@ -2664,17 +2720,26 @@ chatSections.forEach(section => {
 
       let imageUrl = null;
       if (fileInput.files.length > 0) {
-        try {
-          const file = fileInput.files[0];
-          const fileName = `chat_images/${Date.now()}_${file.name}`;
-          const sref = storage.ref().child(fileName);
-          const snap = await sref.put(file);
-          imageUrl = await snap.ref.getDownloadURL();
-        } catch (err) {
-          console.error("Image upload failed:", err);
-          alert("Failed to upload image.");
-        }
-      }
+  try {
+    // валідація + компресія
+    const original = fileInput.files[0];
+    const imgBlob = await prepareImageForUpload(original);
+
+    // унікальний шлях: chat_images/<wallet>/<timestamp>_<rand>.webp
+    const ext = (imgBlob.type.split('/')[1] || 'webp').toLowerCase();
+    const fileName = `chat_images/${sender}/${Date.now()}_${cryptoRand(7)}.${ext}`;
+    const sref = storage.ref().child(fileName);
+
+    const snap = await sref.put(imgBlob, {
+      contentType: imgBlob.type || 'image/webp',
+      cacheControl: 'public,max-age=31536000,immutable'
+    });
+    imageUrl = await snap.ref.getDownloadURL();
+  } catch (err) {
+    console.error("Image upload failed:", err);
+    alert(err.message || "Failed to upload image.");
+  }
+}
 
       const replyData = replyToMessageBySection[section];
       const msgData = {
