@@ -1330,6 +1330,17 @@ function setSidebarAccess({ loggedIn, isHolder }) {
     }
   });
 
+    // Показ/приховування пункту Logout у сайдбарі
+const logoutLink = document.querySelector('#sidebar-nav .sidebar-logout');
+if (logoutLink) {
+  const logoutLi = logoutLink.closest('li');
+  if (logoutLi) logoutLi.style.display = loggedIn ? "" : "none";
+}
+
+// Також сховаємо дропдаун у хедері, якщо не залогінений
+const headerDropdown = document.getElementById("wallet-header-dropdown");
+if (headerDropdown && !loggedIn) headerDropdown.style.display = "none";
+
   // кнопка Connect у сайдбарі
   const connectBtn = document.getElementById("sidebar-connect-btn");
   if (connectBtn) connectBtn.style.display = loggedIn ? "none" : "inline-block";
@@ -2563,6 +2574,85 @@ auth.onAuthStateChanged(u => {
   window.CURRENT_UID = u ? u.uid : null;
 });
 
+    let currentWallet = getConnectedWalletAddress() || null;
+    
+// === ALWAYS-AVAILABLE: wallet connect + listeners ===
+
+// 1) Функція підключення гаманця (доступна завжди)
+async function connectUniSatWallet() {
+  if (!window.unisat) {
+    alert("UniSat Wallet not found. Please install the UniSat extension.");
+    // Можеш розкоментувати наступний рядок для редіректу на сторінку встановлення:
+    // window.open("https://unisat.io/download", "_blank");
+    return;
+  }
+  try {
+    await window.unisat.requestAccounts();
+    const address = (await window.unisat.getAccounts())[0];
+
+    localStorage.setItem("taproot_wallet", address);
+    updateWalletButtons(address);
+    await populateSidebarUserInfo(address);
+
+    // оновлюємо «глобальний» стейт
+    currentWallet = address;
+
+    // показуємо інтерфейс як залогінений (поки без прав холдера)
+    setSidebarAccess({ loggedIn: true, isHolder: false });
+    setChatInputsEnabled(false, currentWallet);
+
+    // завантажуємо бейджі/налаштування/колекцію
+    initUnreadTracking(address);
+    initSettingsUI(address);
+    renderMyCollection(address);
+
+    // коли підтягнеться статус холдера — оновлюємо доступ
+    getHolderInfo(address).then(info => {
+      const isHolder = !!info?.found;
+      setSidebarAccess({ loggedIn: true, isHolder });
+      setChatInputsEnabled(isHolder, currentWallet);
+      if (isHolder) showSection('collection');
+    });
+  } catch (e) {
+    console.error(e);
+    alert("Failed to connect wallet.");
+  }
+}
+
+// 2) Прив'язуємо ВСІ кнопки з класом .wallet-trigger (і в хедері, і в сайдбарі)
+document.querySelectorAll(".wallet-trigger").forEach(btn => {
+  btn.addEventListener("click", (e) => {
+    const saved = getConnectedWalletAddress();
+    if (!saved) {
+      e.preventDefault();
+      e.stopPropagation();
+      connectUniSatWallet();
+    }
+  });
+});
+
+// 3) Логіка хедерного «гаманець»-дропдауну:
+//    - якщо не залогінений → пробуємо конект
+//    - якщо залогінений → просто відкриваємо/закриваємо дропдаун
+const wrapper = document.querySelector(".wallet-wrapper");
+const dropdown = document.getElementById("wallet-header-dropdown");
+if (wrapper && dropdown) {
+  wrapper.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const saved = getConnectedWalletAddress();
+    if (!saved) {
+      connectUniSatWallet();
+      return;
+    }
+    dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+  });
+}
+
+// 4) Клік поза меню — закриває всі дропдауни
+document.addEventListener("click", () => {
+  document.querySelectorAll(".wallet-dropdown-content").forEach(dd => dd.style.display = "none");
+});
+
      db.ref('users').on('child_changed', snap => {
         const addr = (snap.key || '').toLowerCase();
         const nick = (snap.val()?.profile?.nickname) || null;
@@ -2576,8 +2666,6 @@ auth.onAuthStateChanged(u => {
             nicknameCache[addr] = nick;
         }
     });
-
-    let currentWallet = getConnectedWalletAddress() || null;
 
 // спершу стан "не авторизований" / "доступ закритий"
 if (!currentWallet) {
@@ -2613,70 +2701,6 @@ if (initiallyActive && initiallyActive.id?.startsWith('section-') && currentWall
   const localMessageIds = new Set();
   const userMessageKeys = new Set();
   const seenMessages = new Set();
-
-  // Wallet dropdown
-  const wrapper = document.querySelector(".wallet-wrapper");
-  const dropdown = document.getElementById("wallet-header-dropdown");
-  if (wrapper && dropdown) {
-    wrapper.addEventListener("click", (e) => {
-      e.stopPropagation();
-      dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
-    });
-  }
-  document.addEventListener("click", () => {
-    document.querySelectorAll(".wallet-dropdown-content").forEach(dd => dd.style.display = "none");
-  });
-
-  // Wallet connect
-  async function connectUniSatWallet() {
-    if (!window.unisat) {
-      alert("UniSat Wallet not found.");
-      return;
-    }
-    try {
-      await window.unisat.requestAccounts();
-      const address = (await window.unisat.getAccounts())[0];
-      localStorage.setItem("taproot_wallet", address);
-      updateWalletButtons(address);
-      await populateSidebarUserInfo(address);
-      currentWallet = address;
-      initUnreadTracking(address);
-      initSettingsUI(address);
-      renderMyCollection(address);
-      // тимчасово блокуємо доступ, поки перевіряємо snapshot
-setSidebarAccess({ loggedIn: true, isHolder: false });
-setChatInputsEnabled(false, currentWallet);
-
-getHolderInfo(address).then(info => {
-  const isHolder = !!info?.found;
-  setSidebarAccess({ loggedIn: true, isHolder });
-  setChatInputsEnabled(isHolder, currentWallet);
-  if (isHolder) showSection('collection');
-});
-    } catch {
-      alert("Failed to connect wallet.");
-    }
-  }
-
-  const walletHeaderBtn = document.getElementById("wallet-header-btn");
-  if (walletHeaderBtn) {
-    walletHeaderBtn.addEventListener("click", (e) => {
-      const saved = getConnectedWalletAddress();
-      if (!saved) {
-        e.stopPropagation();
-        connectUniSatWallet();
-      }
-    });
-  }
-
-  const sidebarConnectBtn = document.getElementById("sidebar-connect-btn");
-  if (sidebarConnectBtn) {
-    sidebarConnectBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const saved = getConnectedWalletAddress();
-      if (!saved) connectUniSatWallet();
-    });
-  }
 
   document.querySelectorAll('#sidebar-nav a[data-section]').forEach(link => {
   link.addEventListener('click', async (e) => {
