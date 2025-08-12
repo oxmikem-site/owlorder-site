@@ -2864,90 +2864,94 @@ chatSections.forEach(section => {
     const chatRef  = getChatMessagesRef(section);
     if (!sendBtn || !fileInput || !input) return;
 
-    sendBtn.addEventListener("click", async () => {
-      const text = input.value.trim();
-      const sender = getConnectedWalletAddress();
+   sendBtn.addEventListener("click", async () => {
+  const text   = input.value.trim();
+  const sender = getConnectedWalletAddress();
+
+  // у announcements/links пишуть лише адміни
   if (!sectionAllowsPosting(section, sender)) {
     alert("Only admins can post here.");
     return;
   }
 
-      if ((!text && !fileInput.files[0]) || !sender) return;
+  // чи є хоч текст або вибрані зображення
+  const hasSelectedImages = (selectedFilesBySection[section] || []).length > 0;
+  if ((!text && !hasSelectedImages) || !sender) return;
 
-      if (!cachedHolderInfo?.found) {
-        alert("Only verified holders can send messages.");
-        return;
+  if (!cachedHolderInfo?.found) {
+    alert("Only verified holders can send messages.");
+    return;
+  }
+
+  // ---- upload images (до 5) ----
+  let imageUrls = [];
+  const chosen = (selectedFilesBySection[section] || []).slice(0, MAX_IMAGES_PER_MSG);
+
+  if (chosen.length) {
+    for (const original of chosen) {
+      try {
+        const imgBlob  = await prepareImageForUpload(original);
+        const ext      = (imgBlob.type.split('/')[1] || 'webp').toLowerCase();
+        const fileName = `chat_images/${sender}/${Date.now()}_${cryptoRand(7)}.${ext}`;
+        const sref     = storage.ref().child(fileName);
+        const snap     = await sref.put(imgBlob, {
+          contentType: imgBlob.type || 'image/webp',
+          cacheControl: 'public,max-age=31536000,immutable'
+        });
+        const url = await snap.ref.getDownloadURL();
+        imageUrls.push(url);
+      } catch (err) {
+        console.error('Image upload failed:', err);
+        alert(err.message || 'Failed to upload image.');
       }
-
-      let imageUrls = [];
-const chosen = (selectedFilesBySection[section] || []).slice(0, MAX_IMAGES_PER_MSG);
-
-if (chosen.length) {
-  for (const original of chosen) {
-    try {
-      const imgBlob = await prepareImageForUpload(original);
-      const ext = (imgBlob.type.split('/')[1] || 'webp').toLowerCase();
-      const fileName = `chat_images/${sender}/${Date.now()}_${cryptoRand(7)}.${ext}`;
-      const sref = storage.ref().child(fileName);
-      const snap = await sref.put(imgBlob, {
-        contentType: imgBlob.type || 'image/webp',
-        cacheControl: 'public,max-age=31536000,immutable'
-      });
-      const url = await snap.ref.getDownloadURL();
-      imageUrls.push(url);
-    } catch (err) {
-      console.error('Image upload failed:', err);
-      alert(err.message || 'Failed to upload image.');
     }
   }
-}
- catch (err) {
-    console.error("Image upload failed:", err);
-    alert(err.message || "Failed to upload image.");
+
+  // ---- save message ----
+  const uid = window.CURRENT_UID;
+  if (!uid) { alert("Auth not ready, try again."); return; }
+
+  const msgKey    = db.ref().child(`chats/${section}`).push().key;
+  const replyData = replyToMessageBySection[section];
+
+  const msgData = {
+    uid,
+    sender,
+    text,
+    timestamp: Date.now(),
+    imageId: cachedHolderInfo.imageId || null,
+    imageUrls: imageUrls,           // масив
+    imageUrl: imageUrls[0] || null, // для сумісності
+    ...(replyData && {
+      replyTo: {
+        key: replyData.key,
+        sender: replyData.sender,
+        text: replyData.text,
+        imageId: replyData.imageId || null
+      }
+    })
+  };
+
+  const updates = {};
+  updates[`/chats/${section}/${msgKey}`] = msgData;
+  updates[`/rateLimit/${uid}`] = Date.now();
+
+  try {
+    await db.ref().update(updates);
+  } catch (e) {
+    console.error(e);
+    alert('Too fast. Please wait a moment and try again.');
+    return;
   }
-}
-      const uid = window.CURRENT_UID;
-      if (!uid) { alert("Auth not ready, try again."); return; }
-      const msgKey = db.ref().child(`chats/${section}`).push().key;
-      const replyData = replyToMessageBySection[section];
-      const msgData = {
-  uid,
-  sender,
-  text,
-  timestamp: Date.now(),
-  imageId: cachedHolderInfo.imageId || null,
-  imageUrls: imageUrls,               // нове поле (масив)
-  imageUrl: imageUrls[0] || null,     // лишаємо для сумісності
-  ...(replyData && {
-    replyTo: {
-      key: replyData.key,
-      sender: replyData.sender,
-      text: replyData.text,
-      imageId: replyData.imageId || null
-    }
-  })
-};
 
-const updates = {};
-updates[`/chats/${section}/${msgKey}`] = msgData;
-updates[`/rateLimit/${uid}`] = Date.now();
-
-try {
-  await db.ref().update(updates);
-} catch (e) {
-  console.error(e);
-  alert('Too fast. Please wait a moment and try again.');
-  return;
-}
-
-      input.value = "";
-input.placeholder = "Type a message...";
-fileInput.value = "";
-selectedFilesBySection[section] = [];
-renderPreviews(section);
-replyToMessageBySection[section] = null;
-    });
-  });
+  // ---- reset UI ----
+  input.value = "";
+  input.placeholder = "Type a message...";
+  fileInput.value = "";
+  selectedFilesBySection[section] = [];
+  renderPreviews(section);
+  replyToMessageBySection[section] = null;
+});
 
   // Інпут: авто-висота, Enter/Shift+Enter, emoji
   chatSections.forEach(section => {
