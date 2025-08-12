@@ -912,6 +912,24 @@
   padding:18px; border:1px dashed rgba(255,255,255,.12); border-radius:12px; text-align:center; opacity:.9;
 }
 
+        /* прев'ю кількох зображень в інпуті */
+.previews-grid { display:flex; gap:8px; flex-wrap:wrap; }
+.preview-item { position:relative; display:inline-block; }
+.preview-item img { width:120px; height:120px; object-fit:cover; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,.4); }
+.preview-item .cancel { position:absolute; top:4px; right:4px; border:none; border-radius:999px; width:22px; height:22px; background:rgba(0,0,0,.7); color:#fff; cursor:pointer; }
+
+/* рендер у повідомленні */
+.image-grid { display:flex; flex-wrap:wrap; gap:8px; margin-top:6px; }
+.image-grid img { width:180px; height:180px; object-fit:cover; border-radius:10px; cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,.5); }
+
+/* лайтбокс */
+#lightbox { position:fixed; inset:0; background:rgba(0,0,0,.9); display:none; align-items:center; justify-content:center; z-index:2000; }
+#lightbox img { max-width:95%; max-height:95%; border-radius:4px; }
+#lightbox .close, #lightbox .nav { position:fixed; background:rgba(0,0,0,.4); border:none; color:#fff; cursor:pointer; font-size:20px; padding:8px 12px; border-radius:10px; }
+#lightbox .close { top:16px; right:16px; }
+#lightbox .nav.prev { left:16px; top:50%; transform:translateY(-50%); }
+#lightbox .nav.next { right:16px; top:50%; transform:translateY(-50%); }
+
     </style>
 </head>
 
@@ -993,7 +1011,7 @@
                                 <emoji-picker class="emoji-picker" data-section="links" style="position: absolute; bottom: 45px; right: 0; z-index: 999; display: none;"></emoji-picker>
                             </div>
 
-                            <input type="file" class="image-upload" data-section="links" accept="image/*" style="display: none;" />
+                            <input type="file" class="image-upload" data-section="links" accept="image/*" multiple style="display: none;" />
                             <button class="upload-image-btn" data-section="links" title="Attach Image">
                                 <img src="../images2/paperclip.png" alt="attach" width="20" height="20" />
                             </button>
@@ -1043,7 +1061,7 @@
                             </div>
 
                             <!-- Image Upload -->
-                            <input type="file" class="image-upload" data-section="announcements" accept="image/*" style="display: none;" />
+                            <input type="file" class="image-upload" data-section="announcements" accept="image/*" multiple style="display: none;" />
                             <button class="upload-image-btn" data-section="announcements" title="Attach Image">
                                 <img src="../images2/paperclip.png" alt="attach" width="20" height="20" />
                             </button>
@@ -1094,7 +1112,7 @@
                                 <emoji-picker class="emoji-picker" data-section="general" style="position: absolute; bottom: 45px; right: 0; z-index: 999; display: none;"></emoji-picker>
                             </div>
 
-                            <input type="file" class="image-upload" data-section="general" accept="image/*" style="display: none;" />
+                            <input type="file" class="image-upload" data-section="general" accept="image/*" multiple style="display: none;" />
                             <button class="upload-image-btn" data-section="general" title="Attach Image">
                                 <img src="../images2/paperclip.png" alt="attach" width="20" height="20" />
                             </button>
@@ -1142,7 +1160,7 @@
           <emoji-picker class="emoji-picker" data-section="share-art" style="position: absolute; bottom: 45px; right: 0; z-index: 999; display: none;"></emoji-picker>
         </div>
 
-        <input type="file" class="image-upload" data-section="share-art" accept="image/*" style="display: none;" />
+        <input type="file" class="image-upload" data-section="share-art" accept="image/*" multiple style="display: none;" />
         <button class="upload-image-btn" data-section="share-art" title="Attach Image">
           <img src="../images2/paperclip.png" alt="attach" width="20" height="20" />
         </button>
@@ -1179,7 +1197,7 @@
           <emoji-picker class="emoji-picker" data-section="spot-request" style="position: absolute; bottom: 45px; right: 0; z-index: 999; display: none;"></emoji-picker>
         </div>
 
-        <input type="file" class="image-upload" data-section="spot-request" accept="image/*" style="display: none;" />
+        <input type="file" class="image-upload" data-section="spot-request" accept="image/*" multiple style="display: none;" />
         <button class="upload-image-btn" data-section="spot-request" title="Attach Image">
           <img src="../images2/paperclip.png" alt="attach" width="20" height="20" />
         </button>
@@ -2244,15 +2262,22 @@ prefetchNickname(messageObj.replyTo.sender).then(nick => {
 
   chatBox.prepend(wrapper);
 
-  if (messageObj.imageUrl) {
-    const imgEl = document.createElement("img");
-    imgEl.src = messageObj.imageUrl;
-    imgEl.style.maxWidth = "240px";
-    imgEl.style.borderRadius = "8px";
-    imgEl.style.marginTop = "6px";
-    imgEl.style.display = "block";
-    content.appendChild(imgEl);
-  }
+  const urls = Array.isArray(messageObj.imageUrls) && messageObj.imageUrls.length
+  ? messageObj.imageUrls
+  : (messageObj.imageUrl ? [messageObj.imageUrl] : []);
+
+if (urls.length) {
+  const grid = document.createElement('div');
+  grid.className = 'image-grid';
+  urls.forEach((u, i) => {
+    const img = document.createElement('img');
+    img.src = u;
+    img.alt = `image ${i+1}`;
+    img.addEventListener('click', () => openLightbox(urls, i));
+    grid.appendChild(img);
+  });
+  content.appendChild(grid);
+}
 }
 
 function replyTo(key, section) {
@@ -2677,35 +2702,64 @@ chatSections.forEach(section => {
   });
 });
 
-  // === CHAT UI: скрепка відкриває file input
-  chatSections.forEach(section => {
-    const uploadBtn = document.querySelector(`.upload-image-btn[data-section="${section}"]`);
-    const fileInput = document.querySelector(`.image-upload[data-section="${section}"]`);
-    if (uploadBtn && fileInput) {
-      uploadBtn.addEventListener("click", () => fileInput.click());
+    const MAX_IMAGES_PER_MSG = 5;
+const selectedFilesBySection = {}; // { section: File[] }
+
+function renderPreviews(section){
+  const container = document.querySelector(`.image-preview-container[data-section="${section}"]`);
+  if (!container) return;
+  const files = selectedFilesBySection[section] || [];
+  container.innerHTML = '';
+
+  if (!files.length) { container.style.display = 'none'; return; }
+  container.style.display = 'block';
+
+  const grid = document.createElement('div');
+  grid.className = 'previews-grid';
+  files.forEach((file, idx) => {
+    const url = URL.createObjectURL(file);
+    const item = document.createElement('div');
+    item.className = 'preview-item';
+    item.innerHTML = `
+      <img src="${url}" alt="preview ${idx+1}">
+      <button class="cancel" title="Remove" data-idx="${idx}">✖</button>
+    `;
+    item.querySelector('.cancel').onclick = () => {
+      files.splice(idx,1);
+      renderPreviews(section);
+    };
+    grid.appendChild(item);
+  });
+  container.appendChild(grid);
+}
+
+  // Мультизавантаження (до 5 файлів) + прев'ю
+chatSections.forEach(section => {
+  const uploadBtn = document.querySelector(`.upload-image-btn[data-section="${section}"]`);
+  const fileInput = document.querySelector(`.image-upload[data-section="${section}"]`);
+  if (!uploadBtn || !fileInput) return;
+
+  fileInput.setAttribute('multiple', 'multiple');
+
+  uploadBtn.addEventListener('click', () => fileInput.click());
+
+  fileInput.addEventListener('change', (e) => {
+    const incoming = Array.from(e.target.files || []);
+    if (!incoming.length) return;
+
+    const current = selectedFilesBySection[section] || [];
+    for (const f of incoming) {
+      if (current.length >= MAX_IMAGES_PER_MSG) break;
+      if (!isImage(f)) { alert('Only PNG/JPG/WEBP/GIF are allowed.'); continue; }
+      current.push(f);
     }
+    selectedFilesBySection[section] = current;
+    renderPreviews(section);
+
+    // очистити, щоб можна було додавати ті ж файли ще раз
+    fileInput.value = '';
   });
-
-  // Прев’ю/скасування картинки
-  chatSections.forEach(section => {
-    const fileInput = document.querySelector(`.image-upload[data-section="${section}"]`);
-    const previewContainer = document.querySelector(`.image-preview-container[data-section="${section}"]`);
-    const previewImg = document.querySelector(`.image-preview[data-section="${section}"]`);
-    const cancelBtn = document.querySelector(`.cancel-image[data-section="${section}"]`);
-    if (!fileInput || !previewContainer || !previewImg || !cancelBtn) return;
-
-    fileInput.addEventListener("change", (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      previewImg.src = URL.createObjectURL(file);
-      previewContainer.style.display = "block";
-    });
-
-    cancelBtn.addEventListener("click", () => {
-      previewContainer.style.display = "none";
-      fileInput.value = "";
-    });
-  });
+});
 
   // Підписка на нові повідомлення
   chatSections.forEach(section => {
@@ -2791,24 +2845,29 @@ chatSections.forEach(section => {
         return;
       }
 
-      let imageUrl = null;
-      if (fileInput.files.length > 0) {
-  try {
-    // валідація + компресія
-    const original = fileInput.files[0];
-    const imgBlob = await prepareImageForUpload(original);
+      let imageUrls = [];
+const chosen = (selectedFilesBySection[section] || []).slice(0, MAX_IMAGES_PER_MSG);
 
-    // унікальний шлях: chat_images/<wallet>/<timestamp>_<rand>.webp
-    const ext = (imgBlob.type.split('/')[1] || 'webp').toLowerCase();
-    const fileName = `chat_images/${sender}/${Date.now()}_${cryptoRand(7)}.${ext}`;
-    const sref = storage.ref().child(fileName);
-
-    const snap = await sref.put(imgBlob, {
-      contentType: imgBlob.type || 'image/webp',
-      cacheControl: 'public,max-age=31536000,immutable'
-    });
-    imageUrl = await snap.ref.getDownloadURL();
-  } catch (err) {
+if (chosen.length) {
+  for (const original of chosen) {
+    try {
+      const imgBlob = await prepareImageForUpload(original);
+      const ext = (imgBlob.type.split('/')[1] || 'webp').toLowerCase();
+      const fileName = `chat_images/${sender}/${Date.now()}_${cryptoRand(7)}.${ext}`;
+      const sref = storage.ref().child(fileName);
+      const snap = await sref.put(imgBlob, {
+        contentType: imgBlob.type || 'image/webp',
+        cacheControl: 'public,max-age=31536000,immutable'
+      });
+      const url = await snap.ref.getDownloadURL();
+      imageUrls.push(url);
+    } catch (err) {
+      console.error('Image upload failed:', err);
+      alert(err.message || 'Failed to upload image.');
+    }
+  }
+}
+ catch (err) {
     console.error("Image upload failed:", err);
     alert(err.message || "Failed to upload image.");
   }
@@ -2818,12 +2877,13 @@ chatSections.forEach(section => {
       const msgKey = db.ref().child(`chats/${section}`).push().key;
       const replyData = replyToMessageBySection[section];
       const msgData = {
-  uid,                          // <— додаємо UID
+  uid,
   sender,
   text,
   timestamp: Date.now(),
   imageId: cachedHolderInfo.imageId || null,
-  imageUrl: imageUrl || null,
+  imageUrls: imageUrls,               // нове поле (масив)
+  imageUrl: imageUrls[0] || null,     // лишаємо для сумісності
   ...(replyData && {
     replyTo: {
       key: replyData.key,
@@ -2847,11 +2907,11 @@ try {
 }
 
       input.value = "";
-      input.placeholder = "Type a message...";
-      fileInput.value = "";
-      const preview = document.querySelector(`.image-preview-container[data-section="${section}"]`);
-      if (preview) preview.style.display = "none";
-      replyToMessageBySection[section] = null;
+input.placeholder = "Type a message...";
+fileInput.value = "";
+selectedFilesBySection[section] = [];
+renderPreviews(section);
+replyToMessageBySection[section] = null;
     });
   });
 
@@ -2907,6 +2967,60 @@ try {
   });
 }
 });
+                let lightboxEl = null, lightboxIdx = 0, lightboxList = [];
+
+function ensureLightbox() {
+  if (lightboxEl) return lightboxEl;
+  lightboxEl = document.createElement('div');
+  lightboxEl.id = 'lightbox';
+  lightboxEl.innerHTML = `
+    <img id="lightbox-img" alt="">
+    <button class="close" title="Close">✕</button>
+    <button class="nav prev" title="Prev">‹</button>
+    <button class="nav next" title="Next">›</button>
+  `;
+  document.body.appendChild(lightboxEl);
+
+  lightboxEl.querySelector('.close').onclick = closeLightbox;
+  lightboxEl.addEventListener('click', e => { if (e.target.id === 'lightbox') closeLightbox(); });
+  lightboxEl.querySelector('.nav.prev').onclick = showPrev;
+  lightboxEl.querySelector('.nav.next').onclick = showNext;
+
+  document.addEventListener('keydown', e => {
+    if (lightboxEl.style.display !== 'flex') return;
+    if (e.key === 'Escape') closeLightbox();
+    if (e.key === 'ArrowRight') showNext();
+    if (e.key === 'ArrowLeft') showPrev();
+  });
+
+  return lightboxEl;
+}
+
+function openLightbox(urls, startIndex = 0) {
+  lightboxList = urls || [];
+  lightboxIdx = Math.max(0, Math.min(startIndex, lightboxList.length - 1));
+  const box = ensureLightbox();
+  box.style.display = 'flex';
+  updateLightboxImage();
+}
+function closeLightbox() {
+  if (lightboxEl) lightboxEl.style.display = 'none';
+}
+function updateLightboxImage() {
+  const img = lightboxEl.querySelector('#lightbox-img');
+  img.src = lightboxList[lightboxIdx];
+}
+function showPrev() {
+  if (!lightboxList.length) return;
+  lightboxIdx = (lightboxIdx - 1 + lightboxList.length) % lightboxList.length;
+  updateLightboxImage();
+}
+function showNext() {
+  if (!lightboxList.length) return;
+  lightboxIdx = (lightboxIdx + 1) % lightboxList.length;
+  updateLightboxImage();
+}
+
 </script>
 </body>
 </html>
