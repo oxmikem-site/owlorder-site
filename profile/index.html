@@ -411,19 +411,6 @@
             margin-left: 6px;
         }
 
-        /* Кнопка емодзі */
-        #toggle-emoji-picker {
-            background: transparent;
-            border: none;
-            font-size: 20px;
-            cursor: pointer;
-            padding: 4px;
-            line-height: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
         .upload-image-btn,
         .toggle-emoji-picker {
             background: transparent;
@@ -643,13 +630,12 @@
         }
 
         .message-wrapper.reply-highlight {
-            background: rgb(66, 63, 46, 0.2);
-            /* світлий фон */
-            border-left: 3px solid var(--accent-color);
-            border-radius: 8px;
-            padding: 4px;
-            transition: background 0.05s ease;
-        }
+  background: rgba(66, 63, 46, 0.2); /* ✅ */
+  border-left: 3px solid var(--accent-color);
+  border-radius: 8px;
+  padding: 4px;
+  transition: background 0.05s ease;
+}
 
         .reply-container {
             display: flex;
@@ -2919,5 +2905,7 @@ try {
     });
   });
 </script>
+</div> 
+</div> 
 </body>
 </html>
