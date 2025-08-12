@@ -1288,6 +1288,42 @@ const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuO
 
 /* Перелік секцій, де є чат */
 const chatSections = ["links", "announcements", "general", "share-art", "spot-request"];
+// які секції показуємо лише холдерам (можеш додати/зняти будь-яку)
+const HOLDER_ONLY = new Set(["links","announcements","general","share-art","spot-request","raffles","settings","collection"]);
+
+// показати/сховати лінки сайдбару та відповідні секції
+function setSidebarAccess({ loggedIn, isHolder }) {
+  document.querySelectorAll('#sidebar-nav a[data-section]').forEach(a => {
+    const sec = a.getAttribute('data-section');
+    const li = a.closest('li');
+    const panel = document.getElementById('section-' + sec);
+    const allow = !!loggedIn && !!isHolder && HOLDER_ONLY.has(sec);
+
+    if (allow) {
+      if (li) li.style.display = "";
+      if (panel) panel.style.display = ""; // не активує, просто робить видимою
+    } else {
+      if (li) li.style.display = "none";
+      if (panel) { panel.classList.remove("active"); panel.style.display = "none"; }
+    }
+  });
+
+  // кнопка Connect у сайдбарі
+  const connectBtn = document.getElementById("sidebar-connect-btn");
+  if (connectBtn) connectBtn.style.display = loggedIn ? "none" : "inline-block";
+}
+
+// вмикаємо/вимикаємо інпути чату
+function setChatInputsEnabled(enabled) {
+  chatSections.forEach(sec => {
+    const box = document.getElementById(`chat-input-${sec}`);
+    const send = document.querySelector(`.send-btn[data-section="${sec}"]`);
+    const upload = document.querySelector(`.upload-image-btn[data-section="${sec}"]`);
+    if (box)    { box.disabled = !enabled; box.placeholder = enabled ? "Type a message..." : "Only holders can chat"; }
+    if (send)   send.disabled = !enabled;
+    if (upload) upload.disabled = !enabled;
+  });
+}
 
 /* Сховище reply для кожної секції */
 const replyToMessageBySection = {};
@@ -2501,15 +2537,29 @@ auth.onAuthStateChanged(u => {
     });
 
     let currentWallet = getConnectedWalletAddress() || null;
-    if (currentWallet) { renderMyCollection(currentWallet); }
 
-if (currentWallet) {
+// спершу стан "не авторизований" / "доступ закритий"
+if (!currentWallet) {
+  setSidebarAccess({ loggedIn: false, isHolder: false });
+  setChatInputsEnabled(false);
+} else {
+  // поки перевіряємо snapshot — умикаємо loggedIn, але без доступу
+  setSidebarAccess({ loggedIn: true, isHolder: false });
+  setChatInputsEnabled(false);
+
   updateWalletButtons(currentWallet);
   populateSidebarUserInfo(currentWallet);
-  initUnreadTracking(currentWallet); // ✅ Запускаємо відслідковування непрочитаних
-}
+  initUnreadTracking(currentWallet);
+  initSettingsUI(currentWallet);
+  renderMyCollection(currentWallet);
 
-    if (currentWallet) initSettingsUI(currentWallet);
+  // коли підтягнеться інформація про холдера — оновлюємо доступ
+  getHolderInfo(currentWallet).then(info => {
+  const isHolder = !!info?.found;
+  setSidebarAccess({ loggedIn: true, isHolder });
+  setChatInputsEnabled(isHolder);
+  if (isHolder) showSection('collection');
+});
 
     // якщо на старті якась секція вже активна — познач її прочитаною
 const initiallyActive = document.querySelector('.profile-section.active');
@@ -2552,6 +2602,16 @@ if (initiallyActive && initiallyActive.id?.startsWith('section-') && currentWall
       initUnreadTracking(address);
       initSettingsUI(address);
       renderMyCollection(address);
+      // тимчасово блокуємо доступ, поки перевіряємо snapshot
+setSidebarAccess({ loggedIn: true, isHolder: false });
+setChatInputsEnabled(false);
+
+getHolderInfo(address).then(info => {
+  const isHolder = !!info?.found;
+  setSidebarAccess({ loggedIn: true, isHolder });
+  setChatInputsEnabled(isHolder);
+  if (isHolder) showSection('collection');
+});
     } catch {
       alert("Failed to connect wallet.");
     }
@@ -2581,15 +2641,19 @@ if (initiallyActive && initiallyActive.id?.startsWith('section-') && currentWall
   link.addEventListener('click', async (e) => {
     const target = link.getAttribute('data-section');
     if (!target) return;
+
+    // якщо лінк прихований (не дозволено) — блокуємо перехід
+    const liVisible = link.closest('li')?.style.display !== 'none';
+    if (!liVisible) { e.preventDefault(); return; }
+
     e.preventDefault();
     hideAllSections();
     showSection(target);
 
-      if (target === 'collection' && currentWallet) {
-  renderMyCollection(currentWallet);
-}
+    if (target === 'collection' && currentWallet) {
+      renderMyCollection(currentWallet);
+    }
 
-    // одразу позначаємо секцію прочитаною
     if (currentWallet) {
       await markAsRead(target, currentWallet);
     }
