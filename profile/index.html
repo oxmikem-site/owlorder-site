@@ -930,6 +930,16 @@
 #lightbox .nav.prev { left:16px; top:50%; transform:translateY(-50%); }
 #lightbox .nav.next { right:16px; top:50%; transform:translateY(-50%); }
 
+        /* бейдж ролі біля імені */
+.sender-badges{ display:inline-flex; gap:6px; align-items:center; margin-left:6px; }
+.role-badge{
+  display:inline-flex; align-items:center; justify-content:center;
+  padding:2px 6px; border-radius:6px; font-size:10px; font-weight:800; letter-spacing:.3px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.18), 0 1px 6px rgba(0,0,0,.35);
+}
+.role-badge.owl{ background: linear-gradient(90deg,#bfa758,#d4c87c); color:#000; }
+.role-badge.council{ background:#7ec8ff; color:#000; } /* відрізняється від OWL */
+
     </style>
 </head>
 
@@ -1305,11 +1315,92 @@ const ADMIN_WALLETS = new Set([
 function isAdmin(wallet){
   return !!wallet && ADMIN_WALLETS.has(wallet.toLowerCase());
 }
+                /* === ролі користувача за адресою/повідомленням === */
+function hasHolderRoleFor(sender, messageObj){
+  // 1) якщо під час надсилання в msg був imageId — це холдер
+  if (messageObj && messageObj.imageId) return true;
+  // 2) або якщо в локальному кеші є позитивний запис
+  const cached = readHolderCache(sender || '');
+  return !!cached?.found;
+}
+
+function computeRolesForAddress(sender, messageObj){
+  const roles = [];
+  if (!sender) return roles;
+  if (isAdmin(sender)) roles.push('OWL COUNCIL');
+  if (hasHolderRoleFor(sender, messageObj)) roles.push('OWL');
+  return roles;
+}
+
+function makeRoleBadges(roles){
+  const wrap = document.createElement('span');
+  wrap.className = 'sender-badges';
+  roles.forEach(r=>{
+    const span = document.createElement('span');
+    span.className = 'role-badge ' + (r === 'OWL COUNCIL' ? 'council' : 'owl');
+    span.textContent = r;
+    wrap.appendChild(span);
+  });
+  return wrap;
+}
+
+// асинхронно догружаємо статус холдера (якщо не був у msg/кеші), і додаємо бейдж без дублювання
+async function ensureHolderBadgeAsync(sender, badgesWrap){
+  if (!badgesWrap || badgesWrap.querySelector('.role-badge.owl')) return;
+  const info = await getHolderInfo(sender);
+  if (info?.found && !badgesWrap.querySelector('.role-badge.owl')){
+    const span = document.createElement('span');
+    span.className = 'role-badge owl';
+    span.textContent = 'OWL';
+    badgesWrap.appendChild(span);
+  }
+}
+
 function sectionAllowsPosting(section, wallet){
   if (ADMIN_ONLY_SECTIONS.has(section)) return isAdmin(wallet);
   return true; // інші секції — як було
 }
 
+                /* === ролі користувача за адресою/повідомленням === */
+function hasHolderRoleFor(sender, messageObj){
+  // 1) якщо під час надсилання в msg був imageId — це холдер
+  if (messageObj && messageObj.imageId) return true;
+  // 2) або якщо в локальному кеші є позитивний запис
+  const cached = readHolderCache(sender || '');
+  return !!cached?.found;
+}
+
+function computeRolesForAddress(sender, messageObj){
+  const roles = [];
+  if (!sender) return roles;
+  if (isAdmin(sender)) roles.push('OWL COUNCIL');
+  if (hasHolderRoleFor(sender, messageObj)) roles.push('OWL');
+  return roles;
+}
+
+function makeRoleBadges(roles){
+  const wrap = document.createElement('span');
+  wrap.className = 'sender-badges';
+  roles.forEach(r=>{
+    const span = document.createElement('span');
+    span.className = 'role-badge ' + (r === 'OWL COUNCIL' ? 'council' : 'owl');
+    span.textContent = r;
+    wrap.appendChild(span);
+  });
+  return wrap;
+}
+
+// асинхронно догружаємо статус холдера (якщо не був у msg/кеші), і додаємо бейдж без дублювання
+async function ensureHolderBadgeAsync(sender, badgesWrap){
+  if (!badgesWrap || badgesWrap.querySelector('.role-badge.owl')) return;
+  const info = await getHolderInfo(sender);
+  if (info?.found && !badgesWrap.querySelector('.role-badge.owl')){
+    const span = document.createElement('span');
+    span.className = 'role-badge owl';
+    span.textContent = 'OWL';
+    badgesWrap.appendChild(span);
+  }
+}
 // які секції показуємо лише холдерам (можеш додати/зняти будь-яку)
 const HOLDER_ONLY = new Set(["links","announcements","general","share-art","spot-request","raffles","settings","collection"]);
 
@@ -2230,7 +2321,14 @@ prefetchNickname(messageObj.sender).then(nick => {            // догружа�
   }
 
   left.appendChild(nameEl);
-  left.appendChild(timeEl);
+
+// бейджі ролей автора
+const badges = makeRoleBadges(computeRolesForAddress(messageObj.sender, messageObj));
+left.appendChild(badges);
+// якщо про холдера нічого не відомо — тихо перевіримо і додамо пізніше
+ensureHolderBadgeAsync(messageObj.sender, badges);
+
+left.appendChild(timeEl);
 
   // RIGHT (hover menu)
   const right = document.createElement("div");
@@ -2346,7 +2444,15 @@ replyBlock.innerHTML = `
     </div>
 `;
 
-// А потім — оновити, якщо підтягнеться нік
+      const replyNameEl = replyBlock.querySelector('.reply-to-name');
+if (replyNameEl){
+  const rBadges = makeRoleBadges(
+    computeRolesForAddress(messageObj.replyTo.sender, { imageId: messageObj.replyTo.imageId })
+  );
+  replyNameEl.insertAdjacentElement('afterend', rBadges);
+  ensureHolderBadgeAsync(messageObj.replyTo.sender, rBadges);
+}
+
 prefetchNickname(messageObj.replyTo.sender).then(nick => {
     if (!nick) return;
     const el = replyBlock.querySelector('.reply-to-name');
