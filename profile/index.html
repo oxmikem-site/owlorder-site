@@ -1403,9 +1403,28 @@ function writeHolderCache(address, data){
 
                 // === Мій профіль
 let currentUserNickname = "";
+let currentIsHolder = false;
 
                 // кеш ніків інших користувачів
 const nicknameCache = {};
+
+                // індекс: nickname (lower) -> масив адрес
+const nicknameIndex = {};
+
+function mapNickname(addr, nick){
+  const a = (addr||'').toLowerCase();
+  const n = (nick||'').trim().toLowerCase();
+  if (!a || !n) return;
+  if (!nicknameIndex[n]) nicknameIndex[n] = [];
+  if (!nicknameIndex[n].includes(a)) nicknameIndex[n].push(a);
+}
+function unmapNickname(addr, nick){
+  const a = (addr||'').toLowerCase();
+  const n = (nick||'').trim().toLowerCase();
+  if (!a || !n || !nicknameIndex[n]) return;
+  nicknameIndex[n] = nicknameIndex[n].filter(x => x !== a);
+  if (!nicknameIndex[n].length) delete nicknameIndex[n];
+}
 
 // синхронний варіант (повертає що є зараз у кеші або short)
 function getDisplayNameSync(addr) {
@@ -1442,13 +1461,59 @@ function getDisplayName(addr) {
   return shortenAddress(addr);             // інші — як і було
 }
 
-                function isReplyToMe(replySenderRaw) {
+  function isReplyToMe(replySenderRaw) {
   const me      = (getConnectedWalletAddress() || "");
   const myFull  = me.toLowerCase();
   const myShort = shortenAddress(me).toLowerCase();
   const myNick  = (currentUserNickname || "").toLowerCase();
   const val     = (replySenderRaw || "").toLowerCase();
   return val === myFull || val === myShort || (myNick && val === myNick);
+}
+
+  /* ==== Ментіони/ролі ==== */
+// парсимо текст і витягаємо кому шлють
+function buildMentions(text){
+  const roles = new Set();
+  const users = new Set();
+
+  const t = (text || "").trim();
+
+  // ролі (без регістру)
+  if (/@owl\s+council\b/i.test(t)) roles.add('owl_council');
+  if (/@owl\b/i.test(t)) roles.add('owl');
+
+  // @Нік (без пробілів). Підтримка латиниці/кірил.
+  const nickTokens = Array.from(t.matchAll(/@([A-Za-z0-9_\-А-Яа-яЇїІіЄєҐґ]+)\b/gu))
+                          .map(m => (m[1]||'').toLowerCase());
+
+  nickTokens.forEach(n => {
+    if (n === 'owl' || n === 'owl' /* дублів не буде */) return; // пропускаємо службові
+    if (n === 'owl' || n === 'owl council') return;
+    const list = nicknameIndex[n] || [];
+    list.forEach(a => users.add(a));
+  });
+
+  return { roles: Array.from(roles), users: Array.from(users) };
+}
+
+// чи стосується це повідомлення конкретного гаманця
+function isMentionForWallet(msg, wallet){
+  if (!msg || !wallet) return false;
+  if ((msg.sender||'').toLowerCase() === wallet.toLowerCase()) return false; // себе не сповіщаємо
+
+  const m = msg.mentions || {};
+  const roleList = Array.isArray(m.roles) ? m.roles : [];
+  const userList = Array.isArray(m.users) ? m.users : [];
+
+  // прямий ментіон за адресою
+  const wl = wallet.toLowerCase();
+  if (userList.some(w => (w||'').toLowerCase() === wl)) return true;
+
+  // рольові ментіони
+  if (roleList.includes('owl') && currentIsHolder) return true;
+  if (roleList.includes('owl_council') && isAdmin(wallet)) return true;
+
+  return false;
 }
 
 /* === Хелпери інтерфейсу === */
@@ -1921,15 +1986,15 @@ async function initUnreadTracking(wallet) {
       const m = snap.val(); 
       if (!m) return;
 
-      // непрочитані (не мої і новіші за lastSeen)
-      if (m.timestamp > lastSeen && (m.sender || '').toLowerCase() !== walletLower) {
-        unreadCount++;
-      }
+if (m.timestamp > lastSeen && (m.sender || '').toLowerCase() !== walletLower) {
+  unreadCount++;
+}
 
-      // реплаї на мене (порівнюємо усі варіанти: full/short/nick)
-      if (m.replyTo && isReplyToMe(m.replyTo.sender) && m.timestamp > lastReplySeen) {
-        replyCount++;
-      }
+const mentionedMe = isMentionForWallet(m, wallet);
+const repliedToMe = m.replyTo && isReplyToMe(m.replyTo.sender);
+if ((mentionedMe || repliedToMe) && m.timestamp > lastReplySeen) {
+  replyCount++;
+}
     });
 
     setBadgeCount(badges.unread, unreadCount);
@@ -1948,18 +2013,17 @@ async function initUnreadTracking(wallet) {
 
       const isActive = document.getElementById(`section-${section}`)?.classList.contains('active');
 
-      // непрочитані
-      if (!isActive && m.timestamp > lastSeen && (m.sender || '').toLowerCase() !== walletLower) {
-        const cur = parseInt(badges.unread.textContent) || 0;
-        setBadgeCount(badges.unread, cur + 1);
-      }
+if (!isActive && m.timestamp > lastSeen && (m.sender || '').toLowerCase() !== walletLower) {
+  const cur = parseInt(badges.unread.textContent) || 0;
+  setBadgeCount(badges.unread, cur + 1);
+}
 
-      // реплаї на мене (через утиліту)
-      const replyIsToMe = m.replyTo && isReplyToMe(m.replyTo.sender);
-      if (!isActive && replyIsToMe && m.timestamp > lastReplySeen) {
-        const curR = parseInt(badges.replies.textContent) || 0;
-        setBadgeCount(badges.replies, curR + 1);
-      }
+const replyIsToMe = m.replyTo && isReplyToMe(m.replyTo.sender);
+const mentionIsToMe = isMentionForWallet(m, wallet);
+if (!isActive && (replyIsToMe || mentionIsToMe) && m.timestamp > lastReplySeen) {
+  const curR = parseInt(badges.replies.textContent) || 0;
+  setBadgeCount(badges.replies, curR + 1);
+}
     });
   }
 }
@@ -2296,6 +2360,10 @@ prefetchNickname(messageObj.replyTo.sender).then(nick => {
   wrapper.classList.add('reply-highlight');
 }
 
+if (isMentionForWallet(messageObj, currentWallet)) {
+  wrapper.classList.add('reply-highlight');
+}
+
   const myFull = (getConnectedWalletAddress() || "").toLowerCase();
 
   wrapper.appendChild(msgEl);
@@ -2609,6 +2677,7 @@ async function connectUniSatWallet() {
     // коли підтягнеться статус холдера — оновлюємо доступ
     getHolderInfo(address).then(info => {
       const isHolder = !!info?.found;
+      currentIsHolder = isHolder;
       setSidebarAccess({ loggedIn: true, isHolder });
       setChatInputsEnabled(isHolder, currentWallet);
       if (isHolder) showSection('collection');
@@ -2654,18 +2723,22 @@ document.addEventListener("click", () => {
 });
 
      db.ref('users').on('child_changed', snap => {
-        const addr = (snap.key || '').toLowerCase();
-        const nick = (snap.val()?.profile?.nickname) || null;
-        if (addr) nicknameCache[addr] = nick;
-    });
+  const addr = (snap.key || '').toLowerCase();
+  const nick = (snap.val()?.profile?.nickname) || null;
+  if (!addr) return;
+  const old = nicknameCache[addr] || null;
+  if (old && old !== nick) unmapNickname(addr, old);
+  nicknameCache[addr] = nick;
+  if (nick) mapNickname(addr, nick);
+});
 
-    db.ref('users').on('child_added', snap => {
-        const addr = (snap.key || '').toLowerCase();
-        const nick = (snap.val()?.profile?.nickname) || null;
-        if (addr && nicknameCache[addr] === undefined) {
-            nicknameCache[addr] = nick;
-        }
-    });
+db.ref('users').on('child_added', snap => {
+  const addr = (snap.key || '').toLowerCase();
+  const nick = (snap.val()?.profile?.nickname) || null;
+  if (!addr) return;
+  if (nicknameCache[addr] === undefined) nicknameCache[addr] = nick;
+  if (nick) mapNickname(addr, nick);
+});
 
 // спершу стан "не авторизований" / "доступ закритий"
 if (!currentWallet) {
@@ -2937,24 +3010,25 @@ chatSections.forEach(section => {
 
   const msgKey    = db.ref().child(`chats/${section}`).push().key;
   const replyData = replyToMessageBySection[section];
-
+  const mentions = buildMentions(text);
   const msgData = {
-    uid,
-    sender,
-    text,
-    timestamp: Date.now(),
-    imageId: cachedHolderInfo.imageId || null,
-    imageUrls: imageUrls,           // масив
-    imageUrl: imageUrls[0] || null, // для сумісності
-    ...(replyData && {
-      replyTo: {
-        key: replyData.key,
-        sender: replyData.sender,
-        text: replyData.text,
-        imageId: replyData.imageId || null
-      }
-    })
-  };
+  uid,
+  sender,
+  text,
+  timestamp: Date.now(),
+  imageId: cachedHolderInfo.imageId || null,
+  imageUrls: imageUrls,
+  imageUrl: imageUrls[0] || null,
+  ...(mentions.roles.length || mentions.users.length ? { mentions } : {}),
+  ...(replyData && {
+    replyTo: {
+      key: replyData.key,
+      sender: replyData.sender,
+      text: replyData.text,
+      imageId: replyData.imageId || null
+    }
+  })
+};
 
   const updates = {};
   updates[`/chats/${section}/${msgKey}`] = msgData;
