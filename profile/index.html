@@ -1292,6 +1292,24 @@ const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuO
 
 /* Перелік секцій, де є чат */
 const chatSections = ["links", "announcements", "general", "share-art", "spot-request"];
+
+                // --- хто може писати і де ---
+const ADMIN_ONLY_SECTIONS = new Set(["announcements","links"]);
+
+// нижче впиши свої гаманці-адміни (у lower-case!)
+const ADMIN_WALLETS = new Set([
+  "bc1pc7evznevnllyhduedcapfgklexkju43qhuxltr02c85pmdqzjp7qkdp9lt",
+  "bc1pupv8g4h3q39y00s62x2cunuh03n4p3pnevf8cuk2vtndtmn0drkqeg9uv4"
+]);
+
+function isAdmin(wallet){
+  return !!wallet && ADMIN_WALLETS.has(wallet.toLowerCase());
+}
+function sectionAllowsPosting(section, wallet){
+  if (ADMIN_ONLY_SECTIONS.has(section)) return isAdmin(wallet);
+  return true; // інші секції — як було
+}
+
 // які секції показуємо лише холдерам (можеш додати/зняти будь-яку)
 const HOLDER_ONLY = new Set(["links","announcements","general","share-art","spot-request","raffles","settings","collection"]);
 
@@ -1317,15 +1335,27 @@ function setSidebarAccess({ loggedIn, isHolder }) {
   if (connectBtn) connectBtn.style.display = loggedIn ? "none" : "inline-block";
 }
 
-// вмикаємо/вимикаємо інпути чату
-function setChatInputsEnabled(enabled) {
+function setChatInputsEnabled(enabled, wallet) {
   chatSections.forEach(sec => {
-    const box = document.getElementById(`chat-input-${sec}`);
-    const send = document.querySelector(`.send-btn[data-section="${sec}"]`);
-    const upload = document.querySelector(`.upload-image-btn[data-section="${sec}"]`);
-    if (box)    { box.disabled = !enabled; box.placeholder = enabled ? "Type a message..." : "Only holders can chat"; }
-    if (send)   send.disabled = !enabled;
-    if (upload) upload.disabled = !enabled;
+    const canPost = enabled && sectionAllowsPosting(sec, wallet);
+
+    const inputWrap = document.querySelector(`#section-${sec} .chat-input-wrapper`);
+    const preview   = document.querySelector(`.image-preview-container[data-section="${sec}"]`);
+    const box       = document.getElementById(`chat-input-${sec}`);
+    const send      = document.querySelector(`.send-btn[data-section="${sec}"]`);
+    const upload    = document.querySelector(`.upload-image-btn[data-section="${sec}"]`);
+
+    if (inputWrap) inputWrap.style.display = canPost ? "flex" : "none";
+    if (preview)   preview.style.display   = "none"; // ховаємо прев'ю, якщо немає композера
+
+    if (box) {
+      box.disabled    = !canPost;
+      box.placeholder = canPost
+        ? "Type a message..."
+        : (ADMIN_ONLY_SECTIONS.has(sec) ? "Read-only (admins only)" : "Only holders can chat");
+    }
+    if (send)   send.disabled   = !canPost;
+    if (upload) upload.disabled = !canPost;
   });
 }
 
@@ -2552,11 +2582,11 @@ auth.onAuthStateChanged(u => {
 // спершу стан "не авторизований" / "доступ закритий"
 if (!currentWallet) {
   setSidebarAccess({ loggedIn: false, isHolder: false });
-  setChatInputsEnabled(false);
+  setChatInputsEnabled(false, currentWallet);
 } else {
   // поки перевіряємо snapshot — умикаємо loggedIn, але без доступу
   setSidebarAccess({ loggedIn: true, isHolder: false });
-  setChatInputsEnabled(false);
+  setChatInputsEnabled(false, currentWallet);
 
   updateWalletButtons(currentWallet);
   populateSidebarUserInfo(currentWallet);
@@ -2568,7 +2598,7 @@ if (!currentWallet) {
   getHolderInfo(currentWallet).then(info => {
   const isHolder = !!info?.found;
   setSidebarAccess({ loggedIn: true, isHolder });
-  setChatInputsEnabled(isHolder);
+  setChatInputsEnabled(isHolder, currentWallet);
   if (isHolder) showSection('collection');
 });
 
@@ -2615,12 +2645,12 @@ if (initiallyActive && initiallyActive.id?.startsWith('section-') && currentWall
       renderMyCollection(address);
       // тимчасово блокуємо доступ, поки перевіряємо snapshot
 setSidebarAccess({ loggedIn: true, isHolder: false });
-setChatInputsEnabled(false);
+setChatInputsEnabled(false, currentWallet);
 
 getHolderInfo(address).then(info => {
   const isHolder = !!info?.found;
   setSidebarAccess({ loggedIn: true, isHolder });
-  setChatInputsEnabled(isHolder);
+  setChatInputsEnabled(isHolder, currentWallet);
   if (isHolder) showSection('collection');
 });
     } catch {
@@ -2837,6 +2867,10 @@ chatSections.forEach(section => {
     sendBtn.addEventListener("click", async () => {
       const text = input.value.trim();
       const sender = getConnectedWalletAddress();
+  if (!sectionAllowsPosting(section, sender)) {
+    alert("Only admins can post here.");
+    return;
+  }
 
       if ((!text && !fileInput.files[0]) || !sender) return;
 
