@@ -2891,7 +2891,7 @@ try {
       }
     });
 
-    customElements.whenDefined("emoji-picker").then(() => {
+        customElements.whenDefined("emoji-picker").then(() => {
       emojiPicker.addEventListener("emoji-click", (event) => {
         const emoji = event.detail.unicode;
         const cursorPos = chatInput.selectionStart;
@@ -2903,9 +2903,10 @@ try {
         emojiPicker.style.display = "none";
       });
     });
+
   });
+}
+});
 </script>
-</div> 
-</div> 
 </body>
 </html>
