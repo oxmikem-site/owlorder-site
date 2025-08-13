@@ -829,19 +829,23 @@ document.addEventListener("DOMContentLoaded", () => {
   if (!data) return;
 
   const lastMsg = Object.values(data)[0];
-  const text = lastMsg.text || "(no text)";
+  let text = lastMsg.text || "(no text)";
   const date = new Date(lastMsg.timestamp || Date.now()).toLocaleDateString();
 
-  const MAX_LENGTH = 160; // макс довжина тексту
+  const MAX_LENGTH = 160;
 
+  // Перетворення @username → посилання
+  text = text.replace(/@([a-zA-Z0-9_]+)/g, (match, username) => {
+    const url = `https://x.com/${username}`;
+    return `<a href="${url}" target="_blank" style="color: var(--accent-color); text-decoration: none;">@${username}</a>`;
+  });
+
+  // Обрізання якщо забагато символів
   const trimmedText = text.length > MAX_LENGTH
     ? text.slice(0, MAX_LENGTH).trim() + "..."
     : text;
-      
-   text = text.replace(/@([a-zA-Z0-9_]+)/g, (match, username) => {
-    const url = `https://x.com/${username}`;
-    return `<a href="${url}" target="_blank" style="color: var(--accent-color); text-decoration: none;">@${username}</a>`;
-     
+
+  // Вставка в DOM
   const ul = document.getElementById("announcements-list");
   if (ul) {
     ul.innerHTML = `
