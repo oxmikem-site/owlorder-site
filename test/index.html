@@ -864,15 +864,17 @@ document.addEventListener("DOMContentLoaded", () => {
    loadLatestAnnouncement();
 });
 
-    function escapeHTML(s){
+  
+function escapeHTML(s){
   return (s||'').replace(/[&<>"']/g, c => ({
-    '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
   }[c]));
 }
 
 async function loadLatestAnnouncement(){
   const snap = await db.ref("chats/announcements").limitToLast(1).once("value");
-  const data = snap.val(); if (!data) return;
+  const data = snap.val();
+  if (!data) return;
 
   const lastMsg = Object.values(data)[0];
   let text = escapeHTML(lastMsg.text || "(no text)");
@@ -881,23 +883,12 @@ async function loadLatestAnnouncement(){
   );
 
   const date = new Date(lastMsg.timestamp || Date.now()).toLocaleDateString();
-  const trimmed = text.length>160 ? text.slice(0,160) + "..." : text;
+  const trimmed = text.length > 160 ? text.slice(0,160) + "..." : text;
 
   const ul = document.getElementById("announcements-list");
   if (ul) ul.innerHTML = `<li><strong>${date}</strong>: ${trimmed}</li>`;
 }
-
-  // Вставка в DOM
-  const ul = document.getElementById("announcements-list");
-  if (ul) {
-    ul.innerHTML = `
-      <li>
-        <strong>${date}</strong>: ${trimmedText}
-      </li>
-    `;
-  }
-}
-
 </script>
+
     </body>
 </html>
