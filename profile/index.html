@@ -1310,7 +1310,7 @@ display: block;
 const SNAPSHOT_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?output=csv&gid=0";
 const imageBaseURL = "https://raw.githubusercontent.com/oxmikem-site/owlorder-site/main/images2/";
 const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?gid=1127131432&single=true&output=csv";
-const ME_COLLECTION_SLUG = "<<<owl>>>"; 
+const ME_COLLECTION_SLUG = "owl"; 
 
 /* Перелік секцій, де є чат */
 const chatSections = ["links", "announcements", "general", "share-art", "spot-request"];
@@ -1846,12 +1846,13 @@ function buildMagicEdenUrl({ number, inscriptionId }) {
   if (inscriptionId) {
     return `https://magiceden.io/ordinals/item-details/${encodeURIComponent(inscriptionId)}`;
   }
-  if (ME_COLLECTION_SLUG) {
-    return `https://magiceden.io/ordinals/marketplace/${encodeURIComponent(ME_COLLECTION_SLUG)}`;
+  const slug = (ME_COLLECTION_SLUG && !/[<>]/.test(ME_COLLECTION_SLUG)) ? ME_COLLECTION_SLUG : "";
+  if (slug) {
+    const search = number ? `?search=${encodeURIComponent('#' + number)}` : "";
+    return `https://magiceden.io/ordinals/marketplace/${encodeURIComponent(slug)}${search}`;
   }
   return 'https://magiceden.io/';
 }
-
 
 async function renderMyCollection(address){
   const wrap = document.getElementById('section-collection');
