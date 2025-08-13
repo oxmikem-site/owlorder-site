@@ -1884,7 +1884,7 @@ async function renderMyCollection(address){
   mine.sort((a,b)=> Number(a.number)-Number(b.number));
   if (cnt) cnt.textContent = `${mine.length} item(s)`;
 
-  grid.innerHTML = mine.map(({ number, rarity, inscriptionId }) => {
+ grid.innerHTML = mine.map(({ number, rarity, inscriptionId }) => {
   const cls   = rarityToClass(rarity);
   const label = rarity || 'Legendary';
   const url   = buildMagicEdenUrl({ number, inscriptionId });
@@ -1899,6 +1899,7 @@ async function renderMyCollection(address){
     </a>
   `;
 }).join('');
+}
 
 /* Заповнення сайдбару профілю */
 async function populateSidebarUserInfo(address) {
