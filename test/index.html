@@ -5,6 +5,9 @@
   <title>OWL Dashboard</title>
   <link rel="icon" type="image/png" href="../logo1.png" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
   <style>
     :root {
       --bg-dark: #0b0b0b;
@@ -786,7 +789,47 @@ document.addEventListener("DOMContentLoaded", () => {
 
   loadtop5();
   fetchListedNFTsGrid();
+  loadLatestAnnouncement();
 });
+
+    async function loadLatestAnnouncement() {
+  const ref = db.ref("chats/announcements").limitToLast(1);
+  const snapshot = await ref.once("value");
+  const data = snapshot.val();
+  if (!data) return;
+
+  const lastMsg = Object.values(data)[0];
+  const text = lastMsg.text || "(no text)";
+  const date = new Date(lastMsg.timestamp || Date.now()).toLocaleDateString();
+
+  const panels = document.querySelectorAll(".panel");
+  let ul = null;
+
+  panels.forEach(panel => {
+    if (panel.querySelector("h2")?.textContent.trim().toUpperCase() === "ANNOUNCEMENTS") {
+      ul = panel.querySelector(".overlay ul");
+    }
+  });
+
+  if (ul) {
+    ul.innerHTML = `<li><strong>${date}</strong>: ${text}</li>`;
+  }
+}
+
+    const firebaseConfig = {
+  apiKey: "AIzaSyD2v-w99aaVgKYrycfIV515BEbjaTOp7z4",
+  authDomain: "owl-chat-e4233.firebaseapp.com",
+  databaseURL: "https://owl-chat-e4233-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "owl-chat-e4233",
+  storageBucket: "owl-chat-e4233.appspot.com",
+  messagingSenderId: "671987704789",
+  appId: "1:671987704789:web:5ffad58bc9c00ba772935c",
+  measurementId: "G-ELQRLCLGZT"
+};
+
+const app = firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
 </script>
     </body>
 </html>
