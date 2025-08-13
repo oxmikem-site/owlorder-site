@@ -2291,49 +2291,64 @@ function extractTweetInfo(url){
   return { user: m[1], id: m[2] };
 }
 
-function renderTweetEmbed(container, url){
+function renderTweetEmbed(container, url) {
   const info = extractTweetInfo(url);
   if (!info) return;
 
-  const bq = document.createElement('blockquote');
-  bq.className = 'twitter-tweet';
-  bq.innerHTML = `<a href="https://fxtwitter.com/${info.user}/status/${info.id}"></a>`;
-  container.appendChild(bq);
-}
-                function renderTweetEmbed(container, url){
-  const info = extractTweetInfo(url);
-  if (!info) return;
-
-  // 1) вставляємо класичний твіт-блок із посиланням на twitter/x
+  // 1) чистимо контейнер і ставимо "класичний" твіт (twitter.com!)
+  container.textContent = '';
   const bq = document.createElement('blockquote');
   bq.className = 'twitter-tweet';
   bq.innerHTML = `<a href="https://twitter.com/${info.user}/status/${info.id}"></a>`;
   container.appendChild(bq);
 
-  // 2) функція примусового рендеру для нового вузла
-  const forceRender = (node) => {
+  // 2) спроба рендеру FixTweet
+  const tryRender = () => {
     if (window.FixTweet && typeof window.FixTweet.render === 'function') {
-      window.FixTweet.render(node);
+      window.FixTweet.render(container);
       return true;
     }
     return false;
   };
 
-  // 3) якщо FixTweet вже є — рендеримо; якщо ні — підвантажуємо і рендеримо по onload
-  if (!forceRender(container)) {
-    let script = document.querySelector('script[data-fxtw="1"]');
-    if (!script) {
-      script = document.createElement('script');
-      script.src = 'https://fxtwitter.com/embed.js';
-      script.async = true;
-      script.charset = 'utf-8';
-      script.setAttribute('data-fxtw', '1');
-      script.onload = () => forceRender(container);
-      document.head.appendChild(script);
-    } else {
-      setTimeout(() => forceRender(container), 700);
-    }
+  // 3) гарантуємо наявність скрипта FixTweet
+  let s = document.querySelector('script[data-fxtw="1"]');
+  if (!s) {
+    s = document.createElement('script');
+    s.src = 'https://fxtwitter.com/embed.js';
+    s.async = true;
+    s.charset = 'utf-8';
+    s.setAttribute('data-fxtw', '1');
+    document.head.appendChild(s);
   }
+
+  if (tryRender()) return;
+
+  // 4) ретраї (до ~5 секунд) + фолбек на офіційний віджет, якщо FixTweet не спрацював
+  let tries = 0, max = 20;
+  const timer = setInterval(() => {
+    tries++;
+    if (tryRender() || tries >= max) {
+      clearInterval(timer);
+
+      // якщо все ще нема iframe — підключаємо офіційний твіт-виджет як запасний варіант
+      if (!container.querySelector('iframe')) {
+        let tw = document.getElementById('twitter-wjs');
+        const loadWidgets = () => window.twttr && twttr.widgets && twttr.widgets.load(container);
+
+        if (!tw) {
+          tw = document.createElement('script');
+          tw.id = 'twitter-wjs';
+          tw.src = 'https://platform.twitter.com/widgets.js';
+          tw.async = true;
+          tw.onload = loadWidgets;
+          document.head.appendChild(tw);
+        } else {
+          loadWidgets();
+        }
+      }
+    }
+  }, 250);
 }
 
 /* ==== UI рендер повідомлення ==== */
