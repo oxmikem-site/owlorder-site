@@ -1636,52 +1636,58 @@ async function getAllOwlsForAddress(address) {
   const table = parseCSV(rows.join('\n'));
   if (!table.length) return [];
 
-  // індекси колонок (за замовчуванням: B=Holder Address, J=№)
   let body = table;
-  let addrIdx = 1, numIdx = 9, rarIdx = -1;
+  let addrIdx = 1, numIdx = 9, rarIdx = -1, insIdx = -1;
 
-  // якщо є хедер — визначаємо індекси з назв
   const hdr = table[0].map(c => (c || '').trim().toLowerCase());
-  const hasHeader = hdr.join(' ').length > 0 && (
-    hdr.includes('holder address') || hdr.includes('address') || hdr.includes('№') || hdr.includes('rank')
-  );
+  const hasHeader = hdr.some(Boolean);
   if (hasHeader) {
     addrIdx = Math.max(hdr.indexOf('holder address'), hdr.indexOf('address'));
-    // шукаємо саме "№", а якщо нема — інші варіанти
     numIdx  = hdr.indexOf('№') !== -1 ? hdr.indexOf('№')
             : Math.max(hdr.indexOf('number'), hdr.indexOf('nft number'), hdr.indexOf('owl'), hdr.indexOf('#'));
-    // "rarity" або "rank"
     rarIdx  = hdr.indexOf('rarity') !== -1 ? hdr.indexOf('rarity') : hdr.indexOf('rank');
 
-    // ✅ ДОДАЛИ: індекс інскрипшена
-    var insIdx = -1;
-    insIdx = hdr.indexOf('inscription id') !== -1 ? hdr.indexOf('inscription id')
-           : hdr.indexOf('inscription')     !== -1 ? hdr.indexOf('inscription')
-           : hdr.indexOf('inscriptionid');
+    // колонка інскрипшена (гнучкий пошук заголовка)
+    const candHeaders = [
+      'inscription id','inscription','inscriptionid','insc id','insc',
+      'outpoint','location','satpoint','txid'
+    ];
+    insIdx = candHeaders.reduce((acc, key) => acc !== -1 ? acc : hdr.indexOf(key), -1);
 
     body = table.slice(1);
   }
 
+  // Витягуємо inscriptionId з рядка, навіть якщо немає явної колонки
+  const pickInscriptionFromRow = (r) => {
+    const readCell = (v) => (((v || '') + '').trim());
+    if (insIdx >= 0) {
+      const val = readCell(r[insIdx]);
+      const m = val.match(/[0-9a-f]{64}i\d+/i);
+      if (m) return m[0].toLowerCase();
+    }
+    for (const cell of r) {
+      const val = readCell(cell);
+      const m = val.match(/[0-9a-f]{64}i\d+/i);
+      if (m) return m[0].toLowerCase();
+    }
+    return '';
+  };
+
   const me = address.trim().toLowerCase();
   const items = [];
   for (const row of body) {
-    const a = ((row[addrIdx] || '') + '').trim().toLowerCase();
+    const a = (((row[addrIdx] || '') + '').trim().toLowerCase());
     if (a !== me) continue;
 
-    // чистимо номер від #, лапок і т.п.
     const numberRaw = ((row[numIdx] || '') + '').trim();
     const number    = numberRaw.replace(/[^\d]/g, '');
     const rarity    = rarIdx >= 0 ? ((row[rarIdx] || '') + '').trim() : '';
 
-    // ✅ ОТУТ ВСТАВЛЯЄМО ВАШІ ДВА РЯДКИ:
-    const inscriptionId = (typeof insIdx === 'number' && insIdx >= 0)
-      ? (((row[insIdx] || '') + '').trim())
-      : '';
-
-    if (number) items.push({ number, rarity, inscriptionId }); // ← тепер з inscriptionId
+    const inscriptionId = pickInscriptionFromRow(row);
+    if (number) items.push({ number, rarity, inscriptionId });
   }
 
-  // унікалізуємо за номером
+  // унікалізуємо по номеру
   const seen = new Set();
   return items.filter(it => !seen.has(it.number) && seen.add(it.number));
 }
