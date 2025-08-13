@@ -531,15 +531,11 @@
       </div>
 
       <div class="panel" style="grid-column: 3; grid-row: 2;">
-        <h2>ANNOUNCEMENTS</h2>
-        <div class="overlay">
-          <ul>
-            <li>Mint Phase 2 starts July 10</li>
-            <li>Magic Eden Partnership Live</li>
-            <li>Claim WL now - only 30 left!</li>
-          </ul>
-        </div>
-      </div>
+  <h2>ANNOUNCEMENTS</h2>
+  <div class="overlay">
+    <ul></ul>
+  </div>
+</div>
 
       <div class="footer">
         <a href="https://x.com/OwlOrderBTC" target="_blank" class="footer-link">TWITTER</a>
@@ -551,6 +547,19 @@
 </body>
 
   <script>
+    const firebaseConfig = {
+  apiKey: "AIzaSyD2v-w99aaVgKYrycfIV515BEbjaTOp7z4",
+  authDomain: "owl-chat-e4233.firebaseapp.com",
+  databaseURL: "https://owl-chat-e4233-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "owl-chat-e4233",
+  storageBucket: "owl-chat-e4233.appspot.com",
+  messagingSenderId: "671987704789",
+  appId: "1:671987704789:web:5ffad58bc9c00ba772935c",
+  measurementId: "G-ELQRLCLGZT"
+};
+
+const app = firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 const SNAPSHOT_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?output=csv&gid=0";
 const imageBaseURL = "https://raw.githubusercontent.com/oxmikem-site/owlorder-site/main/images2/";
 const sheetURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?gid=1127131432&single=true&output=csv';
@@ -789,7 +798,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   loadtop5();
   fetchListedNFTsGrid();
-  loadLatestAnnouncement();
 });
 
     async function loadLatestAnnouncement() {
@@ -815,20 +823,6 @@ document.addEventListener("DOMContentLoaded", () => {
     ul.innerHTML = `<li><strong>${date}</strong>: ${text}</li>`;
   }
 }
-
-    const firebaseConfig = {
-  apiKey: "AIzaSyD2v-w99aaVgKYrycfIV515BEbjaTOp7z4",
-  authDomain: "owl-chat-e4233.firebaseapp.com",
-  databaseURL: "https://owl-chat-e4233-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "owl-chat-e4233",
-  storageBucket: "owl-chat-e4233.appspot.com",
-  messagingSenderId: "671987704789",
-  appId: "1:671987704789:web:5ffad58bc9c00ba772935c",
-  measurementId: "G-ELQRLCLGZT"
-};
-
-const app = firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
 
 </script>
     </body>
