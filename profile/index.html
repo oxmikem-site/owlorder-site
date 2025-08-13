@@ -918,26 +918,31 @@
         /* Twitter/X preview — 50% від поточної ширини повідомлення */
 .tweet-embed{
   margin-top:8px;
+  background:#ececec;                 /* світло-сірий фон */
+  border:1px solid #d9d9d9;
   border-radius:12px;
+  padding:8px;
   overflow:hidden;
 
-  /* головне — обмежуємо контейнер */
+  /* розміри контейнера */
   width:50%;
-  min-width:320px;   /* щоб не стало занадто вузько на десктопі */
-  max-width:420px;   /* ~половина типового блоку чату */
+  min-width:320px;                    /* не занадто вузько на десктопі */
+  max-width:420px;                    /* ~половина блоку чату */
+  line-height:0;                      /* прибирає зайві просвіти всередині */
 }
 
-.tweet-embed iframe,
-.tweet-embed blockquote.twitter-tweet,
-.tweet-embed .twitter-tweet,
-.tweet-embed .fx-embed{
+/* сам вбудований твіт */
+.tweet-embed > iframe,
+.tweet-embed > blockquote.twitter-tweet,
+.tweet-embed > .twitter-tweet,
+.tweet-embed > .fx-embed{
+  display:block;
   width:100% !important;
   max-width:100% !important;
   border:0;
   border-radius:12px;
 }
 
-/* на вузьких екранах даємо 100% ширини, щоб було читабельно */
 @media (max-width:700px){
   .tweet-embed{
     width:100%;
@@ -945,13 +950,6 @@
     max-width:100%;
   }
 }
-        /* робимо текст у твіт-прев'ю дрібнішим за чат (чат ~14px, тут 12px) */
-.tweet-embed { font-size: 12px; }
-.tweet-embed * { 
-  font-size: inherit !important;
-  line-height: 1.25;
-}
-
     </style>
 </head>
 
@@ -2314,26 +2312,42 @@ function renderTweetEmbed(container, url) {
     document.head.appendChild(t);
   };
 
-  const tryFixTweet = () => {
-    try {
-      if (window.FixTweet && typeof window.FixTweet.render === 'function') {
-        window.FixTweet.render(container);
-        // якщо FixTweet відрендерив — з’являється .fx-embed або iframe
-        return !!container.querySelector('.fx-embed, iframe');
-      }
-    } catch {}
-    return false;
-  };
+ const TWEET_SCALE = 0.5; // 0.5 = у 2 рази менше
+
+const tryFixTweet = () => {
+  try {
+    if (window.FixTweet && typeof window.FixTweet.render === 'function') {
+      window.FixTweet.render(container);
+      // Дамо контенту підвантажитись і застосуємо масштаб
+      setTimeout(() => scaleTweetWhenReady(container, TWEET_SCALE), 250);
+      return !!container.querySelector('.fx-embed, iframe, blockquote.twitter-tweet');
+    }
+  } catch {}
+  return false;
+};
 
   const tryOfficial = () => {
-    try {
-      if (window.twttr && twttr.widgets && typeof twttr.widgets.load === 'function') {
-        twttr.widgets.load(container);
-        return true;
+  try {
+    if (window.twttr && twttr.widgets && typeof twttr.widgets.load === 'function') {
+      twttr.widgets.load(container);
+
+      // Спробуємо зловити подію рендера; якщо ні — таймаут як фолбек
+      if (twttr.events && typeof twttr.events.bind === 'function') {
+        const handler = (ev) => {
+          if (container.contains(ev.target)) {
+            setTimeout(() => scaleTweetWhenReady(container, TWEET_SCALE), 100);
+            try { twttr.events.unbind('rendered', handler); } catch {}
+          }
+        };
+        twttr.events.bind('rendered', handler);
+      } else {
+        setTimeout(() => scaleTweetWhenReady(container, TWEET_SCALE), 1000);
       }
-    } catch {}
-    return false;
-  };
+      return true;
+    }
+  } catch {}
+  return false;
+};
 
   const useTwitframe = () => {
     container.innerHTML = '';
@@ -2382,9 +2396,35 @@ function renderTweetEmbed(container, url) {
       clearInterval(timer);
       // якщо досі немає iframe — робимо twitframe
       if (!container.querySelector('iframe')) useTwitframe();
+        scaleTweetWhenReady(container, TWEET_SCALE);
     }
   }, 250);
 }
+
+                // робить твіт меншим разом зі шрифтами та підрізає висоту контейнера
+function scaleTweetWhenReady(container, scale = 0.5) {
+  const apply = () => {
+    const target = container.querySelector('.fx-embed, iframe, blockquote.twitter-tweet');
+    if (!target) return false;
+
+    const h = target.offsetHeight || parseInt(target.style.height) || 0;
+    if (h < 50) return false; // ще не готово
+
+    target.style.transformOrigin = 'top left';   // ⬅️ щоб не з’їжджало вправо
+target.style.transform = `scale(${scale})`;
+container.style.height = Math.ceil(h * scale) + 'px';
+    container.style.minHeight = container.style.height;
+    return true;
+  };
+
+  if (apply()) return;
+  let tries = 0;
+  const iv = setInterval(() => {
+    tries++;
+    if (apply() || tries > 40) clearInterval(iv); // до ~10с очікування
+  }, 250);
+}
+
 
 /* ==== UI рендер повідомлення ==== */
 function appendMessageToChat(messageObj, key = null, section = "general", currentWallet = null) {
