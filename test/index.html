@@ -680,6 +680,23 @@ async function connectUniSatWallet() {
   }
 }
 
+    function bindWalletBtn(btnId, dropdownId){
+  const btn = document.getElementById(btnId);
+  const dd  = document.getElementById(dropdownId);
+  if (!btn) return;
+
+  btn.addEventListener('click', async (e)=>{
+    e.stopPropagation();
+    const saved = localStorage.getItem('taproot_wallet');
+    if (!saved) {
+      await connectUniSatWallet();  // один виклик і крапка
+    } else if (dd) {
+      dd.style.display = (dd.style.display === 'block' ? 'none' : 'block');
+    }
+  });
+}
+
+
 let _walletListenersBound = false;
     
 function updateWalletButtons(address){
@@ -691,15 +708,6 @@ function updateWalletButtons(address){
 
   if (_walletListenersBound) return;
   _walletListenersBound = true;
-
-  document.querySelectorAll(".wallet-wrapper").forEach(wrapper=>{
-    const dropdown = wrapper.querySelector(".wallet-dropdown-content");
-    if (!dropdown) return;
-    wrapper.addEventListener('click', (e)=>{
-      e.stopPropagation();
-      dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
-    });
-  });
 
   document.querySelectorAll(".logout-btn").forEach(btn=>{
     btn.addEventListener('click', ()=>{
@@ -840,40 +848,18 @@ document.addEventListener("DOMContentLoaded", () => {
     fetchProfileImage(saved);
   }
 
-  document.querySelectorAll(".wallet-trigger").forEach(btn =>
-    btn.addEventListener('click', connectUniSatWallet)
-  );
+  // прив’язуємо кнопки один раз через універсальну функцію
+  bindWalletBtn('wallet-header-btn','wallet-header-dropdown');
+  bindWalletBtn('wallet-side-btn','wallet-side-dropdown');
 
-  document.getElementById("wallet-header-btn").addEventListener("click", (e) => {
-    const saved = localStorage.getItem('taproot_wallet');
-    if (saved) {
-  e.stopPropagation();
-  const dropdown = document.getElementById("wallet-header-dropdown");
-  dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
-}
- else {
-      connectUniSatWallet();
-    }
-  });
-
-  document.getElementById("wallet-side-btn").addEventListener("click", (e) => {
-    const saved = localStorage.getItem('taproot_wallet');
-    if (saved) {
-      e.stopPropagation();
-      const dropdown = document.getElementById("wallet-side-dropdown");
-      dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
-    } else {
-      connectUniSatWallet();
-    }
-  });
-
+  // клік поза меню ховає всі дропдауни
   document.addEventListener("click", () => {
     document.querySelectorAll(".wallet-dropdown-content").forEach(dd => dd.style.display = "none");
   });
 
   loadtop5();
   fetchListedNFTsGrid();
-   loadLatestAnnouncement();
+  loadLatestAnnouncement();
 });
 
   
