@@ -899,17 +899,26 @@ display: block;
 #lightbox .nav.prev { left:16px; top:50%; transform:translateY(-50%); }
 #lightbox .nav.next { right:16px; top:50%; transform:translateY(-50%); }
 
-        /* бейдж ролі біля імені */
 .sender-badges{
-  display:inline-flex; gap:4px; align-items:center;
-  margin-left:6px; transform: translateY(-1px);
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;    
+  margin-left: 6px;
+  vertical-align: middle;
+  transform: none;     
 }
+
 .role-badge{
-  display:inline-flex; align-items:center; justify-content:center;
-  padding:1px 6px; border-radius:6px;
-  font-size:9px; font-weight:800; letter-spacing:.3px; line-height:1.1;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.18), 0 1px 3px rgba(0,0,0,.3);
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 6px;
+  line-height: 18px;
+  font-size: 11px;
+  font-weight: 800;
+  border-radius: 6px;
 }
+
 .role-badge.owl{
   background: linear-gradient(90deg, #ff7ad9, #ffd36b);
   color:#0b0b0b;
@@ -1339,10 +1348,14 @@ function hasHolderRoleFor(sender, messageObj){
 function computeRolesForAddress(sender, messageObj){
   const roles = [];
   if (!sender) return roles;
-  if (isAdmin(sender)) roles.push('OWL COUNCIL');
-  if (hasHolderRoleFor(sender, messageObj)) roles.push('OWL');
+
+  const isCouncil = isAdmin(sender);
+  if (isCouncil) roles.push('OWL COUNCIL');
+  if (!isCouncil && hasHolderRoleFor(sender, messageObj)) roles.push('OWL');
+
   return roles;
 }
+
 
 function makeRoleBadges(roles){
   const wrap = document.createElement('span');
@@ -1356,9 +1369,13 @@ function makeRoleBadges(roles){
   return wrap;
 }
 
-// асинхронно догружаємо статус холдера (якщо не був у msg/кеші), і додаємо бейдж без дублювання
 async function ensureHolderBadgeAsync(sender, badgesWrap){
-  if (!badgesWrap || badgesWrap.querySelector('.role-badge.owl')) return;
+  if (!badgesWrap) return;
+
+  // для council нічого не додаємо
+  if (isAdmin(sender)) return;
+
+  if (badgesWrap.querySelector('.role-badge.owl')) return;
   const info = await getHolderInfo(sender);
   if (info?.found && !badgesWrap.querySelector('.role-badge.owl')){
     const span = document.createElement('span');
