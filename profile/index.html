@@ -931,18 +931,26 @@
 #lightbox .nav.next { right:16px; top:50%; transform:translateY(-50%); }
 
         /* бейдж ролі біля імені */
-.sender-badges{ display:inline-flex; gap:6px; align-items:center; margin-left:6px; }
+.sender-badges{
+  display:inline-flex; gap:4px; align-items:center;
+  margin-left:6px; transform: translateY(-1px);
+}
 .role-badge{
   display:inline-flex; align-items:center; justify-content:center;
-  padding:2px 6px; border-radius:6px; font-size:10px; font-weight:800; letter-spacing:.3px;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.18), 0 1px 6px rgba(0,0,0,.35);
+  padding:1px 6px; border-radius:6px;
+  font-size:9px; font-weight:800; letter-spacing:.3px; line-height:1.1;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.18), 0 1px 3px rgba(0,0,0,.3);
 }
-.role-badge.owl{ background: linear-gradient(90deg,#bfa758,#d4c87c); color:#000; }
-.role-badge.council{ background:#7ec8ff; color:#000; } /* відрізняється від OWL */
-
-        .tweet-embed { margin-top: 8px; border-radius: 12px; overflow: hidden; }
-.tweet-embed iframe { width: 100% !important; border: 0; border-radius: 12px; }
-.chat-messages blockquote.twitter-tweet { margin: 10px 0; max-width: 100%; }
+.role-badge.owl{
+  /* OWL — приглушений оливковий */
+  background: linear-gradient(90deg, #97B46C, #7FA357);
+  color:#0b0b0b;
+}
+.role-badge.council{
+  /* OWL COUNCIL — індіго/фіолет */
+  background: linear-gradient(90deg, #A48BFF, #7B63E6);
+  color:#0b0b0b;
+}
 
     </style>
 </head>
@@ -1496,6 +1504,20 @@ function writeHolderCache(address, data){
   } catch {}
 }
 
+                
+function isWalletHolderSync(wallet){
+  const w = (wallet || '').toLowerCase();
+  if (!w) return false;
+
+  // якщо це мій гаманець і вже відомо з cachedHolderInfo
+  const me = (getConnectedWalletAddress() || '').toLowerCase();
+  if (w === me && cachedHolderInfo && cachedHolderInfo.found) return true;
+
+  // інакше дивимось локальний кеш (офлайн)
+  const cached = readHolderCache(w);
+  return !!cached?.found;
+}
+
                 // === Мій профіль
 let currentUserNickname = "";
 let currentIsHolder = false;
@@ -1577,16 +1599,15 @@ function buildMentions(text){
   if (/@owl\s+council\b/i.test(t)) roles.add('owl_council');
   if (/@owl\b/i.test(t)) roles.add('owl');
 
-  // @Нік (без пробілів). Підтримка латиниці/кірил.
+  // @Нік (лат/кирил), без пробілів
   const nickTokens = Array.from(t.matchAll(/@([A-Za-z0-9_\-А-Яа-яЇїІіЄєҐґ]+)\b/gu))
                           .map(m => (m[1]||'').toLowerCase());
 
   nickTokens.forEach(n => {
-  if (n === 'owl') return;
-  const list = nicknameIndex[n] || [];
-  list.forEach(a => users.add(a));
-});
-
+    if (n === 'owl' || n === 'owl council') return; // службові — уже додані як role
+    const list = nicknameIndex[n] || [];
+    list.forEach(a => users.add(a));
+  });
 
   return { roles: Array.from(roles), users: Array.from(users) };
 }
@@ -1594,19 +1615,19 @@ function buildMentions(text){
 // чи стосується це повідомлення конкретного гаманця
 function isMentionForWallet(msg, wallet){
   if (!msg || !wallet) return false;
-  if ((msg.sender||'').toLowerCase() === wallet.toLowerCase()) return false; // себе не сповіщаємо
+  if ((msg.sender||'').toLowerCase() === wallet.toLowerCase()) return false;
 
   const m = msg.mentions || {};
   const roleList = Array.isArray(m.roles) ? m.roles : [];
   const userList = Array.isArray(m.users) ? m.users : [];
-
-  // прямий ментіон за адресою
   const wl = wallet.toLowerCase();
+
+  // прямий @нік/@адреса
   if (userList.some(w => (w||'').toLowerCase() === wl)) return true;
 
-  // рольові ментіони
-  if (roleList.includes('owl') && currentIsHolder) return true;
-  if (roleList.includes('owl_council') && isAdmin(wallet)) return true;
+  // рольові
+  if (roleList.includes('owl') && isWalletHolderSync(wallet)) return true;
+  if (roleList.includes('owlcouncil') && isAdmin(wallet)) return true;
 
   return false;
 }
@@ -2123,6 +2144,34 @@ if (!isActive && (replyIsToMe || mentionIsToMe) && m.timestamp > lastReplySeen) 
   }
 }
 
+                async function recalcSectionIndicators(wallet){
+  const sections = ["collection","links","announcements","general","share-art","spot-request","raffles","settings"];
+  for (const section of sections){
+    const badges = ensureSidebarBadges(section);
+    if (!badges) continue;
+
+    const readsSnap = await getReadsRef(wallet, section).get();
+    const reads = readsSnap.val() || {};
+    const lastSeen = reads.lastSeen || 0;
+    const lastReplySeen = reads.lastReplySeen || 0;
+
+    let unread = 0, replies = 0;
+    const snap = await getChatMessagesRef(section).get();
+    snap.forEach(s => {
+      const m = s.val(); if (!m) return;
+
+      if (m.timestamp > lastSeen && (m.sender||'').toLowerCase() !== wallet.toLowerCase()) unread++;
+
+      const repliedToMe = m.replyTo && isReplyToMe(m.replyTo.sender);
+      const mentionedMe = isMentionForWallet(m, wallet);
+      if ((repliedToMe || mentionedMe) && m.timestamp > lastReplySeen) replies++;
+    });
+
+    setBadgeCount(badges.unread, unread);
+    setBadgeCount(badges.replies, replies);
+  }
+}
+                
                 function getUserProfileRef(wallet) {
   return db.ref(`users/${wallet}/profile`);
 }
@@ -2836,13 +2885,14 @@ async function connectUniSatWallet() {
     renderMyCollection(address);
 
     // коли підтягнеться статус холдера — оновлюємо доступ
-    getHolderInfo(address).then(info => {
-      const isHolder = !!info?.found;
-      currentIsHolder = isHolder;
-      setSidebarAccess({ loggedIn: true, isHolder });
-      setChatInputsEnabled(isHolder, currentWallet);
-      if (isHolder) showSection('collection');
-    });
+    getHolderInfo(address).then(async info => {
+  const isHolder = !!info?.found;
+  currentIsHolder = isHolder;
+  setSidebarAccess({ loggedIn: true, isHolder });
+  setChatInputsEnabled(isHolder, currentWallet);
+  if (isHolder) showSection('collection');
+  await recalcSectionIndicators(address);
+});
   } catch (e) {
     console.error(e);
     alert("Failed to connect wallet.");
@@ -2916,12 +2966,12 @@ if (!currentWallet) {
   initSettingsUI(currentWallet);
   renderMyCollection(currentWallet);
 
-  // коли підтягнеться інформація про холдера — оновлюємо доступ
-  getHolderInfo(currentWallet).then(info => {
+  getHolderInfo(currentWallet).then(async info => {
   const isHolder = !!info?.found;
   setSidebarAccess({ loggedIn: true, isHolder });
   setChatInputsEnabled(isHolder, currentWallet);
   if (isHolder) showSection('collection');
+  await recalcSectionIndicators(currentWallet);
 });
 
     // якщо на старті якась секція вже активна — познач її прочитаною
