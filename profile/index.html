@@ -12,7 +12,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
     <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@1.9.0/index.js"></script>
     <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
-    <script async src="https://fxtwitter.com/embed.js" charset="utf-8" data-fxtw="1"></script>
+    <script defer src="https://cdn.fxtwitter.com/embed.js" data-fxtw="1"></script>
     
     <style>
         :root {
@@ -2295,58 +2295,93 @@ function renderTweetEmbed(container, url) {
   const info = extractTweetInfo(url);
   if (!info) return;
 
-  // 1) чистимо контейнер і ставимо "класичний" твіт (twitter.com!)
-  container.textContent = '';
-  const bq = document.createElement('blockquote');
-  bq.className = 'twitter-tweet';
-  bq.innerHTML = `<a href="https://twitter.com/${info.user}/status/${info.id}"></a>`;
-  container.appendChild(bq);
+  // Допоміжні
+  const twitterURL = `https://twitter.com/${info.user}/status/${info.id}`;
+  const ensureFxScript = () => {
+    if (document.querySelector('script[data-fxtw="1"]')) return;
+    const s = document.createElement('script');
+    s.src = 'https://cdn.fxtwitter.com/embed.js';
+    s.defer = true;
+    s.setAttribute('data-fxtw', '1');
+    document.head.appendChild(s);
+  };
+  const ensureTwWidgets = () => {
+    if (document.getElementById('twitter-wjs')) return;
+    const t = document.createElement('script');
+    t.id = 'twitter-wjs';
+    t.src = 'https://platform.twitter.com/widgets.js';
+    t.defer = true;
+    document.head.appendChild(t);
+  };
 
-  // 2) спроба рендеру FixTweet
-  const tryRender = () => {
-    if (window.FixTweet && typeof window.FixTweet.render === 'function') {
-      window.FixTweet.render(container);
-      return true;
-    }
+  const tryFixTweet = () => {
+    try {
+      if (window.FixTweet && typeof window.FixTweet.render === 'function') {
+        window.FixTweet.render(container);
+        // якщо FixTweet відрендерив — з’являється .fx-embed або iframe
+        return !!container.querySelector('.fx-embed, iframe');
+      }
+    } catch {}
     return false;
   };
 
-  // 3) гарантуємо наявність скрипта FixTweet
-  let s = document.querySelector('script[data-fxtw="1"]');
-  if (!s) {
-    s = document.createElement('script');
-    s.src = 'https://fxtwitter.com/embed.js';
-    s.async = true;
-    s.charset = 'utf-8';
-    s.setAttribute('data-fxtw', '1');
-    document.head.appendChild(s);
-  }
-
-  if (tryRender()) return;
-
-  // 4) ретраї (до ~5 секунд) + фолбек на офіційний віджет, якщо FixTweet не спрацював
-  let tries = 0, max = 20;
-  const timer = setInterval(() => {
-    tries++;
-    if (tryRender() || tries >= max) {
-      clearInterval(timer);
-
-      // якщо все ще нема iframe — підключаємо офіційний твіт-виджет як запасний варіант
-      if (!container.querySelector('iframe')) {
-        let tw = document.getElementById('twitter-wjs');
-        const loadWidgets = () => window.twttr && twttr.widgets && twttr.widgets.load(container);
-
-        if (!tw) {
-          tw = document.createElement('script');
-          tw.id = 'twitter-wjs';
-          tw.src = 'https://platform.twitter.com/widgets.js';
-          tw.async = true;
-          tw.onload = loadWidgets;
-          document.head.appendChild(tw);
-        } else {
-          loadWidgets();
-        }
+  const tryOfficial = () => {
+    try {
+      if (window.twttr && twttr.widgets && typeof twttr.widgets.load === 'function') {
+        twttr.widgets.load(container);
+        return true;
       }
+    } catch {}
+    return false;
+  };
+
+  const useTwitframe = () => {
+    container.innerHTML = '';
+    const ifr = document.createElement('iframe');
+    ifr.src = 'https://twitframe.com/show?url=' + encodeURIComponent(twitterURL);
+    ifr.style.width = '100%';
+    ifr.style.border = '0';
+    ifr.style.minHeight = '200px';
+    ifr.loading = 'lazy';
+    // трохи безпечніший sandbox
+    ifr.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-popups');
+    container.appendChild(ifr);
+
+    // простий авто-підгін висоти
+    const H = () => { if (ifr.contentWindow) ifr.style.height = Math.max(ifr.clientHeight, 520) + 'px'; };
+    ifr.addEventListener('load', H);
+    setTimeout(H, 1500); // на випадок повільного завантаження
+  };
+
+  // 1) готуємо «класичний» блок для FixTweet/official
+  container.innerHTML = '';
+  const bq = document.createElement('blockquote');
+  bq.className = 'twitter-tweet';
+  bq.innerHTML = `<a href="${twitterURL}"></a>`;
+  container.appendChild(bq);
+
+  // 2) гарантуємо наявність скриптів
+  ensureFxScript();
+  ensureTwWidgets();
+
+  // 3) спроби рендеру: FixTweet → Official → twitframe (форс)
+  if (tryFixTweet()) return;
+
+  let ticks = 0;
+  const timer = setInterval(() => {
+    ticks++;
+
+    // пробуємо FixTweet
+    if (tryFixTweet()) { clearInterval(timer); return; }
+
+    // після кількох спроб — пробуємо офіційний
+    if (ticks === 8) tryOfficial();
+
+    // якщо за ~5 секунд нічого — iframe-фолбек
+    if (ticks >= 20) {
+      clearInterval(timer);
+      // якщо досі немає iframe — робимо twitframe
+      if (!container.querySelector('iframe')) useTwitframe();
     }
   }, 250);
 }
