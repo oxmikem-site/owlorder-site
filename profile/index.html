@@ -12,7 +12,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
     <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@1.9.0/index.js"></script>
     <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
-    <script async src="https://fxtwitter.com/embed.js" charset="utf-8"></script>
+    <script async src="https://fxtwitter.com/embed.js" charset="utf-8" data-fxtw="1"></script>
     
     <style>
         :root {
@@ -2299,6 +2299,41 @@ function renderTweetEmbed(container, url){
   bq.className = 'twitter-tweet';
   bq.innerHTML = `<a href="https://fxtwitter.com/${info.user}/status/${info.id}"></a>`;
   container.appendChild(bq);
+}
+                function renderTweetEmbed(container, url){
+  const info = extractTweetInfo(url);
+  if (!info) return;
+
+  // 1) вставляємо класичний твіт-блок із посиланням на twitter/x
+  const bq = document.createElement('blockquote');
+  bq.className = 'twitter-tweet';
+  bq.innerHTML = `<a href="https://twitter.com/${info.user}/status/${info.id}"></a>`;
+  container.appendChild(bq);
+
+  // 2) функція примусового рендеру для нового вузла
+  const forceRender = (node) => {
+    if (window.FixTweet && typeof window.FixTweet.render === 'function') {
+      window.FixTweet.render(node);
+      return true;
+    }
+    return false;
+  };
+
+  // 3) якщо FixTweet вже є — рендеримо; якщо ні — підвантажуємо і рендеримо по onload
+  if (!forceRender(container)) {
+    let script = document.querySelector('script[data-fxtw="1"]');
+    if (!script) {
+      script = document.createElement('script');
+      script.src = 'https://fxtwitter.com/embed.js';
+      script.async = true;
+      script.charset = 'utf-8';
+      script.setAttribute('data-fxtw', '1');
+      script.onload = () => forceRender(container);
+      document.head.appendChild(script);
+    } else {
+      setTimeout(() => forceRender(container), 700);
+    }
+  }
 }
 
 /* ==== UI рендер повідомлення ==== */
