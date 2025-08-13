@@ -317,24 +317,6 @@
             width: 100%;
         }
 
-        .chat-messages {
-            flex: 1;
-            display: flex;
-            /* ✅ додаємо flex */
-            flex-direction: column-reverse;
-            /* ✅ останні повідомлення внизу */
-            overflow-y: auto;
-            height: 100%;
-            padding: 10px;
-            border-radius: 10px;
-            background: #151515;
-            font-size: 14px;
-            margin-bottom: 8px;
-            padding-right: 5px;
-            white-space: pre-wrap;
-            word-break: break-word;
-        }
-
         .chat-messages a {
             color: var(--accent-color);
             /* або інший колір */
@@ -557,20 +539,25 @@
             background: transparent;
         }
 
-        .chat-messages {
-            flex: 1;
-            overflow-y: auto;
-            min-height: 0;
-            padding: 10px;
-            border-radius: 10px;
-            background: #151515;
-            font-size: 14px;
-            white-space: pre-wrap;
-            word-break: break-word;
-            scroll-behavior: smooth;
-            box-shadow: inset 4px 4px 8px #0d0d0d, inset -4px -4px 8px #1d1d1d;
-            border: 1px solid rgba(255, 255, 255, 0.03);
-        }
+        .chat-messages{
+  flex:1;
+  display:flex;
+  flex-direction:column-reverse;
+  overflow-y:auto;
+  height:100%;
+  min-height:0;
+  padding:10px;
+  padding-right:5px;
+  border-radius:10px;
+  background:#151515;
+  font-size:14px;
+  white-space:pre-wrap;
+  word-break:break-word;
+  scroll-behavior:smooth;
+  box-shadow:inset 4px 4px 8px #0d0d0d, inset -4px -4px 8px #1d1d1d;
+  border:1px solid rgba(255,255,255,.03);
+  margin-bottom:8px;
+}
 
         .message-content {
             flex: 1;
@@ -605,28 +592,6 @@
             margin-left: 25px;
             margin-bottom: 0;
             background: transparent;
-        }
-
-        .reply-text {
-            display: flex;
-            flex: 1;
-            min-width: 0;
-            /* дозволяє обрізати текст всередині flex */
-            gap: 4px;
-            font-size: 10px;
-            overflow: hidden;
-        }
-
-        .reply-to-preview {
-            font-size: 10px;
-            opacity: 0.8;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            /* додає три крапки */
-            white-space: nowrap;
-            /* в один рядок */
-            max-width: 120px;
-            /* або інше значення під твій дизайн */
         }
 
         .message-wrapper.reply-highlight {
@@ -950,6 +915,37 @@
   /* OWL COUNCIL — індіго/фіолет */
   background: linear-gradient(90deg, #A48BFF, #7B63E6);
   color:#0b0b0b;
+}
+
+        /* Twitter/X preview — 50% від поточної ширини повідомлення */
+.tweet-embed{
+  margin-top:8px;
+  border-radius:12px;
+  overflow:hidden;
+
+  /* головне — обмежуємо контейнер */
+  width:50%;
+  min-width:320px;   /* щоб не стало занадто вузько на десктопі */
+  max-width:420px;   /* ~половина типового блоку чату */
+}
+
+.tweet-embed iframe,
+.tweet-embed blockquote.twitter-tweet,
+.tweet-embed .twitter-tweet,
+.tweet-embed .fx-embed{
+  width:100% !important;
+  max-width:100% !important;
+  border:0;
+  border-radius:12px;
+}
+
+/* на вузьких екранах даємо 100% ширини, щоб було читабельно */
+@media (max-width:700px){
+  .tweet-embed{
+    width:100%;
+    min-width:auto;
+    max-width:100%;
+  }
 }
 
     </style>
@@ -1373,46 +1369,6 @@ function sectionAllowsPosting(section, wallet){
   return true; // інші секції — як було
 }
 
-                /* === ролі користувача за адресою/повідомленням === */
-function hasHolderRoleFor(sender, messageObj){
-  // 1) якщо під час надсилання в msg був imageId — це холдер
-  if (messageObj && messageObj.imageId) return true;
-  // 2) або якщо в локальному кеші є позитивний запис
-  const cached = readHolderCache(sender || '');
-  return !!cached?.found;
-}
-
-function computeRolesForAddress(sender, messageObj){
-  const roles = [];
-  if (!sender) return roles;
-  if (isAdmin(sender)) roles.push('OWL COUNCIL');
-  if (hasHolderRoleFor(sender, messageObj)) roles.push('OWL');
-  return roles;
-}
-
-function makeRoleBadges(roles){
-  const wrap = document.createElement('span');
-  wrap.className = 'sender-badges';
-  roles.forEach(r=>{
-    const span = document.createElement('span');
-    span.className = 'role-badge ' + (r === 'OWL COUNCIL' ? 'council' : 'owl');
-    span.textContent = r;
-    wrap.appendChild(span);
-  });
-  return wrap;
-}
-
-// асинхронно догружаємо статус холдера (якщо не був у msg/кеші), і додаємо бейдж без дублювання
-async function ensureHolderBadgeAsync(sender, badgesWrap){
-  if (!badgesWrap || badgesWrap.querySelector('.role-badge.owl')) return;
-  const info = await getHolderInfo(sender);
-  if (info?.found && !badgesWrap.querySelector('.role-badge.owl')){
-    const span = document.createElement('span');
-    span.className = 'role-badge owl';
-    span.textContent = 'OWL';
-    badgesWrap.appendChild(span);
-  }
-}
 // які секції показуємо лише холдерам (можеш додати/зняти будь-яку)
 const HOLDER_ONLY = new Set(["links","announcements","general","share-art","spot-request","raffles","settings","collection"]);
 
@@ -1596,7 +1552,7 @@ function buildMentions(text){
   const t = (text || "").trim();
 
   // ролі (без регістру)
-  if (/@owl\s+council\b/i.test(t)) roles.add('owl_council');
+  if (/@owl\s+council\b/i.test(t)) roles.add('owlcouncil');
   if (/@owl\b/i.test(t)) roles.add('owl');
 
   // @Нік (лат/кирил), без пробілів
@@ -2574,7 +2530,6 @@ if (isMentionForWallet(messageObj, currentWallet)) {
   wrapper.classList.add('reply-highlight');
 }
 
-  const myFull = (getConnectedWalletAddress() || "").toLowerCase();
 
   wrapper.appendChild(msgEl);
   wrapper.appendChild(right);
@@ -2981,9 +2936,6 @@ if (initiallyActive && initiallyActive.id?.startsWith('section-') && currentWall
   await markAsRead(activeSection, currentWallet);
 }
 
-  // Збережені сети
-  const localMessageIds = new Set();
-  const userMessageKeys = new Set();
   const seenMessages = new Set();
 
   document.querySelectorAll('#sidebar-nav a[data-section]').forEach(link => {
