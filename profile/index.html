@@ -13,8 +13,8 @@
     <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@1.9.0/index.js"></script>
     <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
     <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
-
-
+    <script async src="https://fxtwitter.com/embed.js" charset="utf-8"></script>
+    
     <style>
         :root {
   --bg-dark: #0b0b0b;
@@ -940,6 +940,10 @@
 .role-badge.owl{ background: linear-gradient(90deg,#bfa758,#d4c87c); color:#000; }
 .role-badge.council{ background:#7ec8ff; color:#000; } /* відрізняється від OWL */
 
+        .tweet-embed { margin-top: 8px; border-radius: 12px; overflow: hidden; }
+.tweet-embed iframe { width: 100% !important; border: 0; border-radius: 12px; }
+.chat-messages blockquote.twitter-tweet { margin: 10px 0; max-width: 100%; }
+
     </style>
 </head>
 
@@ -1578,11 +1582,11 @@ function buildMentions(text){
                           .map(m => (m[1]||'').toLowerCase());
 
   nickTokens.forEach(n => {
-    if (n === 'owl' || n === 'owl' /* дублів не буде */) return; // пропускаємо службові
-    if (n === 'owl' || n === 'owl council') return;
-    const list = nicknameIndex[n] || [];
-    list.forEach(a => users.add(a));
-  });
+  if (n === 'owl') return;
+  const list = nicknameIndex[n] || [];
+  list.forEach(a => users.add(a));
+});
+
 
   return { roles: Array.from(roles), users: Array.from(users) };
 }
@@ -2271,6 +2275,58 @@ function linkify(text) {
   return (text || "").replace(urlPattern, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
 }
 
+                // Витягаємо дані твіту з URL
+function extractTweetInfo(url){
+  const m = url.match(/https?:\/\/(?:www\.)?(?:mobile\.)?(?:twitter|x)\.com\/([^\/\s]+)\/status\/(\d+)/i);
+  if (!m) return null;
+  return { user: m[1], id: m[2] };
+}
+
+// Рендеримо прев’ю: спершу офіційний віджет, якщо він доступний;
+// якщо ні — робимо FixTweet-блок (fxtwitter), який перетворить їхній скрипт.
+function renderTweetEmbed(container, url){
+  const info = extractTweetInfo(url);
+  if (!info) return;
+
+  // 1) офіційний варіант
+  const tryOfficial = () => {
+    if (window.twttr && twttr.widgets && twttr.widgets.createTweet){
+      return twttr.widgets.createTweet(info.id, container, {
+        theme: 'dark', dnt: true, align: 'left', conversation: 'none'
+      }).catch(()=>false);
+    }
+    return false;
+  };
+
+  // 2) fallback через FixTweet — просто додаємо blockquote з посиланням на fxtwitter
+  const renderFixTweet = () => {
+    const bq = document.createElement('blockquote');
+    bq.className = 'twitter-tweet';
+    bq.innerHTML = `<a href="https://fxtwitter.com/${info.user}/status/${info.id}"></a>`;
+    container.appendChild(bq);
+    // їхній <script src="https://fxtwitter.com/embed.js"> зробить гарну картку
+  };
+
+  // Спроба офіційного, з тайм-аутом на випадок, якщо нічого не намалювалось
+  const maybe = tryOfficial();
+  let fallbackTimer = setTimeout(() => {
+    // якщо в контейнері досі нічого (iframe/blockquote) — робимо FixTweet
+    if (!container.querySelector('iframe') && !container.querySelector('blockquote.twitter-tweet')){
+      renderFixTweet();
+    }
+  }, 2500);
+
+  // якщо createTweet повернув проміс — після нього теж підстрахуємось
+  if (maybe && typeof maybe.then === 'function'){
+    maybe.finally(() => {
+      clearTimeout(fallbackTimer);
+      // якщо офіційний не вставив iframe — все одно fallback
+      if (!container.querySelector('iframe')){
+        renderFixTweet();
+      }
+    });
+  }
+}
 /* ==== UI рендер повідомлення ==== */
 function appendMessageToChat(messageObj, key = null, section = "general", currentWallet = null) {
   const chatBox = document.querySelector(`.chat-messages[data-section="${section}"]`);
@@ -2398,17 +2454,16 @@ left.appendChild(timeEl);
     content.appendChild(reactionRow);
   }
 
-  // Tweet embedding
-  const match = (messageObj.text || "").match(/https:\/\/(twitter|x)\.com\/[^/]+\/status\/\d+/);
-  if (match) {
-    const tweetUrl = match[0];
-    const embedDiv = document.createElement("div");
-    embedDiv.innerHTML = `<blockquote class="twitter-tweet"><a href="${tweetUrl}"></a></blockquote>`;
-    textEl.appendChild(embedDiv);
-    setTimeout(() => {
-      if (window.twttr && window.twttr.widgets) window.twttr.widgets.load();
-    }, 200);
-  }
+  // Tweet embedding (офіційний + FixTweet fallback) — підтримує кілька посилань в одному повідомленні
+const tweetUrls = (messageObj.text || "").match(/https?:\/\/(?:www\.)?(?:mobile\.)?(?:twitter|x)\.com\/[^\/\s]+\/status\/\d+[^\s]*/gi);
+if (tweetUrls){
+  tweetUrls.forEach(u => {
+    const holder = document.createElement('div');
+    holder.className = 'tweet-embed';
+    content.appendChild(holder);
+    renderTweetEmbed(holder, u);
+  });
+}
 
   msgEl.appendChild(avatar);
   msgEl.appendChild(content);
