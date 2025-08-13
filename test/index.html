@@ -473,6 +473,28 @@
   background: rgba(255, 255, 255, 0.05);
 }
 
+    #announcements-list {
+  list-style: none; /* прибрати крапки */
+  padding: 0;
+  margin: 0;
+}
+
+#announcements-list li {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-primary);
+  box-shadow: inset 0 1px 2px rgba(255,255,255,0.04);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
   </style>
 </head>
 <body>
@@ -533,7 +555,7 @@
       <div class="panel" style="grid-column: 3; grid-row: 2;">
   <h2>ANNOUNCEMENTS</h2>
   <div class="overlay">
-    <ul></ul>
+    <ul id="announcements-list"></ul>
   </div>
 </div>
 
@@ -810,17 +832,23 @@ document.addEventListener("DOMContentLoaded", () => {
   const text = lastMsg.text || "(no text)";
   const date = new Date(lastMsg.timestamp || Date.now()).toLocaleDateString();
 
-  const panels = document.querySelectorAll(".panel");
-  let ul = null;
+  const MAX_LENGTH = 160; // макс довжина тексту
 
-  panels.forEach(panel => {
-    if (panel.querySelector("h2")?.textContent.trim().toUpperCase() === "ANNOUNCEMENTS") {
-      ul = panel.querySelector(".overlay ul");
-    }
-  });
-
+  const trimmedText = text.length > MAX_LENGTH
+    ? text.slice(0, MAX_LENGTH).trim() + "..."
+    : text;
+      
+   text = text.replace(/@([a-zA-Z0-9_]+)/g, (match, username) => {
+    const url = `https://x.com/${username}`;
+    return `<a href="${url}" target="_blank" style="color: var(--accent-color); text-decoration: none;">@${username}</a>`;
+     
+  const ul = document.getElementById("announcements-list");
   if (ul) {
-    ul.innerHTML = `<li><strong>${date}</strong>: ${text}</li>`;
+    ul.innerHTML = `
+      <li>
+        <strong>${date}</strong>: ${trimmedText}
+      </li>
+    `;
   }
 }
 
