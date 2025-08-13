@@ -12,7 +12,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
     <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@1.9.0/index.js"></script>
     <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
-    <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
     <script async src="https://fxtwitter.com/embed.js" charset="utf-8"></script>
     
     <style>
@@ -945,6 +944,12 @@
     min-width:auto;
     max-width:100%;
   }
+}
+        /* робимо текст у твіт-прев'ю дрібнішим за чат (чат ~14px, тут 12px) */
+.tweet-embed { font-size: 12px; }
+.tweet-embed * { 
+  font-size: inherit !important;
+  line-height: 1.25;
 }
 
     </style>
@@ -2286,51 +2291,16 @@ function extractTweetInfo(url){
   return { user: m[1], id: m[2] };
 }
 
-// Рендеримо прев’ю: спершу офіційний віджет, якщо він доступний;
-// якщо ні — робимо FixTweet-блок (fxtwitter), який перетворить їхній скрипт.
 function renderTweetEmbed(container, url){
   const info = extractTweetInfo(url);
   if (!info) return;
 
-  // 1) офіційний варіант
-  const tryOfficial = () => {
-    if (window.twttr && twttr.widgets && twttr.widgets.createTweet){
-      return twttr.widgets.createTweet(info.id, container, {
-        theme: 'dark', dnt: true, align: 'left', conversation: 'none'
-      }).catch(()=>false);
-    }
-    return false;
-  };
-
-  // 2) fallback через FixTweet — просто додаємо blockquote з посиланням на fxtwitter
-  const renderFixTweet = () => {
-    const bq = document.createElement('blockquote');
-    bq.className = 'twitter-tweet';
-    bq.innerHTML = `<a href="https://fxtwitter.com/${info.user}/status/${info.id}"></a>`;
-    container.appendChild(bq);
-    // їхній <script src="https://fxtwitter.com/embed.js"> зробить гарну картку
-  };
-
-  // Спроба офіційного, з тайм-аутом на випадок, якщо нічого не намалювалось
-  const maybe = tryOfficial();
-  let fallbackTimer = setTimeout(() => {
-    // якщо в контейнері досі нічого (iframe/blockquote) — робимо FixTweet
-    if (!container.querySelector('iframe') && !container.querySelector('blockquote.twitter-tweet')){
-      renderFixTweet();
-    }
-  }, 2500);
-
-  // якщо createTweet повернув проміс — після нього теж підстрахуємось
-  if (maybe && typeof maybe.then === 'function'){
-    maybe.finally(() => {
-      clearTimeout(fallbackTimer);
-      // якщо офіційний не вставив iframe — все одно fallback
-      if (!container.querySelector('iframe')){
-        renderFixTweet();
-      }
-    });
-  }
+  const bq = document.createElement('blockquote');
+  bq.className = 'twitter-tweet';
+  bq.innerHTML = `<a href="https://fxtwitter.com/${info.user}/status/${info.id}"></a>`;
+  container.appendChild(bq);
 }
+
 /* ==== UI рендер повідомлення ==== */
 function appendMessageToChat(messageObj, key = null, section = "general", currentWallet = null) {
   const chatBox = document.querySelector(`.chat-messages[data-section="${section}"]`);
