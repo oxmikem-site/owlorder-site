@@ -657,26 +657,38 @@ async function fetchProfileImage(wallet) {
 }
 
 async function connectUniSatWallet() {
-  if (!window.unisat) return alert("UniSat Wallet not found.");
+  if (!window.unisat) {
+    alert("UniSat Wallet not found. Install/enable the extension.");
+    return;
+  }
   try {
-    await window.unisat.requestAccounts();
-    const address = (await window.unisat.getAccounts())[0];
+    // requestAccounts вже повертає адреси – не треба одразу викликати getAccounts
+    const accounts = await window.unisat.requestAccounts();
+    const address = Array.isArray(accounts) ? accounts[0] : undefined;
+
+    if (!address || typeof address !== 'string') {
+      alert("No address returned. Unlock UniSat and approve the connection.");
+      return; // ← нічого не пишемо в localStorage поки нема валідної адреси
+    }
+
     localStorage.setItem('taproot_wallet', address);
     updateWalletButtons(address);
-    await handleWalletConnected(address);
-    await fetchProfileImage(address);
+    await Promise.all([handleWalletConnected(address), fetchProfileImage(address)]);
   } catch (err) {
-    alert("Failed to connect wallet.");
+    console.error('UniSat connect error:', err);
+    alert(`Failed to connect wallet: ${err?.message || err}`);
   }
 }
+
 let _walletListenersBound = false;
     
 function updateWalletButtons(address){
+  if (!address || typeof address !== 'string') return; // ← guard
+
   const short = shortenAddress(address);
   document.getElementById("wallet-header-btn").textContent = short;
   document.getElementById("wallet-side-btn").textContent   = short;
 
-  // не навішуємо обробники по кілька разів
   if (_walletListenersBound) return;
   _walletListenersBound = true;
 
