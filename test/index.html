@@ -494,6 +494,14 @@
   white-space: nowrap;
 }
 
+    .connect-wallet.profile-button {
+  height: 40px;
+  line-height: 40px;
+  font-size: 15px;
+  display: block;
+  text-align: center;
+  margin-top: 10px;
+}
 
   </style>
 </head>
@@ -697,7 +705,7 @@ wrapper.style.cssText = "margin-top: 16px; font-size: 15px; line-height: 1.6;";
   profileBtn.style.marginTop = "10px";
   profileBtn.style.textDecoration = "none";
   wrapper.appendChild(profileBtn);
-
+  profileBtn.classList.add("profile-button");
   img.insertAdjacentElement('afterend', wrapper);
 }
 
@@ -820,6 +828,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   loadtop5();
   fetchListedNFTsGrid();
+   loadLatestAnnouncement();
 });
 
     async function loadLatestAnnouncement() {
