@@ -837,6 +837,10 @@
   border:1px solid rgba(255,255,255,.06);
   box-shadow: 0 8px 24px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.06);
   transition: transform .2s ease, box-shadow .2s ease;
+display: block; 
+  text-decoration: none; 
+  color: inherit; 
+  cursor: pointer;
 }
 .owl-card:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(0,0,0,.6); }
 
@@ -855,6 +859,7 @@
   color:#000; text-transform:uppercase; letter-spacing:.4px;
   box-shadow: 0 0 12px rgba(212,200,124,.35), inset 0 1px 0 rgba(255,255,255,.25);
 }
+.owl-card:focus { outline: none; }
 
 /* кольори під рарності (можеш підкрутити) */
 .rarity-common     { background:#cfcfcf; }
@@ -1305,6 +1310,7 @@
 const SNAPSHOT_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?output=csv&gid=0";
 const imageBaseURL = "https://raw.githubusercontent.com/oxmikem-site/owlorder-site/main/images2/";
 const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?gid=1127131432&single=true&output=csv";
+const ME_COLLECTION_SLUG = "<<<owl>>>"; 
 
 /* Перелік секцій, де є чат */
 const chatSections = ["links", "announcements", "general", "share-art", "spot-request"];
@@ -1623,7 +1629,6 @@ function setProfileImageById(imageId) {
   return fresh;
 }
 
-// збирає всі OWL для гаманця з SNAPSHOT (враховує колонку "№" і "Rank")
 async function getAllOwlsForAddress(address) {
   if (!address) return [];
 
@@ -1647,6 +1652,13 @@ async function getAllOwlsForAddress(address) {
             : Math.max(hdr.indexOf('number'), hdr.indexOf('nft number'), hdr.indexOf('owl'), hdr.indexOf('#'));
     // "rarity" або "rank"
     rarIdx  = hdr.indexOf('rarity') !== -1 ? hdr.indexOf('rarity') : hdr.indexOf('rank');
+
+    // ✅ ДОДАЛИ: індекс інскрипшена
+    var insIdx = -1;
+    insIdx = hdr.indexOf('inscription id') !== -1 ? hdr.indexOf('inscription id')
+           : hdr.indexOf('inscription')     !== -1 ? hdr.indexOf('inscription')
+           : hdr.indexOf('inscriptionid');
+
     body = table.slice(1);
   }
 
@@ -1661,7 +1673,12 @@ async function getAllOwlsForAddress(address) {
     const number    = numberRaw.replace(/[^\d]/g, '');
     const rarity    = rarIdx >= 0 ? ((row[rarIdx] || '') + '').trim() : '';
 
-    if (number) items.push({ number, rarity });
+    // ✅ ОТУТ ВСТАВЛЯЄМО ВАШІ ДВА РЯДКИ:
+    const inscriptionId = (typeof insIdx === 'number' && insIdx >= 0)
+      ? (((row[insIdx] || '') + '').trim())
+      : '';
+
+    if (number) items.push({ number, rarity, inscriptionId }); // ← тепер з inscriptionId
   }
 
   // унікалізуємо за номером
@@ -1824,6 +1841,17 @@ function rarityToClass(r){
   if (t) return 'rarity-common';
   return 'rarity-legendary'; // якщо рарності нема — зробимо “золоту” (можеш змінити)
 }
+                
+function buildMagicEdenUrl({ number, inscriptionId }) {
+  if (inscriptionId) {
+    return `https://magiceden.io/ordinals/item-details/${encodeURIComponent(inscriptionId)}`;
+  }
+  if (ME_COLLECTION_SLUG) {
+    return `https://magiceden.io/ordinals/marketplace/${encodeURIComponent(ME_COLLECTION_SLUG)}`;
+  }
+  return 'https://magiceden.io/';
+}
+
 
 async function renderMyCollection(address){
   const wrap = document.getElementById('section-collection');
@@ -1856,20 +1884,21 @@ async function renderMyCollection(address){
   mine.sort((a,b)=> Number(a.number)-Number(b.number));
   if (cnt) cnt.textContent = `${mine.length} item(s)`;
 
-  grid.innerHTML = mine.map(({number, rarity})=>{
-  const cls = rarityToClass(rarity);
+  grid.innerHTML = mine.map(({ number, rarity, inscriptionId }) => {
+  const cls   = rarityToClass(rarity);
   const label = rarity || 'Legendary';
+  const url   = buildMagicEdenUrl({ number, inscriptionId });
+
   return `
-    <div class="owl-card">
+    <a class="owl-card" href="${url}" target="_blank" rel="noopener noreferrer" title="Open on Magic Eden">
       <img class="owl-img" src="${imageBaseURL}${number}.webp" alt="OWL #${number}" onerror="this.src='../logo1.png'">
       <div class="owl-meta">
         <span class="owl-num">OWL #${number}</span>
         <span class="rarity-badge ${cls}">${label}</span>
       </div>
-    </div>
+    </a>
   `;
 }).join('');
-}
 
 /* Заповнення сайдбару профілю */
 async function populateSidebarUserInfo(address) {
