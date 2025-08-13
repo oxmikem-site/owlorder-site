@@ -282,8 +282,9 @@
   overflow-x: auto;  
   scrollbar-width: none;
       -ms-overflow-style: none;
+  text-align: left;
     }
-    text-align: left;
+    
 #me-listed-grid::-webkit-scrollbar {
  display: none;
     }
@@ -587,7 +588,7 @@
       </div>
     </div>
   </div>
-</body>
+
 
   <script>
     const firebaseConfig = {
@@ -607,6 +608,21 @@ const SNAPSHOT_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAO
 const imageBaseURL = "https://raw.githubusercontent.com/oxmikem-site/owlorder-site/main/images2/";
 const sheetURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?gid=1127131432&single=true&output=csv';
 
+    function parseCSV(text){
+  const rows=[]; let cur='', row=[], q=false;
+  for (let i=0;i<text.length;i++){
+    const c=text[i], n=text[i+1];
+    if (c === '"'){ if (q && n === '"'){ cur+='"'; i++; } else { q=!q; } }
+    else if (c === ',' && !q){ row.push(cur); cur=''; }
+    else if ((c === '\n' || c === '\r') && !q){
+      if (cur!=='' || row.length){ row.push(cur); rows.push(row); }
+      cur=''; row=[]; if (c==='\r' && n==='\n') i++;
+    } else { cur+=c; }
+  }
+  if (cur!=='' || row.length){ row.push(cur); rows.push(row); }
+  return rows;
+}
+    
 function shortenAddress(addr) {
   return addr.slice(0, 6) + '...' + addr.slice(-4);
 }
@@ -653,39 +669,45 @@ async function connectUniSatWallet() {
     alert("Failed to connect wallet.");
   }
 }
-
-function updateWalletButtons(address) {
+let _walletListenersBound = false;
+    
+function updateWalletButtons(address){
   const short = shortenAddress(address);
   document.getElementById("wallet-header-btn").textContent = short;
-  document.getElementById("wallet-side-btn").textContent = short;
+  document.getElementById("wallet-side-btn").textContent   = short;
 
-  document.querySelectorAll(".wallet-wrapper").forEach(wrapper => {
-    const dropdown = wrapper.querySelector(".wallet-dropdown, .wallet-dropdown-content");
-    if (dropdown) {
-      wrapper.addEventListener('click', (e) => {
-        e.stopPropagation();
-        dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
-      });
-    }
+  // не навішуємо обробники по кілька разів
+  if (_walletListenersBound) return;
+  _walletListenersBound = true;
+
+  document.querySelectorAll(".wallet-wrapper").forEach(wrapper=>{
+    const dropdown = wrapper.querySelector(".wallet-dropdown-content");
+    if (!dropdown) return;
+    wrapper.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+    });
   });
 
-  document.querySelectorAll(".logout-btn").forEach(btn => {
-    btn.addEventListener('click', () => {
+  document.querySelectorAll(".logout-btn").forEach(btn=>{
+    btn.addEventListener('click', ()=>{
       localStorage.removeItem("taproot_wallet");
       location.reload();
     });
   });
 }
 
-async function checkHolderInSheet(address) {
-  const res = await fetch(sheetURL);
-  const text = await res.text();
-  const rows = text.trim().split('\n').map(r => r.split(','));
-  const headers = rows[0].map(h => h.trim());
-  const addrIndex = headers.indexOf("Holder Address");
-  const pointsIndex = headers.indexOf("Total Points");
-  const row = rows.find(r => r[addrIndex]?.trim() === address.trim());
-  return row ? { found: true, address, points: row[pointsIndex] } : { found: false };
+async function checkHolderInSheet(address){
+  const res  = await fetch(sheetURL, { cache:'no-store' });
+  const csv  = await res.text();
+  const tbl  = parseCSV(csv);
+  const head = tbl[0].map(h => (h||'').trim().toLowerCase());
+  const ai   = head.indexOf('holder address');
+  const pi   = head.indexOf('total points');
+  const me   = address.trim().toLowerCase();
+  const row  = tbl.slice(1).find(r => ((r[ai]||'')+'').trim().toLowerCase() === me);
+  return row ? { found:true, address, points:(r=>r? r.replace(/,/g,'') : '0')(row[pi]) }
+             : { found:false };
 }
 
 async function handleWalletConnected(address) {
@@ -733,26 +755,24 @@ wrapper.style.cssText = "margin-top: 16px; font-size: 15px; line-height: 1.6;";
   }
 }
 
-async function loadtop5() {
-  const res = await fetch(sheetURL);
-  const text = await res.text();
-  const rows = text.trim().split('\n').map(row => row.split(','));
-  const entries = rows.slice(1).map(row => {
-    const [, address, , pointsRaw] = row;
-    const cleanPoints = (pointsRaw || '0').replace(/,/g, '');
-    return { address, points: cleanPoints };
-  });
-
-  const top5 = entries.slice(0, 5).map(({ address, points }, index) => {
-    const shortAddr = address.slice(0, 6) + '...' + address.slice(-4);
-    return `
-      <li class="leaderboard-entry">
-        <span class="rank">#${index + 1}</span>
-        <span class="addr">${shortAddr}</span>
-        <span class="pts">${points}</span>
-      </li>`;
-  }).join('');
-
+async function loadtop5(){
+  const res  = await fetch(sheetURL, { cache:'no-store' });
+  const csv  = await res.text();
+  const tbl  = parseCSV(csv);
+  const head = tbl[0].map(h => (h||'').trim().toLowerCase());
+  const ai   = head.indexOf('holder address');
+  const pi   = head.indexOf('total points');
+  const rows = tbl.slice(1)
+                  .map(r => ({ address:(r[ai]||'').trim(),
+                               points: Number((r[pi]||'0').replace(/,/g,'')) }))
+                  .filter(x => x.address);
+  rows.sort((a,b)=> b.points - a.points);
+  const top5 = rows.slice(0,5).map(({address,points},i)=>`
+    <li class="leaderboard-entry">
+      <span class="rank">#${i+1}</span>
+      <span class="addr">${shortenAddress(address)}</span>
+      <span class="pts">${points.toLocaleString()}</span>
+    </li>`).join('');
   document.getElementById('leaderboard-top5').innerHTML = top5;
 }
 
@@ -844,28 +864,28 @@ document.addEventListener("DOMContentLoaded", () => {
    loadLatestAnnouncement();
 });
 
-    async function loadLatestAnnouncement() {
-  const ref = db.ref("chats/announcements").limitToLast(1);
-  const snapshot = await ref.once("value");
-  const data = snapshot.val();
-  if (!data) return;
+    function escapeHTML(s){
+  return (s||'').replace(/[&<>"']/g, c => ({
+    '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
+  }[c]));
+}
+
+async function loadLatestAnnouncement(){
+  const snap = await db.ref("chats/announcements").limitToLast(1).once("value");
+  const data = snap.val(); if (!data) return;
 
   const lastMsg = Object.values(data)[0];
-  let text = lastMsg.text || "(no text)";
+  let text = escapeHTML(lastMsg.text || "(no text)");
+  text = text.replace(/@([a-zA-Z0-9_]+)/g, (_,u)=>
+    `<a href="https://x.com/${u}" target="_blank" rel="noopener noreferrer" style="color: var(--accent-color); text-decoration: none;">@${u}</a>`
+  );
+
   const date = new Date(lastMsg.timestamp || Date.now()).toLocaleDateString();
+  const trimmed = text.length>160 ? text.slice(0,160) + "..." : text;
 
-  const MAX_LENGTH = 160;
-
-  // Перетворення @username → посилання
-  text = text.replace(/@([a-zA-Z0-9_]+)/g, (match, username) => {
-    const url = `https://x.com/${username}`;
-    return `<a href="${url}" target="_blank" style="color: var(--accent-color); text-decoration: none;">@${username}</a>`;
-  });
-
-  // Обрізання якщо забагато символів
-  const trimmedText = text.length > MAX_LENGTH
-    ? text.slice(0, MAX_LENGTH).trim() + "..."
-    : text;
+  const ul = document.getElementById("announcements-list");
+  if (ul) ul.innerHTML = `<li><strong>${date}</strong>: ${trimmed}</li>`;
+}
 
   // Вставка в DOM
   const ul = document.getElementById("announcements-list");
