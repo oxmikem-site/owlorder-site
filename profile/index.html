@@ -915,23 +915,23 @@
   color:#0b0b0b;
 }
 
-        /* Twitter/X preview — 50% від поточної ширини повідомлення */
 .tweet-embed{
   margin-top:8px;
-  background:#ececec;                 /* світло-сірий фон */
-  border:1px solid #d9d9d9;
-  border-radius:12px;
-  padding:8px;
-  overflow:hidden;
+  background: transparent;   /* ✅ без фону */
+  border: none;               /* ✅ без рамки */
+  border-radius: 0;
+  padding: 0;                 /* ✅ без внутрішніх відступів */
+  overflow: visible;
 
-  /* розміри контейнера */
-  width:50%;
-  min-width:320px;                    /* не занадто вузько на десктопі */
-  max-width:420px;                    /* ~половина блоку чату */
-  line-height:0;                      /* прибирає зайві просвіти всередині */
+  /* розмір (трохи більший) */
+  width: 60%;
+  min-width: 340px;
+  max-width: 520px;
+
+  line-height:0;              /* щоб не було зайвих прогалин */
 }
 
-/* сам вбудований твіт */
+/* сам вбудований твіт (щоб кути були акуратні) */
 .tweet-embed > iframe,
 .tweet-embed > blockquote.twitter-tweet,
 .tweet-embed > .twitter-tweet,
@@ -942,14 +942,10 @@
   border:0;
   border-radius:12px;
 }
-
 @media (max-width:700px){
-  .tweet-embed{
-    width:100%;
-    min-width:auto;
-    max-width:100%;
-  }
+  .tweet-embed{ width:100%; min-width:auto; max-width:100%; }
 }
+
     </style>
 </head>
 
@@ -1712,28 +1708,33 @@ async function checkHolderInSheet(address) {
   if (!imageId) return { found: false };
 
   // 2) Тягнемо поінти лише для холдерів (як у дашборді по header-ах)
-  let points = "-";
-  try {
-    const res = await fetch(sheetURL);
-    const text = await res.text();
-    const rows = text.trim().split("\n").map(r => r.split(","));
+let points = "-";
+try {
+  const res   = await fetch(sheetURL, { cache: 'no-store' });
+  const csv   = await res.text();
+  const table = parseCSV(csv); // ✅ надійний парсер (в тебе вже є вище)
 
-    const headers = rows[0].map(h => h.trim());
-    const addrIndex = headers.indexOf("Holder Address");
-    const pointsIndex = headers.indexOf("Total Points");
+  if (table.length) {
+    const header    = table[0].map(h => (h || '').trim().toLowerCase());
+    const addrIdx   = header.indexOf("holder address");
+    const pointsIdx = header.indexOf("total points");
 
-    if (addrIndex !== -1 && pointsIndex !== -1) {
-      const row = rows.find(r => (r[addrIndex] || "").trim().toLowerCase() === address.trim().toLowerCase());
+    if (addrIdx !== -1 && pointsIdx !== -1) {
+      const body   = table.slice(1);
+      const addrLc = address.trim().toLowerCase();
+      const row    = body.find(r => (((r[addrIdx] || '') + '').trim().toLowerCase()) === addrLc);
+
       if (row) {
-        const raw = (row[pointsIndex] || "").trim();
-        points = raw.replace(/,/g, "") || "-";
+        const raw = ((row[pointsIdx] || '') + '').trim();
+        points = raw.replace(/,/g, "") || "0"; // хочеш «–» замість 0 — підстав "-"
       }
     }
-  } catch (e) {
-    console.warn("Points sheet fetch error:", e);
   }
+} catch (e) {
+  console.warn("Points sheet fetch error:", e);
+}
 
-  return { found: true, address, imageId, points };
+return { found: true, address, imageId, points };
 }
                 // --- robust CSV parser (лапки/коми всередині клітинок)
 function parseCSV(text) {
@@ -2312,7 +2313,7 @@ function renderTweetEmbed(container, url) {
     document.head.appendChild(t);
   };
 
- const TWEET_SCALE = 0.5; // 0.5 = у 2 рази менше
+ const TWEET_SCALE = 0.6;
 
 const tryFixTweet = () => {
   try {
@@ -2401,16 +2402,15 @@ const tryFixTweet = () => {
   }, 250);
 }
 
-                // робить твіт меншим разом зі шрифтами та підрізає висоту контейнера
-function scaleTweetWhenReady(container, scale = 0.5) {
+function scaleTweetWhenReady(container, scale = 0.6) {
   const apply = () => {
     const target = container.querySelector('.fx-embed, iframe, blockquote.twitter-tweet');
     if (!target) return false;
 
     const h = target.offsetHeight || parseInt(target.style.height) || 0;
-    if (h < 50) return false; // ще не готово
+    if (h < 50) return false; 
 
-    target.style.transformOrigin = 'top left';   // ⬅️ щоб не з’їжджало вправо
+    target.style.transformOrigin = 'top left';
 target.style.transform = `scale(${scale})`;
 container.style.height = Math.ceil(h * scale) + 'px';
     container.style.minHeight = container.style.height;
@@ -2421,12 +2421,11 @@ container.style.height = Math.ceil(h * scale) + 'px';
   let tries = 0;
   const iv = setInterval(() => {
     tries++;
-    if (apply() || tries > 40) clearInterval(iv); // до ~10с очікування
+    if (apply() || tries > 40) clearInterval(iv); 
   }, 250);
 }
 
 
-/* ==== UI рендер повідомлення ==== */
 function appendMessageToChat(messageObj, key = null, section = "general", currentWallet = null) {
   const chatBox = document.querySelector(`.chat-messages[data-section="${section}"]`);
   if (!chatBox) return;
@@ -2457,8 +2456,8 @@ function appendMessageToChat(messageObj, key = null, section = "general", curren
 
   const nameEl = document.createElement("span");
   nameEl.className = "sender-name";
-  nameEl.textContent = getDisplayNameSync(messageObj.sender);   // миттєво (short/нік із кешу)
-prefetchNickname(messageObj.sender).then(nick => {            // догружаємо і оновлюємо
+  nameEl.textContent = getDisplayNameSync(messageObj.sender);   
+prefetchNickname(messageObj.sender).then(nick => {            
   if (nick) nameEl.textContent = nick;
 });
 
