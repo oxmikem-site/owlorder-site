@@ -2585,17 +2585,20 @@ left.appendChild(timeEl);
   btnReply.addEventListener("click", () => replyTo(key, section));
   right.appendChild(btnReply);
 
-  if (messageObj.sender?.toLowerCase() === (currentWallet || "").toLowerCase()) {
-    const btnEdit = document.createElement("button");
-    btnEdit.innerHTML = '<iconify-icon icon="mdi:pencil" width="14"></iconify-icon>';
-    btnEdit.addEventListener("click", () => editMessage(key, section));
-    right.appendChild(btnEdit);
+  const amAdmin = isAdmin(currentWallet);
+const isMine  = (messageObj.sender || "").toLowerCase() === (currentWallet || "").toLowerCase();
 
-    const btnDel = document.createElement("button");
-    btnDel.innerHTML = '<iconify-icon icon="ic:baseline-delete" width="14"></iconify-icon>';
-    btnDel.addEventListener("click", () => deleteMessage(key, section));
-    right.appendChild(btnDel);
-  }
+if (amAdmin || isMine) {
+  const btnEdit = document.createElement("button");
+  btnEdit.innerHTML = '<iconify-icon icon="mdi:pencil" width="14"></iconify-icon>';
+  btnEdit.addEventListener("click", () => editMessage(key, section));
+  right.appendChild(btnEdit);
+
+  const btnDel = document.createElement("button");
+  btnDel.innerHTML = '<iconify-icon icon="ic:baseline-delete" width="14"></iconify-icon>';
+  btnDel.addEventListener("click", () => deleteMessage(key, section));
+  right.appendChild(btnDel);
+}
 
   header.appendChild(left);
   content.appendChild(header);
@@ -2794,11 +2797,27 @@ function updateReactionButtons(reactionRow, updatedMsg, section, key) {
   }
 }
 
-function deleteMessage(key, section) {
-  if (!confirm("Are you sure you want to delete this message?")) return;
-  const chatRef = getChatMessagesRef(section);
-  chatRef.child(key).remove().catch(console.error);
+async function deleteMessage(key, section) {
+  const wallet = getConnectedWalletAddress();
+  if (!wallet) return alert("Connect wallet first");
+
+  const msgRef = getChatMessagesRef(section).child(key);
+  const snap = await msgRef.get();
+  const msg = snap.val();
+  if (!msg) return;
+
+  const isOwner = ((msg.sender || "").toLowerCase() === wallet.toLowerCase());
+  const amAdmin = isAdmin(wallet);
+
+  if (!(isOwner || amAdmin)) {
+    alert("You don't have permission to delete this message.");
+    return;
+  }
+
+  if (!confirm("Delete this message for everyone?")) return;
+  await msgRef.remove().catch(console.error);
 }
+
 
 function editMessage(key, section) {
   const textEl = document.querySelector(`.chat-messages[data-section="${section}"] .chat-message[data-key="${key}"] .message-text`);
