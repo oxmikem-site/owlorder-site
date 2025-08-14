@@ -578,7 +578,7 @@
   <div class="overlay">
     <ul id="announcements-list"></ul>
   </div>
-  <a href="https://owlbtc.art/profile/#announcements" target="_blank" class="view-more-button">View More</a>
+  <a href="https://owlbtc.art/profile/" target="_blank" id="announcements-view-more" class="view-more-button">View More</a>
 </div>
 
       <div class="footer">
@@ -907,7 +907,13 @@ document.addEventListener("DOMContentLoaded", () => {
   loadLatestAnnouncement();
 });
 
-  
+const vm = document.getElementById('announcements-view-more');
+if (vm) {
+  vm.addEventListener('click', () => {
+    try { localStorage.setItem('chat_autojoin', 'announcements'); } catch(e){}
+  });
+}
+
 function escapeHTML(s){
   return (s||'').replace(/[&<>"']/g, c => ({
     '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
