@@ -473,53 +473,47 @@
 .wallet-dropdown-content a:hover {
   background: rgba(255, 255, 255, 0.05);
 }
-/* === Announcements: контент без додаткової "верхньої" панелі === */
+/* ANNOUNCEMENTS — контент прямо на середній панелі, без скролів і внутрішньої «картки» */
 #announcements-list {
   margin: 0;
-  padding: 0 8px;
-  max-height: 160px;      /* висота області з текстом */
-  overflow-y: auto;       /* скрол на <ul>, а не на <li> */
+  padding: 0;        
+  max-height: none;     
+  overflow: hidden;     
 }
 
-/* сам елемент списку — без фону та без внутрішньої картки */
 #announcements-list li {
   list-style: none;
-  background: rgba(255, 255, 255, 0.05);
-  padding: 12px 16px;
-  border-radius: 10px;
+  background: transparent;  
+  padding: 0;               
+  border-radius: 0;
+  box-shadow: none;
   font-size: 14px;
   color: var(--text-primary);
-  line-height: 1.4;
-  overflow: hidden;
+  line-height: 1.5;
   word-break: break-word;
 }
 
-
-#announcements-list li + li {
-  margin-top: 8px;
+#announcements-list a {
+  color: var(--accent-color);
+  text-decoration: none;
 }
-
-
-#announcements-list::-webkit-scrollbar {
-  width: 6px;
-}
-#announcements-list::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
-}
-
-  
-#wallet-side-btn,
-.connect-wallet.profile-button {
-  width: 100%;
-  max-width: none;   
-  display: block;
-  text-align: center;
-}
-
 
 .connect-wallet.profile-button {
-  text-decoration: none; /* для <a> */
+  text-decoration: none; 
+}
+
+.wallet-info .connect-wallet,
+.wallet-info a.connect-wallet,
+.wallet-info button.connect-wallet {
+  display: inline-flex;         
+  align-items: center;
+  justify-content: center;
+  width: 78%;                 
+  margin: 10px auto 0;     
+  padding: 6px 14px;         
+  line-height: 1;                
+  height: auto;                 
+  text-decoration: none;         
 }
 
   </style>
