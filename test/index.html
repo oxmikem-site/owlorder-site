@@ -512,13 +512,11 @@
 #wallet-side-btn,
 .connect-wallet.profile-button {
   width: 100%;
+  max-width: none;   
   display: block;
-  height: 40px;
-  line-height: 40px;  
-  padding: 0;         
-  text-align: center; 
-  box-sizing: border-box;
+  text-align: center;
 }
+
 
 .connect-wallet.profile-button {
   text-decoration: none; /* для <a> */
@@ -775,20 +773,26 @@ async function handleWalletConnected(address) {
     : document.querySelectorAll(".panel")[0];
 
   const img = document.getElementById("profile-image");
+  const sideBtn = document.getElementById("wallet-side-btn");
+
   let wrapper = userPanel.querySelector(".wallet-info");
   if (wrapper) wrapper.remove();
   wrapper = document.createElement("div");
   wrapper.className = "wallet-info";
-  wrapper.style.cssText = "margin-top: 16px; font-size: 15px; line-height: 1.6;";
+  wrapper.style.cssText = "margin-top:16px;font-size:15px;line-height:1.6;";
 
   if (result.found) {
+    // приховуємо стару кнопку CONNECT WALLET у юзер-панелі
+    if (sideBtn) sideBtn.style.display = "none";
+
     img.style.display = "block";
 
     const totalPointsEl = document.createElement("div");
-    totalPointsEl.style.cssText = "margin-top: 10px; font-size: 15px;";
+    totalPointsEl.style.cssText = "margin-top:10px;font-size:15px;";
     totalPointsEl.innerHTML = `<strong>Total Points:</strong> ${result.points}`;
     wrapper.appendChild(totalPointsEl);
 
+    // Profile (повна ширина, як у хедері)
     const profileBtn = document.createElement("a");
     profileBtn.href = "https://owlbtc.art/profile/";
     profileBtn.textContent = "Profile";
@@ -797,18 +801,21 @@ async function handleWalletConnected(address) {
     profileBtn.style.textDecoration = "none";
     wrapper.appendChild(profileBtn);
 
+    // Адреса (не клікабельна)
     const addrBtn = document.createElement("button");
     addrBtn.className = "connect-wallet profile-button";
     addrBtn.textContent = shortenAddress(address);
     addrBtn.style.marginTop = "10px";
     addrBtn.style.cursor = "default";
-    addrBtn.disabled = true; 
+    addrBtn.disabled = true;
     wrapper.appendChild(addrBtn);
 
-
-    img.insertAdjacentElement('afterend', wrapper);
+    img.insertAdjacentElement("afterend", wrapper);
   } else {
+    // гість — показуємо кнопку CONNECT WALLET у юзер-панелі
+    if (sideBtn) sideBtn.style.display = "";
     img.style.display = "none";
+
     const getOwlBtn = document.createElement("button");
     getOwlBtn.textContent = "Get your OWL";
     getOwlBtn.className = "connect-wallet";
