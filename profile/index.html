@@ -1606,20 +1606,26 @@ function buildMentions(text){
   if (/@owl\s+council\b/i.test(t)) roles.add('owlcouncil');
   if (/@owl\b/i.test(t)) roles.add('owl');
 
-  // @Нік (лат/кирил), без пробілів
+ 
   const nickTokens = Array.from(t.matchAll(/@([A-Za-z0-9_\-А-Яа-яЇїІіЄєҐґ]+)\b/gu))
                           .map(m => (m[1]||'').toLowerCase());
 
   nickTokens.forEach(n => {
-    if (n === 'owl' || n === 'owl council') return; // службові — уже додані як role
+    if (n === 'owl' || n === 'owl council') return; 
     const list = nicknameIndex[n] || [];
     list.forEach(a => users.add(a));
   });
 
+
+const addrTokens = Array.from(t.matchAll(/@((?:bc1|[13])[a-zA-HJ-NP-Z0-9]{25,62}|0x[a-fA-F0-9]{40})\b/g))
+  .map(m => (m[1]||'').toLowerCase());
+addrTokens.forEach(a => users.add(a));
+
+
   return { roles: Array.from(roles), users: Array.from(users) };
 }
 
-// чи стосується це повідомлення конкретного гаманця
+
 function isMentionForWallet(msg, wallet){
   if (!msg || !wallet) return false;
   if ((msg.sender||'').toLowerCase() === wallet.toLowerCase()) return false;
@@ -1629,10 +1635,9 @@ function isMentionForWallet(msg, wallet){
   const userList = Array.isArray(m.users) ? m.users : [];
   const wl = wallet.toLowerCase();
 
-  // прямий @нік/@адреса
   if (userList.some(w => (w||'').toLowerCase() === wl)) return true;
 
-  // рольові
+
   if (roleList.includes('owl') && isWalletHolderSync(wallet)) return true;
   if (roleList.includes('owlcouncil') && isAdmin(wallet)) return true;
 
@@ -2107,7 +2112,7 @@ const firebaseConfig = {
   authDomain: "owl-chat-e4233.firebaseapp.com",
   databaseURL: "https://owl-chat-e4233-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "owl-chat-e4233",
-  storageBucket: "owl-chat-e4233.firebasestorage.app",
+  storageBucket: "owl-chat-e4233.appspot.com",
   messagingSenderId: "671987704789",
   appId: "1:671987704789:web:5ffad58bc9c00ba772935c",
   measurementId: "G-ELQRLCLGZT"
@@ -2366,8 +2371,13 @@ function linkify(text) {
   const urlPattern = /(https?:\/\/[^\s]+)/g;
   return (text || "").replace(urlPattern, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
 }
+                
+                function escapeHTML(str = "") {
+  return String(str).replace(/[&<>"']/g, s => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[s]
+  ));
+}
 
-                // Витягаємо дані твіту з URL
 function extractTweetInfo(url){
   const m = url.match(/https?:\/\/(?:www\.)?(?:mobile\.)?(?:twitter|x)\.com\/([^\/\s]+)\/status\/(\d+)/i);
   if (!m) return null;
@@ -2605,7 +2615,11 @@ if (amAdmin || isMine) {
 
   const textEl = document.createElement("div");
   textEl.className = "message-text";
-  textEl.innerHTML = replaceEmojisWithIconify(linkify(messageObj.text || ""));
+  const rawText = messageObj.text || "";
+const safe = escapeHTML(rawText); 
+const linked = linkify(safe);                
+const withEmoji = replaceEmojisWithIconify(linked); 
+textEl.innerHTML = withEmoji;
   content.appendChild(textEl);
 
   // reactions row (якщо вже є)
@@ -2663,9 +2677,10 @@ if (tweetUrls){
     replyBlock.dataset.replyKey = messageObj.replyTo.key;
 
     const previewRaw = (messageObj.replyTo.text || "").trim()
-      ? messageObj.replyTo.text.split("\n")[0].slice(0, 250)
-      : "(image)";
-    const previewText = replaceEmojisWithIconify(previewRaw);
+  ? messageObj.replyTo.text.split("\n")[0].slice(0, 250)
+  : "(image)";
+const previewSafe = escapeHTML(previewRaw);
+const previewText = replaceEmojisWithIconify(linkify(previewSafe));
 
     const avatarSrc = messageObj.replyTo.imageId
       ? `${imageBaseURL}${messageObj.replyTo.imageId}.webp`
@@ -3181,7 +3196,7 @@ chatSections.forEach(section => {
     // ставимо невелику затримку, щоб не спамити
     if (scrollTimer) clearTimeout(scrollTimer);
     scrollTimer = setTimeout(async () => {
-      if (box.scrollTop >= -4 && box.scrollTop <= 4) {
+      if (box.scrollTop >= -10 && box.scrollTop <= 10) {
         await markAsRead(section, currentWallet);
       }
     }, 120);
@@ -3282,10 +3297,30 @@ chatSections.forEach(section => {
       const msgCard = document.querySelector(`.chat-messages[data-section="${section}"] .chat-message[data-key="${key}"]`);
       if (!msgCard) return;
 
-      const textEl = msgCard.querySelector(".message-text");
-      if (textEl) {
-        textEl.innerHTML = replaceEmojisWithIconify(linkify(updatedMsg.text || ""));
-      }
+     const textEl = msgCard.querySelector(".message-text");
+if (textEl) {
+  const rawText = updatedMsg.text || "";
+  const safe = escapeHTML(rawText);
+  const linked = linkify(safe);
+  const withEmoji = replaceEmojisWithIconify(linked);
+  textEl.innerHTML = withEmoji;
+}
+
+// 1) прибираємо старі вбудовані твіти, щоб не дублювались
+msgCard.querySelectorAll('.tweet-embed').forEach(n => n.remove());
+
+// 2) шукаємо нові twitter/x-URL і рендеримо знову
+const newText = updatedMsg.text || "";
+const tweetUrls = newText.match(/https?:\/\/(?:www\.)?(?:mobile\.)?(?:twitter|x)\.com\/[^\/\s]+\/status\/\d+[^\s]*/gi);
+if (tweetUrls) {
+  const contentEl = msgCard.querySelector('.message-content');
+  tweetUrls.forEach(u => {
+    const holder = document.createElement('div');
+    holder.className = 'tweet-embed';
+    contentEl.appendChild(holder);
+    renderTweetEmbed(holder, u);
+  });
+}
 
       const contentEl = msgCard.querySelector(".message-content");
       let reactionRow = msgCard.querySelector(".reaction-row");
