@@ -484,24 +484,22 @@
 /* сам елемент списку — без фону та без внутрішньої картки */
 #announcements-list li {
   list-style: none;
-  background: transparent; /* прибрали третю "панель" */
-  padding: 0;              /* забрали внутрішні відступи картки */
-  margin: 0;
-  border-radius: 0;        /* не потрібні заокруглення, бо фону немає */
+  background: rgba(255, 255, 255, 0.05);
+  padding: 12px 16px;
+  border-radius: 10px;
   font-size: 14px;
   color: var(--text-primary);
-  line-height: 1.5;
-  white-space: normal;
-  text-overflow: clip;
-  overflow: visible;
+  line-height: 1.4;
+  overflow: hidden;
+  word-break: break-word;
 }
 
-/* якщо буде кілька повідомлень — невеликий відступ між ними */
+
 #announcements-list li + li {
   margin-top: 8px;
 }
 
-/* скролбар тепер стилізуємо для <ul>, а не для <li> */
+
 #announcements-list::-webkit-scrollbar {
   width: 6px;
 }
@@ -510,15 +508,15 @@
   border-radius: 3px;
 }
 
-    /* USER PANEL: однаковий розмір і центрований текст */
+  
 #wallet-side-btn,
 .connect-wallet.profile-button {
   width: 100%;
   display: block;
   height: 40px;
-  line-height: 40px;   /* вертикальне центрування */
-  padding: 0;          /* щоб висота була однакова */
-  text-align: center;  /* горизонтальне центрування */
+  line-height: 40px;  
+  padding: 0;         
+  text-align: center; 
   box-sizing: border-box;
 }
 
@@ -588,6 +586,7 @@
   <div class="overlay">
     <ul id="announcements-list"></ul>
   </div>
+  <a href="https://owlbtc.art/profile/#announcements" target="_blank" class="view-more-button">View More</a>
 </div>
 
       <div class="footer">
@@ -777,35 +776,38 @@ async function handleWalletConnected(address) {
 
   const img = document.getElementById("profile-image");
   let wrapper = userPanel.querySelector(".wallet-info");
-if (wrapper) wrapper.remove(); 
-wrapper = document.createElement("div");
-wrapper.className = "wallet-info";
-wrapper.style.cssText = "margin-top: 16px; font-size: 15px; line-height: 1.6;";
+  if (wrapper) wrapper.remove();
+  wrapper = document.createElement("div");
+  wrapper.className = "wallet-info";
+  wrapper.style.cssText = "margin-top: 16px; font-size: 15px; line-height: 1.6;";
 
   if (result.found) {
-  img.style.display = "block";
+    img.style.display = "block";
 
-  const totalPointsEl = document.createElement("div");
-  totalPointsEl.style.cssText = "margin-top: 10px; font-size: 15px;";
-  totalPointsEl.innerHTML = `<strong>Total Points:</strong> ${result.points}`;
-  wrapper.appendChild(totalPointsEl);
+    const totalPointsEl = document.createElement("div");
+    totalPointsEl.style.cssText = "margin-top: 10px; font-size: 15px;";
+    totalPointsEl.innerHTML = `<strong>Total Points:</strong> ${result.points}`;
+    wrapper.appendChild(totalPointsEl);
 
-  const profileBtn = document.createElement("a");
-profileBtn.href = "https://owlbtc.art/profile/";
-profileBtn.textContent = "Profile";
-profileBtn.className = "connect-wallet";     
-profileBtn.style.marginTop = "10px";
-profileBtn.style.textDecoration = "none";
-wrapper.appendChild(profileBtn);
+    const profileBtn = document.createElement("a");
+    profileBtn.href = "https://owlbtc.art/profile/";
+    profileBtn.textContent = "Profile";
+    profileBtn.className = "connect-wallet profile-button";
+    profileBtn.style.marginTop = "10px";
+    profileBtn.style.textDecoration = "none";
+    wrapper.appendChild(profileBtn);
 
     const addrBtn = document.createElement("button");
-addrBtn.className = "connect-wallet";           
-addrBtn.textContent = shortenAddress(address);
-addrBtn.style.marginTop = "10px";
-addrBtn.style.cursor = "default";
-wrapper.appendChild(addrBtn);
+    addrBtn.className = "connect-wallet profile-button";
+    addrBtn.textContent = shortenAddress(address);
+    addrBtn.style.marginTop = "10px";
+    addrBtn.style.cursor = "default";
+    addrBtn.disabled = true; 
+    wrapper.appendChild(addrBtn);
 
-  else {
+
+    img.insertAdjacentElement('afterend', wrapper);
+  } else {
     img.style.display = "none";
     const getOwlBtn = document.createElement("button");
     getOwlBtn.textContent = "Get your OWL";
@@ -815,6 +817,7 @@ wrapper.appendChild(addrBtn);
     userPanel.appendChild(getOwlBtn);
   }
 }
+
 
 async function loadtop5(){
   const res  = await fetch(sheetURL, { cache:'no-store' });
@@ -889,11 +892,11 @@ document.addEventListener("DOMContentLoaded", () => {
     fetchProfileImage(saved);
   }
 
-  // прив’язуємо кнопки один раз через універсальну функцію
+
   bindWalletBtn('wallet-header-btn','wallet-header-dropdown');
   bindWalletBtn('wallet-side-btn','wallet-side-dropdown');
 
-  // клік поза меню ховає всі дропдауни
+
   document.addEventListener("click", () => {
     document.querySelectorAll(".wallet-dropdown-content").forEach(dd => dd.style.display = "none");
   });
@@ -910,22 +913,28 @@ function escapeHTML(s){
   }[c]));
 }
 
-async function loadLatestAnnouncement(){
+function clipWithDots(str, limit) {
+  const src = (str || "").trim();
+  if (src.length <= limit) return src;
+  // обрізаємо по слову і додаємо три крапки
+  return src.slice(0, limit).replace(/\s+\S*$/, "") + "...";
+}
+
+async function loadLatestAnnouncement() {
   const snap = await db.ref("chats/announcements").limitToLast(1).once("value");
   const data = snap.val();
   if (!data) return;
 
   const lastMsg = Object.values(data)[0];
-  let text = escapeHTML(lastMsg.text || "(no text)");
-  text = text.replace(/@([a-zA-Z0-9_]+)/g, (_,u)=>
-    `<a href="https://x.com/${u}" target="_blank" rel="noopener noreferrer" style="color: var(--accent-color); text-decoration: none;">@${u}</a>`
-  );
-
   const date = new Date(lastMsg.timestamp || Date.now()).toLocaleDateString();
-  const trimmed = text.length > 160 ? text.slice(0,160) + "..." : text;
+
+
+  const preview = clipWithDots(lastMsg.text || "", 220);
 
   const ul = document.getElementById("announcements-list");
-  if (ul) ul.innerHTML = `<li><strong>${date}</strong>: ${trimmed}</li>`;
+  if (ul) {
+    ul.innerHTML = `<li><strong>${date}</strong>: ${escapeHTML(preview)}</li>`;
+  }
 }
 </script>
 
