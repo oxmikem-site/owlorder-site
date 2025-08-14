@@ -662,13 +662,21 @@ async function connectUniSatWallet() {
     return;
   }
   try {
-    // requestAccounts вже повертає адреси – не треба одразу викликати getAccounts
-    const accounts = await window.unisat.requestAccounts();
-    const address = Array.isArray(accounts) ? accounts[0] : undefined;
+    let address;
 
-    if (!address || typeof address !== 'string') {
+    // 1) спроба взяти з requestAccounts
+    const req = await window.unisat.requestAccounts();
+    if (Array.isArray(req) && req.length) address = req[0];
+
+    // 2) фолбек: якщо нічого — беремо з getAccounts
+    if (!address) {
+      const accs = await window.unisat.getAccounts();
+      if (Array.isArray(accs) && accs.length) address = accs[0];
+    }
+
+    if (!address) {
       alert("No address returned. Unlock UniSat and approve the connection.");
-      return; // ← нічого не пишемо в localStorage поки нема валідної адреси
+      return;
     }
 
     localStorage.setItem('taproot_wallet', address);
@@ -678,6 +686,28 @@ async function connectUniSatWallet() {
     console.error('UniSat connect error:', err);
     alert(`Failed to connect wallet: ${err?.message || err}`);
   }
+}
+
+    if (window.unisat) {
+  // коли користувач у гаманці перемикає адресу
+  window.unisat.on('accountsChanged', (accounts) => {
+    const addr = Array.isArray(accounts) && accounts[0] ? accounts[0] : null;
+    if (addr) {
+      localStorage.setItem('taproot_wallet', addr);
+      updateWalletButtons(addr);
+      handleWalletConnected(addr);
+      fetchProfileImage(addr);
+    } else {
+      localStorage.removeItem('taproot_wallet');
+      location.reload();
+    }
+  });
+
+  // коли змінюється мережа — просто оновимо кнопки, якщо вже збережено адресу
+  window.unisat.on('networkChanged', () => {
+    const saved = localStorage.getItem('taproot_wallet');
+    if (saved) updateWalletButtons(saved);
+  });
 }
 
     function bindWalletBtn(btnId, dropdownId){
