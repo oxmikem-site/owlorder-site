@@ -510,15 +510,6 @@
   border-radius: 3px;
 }
 
-    .connect-wallet.profile-button {
-  height: 40px;
-  line-height: 40px;
-  font-size: 15px;
-  display: block;
-  text-align: center;
-  margin-top: 10px;
-}
-
     /* USER PANEL: однаковий розмір і центрований текст */
 #wallet-side-btn,
 .connect-wallet.profile-button {
@@ -800,12 +791,19 @@ wrapper.style.cssText = "margin-top: 16px; font-size: 15px; line-height: 1.6;";
   wrapper.appendChild(totalPointsEl);
 
   const profileBtn = document.createElement("a");
-  profileBtn.href = "https://owlbtc.art/profile/";
+profileBtn.href = "https://owlbtc.art/profile/";
 profileBtn.textContent = "Profile";
-profileBtn.className = "connect-wallet profile-button";
+profileBtn.className = "connect-wallet";     
+profileBtn.style.marginTop = "10px";
+profileBtn.style.textDecoration = "none";
 wrapper.appendChild(profileBtn);
-  img.insertAdjacentElement('afterend', wrapper);
-}
+
+    const addrBtn = document.createElement("button");
+addrBtn.className = "connect-wallet";           
+addrBtn.textContent = shortenAddress(address);
+addrBtn.style.marginTop = "10px";
+addrBtn.style.cursor = "default";
+wrapper.appendChild(addrBtn);
 
   else {
     img.style.display = "none";
