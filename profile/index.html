@@ -1500,14 +1500,10 @@ function readHolderCache(address){
 
 function writeHolderCache(address, data){
   try {
-    if (data && data.found) {
-      localStorage.setItem(
-        `holder:${address.toLowerCase()}`,
-        JSON.stringify({ ...data, ts: Date.now() })
-      );
-    } else {
-      localStorage.removeItem(`holder:${address.toLowerCase()}`);
-    }
+    localStorage.setItem(
+      `holder:${address.toLowerCase()}`,
+      JSON.stringify({ ...data, ts: Date.now() })
+    );
   } catch {}
 }
 
@@ -1670,16 +1666,88 @@ function setProfileImageById(imageId) {
   img.style.display = "block";
 }
 
-                async function getHolderInfo(address){
-  // 1) спершу кеш
+async function getHolderInfo(address){
+  if (!address) return { found:false, address:null, imageId:null, points:null };
+
+  // 1) кеш
   const cached = readHolderCache(address);
   if (cached) return cached;
 
-  // 2) мережа
-  const fresh = await checkHolderInSheet(address);
-  writeHolderCache(address, fresh);
-  return fresh;
+  // 2) тягнемо ПОІНТИ (НЕ залежно від snapshot)
+  let points = null;
+  try {
+    const res   = await fetch(sheetURL, { cache: 'no-store' });
+    const csv   = await res.text();
+    const table = parseCSV(csv);
+
+    if (table.length) {
+      const header    = table[0].map(h => (h || '').trim().toLowerCase());
+      const addrIdx   = header.indexOf("holder address");
+      const pointsIdx = header.indexOf("total points");
+      if (addrIdx !== -1 && pointsIdx !== -1) {
+        const body   = table.slice(1);
+        const addrLc = address.trim().toLowerCase();
+        const row    = body.find(r => (((r[addrIdx] || '') + '').trim().toLowerCase()) === addrLc);
+        if (row) {
+          const raw = ((row[pointsIdx] || '') + '').trim();
+          points = raw.replace(/,/g, "") || "0";
+        }
+      }
+    }
+  } catch (e) {
+    console.warn("Points sheet fetch error:", e);
+  }
+
+  // 3) тягнемо SNAPSHOT (щоб визначити холдера та imageId)
+  let imageId = null;
+  try {
+    const resImg = await fetch(SNAPSHOT_CSV_URL, { cache: 'no-store' });
+    const csvImg = await resImg.text();
+    const rows = parseCSV(csvImg);
+    if (rows.length) {
+      let body = rows, addrIdx = 1, numIdx = 9;
+
+      const header = rows[0].map(h => (h || '').trim().toLowerCase());
+      const hasHeader = header.join(' ').includes('address') || header.join(' ').includes('holder') || header.includes('№');
+      if (hasHeader) {
+        const maybeAddr = Math.max(header.indexOf('holder address'), header.indexOf('address'));
+if (maybeAddr !== -1) addrIdx = maybeAddr;
+
+const maybeNum = (header.indexOf('№') !== -1)
+  ? header.indexOf('№')
+  : Math.max(header.indexOf('number'), header.indexOf('nft number'), header.indexOf('owl'), header.indexOf('#'));
+if (maybeNum !== -1) numIdx = maybeNum;
+
+body = rows.slice(1);
+      }
+
+      const addrLc = address.trim().toLowerCase();
+      for (const cols of body) {
+        const rowAddress = (((cols[addrIdx] || '') + '').trim().toLowerCase());
+        if (rowAddress === addrLc) {
+          const raw = ((cols[numIdx] || '') + '').trim();
+          imageId = raw.replace(/[^\d]/g, '');
+          break;
+        }
+      }
+    }
+  } catch (e) {
+    console.warn("SNAPSHOT fetch error:", e);
+  }
+
+  // 4) формуємо результат:
+  const result = {
+    found: !!imageId,     // статус холдера — за snapshot
+    address,
+    imageId: imageId || null,
+    points: (points != null ? points : null)
+  };
+
+  // 5) кеш (тепер пишемо завжди, навіть якщо found:false)
+  writeHolderCache(address, result);
+  return result;
 }
+
 
 async function getAllOwlsForAddress(address) {
   if (!address) return [];
@@ -1990,46 +2058,42 @@ async function populateSidebarUserInfo(address) {
   addrEl.style.display = "block";
 }
 
-  // спочатку сховаємо картинку, щоб не блимала
+ // стартово ховаємо
 if (img) img.style.display = "none";
+if (ptsEl) ptsEl.style.display = "none";
 
-// миттєво показуємо із локального кешу, якщо є
-cachedHolderInfo = readHolderCache(address) || { found: false };
-if (cachedHolderInfo.found) {
-  setProfileImageById(cachedHolderInfo.imageId);
-  if (ptsEl) {
-    ptsEl.innerHTML = `<strong>Total Points:</strong> ${cachedHolderInfo.points}`;
-    ptsEl.style.display = "block";
-  }
-} else {
-  if (ptsEl) ptsEl.style.display = "none";
-  if (connectBtn) {
-    connectBtn.textContent = "Get your OWL";
-    connectBtn.onclick = () => window.open("https://owlbtc.art/collection", "_blank");
-    connectBtn.style.display = "inline-block";
-  }
-}
-
-// тихо оновимо з мережі й, якщо змінились дані — перерендераємо
+// оновлюємо з мережі
 getHolderInfo(address).then(info => {
   cachedHolderInfo = info;
-  if (!info.found) {
-    if (img) img.style.display = "none";
-    if (ptsEl) ptsEl.style.display = "none";
-    if (connectBtn) {
+
+  // аватар показуємо тільки якщо є imageId
+  if (info.imageId) {
+    setProfileImageById(info.imageId);
+  } else if (img) {
+    img.style.display = "none";
+  }
+
+  // ПОКАЗ поінтів — якщо вони є, незалежно від found
+  if (ptsEl) {
+    if (info.points != null && info.points !== "") {
+      ptsEl.innerHTML = `<strong>Total Points:</strong> ${info.points}`;
+      ptsEl.style.display = "block";
+    } else {
+      ptsEl.style.display = "none";
+    }
+  }
+
+  // кнопка в сайдбарі
+  if (connectBtn) {
+    if (info.imageId) {
+      connectBtn.style.display = "none"; // є аватар — ховаємо кнопку
+    } else {
       connectBtn.textContent = "Get your OWL";
       connectBtn.onclick = () => window.open("https://owlbtc.art/collection", "_blank");
       connectBtn.style.display = "inline-block";
     }
-    return;
-  }
-    setProfileImageById(info.imageId);
-  if (ptsEl) {
-    ptsEl.innerHTML = `<strong>Total Points:</strong> ${info.points}`;
-    ptsEl.style.display = "block";
   }
 });
-
 }
 
 /* Перемикання секцій */
@@ -3181,19 +3245,67 @@ if (initiallyActive && initiallyActive.id?.startsWith('section-') && currentWall
     });
   });
 
-    // коли секція активна і користувач прокрутив донизу (нові повідомлення переглянуті) — скидаємо бейдж
+    // глобальна функція відкриття секції чату
+window.openRoom = async function(room){
+  const section = (room || '').toLowerCase();
+  // якщо є клік по пункту — скористаємося ним (там є вся логіка show/hide + markAsRead)
+  const link = document.querySelector(`#sidebar-nav a[data-section="${section}"]`);
+  if (link) {
+    link.click();
+    return;
+  }
+  // фолбек: напряму вмикаємо секцію
+  try {
+    hideAllSections();
+    showSection(section);
+    const wallet = getConnectedWalletAddress && getConnectedWalletAddress();
+    if (wallet && typeof markAsRead === 'function') {
+      await markAsRead(section, wallet);
+    }
+  } catch (e) { /* no-op */ }
+};
+
+// якщо прийшли з дашборду — авто-відкрий «Announcements»
+(function autoOpenAnnouncements() {
+  const KEY = 'chat_autojoin';
+  const room = localStorage.getItem(KEY);
+  if (!room) return;
+  localStorage.removeItem(KEY);
+
+  let tries = 0, maxTries = 30;
+
+  const tryOpen = () => {
+    tries++;
+
+
+    if (typeof window.openRoom === 'function') {
+      window.openRoom(room);  
+      return;
+    }
+
+
+    const el = document.querySelector(`#sidebar-nav a[data-section="${room}"]`);
+    if (el) { el.click(); return; }
+
+
+    if (tries < maxTries) setTimeout(tryOpen, 200);
+  };
+
+  tryOpen();
+})();
+
+
 chatSections.forEach(section => {
   const box = document.querySelector(`.chat-messages[data-section="${section}"]`);
   if (!box) return;
 
   let scrollTimer = null;
   box.addEventListener('scroll', async () => {
-    // перевіряємо, що секція відкрита
+
     const isActive = document.getElementById(`section-${section}`)?.classList.contains('active');
     if (!isActive || !currentWallet) return;
 
-    // для column-reverse: "низ" візуально = scrollTop близько 0
-    // ставимо невелику затримку, щоб не спамити
+
     if (scrollTimer) clearTimeout(scrollTimer);
     scrollTimer = setTimeout(async () => {
       if (box.scrollTop >= -10 && box.scrollTop <= 10) {
@@ -3238,7 +3350,7 @@ function renderPreviews(section){
   container.appendChild(grid);
 }
 
-  // Мультизавантаження (до 5 файлів) + прев'ю
+
 chatSections.forEach(section => {
   const uploadBtn = document.querySelector(`.upload-image-btn[data-section="${section}"]`);
   const fileInput = document.querySelector(`.image-upload[data-section="${section}"]`);
@@ -3261,12 +3373,12 @@ chatSections.forEach(section => {
     selectedFilesBySection[section] = current;
     renderPreviews(section);
 
-    // очистити, щоб можна було додавати ті ж файли ще раз
+
     fileInput.value = '';
   });
 });
 
-  // Підписка на нові повідомлення
+
   chatSections.forEach(section => {
     const ref = getChatMessagesRef(section);
     ref.on("child_added", (snapshot) => {
@@ -3287,7 +3399,7 @@ chatSections.forEach(section => {
     });
   });
 
-  // Оновлення повідомлення
+
   chatSections.forEach(section => {
     const ref = getChatMessagesRef(section);
     ref.on("child_changed", (snapshot) => {
@@ -3306,10 +3418,10 @@ if (textEl) {
   textEl.innerHTML = withEmoji;
 }
 
-// 1) прибираємо старі вбудовані твіти, щоб не дублювались
+
 msgCard.querySelectorAll('.tweet-embed').forEach(n => n.remove());
 
-// 2) шукаємо нові twitter/x-URL і рендеримо знову
+
 const newText = updatedMsg.text || "";
 const tweetUrls = newText.match(/https?:\/\/(?:www\.)?(?:mobile\.)?(?:twitter|x)\.com\/[^\/\s]+\/status\/\d+[^\s]*/gi);
 if (tweetUrls) {
@@ -3333,7 +3445,6 @@ if (tweetUrls) {
     });
   });
 
-  // Видалення повідомлення
   chatSections.forEach(section => {
     const chatRef = getChatMessagesRef(section);
     chatRef.on("child_removed", (snapshot) => {
@@ -3391,7 +3502,6 @@ function setPreviewProgress(section, idx, pct){
   if (bar) bar.style.width = `${Math.max(0, Math.min(100, pct))}%`;
 }
 
-  // Надсилання повідомлення
   chatSections.forEach(section => {
     const sendBtn  = document.querySelector(`.send-btn[data-section="${section}"]`);
     const fileInput = document.querySelector(`.image-upload[data-section="${section}"]`);
@@ -3404,13 +3514,12 @@ function setPreviewProgress(section, idx, pct){
   const text   = input.value.trim();
   const sender = getConnectedWalletAddress();
 
-  // у announcements/links пишуть лише адміни
+
   if (!sectionAllowsPosting(section, sender)) {
     alert("Only admins can post here.");
     return;
   }
 
-  // чи є хоч текст або вибрані зображення
   const hasSelectedImages = (selectedFilesBySection[section] || []).length > 0;
   if ((!text && !hasSelectedImages) || !sender) return;
 
@@ -3446,7 +3555,7 @@ if (chosen.length) {
             const pctFile  = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
             setPreviewProgress(section, i, pctFile);
 
-            // агрегований прогрес
+
             const totalPct = Math.round(((finished + pctFile/100) / chosen.length) * 100);
             setUploadingUI(section, true, `Uploading ${i+1}/${chosen.length}… ${totalPct}%`);
           },
@@ -3520,7 +3629,7 @@ if (chosen.length) {
 });
 });
     
-  // Інпут: авто-висота, Enter/Shift+Enter, emoji
+
   chatSections.forEach(section => {
     const chatInput = document.getElementById(`chat-input-${section}`);
     const sendBtn = document.querySelector(`.send-btn[data-section="${section}"]`);
