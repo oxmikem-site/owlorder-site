@@ -3142,7 +3142,7 @@ function appendMessageToChat(messageObj, key = null, section = "general", curren
   msgEl.className = "chat-message";
   if (key) msgEl.dataset.key = key;
   msgEl.dataset.senderFull = messageObj.sender || "";
-
+  msgEl.dataset.rawText = messageObj.text || "";
 
   const avatar = document.createElement("img");
   avatar.className = "avatar";
@@ -4007,46 +4007,52 @@ chatSections.forEach(section => {
     const ref = getChatMessagesRef(section);
     ref.on("child_changed", (snapshot) => {
       const key = snapshot.key;
-      const updatedMsg = snapshot.val();
+const updatedMsg = snapshot.val();
 
-      const msgCard = document.querySelector(`.chat-messages[data-section="${section}"] .chat-message[data-key="${key}"]`);
-      if (!msgCard) return;
+const msgCard = document.querySelector(`.chat-messages[data-section="${section}"] .chat-message[data-key="${key}"]`);
+if (!msgCard) return;
 
-     const textEl = msgCard.querySelector(".message-text");
-if (textEl) {
-  const rawText = updatedMsg.text || "";
-  const safe = escapeHTML(rawText);
-  const linked = linkify(safe);
-  const withEmoji = replaceEmojisWithIconify(linked);
-  textEl.innerHTML = withEmoji;
-}
+// порівнюємо старий і новий сирий текст
+const newRaw = updatedMsg.text || "";
+const oldRaw = msgCard.dataset.rawText || "";
 
+if (newRaw !== oldRaw) {
+  // зберігаємо новий сирий текст
+  msgCard.dataset.rawText = newRaw;
 
-msgCard.querySelectorAll('.tweet-embed').forEach(n => n.remove());
+  // оновлюємо розмітку тексту
+  const textEl = msgCard.querySelector(".message-text");
+  if (textEl) {
+    const safe = escapeHTML(newRaw);
+    const linked = linkify(safe);
+    const withEmoji = replaceEmojisWithIconify(linked);
+    textEl.innerHTML = withEmoji;
+  }
 
+  // перерендеримо твіти лише коли змінився текст
+  msgCard.querySelectorAll(".tweet-embed").forEach(n => n.remove());
 
-const newText = updatedMsg.text || "";
-const tweetUrls = newText.match(/https?:\/\/(?:www\.)?(?:mobile\.)?(?:twitter|x)\.com\/[^\/\s]+\/status\/\d+[^\s]*/gi);
-if (tweetUrls) {
-  const contentEl = msgCard.querySelector('.message-content');
-  tweetUrls.forEach(u => {
-    const holder = document.createElement('div');
-    holder.className = 'tweet-embed';
-    contentEl.appendChild(holder);
-    renderTweetEmbed(holder, u);
-  });
-}
-
-      const contentEl = msgCard.querySelector(".message-content");
-      let reactionRow = msgCard.querySelector(".reaction-row");
-      if (!reactionRow) {
-        reactionRow = document.createElement("div");
-        reactionRow.className = "reaction-row";
-        contentEl.appendChild(reactionRow);
-      }
-      updateReactionButtons(reactionRow, updatedMsg, section, key);
+  const tweetUrls = newRaw.match(/https?:\/\/(?:www\.)?(?:mobile\.)?(?:twitter|x)\.com\/[^\/\s]+\/status\/\d+[^\s]*/gi);
+  if (tweetUrls) {
+    const contentEl = msgCard.querySelector(".message-content");
+    tweetUrls.forEach(u => {
+      const holder = document.createElement("div");
+      holder.className = "tweet-embed";
+      contentEl.appendChild(holder);
+      renderTweetEmbed(holder, u);
     });
+  }
+}
+
+let reactionRow = msgCard.querySelector(".reaction-row");
+if (!reactionRow) {
+  reactionRow = document.createElement("div");
+  reactionRow.className = "reaction-row";
+  msgCard.querySelector(".message-content").appendChild(reactionRow);
+}
+updateReactionButtons(reactionRow, updatedMsg, section, key);
   });
+}
 
   chatSections.forEach(section => {
     const chatRef = getChatMessagesRef(section);
@@ -4259,9 +4265,33 @@ const fileName = `chat_images/${uid}/${Date.now()}_${cryptoRand(7)}.${ext}`;
     });
 
     toggleBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      emojiPicker.style.display = emojiPicker.style.display === "none" ? "block" : "none";
-    });
+  e.stopPropagation();
+
+  const willShow = emojiPicker.style.display !== "block";
+  // скинемо попередні координати
+  emojiPicker.style.top = "auto";
+  emojiPicker.style.bottom = "auto";
+
+  if (willShow) {
+    // оцінюємо куди є місце: над чи під кнопкою
+    const r = toggleBtn.getBoundingClientRect();
+    const estH = emojiPicker.offsetHeight || 300; // fallback
+    const spaceBelow = window.innerHeight - r.bottom;
+    const spaceAbove = r.top;
+
+    // контейнер у тебе вже position:relative (inline в розмітці)
+    if (spaceBelow >= estH + 12) {
+      // під кнопкою
+      emojiPicker.style.top = "45px";
+    } else {
+      // над кнопкою
+      emojiPicker.style.bottom = "45px";
+    }
+  }
+
+  emojiPicker.style.display = willShow ? "block" : "none";
+});
+
 
     document.addEventListener("click", (e) => {
       if (!emojiPicker.contains(e.target) && !toggleBtn.contains(e.target)) {
