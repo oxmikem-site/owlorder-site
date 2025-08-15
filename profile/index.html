@@ -2926,10 +2926,10 @@ loadSettings(wallet);
   const twRaw = (twEl?.value || '').trim();
   const dcRaw = (dcEl?.value || '').trim();
 
-  if (!isValidTwitterHandle(twRaw)) {
+  if (twRaw && !isValidTwitterHandle(twRaw)) {
     return alert('Enter a valid X/Twitter handle, e.g. @owl_art');
   }
-  if (!isValidDiscordHandle(dcRaw)) {
+  if (dcRaw && !isValidDiscordHandle(dcRaw)) {
     return alert('Enter a valid Discord username, e.g. owl.art or owl#1234');
   }
 
@@ -4045,8 +4045,8 @@ if (!reactionRow) {
   msgCard.querySelector(".message-content").appendChild(reactionRow);
 }
 updateReactionButtons(reactionRow, updatedMsg, section, key);
-  });
-}
+   });
+});
 
   chatSections.forEach(section => {
     const chatRef = getChatMessagesRef(section);
@@ -4318,47 +4318,58 @@ function ensureLightbox() {
     <button class="nav prev" title="Prev">‹</button>
     <button class="nav next" title="Next">›</button>
   `;
+  Object.assign(lightboxEl.style, {
+    position:'fixed', inset:0, background:'rgba(0,0,0,.9)',
+    display:'none', alignItems:'center', justifyContent:'center', zIndex:2000
+  });
   document.body.appendChild(lightboxEl);
 
   lightboxEl.querySelector('.close').onclick = closeLightbox;
   lightboxEl.addEventListener('click', e => { if (e.target.id === 'lightbox') closeLightbox(); });
   lightboxEl.querySelector('.nav.prev').onclick = showPrev;
   lightboxEl.querySelector('.nav.next').onclick = showNext;
-
-  document.addEventListener('keydown', e => {
-    if (lightboxEl.style.display !== 'flex') return;
-    if (e.key === 'Escape') closeLightbox();
-    if (e.key === 'ArrowRight') showNext();
-    if (e.key === 'ArrowLeft') showPrev();
-  });
-
   return lightboxEl;
 }
 
-function openLightbox(urls, startIndex = 0) {
-  lightboxList = urls || [];
-  lightboxIdx = Math.max(0, Math.min(startIndex, lightboxList.length - 1));
-  const box = ensureLightbox();
-  box.style.display = 'flex';
+function openLightbox(list, startIndex = 0) {
+  ensureLightbox();
+  lightboxList = Array.isArray(list) ? list.slice() : [];
+  lightboxIdx = Math.min(Math.max(0, startIndex|0), Math.max(0, lightboxList.length - 1));
   updateLightboxImage();
+  lightboxEl.style.display = 'flex';
 }
+
 function closeLightbox() {
-  if (lightboxEl) lightboxEl.style.display = 'none';
+  if (!lightboxEl) return;
+  lightboxEl.style.display = 'none';
 }
+
 function updateLightboxImage() {
+  if (!lightboxEl || !lightboxList.length) return;
   const img = lightboxEl.querySelector('#lightbox-img');
   img.src = lightboxList[lightboxIdx];
 }
+
 function showPrev() {
   if (!lightboxList.length) return;
   lightboxIdx = (lightboxIdx - 1 + lightboxList.length) % lightboxList.length;
   updateLightboxImage();
 }
+
 function showNext() {
   if (!lightboxList.length) return;
   lightboxIdx = (lightboxIdx + 1) % lightboxList.length;
   updateLightboxImage();
 }
+
+// Keyboard navigation
+document.addEventListener('keydown', (ev) => {
+  if (!lightboxEl || lightboxEl.style.display !== 'flex') return;
+  if (ev.key === 'Escape') { ev.preventDefault(); closeLightbox(); }
+  else if (ev.key === 'ArrowLeft') { ev.preventDefault(); showPrev(); }
+  else if (ev.key === 'ArrowRight') { ev.preventDefault(); showNext(); }
+});
+
 
 </script>
 </body>
