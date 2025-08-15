@@ -2413,9 +2413,6 @@ function renderWallets(type, list) {
       arr.splice(i,1);
       await getUserProfileRef(wallet).child('wallets').update({ [t]: arr });
       renderWallets(t, arr);
-        if (document.getElementById('section-raffles')?.classList.contains('active')) {
-  renderRafflesEligibility(wallet);
-}
     });
   });
 }
@@ -2441,10 +2438,6 @@ async function addWallet(type) {
   const next = [...list, addr.trim()];
   await ref.update({ [type]: next });
   renderWallets(type, next);
-}
-
-                if (document.getElementById('section-raffles')?.classList.contains('active')) {
-  renderRafflesEligibility(wallet);
 }
 
 async function saveNickname() {
