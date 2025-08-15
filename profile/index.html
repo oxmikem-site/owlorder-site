@@ -2109,19 +2109,22 @@ async function renderMyCollection(address){
   const socials = prof.socials || {};
   const wallets = prof.wallets || { btc:[], evm:[] };
 
-  const isHolder = isWalletHolderSync(wallet) || !!(cachedHolderInfo && cachedHolderInfo.found);
-
+  const isHolder    = isWalletHolderSync(wallet) || !!(cachedHolderInfo && cachedHolderInfo.found);
   const haveTwitter = !!(socials.twitter && (socials.twitter.handle || socials.twitter.connected));
   const haveDiscord = !!(socials.discord && (socials.discord.handle || socials.discord.connected));
-  const btcCount = Array.isArray(wallets.btc) ? wallets.btc.length : 0;
-  const evmCount = Array.isArray(wallets.evm) ? wallets.evm.length : 0;
+  const btcCount    = Array.isArray(wallets.btc) ? wallets.btc.length : 0;
+  const evmCount    = Array.isArray(wallets.evm) ? wallets.evm.length : 0;
+
+  // якщо всі умови виконані — забираємо панель і нічого не показуємо
+  const allMet = isHolder && haveTwitter && haveDiscord && btcCount > 0 && evmCount > 0;
+  const existing = sec.querySelector('.raffles-wrap');
+  if (allMet) { if (existing) existing.remove(); return; }
 
   // створюємо/оновлюємо контейнер
-  let wrap = sec.querySelector('.raffles-wrap');
+  let wrap = existing;
   if (!wrap) {
     wrap = document.createElement('div');
     wrap.className = 'panel raffles-wrap';
-    sec.appendChild(wrap);
   }
 
   wrap.innerHTML = `
@@ -2136,49 +2139,37 @@ async function renderMyCollection(address){
     <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
       <button id="open-settings-from-raffles" class="connect-wallet">Open Settings</button>
     </div>
-    <small class="muted" style="display:block; margin-top:8px;">
-      Raffles are for verified holders with socials provided. We don’t verify accounts, but fields must be filled.
-    </small>
   `;
 
+  // панель завжди внизу центральної секції
+  sec.appendChild(wrap);
+
   const btn = wrap.querySelector('#open-settings-from-raffles');
-  if (btn) {
-    btn.onclick = () => {
-      const link = document.querySelector('#sidebar-nav a[data-section="settings"]');
-      if (link) link.click();
-    };
-  }
+  if (btn) btn.onclick = () => {
+    const link = document.querySelector('#sidebar-nav a[data-section="settings"]');
+    if (link) link.click();
+  };
 }
 
                 async function renderRafflesGrid(){
   const sec = document.getElementById('section-raffles');
   if (!sec) return;
 
-  // topbar + кнопка +
+  // topbar без дублюючого заголовка
   let topbar = sec.querySelector('.raffles-topbar');
   if (!topbar){
     topbar = document.createElement('div');
     topbar.className = 'raffles-topbar';
-    topbar.innerHTML = `
-      <h3 style="margin:0">Raffles</h3>
-      <button id="btn-create-raffle" class="raffles-create-btn">+</button>
-    `;
+    topbar.innerHTML = `<button id="btn-create-raffle" class="raffles-create-btn">+</button>`;
     sec.appendChild(topbar);
   }
 
-                
-const wrap = sec.querySelector('.raffles-wrap');
-if (wrap && topbar && topbar.nextElementSibling !== wrap) {
-  sec.insertBefore(topbar, wrap);
-}
-
-  
   const btnPlus = topbar.querySelector('#btn-create-raffle');
   const w = getConnectedWalletAddress();
   btnPlus.classList.toggle('show', isAdmin(w));
   if (isAdmin(w)) btnPlus.onclick = openCreateRaffleModal;
 
-
+  // сам грід
   let grid = sec.querySelector('.raffles-grid');
   if (!grid){
     grid = document.createElement('div');
@@ -2190,31 +2181,34 @@ if (wrap && topbar && topbar.nextElementSibling !== wrap) {
   const snap = await getRafflesRef().orderByChild('createdAt').get();
   const list = [];
   snap.forEach(ch => list.push({ id: ch.key, ...ch.val() }));
-  list.reverse(); // нові зверху
+  list.reverse();
 
   if (!list.length){
     grid.innerHTML = `<div class="empty-state">No raffles yet.</div>`;
-    return;
+  } else {
+    grid.innerHTML = list.map(r => `
+      <div class="raffle-card" data-id="${r.id}">
+        <img class="raffle-img" src="${escapeHTML(r.coverUrl || '../logo1.png')}" onerror="this.src='../logo1.png'">
+        <img class="raffle-logo" src="${escapeHTML(r.logoUrl || '../logo1.png')}" onerror="this.src='../logo1.png'">
+        <div class="raffle-meta">
+          <span class="raffle-title">${escapeHTML(r.title || 'Raffle')}</span>
+          <span class="raffle-chip">${(r.chain || 'btc').toUpperCase()}</span>
+        </div>
+      </div>
+    `).join('');
+
+    grid.querySelectorAll('.raffle-card').forEach(card=>{
+      card.addEventListener('click', async ()=>{
+        const id = card.getAttribute('data-id');
+        const data = (await getRafflesRef().child(id).get()).val() || {};
+        openRaffleViewModal(id, data);
+      });
+    });
   }
 
-  grid.innerHTML = list.map(r => `
-    <div class="raffle-card" data-id="${r.id}">
-      <img class="raffle-img" src="${escapeHTML(r.coverUrl || '../logo1.png')}" onerror="this.src='../logo1.png'">
-      <img class="raffle-logo" src="${escapeHTML(r.logoUrl || '../logo1.png')}" onerror="this.src='../logo1.png'">
-      <div class="raffle-meta">
-        <span class="raffle-title">${escapeHTML(r.title || 'Raffle')}</span>
-        <span class="raffle-chip">${(r.chain || 'btc').toUpperCase()}</span>
-      </div>
-    </div>
-  `).join('');
-
-  grid.querySelectorAll('.raffle-card').forEach(card=>{
-    card.addEventListener('click', async ()=>{
-      const id = card.getAttribute('data-id');
-      const data = (await getRafflesRef().child(id).get()).val() || {};
-      openRaffleViewModal(id, data);
-    });
-  });
+  // і ще раз — панель вимог завжди в самому низу
+  const wrap = sec.querySelector('.raffles-wrap');
+  if (wrap) sec.appendChild(wrap);
 }
 
                 function openCreateRaffleModal(){
