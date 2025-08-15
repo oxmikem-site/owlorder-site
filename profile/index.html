@@ -1289,17 +1289,16 @@ display: block;
   <div class="settings-grid">
     <!-- Socials -->
     <div class="setting-card">
-      <h4>Socials</h4>
-      <div class="row">
-        <span>Twitter</span>
-        <button id="btn-connect-twitter" class="connect-wallet">Connect</button>
-      </div>
-      <div class="row">
-        <span>Discord</span>
-        <button id="btn-connect-discord" class="connect-wallet">Connect</button>
-      </div>
-      <small id="settings-social-status" class="muted"></small>
-    </div>
+  <h4>Socials</h4>
+  <div class="row">
+    <input id="inp-twitter" type="text" placeholder="@your_handle (X/Twitter)" maxlength="15" />
+    <button id="btn-save-socials" class="connect-wallet">Save</button>
+  </div>
+  <div class="row">
+    <input id="inp-discord" type="text" placeholder="Discord username (name#1234 або new username)" maxlength="40" />
+  </div>
+  <small id="settings-social-status" class="muted"></small>
+</div>
 
     <!-- Nickname -->
     <div class="setting-card">
@@ -2028,6 +2027,57 @@ async function renderMyCollection(address){
 }).join('');
 }
 
+                async function renderRafflesEligibility(wallet){
+  const sec = document.getElementById('section-raffles');
+  if (!sec) return;
+
+  // читаємо профіль
+  const profSnap = await getUserProfileRef(wallet).get();
+  const prof = profSnap.val() || {};
+  const socials = prof.socials || {};
+  const wallets = prof.wallets || { btc:[], evm:[] };
+
+  const isHolder = isWalletHolderSync(wallet) || !!(cachedHolderInfo && cachedHolderInfo.found);
+
+  const haveTwitter = !!(socials.twitter && (socials.twitter.handle || socials.twitter.connected));
+  const haveDiscord = !!(socials.discord && (socials.discord.handle || socials.discord.connected));
+  const btcCount = Array.isArray(wallets.btc) ? wallets.btc.length : 0;
+  const evmCount = Array.isArray(wallets.evm) ? wallets.evm.length : 0;
+
+  // створюємо/оновлюємо контейнер
+  let wrap = sec.querySelector('.raffles-wrap');
+  if (!wrap) {
+    wrap = document.createElement('div');
+    wrap.className = 'panel raffles-wrap';
+    sec.appendChild(wrap);
+  }
+
+  wrap.innerHTML = `
+    <h2>Profile requirements</h2>
+    <ul style="margin:0; padding-left:18px; line-height:1.8;">
+      <li>${isHolder ? '✅' : '❌'} Holder status (snapshot)</li>
+      <li>${haveTwitter ? '✅' : '❌'} X/Twitter connected</li>
+      <li>${haveDiscord ? '✅' : '❌'} Discord connected</li>
+      <li>${btcCount > 0 ? '✅' : '❌'} BTC addresses added (${btcCount})</li>
+      <li>${evmCount > 0 ? '✅' : '❌'} EVM addresses added (${evmCount})</li>
+    </ul>
+    <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
+      <button id="open-settings-from-raffles" class="connect-wallet">Open Settings</button>
+    </div>
+    <small class="muted" style="display:block; margin-top:8px;">
+      Raffles are for verified holders with socials provided. We don’t verify accounts, but fields must be filled.
+    </small>
+  `;
+
+  const btn = wrap.querySelector('#open-settings-from-raffles');
+  if (btn) {
+    btn.onclick = () => {
+      const link = document.querySelector('#sidebar-nav a[data-section="settings"]');
+      if (link) link.click();
+    };
+  }
+}
+
 /* Заповнення сайдбару профілю */
 async function populateSidebarUserInfo(address) {
   const addrEl = document.getElementById("sidebar-wallet-addr");
@@ -2288,13 +2338,24 @@ if (!isActive && (replyIsToMe || mentionIsToMe) && m.timestamp > lastReplySeen) 
   return db.ref(`users/${wallet}/profile`);
 }
 
-                async function loadSettings(wallet) {
-  if (!wallet) return {nickname:'', socials:{twitter:false, discord:false}, wallets:{btc:[], evm:[]}};
-
+               async function loadSettings(wallet) {
+  if (!wallet) return {nickname:'', socials:{}, wallets:{btc:[], evm:[]}};
   const snap = await getUserProfileRef(wallet).get();
   const data = snap.val() || {};
+
   const nickname = data.nickname || '';
-  const socials  = data.socials || { twitter:false, discord:false };
+
+  // socials: підтримуємо старий формат (true/false) і новий (об’єкт)
+  const rawSoc = data.socials || {};
+  const socials = {
+    twitter: (typeof rawSoc.twitter === 'object')
+      ? rawSoc.twitter
+      : (rawSoc.twitter ? { connected: true } : { connected: false }),
+    discord: (typeof rawSoc.discord === 'object')
+      ? rawSoc.discord
+      : (rawSoc.discord ? { connected: true } : { connected: false })
+  };
+
   const wallets  = data.wallets || { btc:[], evm:[] };
 
   // UI fill
@@ -2302,9 +2363,19 @@ if (!isActive && (replyIsToMe || mentionIsToMe) && m.timestamp > lastReplySeen) 
   if (nickInp) nickInp.value = nickname;
   currentUserNickname = nickname || "";
 
+  const twInp = document.getElementById('inp-twitter');
+  if (twInp) twInp.value = socials.twitter?.handle ? '@' + socials.twitter.handle : '';
+
+  const dcInp = document.getElementById('inp-discord');
+  if (dcInp) dcInp.value = socials.discord?.handle || '';
+
   const socialStatus = document.getElementById('settings-social-status');
   if (socialStatus) {
-    socialStatus.textContent = `Twitter: ${socials.twitter ? 'connected' : 'not connected'} · Discord: ${socials.discord ? 'connected' : 'not connected'}`;
+    const twTxt = socials.twitter?.handle ? '@'+socials.twitter.handle
+                 : (socials.twitter?.connected ? 'connected' : 'not connected');
+    const dcTxt = socials.discord?.handle ? socials.discord.handle
+                 : (socials.discord?.connected ? 'connected' : 'not connected');
+    socialStatus.textContent = `Twitter: ${twTxt} · Discord: ${dcTxt}`;
   }
 
   renderWallets('btc', wallets.btc || []);
@@ -2312,6 +2383,7 @@ if (!isActive && (replyIsToMe || mentionIsToMe) && m.timestamp > lastReplySeen) 
 
   return { nickname, socials, wallets };
 }
+
 
 function renderWallets(type, list) {
   const el = document.getElementById(type === 'btc' ? 'list-btc' : 'list-evm');
@@ -2341,6 +2413,9 @@ function renderWallets(type, list) {
       arr.splice(i,1);
       await getUserProfileRef(wallet).child('wallets').update({ [t]: arr });
       renderWallets(t, arr);
+        if (document.getElementById('section-raffles')?.classList.contains('active')) {
+  renderRafflesEligibility(wallet);
+}
     });
   });
 }
@@ -2366,6 +2441,10 @@ async function addWallet(type) {
   const next = [...list, addr.trim()];
   await ref.update({ [type]: next });
   renderWallets(type, next);
+}
+
+                if (document.getElementById('section-raffles')?.classList.contains('active')) {
+  renderRafflesEligibility(wallet);
 }
 
 async function saveNickname() {
@@ -2397,24 +2476,67 @@ async function saveNickname() {
 
 function initSettingsUI(wallet) {
   // buttons
-  const tw = document.getElementById('btn-connect-twitter');
-  if (tw) tw.onclick = () => { window.location.href = '/auth/twitter2'; };
+ const saveSoc = document.getElementById('btn-save-socials');
+if (saveSoc) saveSoc.onclick = saveSocials;
 
-  const dc = document.getElementById('btn-connect-discord');
-  if (dc) dc.onclick = () => { window.location.href = '/auth/discord'; };
+const saveNick = document.getElementById('btn-save-nickname');
+if (saveNick) saveNick.onclick = saveNickname;
 
-  const saveNick = document.getElementById('btn-save-nickname');
-  if (saveNick) saveNick.onclick = saveNickname;
+const addBtc = document.getElementById('btn-add-btc');
+if (addBtc) addBtc.onclick = () => addWallet('btc');
 
-  const addBtc = document.getElementById('btn-add-btc');
-  if (addBtc) addBtc.onclick = () => addWallet('btc');
+const addEvm = document.getElementById('btn-add-evm');
+if (addEvm) addEvm.onclick = () => addWallet('evm');
 
-  const addEvm = document.getElementById('btn-add-evm');
-  if (addEvm) addEvm.onclick = () => addWallet('evm');
-
-  // initial load
-  loadSettings(wallet);
+// initial load
+loadSettings(wallet);
 }
+
+                async function saveSocials(){
+  const wallet = getConnectedWalletAddress();
+  if (!wallet) return alert('Connect wallet first');
+
+  const twEl = document.getElementById('inp-twitter');
+  const dcEl = document.getElementById('inp-discord');
+  const twRaw = (twEl?.value || '').trim();
+  const dcRaw = (dcEl?.value || '').trim();
+
+  if (!isValidTwitterHandle(twRaw)) {
+    return alert('Enter a valid X/Twitter handle, e.g. @owl_art');
+  }
+  if (!isValidDiscordHandle(dcRaw)) {
+    return alert('Enter a valid Discord username, e.g. owl.art or owl#1234');
+  }
+
+  const twHandle = normalizeTwitterHandle(twRaw);
+  const dcHandle = normalizeDiscordHandle(dcRaw);
+
+  const ref = getUserProfileRef(wallet);
+  // фіксуємо власника профілю, якщо ще не зафіксований
+  const snap = await ref.get();
+  const hasOwner = !!(snap.val() && snap.val().ownerUid);
+  const uid = window.CURRENT_UID;
+  if (!uid) return alert('Auth not ready');
+
+  await ref.update({
+    ...(hasOwner ? {} : { ownerUid: uid }),
+    socials: {
+      twitter: { connected: true, handle: twHandle, url: `https://x.com/${twHandle}` },
+      discord: { connected: true, handle: dcHandle }
+    }
+  });
+
+  const status = document.getElementById('settings-social-status');
+  if (status) {
+    status.textContent = `Twitter: @${twHandle} · Discord: ${dcHandle}`;
+  }
+  alert('Socials saved');
+}
+
+                if (document.getElementById('section-raffles')?.classList.contains('active')) {
+  renderRafflesEligibility(wallet);
+}
+
 
 /* ==== Emoji utils ==== */
 const emojiToIconifyMap = {
@@ -2850,6 +2972,28 @@ function isValidBTC(addr) {
   return /^(bc1|[13])[a-zA-HJ-NP-Z0-9]{25,62}$/.test(addr.trim());
 }
 
+                function isValidTwitterHandle(h){
+  if (!h) return false;
+  const s = h.trim().replace(/^@/, '');
+  return /^[A-Za-z0-9_]{1,15}$/.test(s);
+}
+function normalizeTwitterHandle(h){
+  return h.trim().replace(/^@/, '').toLowerCase();
+}
+
+function isValidDiscordHandle(h){
+  if (!h) return false;
+  const t = h.trim();
+
+  if (/^.{2,32}#[0-9]{4}$/.test(t)) return true;
+  if (/^[A-Za-z0-9._]{2,32}$/.test(t)) return true;
+  return false;
+}
+function normalizeDiscordHandle(h){
+  return h.trim();
+}
+
+
 function updateReactionButtons(reactionRow, updatedMsg, section, key) {
   reactionRow.innerHTML = "";
   for (const [emoji, users] of Object.entries(updatedMsg.reactions || {})) {
@@ -3229,6 +3373,10 @@ if (initiallyActive && initiallyActive.id?.startsWith('section-') && currentWall
     if (target === 'collection' && currentWallet) {
       renderMyCollection(currentWallet);
     }
+
+      if (target === 'raffles' && currentWallet) {
+  renderRafflesEligibility(currentWallet);
+}
 
     if (currentWallet) {
       await markAsRead(target, currentWallet);
