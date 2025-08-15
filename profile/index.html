@@ -4309,68 +4309,59 @@ const fileName = `chat_images/${uid}/${Date.now()}_${cryptoRand(7)}.${ext}`;
                 let lightboxEl = null, lightboxIdx = 0, lightboxList = [];
 
 function ensureLightbox() {
-  if (lightboxEl) return lightboxEl;
-  lightboxEl = document.createElement('div');
-  lightboxEl.id = 'lightbox';
-  lightboxEl.innerHTML = `
-    <img id="lightbox-img" alt="">
-    <button class="close" title="Close">✕</button>
-    <button class="nav prev" title="Prev">‹</button>
-    <button class="nav next" title="Next">›</button>
-  `;
-  Object.assign(lightboxEl.style, {
-    position:'fixed', inset:0, background:'rgba(0,0,0,.9)',
-    display:'none', alignItems:'center', justifyContent:'center', zIndex:2000
-  });
-  document.body.appendChild(lightboxEl);
+      if (lightboxEl) return lightboxEl;
+      lightboxEl = document.createElement('div');
+      lightboxEl.id = 'lightbox';
+      lightboxEl.innerHTML = `
+        <button class="close" aria-label="Close">&times;</button>
+        <button class="nav prev" aria-label="Previous">‹</button>
+        <img alt="Preview">
+        <button class="nav next" aria-label="Next">›</button>
+      `;
+      document.body.appendChild(lightboxEl);
 
-  lightboxEl.querySelector('.close').onclick = closeLightbox;
-  lightboxEl.addEventListener('click', e => { if (e.target.id === 'lightbox') closeLightbox(); });
-  lightboxEl.querySelector('.nav.prev').onclick = showPrev;
-  lightboxEl.querySelector('.nav.next').onclick = showNext;
-  return lightboxEl;
-}
+      lightboxEl.querySelector('.close').addEventListener('click', closeLightbox);
+      lightboxEl.addEventListener('click', (e) => { if (e.target === lightboxEl) closeLightbox(); });
+      lightboxEl.querySelector('.nav.prev').addEventListener('click', () => navLightbox(-1));
+      lightboxEl.querySelector('.nav.next').addEventListener('click', () => navLightbox(1));
+      return lightboxEl;
+    }
 
-function openLightbox(list, startIndex = 0) {
-  ensureLightbox();
-  lightboxList = Array.isArray(list) ? list.slice() : [];
-  lightboxIdx = Math.min(Math.max(0, startIndex|0), Math.max(0, lightboxList.length - 1));
-  updateLightboxImage();
-  lightboxEl.style.display = 'flex';
-}
+    function showLightboxImage() {
+      const img = ensureLightbox().querySelector('img');
+      const url = lightboxList[lightboxIdx];
+      if (img && url) img.src = url;
+    }
 
-function closeLightbox() {
-  if (!lightboxEl) return;
-  lightboxEl.style.display = 'none';
-}
+    // викликається при кліку на картинку в повідомленні
+    function openLightbox(urls, startIndex = 0) {
+      if (!Array.isArray(urls) || !urls.length) return;
+      lightboxList = urls.slice();
+      lightboxIdx = Math.max(0, Math.min(startIndex, lightboxList.length - 1));
+      ensureLightbox().style.display = 'flex';
+      showLightboxImage();
+      document.addEventListener('keydown', onLightboxKey, { once: false });
+    }
 
-function updateLightboxImage() {
-  if (!lightboxEl || !lightboxList.length) return;
-  const img = lightboxEl.querySelector('#lightbox-img');
-  img.src = lightboxList[lightboxIdx];
-}
+    function closeLightbox() {
+      if (!lightboxEl) return;
+      lightboxEl.style.display = 'none';
+      document.removeEventListener('keydown', onLightboxKey);
+    }
 
-function showPrev() {
-  if (!lightboxList.length) return;
-  lightboxIdx = (lightboxIdx - 1 + lightboxList.length) % lightboxList.length;
-  updateLightboxImage();
-}
+    function navLightbox(dir) {
+      if (!lightboxList.length) return;
+      lightboxIdx = (lightboxIdx + dir + lightboxList.length) % lightboxList.length;
+      showLightboxImage();
+    }
 
-function showNext() {
-  if (!lightboxList.length) return;
-  lightboxIdx = (lightboxIdx + 1) % lightboxList.length;
-  updateLightboxImage();
-}
+    function onLightboxKey(e) {
+      if (e.key === 'Escape')        closeLightbox();
+      else if (e.key === 'ArrowLeft')  navLightbox(-1);
+      else if (e.key === 'ArrowRight') navLightbox(1);
+    }
 
-// Keyboard navigation
-document.addEventListener('keydown', (ev) => {
-  if (!lightboxEl || lightboxEl.style.display !== 'flex') return;
-  if (ev.key === 'Escape') { ev.preventDefault(); closeLightbox(); }
-  else if (ev.key === 'ArrowLeft') { ev.preventDefault(); showPrev(); }
-  else if (ev.key === 'ArrowRight') { ev.preventDefault(); showNext(); }
-});
-
-
+  }); 
 </script>
 </body>
 </html>
