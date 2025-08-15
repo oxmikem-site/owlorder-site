@@ -990,6 +990,62 @@ display: block;
   .tweet-embed{ width:100%; min-width:auto; max-width:100%; }
 }
 
+        /* === RAFFLES === */
+.raffles-topbar { position:relative; display:flex; align-items:center; justify-content:flex-start; gap:10px; margin-bottom:10px; }
+.raffles-create-btn{
+  position:absolute; right:12px; top:12px; width:36px; height:36px;
+  border:none; border-radius:10px; cursor:pointer; font-size:22px; font-weight:800;
+  background: linear-gradient(90deg,#bfa758,#d4c87c); color:#000;
+  box-shadow:0 6px 16px rgba(0,0,0,.55);
+  display:none;
+}
+.raffles-create-btn.show{ display:block; }
+
+.raffles-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:14px; }
+.raffle-card{
+  position:relative; overflow:hidden; border-radius:16px;
+  background: linear-gradient(145deg,#1b1b1b,#0f0f0f);
+  border:1px solid rgba(255,255,255,.06);
+  box-shadow: 0 8px 24px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.06);
+  transition: transform .2s ease, box-shadow .2s ease;
+  cursor:pointer;
+}
+.raffle-card:hover{ transform:translateY(-2px); box-shadow:0 12px 28px rgba(0,0,0,.6); }
+.raffle-img{ width:100%; aspect-ratio:1/1; object-fit:cover; display:block; background:#0e0e0e; }
+.raffle-meta{ display:flex; justify-content:space-between; align-items:center; padding:10px 12px; }
+.raffle-title{ font-weight:700; letter-spacing:.3px; }
+.raffle-chip{ font-size:11px; padding:4px 8px; border-radius:999px; background:#222; border:1px solid rgba(255,255,255,.08); }
+.raffle-logo{
+  position:absolute; left:10px; top:10px; width:52px; height:52px; border-radius:50%;
+  border:1px solid #d4c87c; box-shadow:0 0 12px rgba(212,200,124,.35); object-fit:cover; background:#0e0e0e;
+}
+
+
+.modal-mask{ position:fixed; inset:0; background:rgba(0,0,0,.65); display:none; align-items:center; justify-content:center; z-index:3000; }
+.modal{ width:min(760px,92vw); background:#151515; border:1px solid rgba(255,255,255,.08); border-radius:16px; padding:16px; box-shadow:0 16px 48px rgba(0,0,0,.6); }
+.modal h3{ margin:0 0 10px 0; }
+.modal .row{ display:flex; gap:10px; margin:8px 0; align-items:center; }
+.modal input[type="text"], .modal textarea, .modal select{
+  flex:1; background:#222; border:none; color:#fff; border-radius:10px; padding:10px 12px;
+  box-shadow: inset 3px 3px 6px #0c0c0c, inset -3px -3px 6px #2a2a2a;
+}
+.modal textarea{ min-height:90px; }
+.modal .actions{ display:flex; justify-content:flex-end; gap:8px; margin-top:12px; }
+.btn{ background:#2a2a2a; border:1px solid rgba(255,255,255,.08); color:#fff; border-radius:10px; padding:8px 12px; cursor:pointer; }
+.btn.primary{ background:linear-gradient(90deg,#bfa758,#d4c87c); color:#000; font-weight:700; }
+
+
+.pill{ display:inline-flex; align-items:center; gap:6px; background:#222; border:1px solid rgba(255,255,255,.08); padding:4px 8px; border-radius:999px; font-size:12px; }
+.pill .x{ cursor:pointer; opacity:.85; }
+
+        .avatar-round{
+  width:56px; height:56px; border-radius:50%;
+  border:1px solid #d4c87c;
+  box-shadow:0 0 12px rgba(212,200,124,.35);
+  object-fit:cover; background:#0e0e0e;
+}
+
+
     </style>
 </head>
 
@@ -1334,6 +1390,13 @@ display: block;
     </div>
   </div>
 </div>
+
+            <!-- Create raffle -->
+<div id="raffle-create-mask" class="modal-mask"></div>
+
+<!-- View raffle -->
+<div id="raffle-view-mask" class="modal-mask"></div>
+
 
             <!-- Logout -->
             <div id="section-logout" class="profile-section">
@@ -2078,6 +2141,336 @@ async function renderMyCollection(address){
   }
 }
 
+                async function renderRafflesGrid(){
+  const sec = document.getElementById('section-raffles');
+  if (!sec) return;
+
+  // topbar + кнопка +
+  let topbar = sec.querySelector('.raffles-topbar');
+  if (!topbar){
+    topbar = document.createElement('div');
+    topbar.className = 'raffles-topbar';
+    topbar.innerHTML = `
+      <h3 style="margin:0">Raffles</h3>
+      <button id="btn-create-raffle" class="raffles-create-btn">+</button>
+    `;
+    sec.appendChild(topbar);
+  }
+
+                
+const wrap = sec.querySelector('.raffles-wrap');
+if (wrap && topbar && topbar.nextElementSibling !== wrap) {
+  sec.insertBefore(topbar, wrap);
+}
+
+  
+  const btnPlus = topbar.querySelector('#btn-create-raffle');
+  const w = getConnectedWalletAddress();
+  btnPlus.classList.toggle('show', isAdmin(w));
+  if (isAdmin(w)) btnPlus.onclick = openCreateRaffleModal;
+
+
+  let grid = sec.querySelector('.raffles-grid');
+  if (!grid){
+    grid = document.createElement('div');
+    grid.className = 'raffles-grid';
+    sec.appendChild(grid);
+  }
+  grid.innerHTML = `<div class="skel"></div><div class="skel"></div><div class="skel"></div>`;
+
+  const snap = await getRafflesRef().orderByChild('createdAt').get();
+  const list = [];
+  snap.forEach(ch => list.push({ id: ch.key, ...ch.val() }));
+  list.reverse(); // нові зверху
+
+  if (!list.length){
+    grid.innerHTML = `<div class="empty-state">No raffles yet.</div>`;
+    return;
+  }
+
+  grid.innerHTML = list.map(r => `
+    <div class="raffle-card" data-id="${r.id}">
+      <img class="raffle-img" src="${escapeHTML(r.coverUrl || '../logo1.png')}" onerror="this.src='../logo1.png'">
+      <img class="raffle-logo" src="${escapeHTML(r.logoUrl || '../logo1.png')}" onerror="this.src='../logo1.png'">
+      <div class="raffle-meta">
+        <span class="raffle-title">${escapeHTML(r.title || 'Raffle')}</span>
+        <span class="raffle-chip">${(r.chain || 'btc').toUpperCase()}</span>
+      </div>
+    </div>
+  `).join('');
+
+  grid.querySelectorAll('.raffle-card').forEach(card=>{
+    card.addEventListener('click', async ()=>{
+      const id = card.getAttribute('data-id');
+      const data = (await getRafflesRef().child(id).get()).val() || {};
+      openRaffleViewModal(id, data);
+    });
+  });
+}
+
+                function openCreateRaffleModal(){
+  const mask = document.getElementById('raffle-create-mask');
+  mask.innerHTML = ''; mask.style.display = 'flex';
+
+  const modal = document.createElement('div');
+  modal.className = 'modal';
+  modal.innerHTML = `
+    <h3>Create raffle</h3>
+
+    <div class="row">
+      <input id="rf-title" type="text" placeholder="Project name *" maxlength="60">
+      <select id="rf-chain">
+        <option value="btc">BTC</option>
+        <option value="evm">EVM</option>
+      </select>
+    </div>
+    <div class="row">
+      <textarea id="rf-desc" placeholder="Main info about project *"></textarea>
+    </div>
+
+    <div class="row">
+      <div style="display:flex; flex-direction:column; gap:6px; width:50%;">
+        <span>Header image</span>
+        <input id="rf-cover" type="file" accept="image/*">
+      </div>
+      <div style="display:flex; flex-direction:column; gap:6px; width:50%;">
+        <span>Round logo</span>
+        <input id="rf-logo" type="file" accept="image/*">
+      </div>
+    </div>
+
+    <div class="row" style="flex-direction:column; align-items:flex-start;">
+      <strong>Follow accounts (X/Twitter)</strong>
+      <div style="display:flex; gap:8px; width:100%;">
+        <input id="rf-follow" type="text" placeholder="@acc1, @acc2, ..." />
+        <button id="add-follow" class="btn">Add</button>
+      </div>
+      <div id="rf-follow-list" style="display:flex; gap:6px; flex-wrap:wrap;"></div>
+    </div>
+
+    <div class="row" style="flex-direction:column; align-items:flex-start;">
+      <strong>Like + Retweet tweet (optional)</strong>
+      <input id="rf-tweet" type="text" placeholder="https://x.com/user/status/123..." />
+    </div>
+
+    <div class="row" style="flex-direction:column; align-items:flex-start;">
+      <strong>Extra tasks</strong>
+      <div style="display:flex; gap:8px; width:100%; flex-wrap:wrap;">
+        <input id="rf-extra-label" type="text" placeholder="Task title (Visit website / Join Discord ...)" style="flex:2;">
+        <input id="rf-extra-url" type="text" placeholder="https://..." style="flex:3;">
+        <button id="add-extra" class="btn">Add</button>
+      </div>
+      <div id="rf-extra-list" style="display:flex; gap:6px; flex-wrap:wrap;"></div>
+    </div>
+
+    <div class="actions">
+      <button class="btn" id="rf-cancel">Cancel</button>
+      <button class="btn primary" id="rf-publish">Publish</button>
+    </div>
+  `;
+
+
+  // локальні масиви
+  const follows = [];
+  const extras  = []; // {label,url}
+
+  function renderPills(){
+    const fl = modal.querySelector('#rf-follow-list');
+    fl.innerHTML = follows.map((h,i)=>`<span class="pill">@${h}<span class="x" data-i="${i}">×</span></span>`).join('');
+    fl.querySelectorAll('.x').forEach(x=>x.onclick = ()=>{ follows.splice(+x.dataset.i,1); renderPills(); });
+
+    const el = modal.querySelector('#rf-extra-list');
+    el.innerHTML = extras.map((t,i)=>`<span class="pill">${escapeHTML(t.label)}<span class="x" data-i="${i}">×</span></span>`).join('');
+    el.querySelectorAll('.x').forEach(x=>x.onclick = ()=>{ extras.splice(+x.dataset.i,1); renderPills(); });
+  }
+  renderPills();
+
+  modal.querySelector('#add-follow').onclick = ()=>{
+    const raw = modal.querySelector('#rf-follow').value.trim();
+    if (!raw) return;
+    raw.split(',').map(s=>s.trim().replace(/^@/,'').toLowerCase()).filter(Boolean).forEach(h=>{
+      if (!follows.includes(h)) follows.push(h);
+    });
+    modal.querySelector('#rf-follow').value='';
+    renderPills();
+  };
+
+  modal.querySelector('#add-extra').onclick = ()=>{
+    const label = modal.querySelector('#rf-extra-label').value.trim();
+    const url   = modal.querySelector('#rf-extra-url').value.trim();
+    if (!label || !/^https?:\/\//i.test(url)) return alert('Заповни назву і валідний URL');
+    extras.push({label, url});
+    modal.querySelector('#rf-extra-label').value='';
+    modal.querySelector('#rf-extra-url').value='';
+    renderPills();
+  };
+
+  modal.querySelector('#rf-cancel').onclick = ()=> mask.style.display='none';
+
+  modal.querySelector('#rf-publish').onclick = async ()=>{
+    const title = modal.querySelector('#rf-title').value.trim();
+    const desc  = modal.querySelector('#rf-desc').value.trim();
+    const chain = modal.querySelector('#rf-chain').value || 'btc';
+    const tweet = modal.querySelector('#rf-tweet').value.trim();
+
+    if (!title || !desc) return alert('Заповни назву та опис');
+
+    // завантажимо картинки (якщо обрані)
+    const creator = getConnectedWalletAddress() || 'unknown';
+    const coverFile = modal.querySelector('#rf-cover').files[0] || null;
+    const logoFile  = modal.querySelector('#rf-logo').files[0]  || null;
+
+    let coverUrl = '', logoUrl = '';
+    try{
+      if (coverFile){
+        const blob = await prepareImageForUpload(coverFile);
+        const ref  = storage.ref().child(`raffles/${Date.now()}_${creator}_cover.webp`);
+        await ref.put(blob, { contentType: blob.type || 'image/webp', cacheControl:'public,max-age=31536000,immutable' });
+        coverUrl = await ref.getDownloadURL();
+      }
+      if (logoFile){
+        const blob = await compressImage(logoFile, 600, 600, 'image/webp', 0.9);
+        const ref  = storage.ref().child(`raffles/${Date.now()}_${creator}_logo.webp`);
+        await ref.put(blob, { contentType: 'image/webp', cacheControl:'public,max-age=31536000,immutable' });
+        logoUrl = await ref.getDownloadURL();
+      }
+    }catch(e){ console.error(e); return alert('Image upload failed'); }
+
+    const id  = getRafflesRef().push().key;
+    const doc = {
+      title, description: desc, chain,
+      followHandles: follows,
+      tweetUrl: tweet || '',
+      extraTasks: extras, // [{label,url}]
+      coverUrl, logoUrl,
+      createdAt: Date.now(),
+      createdBy: creator
+    };
+    await getRafflesRef().child(id).set(doc);
+
+    mask.style.display='none';
+    renderRafflesGrid();
+
+    // оновимо бейджі у всіх (у тебе вже live-підписка зроблена в initUnreadTracking; для raffle додали окремо нижче)
+  };
+}
+
+                async function openRaffleViewModal(id, data){
+  const mask = document.getElementById('raffle-view-mask');
+  mask.innerHTML=''; mask.style.display='flex';
+
+  const me = getConnectedWalletAddress() || '';
+  // підтягнемо збережені адреси для потрібної мережі
+  let wallets = { btc:[], evm:[] };
+  try{
+    const snap = await getUserProfileRef(me).child('wallets').get();
+    wallets = snap.val() || { btc:[], evm:[] };
+  }catch{}
+
+  const modal = document.createElement('div');
+  modal.className = 'modal';
+  modal.innerHTML = `
+    <div style="display:flex; gap:14px; align-items:center;">
+      <img src="${escapeHTML(data.logoUrl || '../logo1.png')}" class="avatar-round" onerror="this.src='../logo1.png'">
+      <div>
+        <h3 style="margin:0">${escapeHTML(data.title || 'Raffle')}</h3>
+        <div class="muted">${(data.chain || 'btc').toUpperCase()} raffle</div>
+      </div>
+    </div>
+
+    <div class="row"><div style="white-space:pre-wrap;">${escapeHTML(data.description || '')}</div></div>
+
+    <div class="row" style="flex-direction:column; align-items:flex-start;">
+      <strong>Tasks</strong>
+      <ol id="rfv-tasks" style="margin-top:6px; padding-left:18px;"></ol>
+    </div>
+
+    <div class="row">
+      <select id="rfv-wallet">
+        <option value="">Choose your ${(data.chain||'btc').toUpperCase()} address</option>
+        ${((wallets[data.chain||'btc']||[]).map(a=>`<option value="${a}">${shortenAddress(a)}</option>`).join(''))}
+      </select>
+      <button id="rfv-enter" class="btn primary" disabled>Enter</button>
+      <button id="rfv-close" class="btn">Close</button>
+    </div>
+  `;
+  mask.appendChild(modal);
+
+                     try {
+    const meLc = me.toLowerCase();
+    const existing = (await getRaffleEntriesRef(id).child(meLc).get()).val();
+    if (existing) {
+      const enterBtn = modal.querySelector('#rfv-enter');
+      if (enterBtn) {
+        enterBtn.textContent = 'Entered';
+        enterBtn.disabled = true;
+      }
+    }
+  } catch (e) { /* noop */ }
+
+  // список тасків (клік по лінку = виконано)
+  const done = new Set();
+
+  const list = modal.querySelector('#rfv-tasks');
+
+  // follow tasks
+  (data.followHandles||[]).forEach(h=>{
+    const li = document.createElement('li');
+    const url = `https://x.com/${encodeURIComponent(h)}`;
+    li.innerHTML = `Follow <a href="${url}" target="_blank" rel="noopener">@${h}</a>`;
+    li.querySelector('a').addEventListener('click', ()=>{ done.add(`f:${h}`); checkDone(); });
+    list.appendChild(li);
+  });
+
+  // like+retweet
+  if (data.tweetUrl){
+    const li = document.createElement('li');
+    li.innerHTML = `Like & Retweet <a href="${escapeHTML(data.tweetUrl)}" target="_blank" rel="noopener">this tweet</a>`;
+    li.querySelector('a').addEventListener('click', ()=>{ done.add('tweet'); checkDone(); });
+    list.appendChild(li);
+  }
+
+  // extra tasks
+  (data.extraTasks||[]).forEach((t,i)=>{
+    const li = document.createElement('li');
+    const url = t.url || '#';
+    li.innerHTML = `${escapeHTML(t.label || 'Open link')}: <a href="${escapeHTML(url)}" target="_blank" rel="noopener">${escapeHTML(url)}</a>`;
+    li.querySelector('a').addEventListener('click', ()=>{ done.add(`x:${i}`); checkDone(); });
+    list.appendChild(li);
+  });
+
+  function totalTasks(){
+    return (data.followHandles||[]).length + (data.tweetUrl?1:0) + (data.extraTasks||[]).length;
+  }
+  function checkDone(){
+    const ok = done.size >= totalTasks();
+    const addr = modal.querySelector('#rfv-wallet').value;
+    modal.querySelector('#rfv-enter').disabled = !(ok && addr);
+  }
+
+  modal.querySelector('#rfv-wallet').addEventListener('change', checkDone);
+  modal.querySelector('#rfv-close').onclick = ()=> mask.style.display='none';
+
+  modal.querySelector('#rfv-enter').onclick = async ()=>{
+    const addr = modal.querySelector('#rfv-wallet').value;
+    if (!addr) return;
+
+    await getRaffleEntriesRef(id).child(me.toLowerCase()).set({
+      at: Date.now(),
+      chain: data.chain || 'btc',
+      address: addr,
+      tasksDone: Array.from(done)
+    });
+
+    alert('Entry submitted. Good luck!');
+    mask.style.display='none';
+  };
+}
+    
+
+                function getRafflesRef(){ return db.ref('raffles/items'); }
+function getRaffleEntriesRef(id){ return db.ref(`raffleEntries/${id}`); }
+                
 /* Заповнення сайдбару профілю */
 async function populateSidebarUserInfo(address) {
   const addrEl = document.getElementById("sidebar-wallet-addr");
@@ -2281,6 +2674,31 @@ if ((mentionedMe || repliedToMe) && m.timestamp > lastReplySeen) {
     // 2.5) скільки child_added треба ПРОПУСТИТИ (щоб не подвоїти після підписки)
     let toSkip = existing.numChildren();
 
+      if (section === 'raffles') {
+  // первинний підрахунок
+  const listSnap = await getRafflesRef().get();
+  let newCount = 0;
+  listSnap.forEach(s => { const r = s.val(); if (r?.createdAt > lastSeen) newCount++; });
+
+  // показуємо золотим (використаємо replies-бейдж)
+  setBadgeCount(badges.unread, 0);
+  setBadgeCount(badges.replies, newCount); // золото
+
+  // live
+  let toSkipR = listSnap.numChildren();
+  getRafflesRef().on('child_added', s => {
+    if (toSkipR > 0){ toSkipR--; return; }
+    const r = s.val();
+    if (r?.createdAt > lastSeen) {
+      const cur = parseInt(badges.replies.textContent) || 0;
+      setBadgeCount(badges.replies, cur + 1);
+    }
+  });
+
+  // ідемо далі до наступної секції
+  continue;
+}
+
     // 3) live-підписка
     getChatMessagesRef(section).on('child_added', snap => {
       // пропускаємо перші "старі" події
@@ -2308,6 +2726,7 @@ if (!isActive && (replyIsToMe || mentionIsToMe) && m.timestamp > lastReplySeen) 
 
                 async function recalcSectionIndicators(wallet){
   const sections = ["collection","links","announcements","general","share-art","spot-request","raffles","settings"];
+
   for (const section of sections){
     const badges = ensureSidebarBadges(section);
     if (!badges) continue;
@@ -2317,11 +2736,21 @@ if (!isActive && (replyIsToMe || mentionIsToMe) && m.timestamp > lastReplySeen) 
     const lastSeen = reads.lastSeen || 0;
     const lastReplySeen = reads.lastReplySeen || 0;
 
+    // 🔸 окрема логіка для raffles
+    if (section === 'raffles') {
+      const snapR = await getRafflesRef().get();
+      let newCount = 0;
+      snapR.forEach(s => { const r = s.val(); if (r?.createdAt > lastSeen) newCount++; });
+      setBadgeCount(badges.unread, 0);
+      setBadgeCount(badges.replies, newCount); // золотий бейдж
+      continue; // до наступної секції
+    }
+
+    // 🔸 чати — як було
     let unread = 0, replies = 0;
     const snap = await getChatMessagesRef(section).get();
     snap.forEach(s => {
       const m = s.val(); if (!m) return;
-
       if (m.timestamp > lastSeen && (m.sender||'').toLowerCase() !== wallet.toLowerCase()) unread++;
 
       const repliedToMe = m.replyTo && isReplyToMe(m.replyTo.sender);
@@ -2525,11 +2954,6 @@ loadSettings(wallet);
   }
   alert('Socials saved');
 }
-
-                if (document.getElementById('section-raffles')?.classList.contains('active')) {
-  renderRafflesEligibility(wallet);
-}
-
 
 /* ==== Emoji utils ==== */
 const emojiToIconifyMap = {
@@ -3355,7 +3779,7 @@ if (initiallyActive && initiallyActive.id?.startsWith('section-') && currentWall
     const target = link.getAttribute('data-section');
     if (!target) return;
 
-    // якщо лінк прихований (не дозволено) — блокуємо перехід
+   
     const liVisible = link.closest('li')?.style.display !== 'none';
     if (!liVisible) { e.preventDefault(); return; }
 
@@ -3369,6 +3793,7 @@ if (initiallyActive && initiallyActive.id?.startsWith('section-') && currentWall
 
       if (target === 'raffles' && currentWallet) {
   renderRafflesEligibility(currentWallet);
+  renderRafflesGrid(); 
 }
 
     if (currentWallet) {
@@ -3386,7 +3811,7 @@ if (initiallyActive && initiallyActive.id?.startsWith('section-') && currentWall
     });
   });
 
-    // глобальна функція відкриття секції чату
+
 window.openRoom = async function(room){
   const section = (room || '').toLowerCase();
   // якщо є клік по пункту — скористаємося ним (там є вся логіка show/hide + markAsRead)
