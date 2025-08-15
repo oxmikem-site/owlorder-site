@@ -1468,7 +1468,7 @@ async function ensureHolderBadgeAsync(sender, badgesWrap){
   if (isAdmin(sender)) return;
 
   if (badgesWrap.querySelector('.role-badge.owl')) return;
-  const info = await getHolderInfo(sender);
+  const info = await getHolderInfoOnce(sender);
   if (info?.found && !badgesWrap.querySelector('.role-badge.owl')){
     const span = document.createElement('span');
     span.className = 'role-badge owl';
@@ -1759,6 +1759,16 @@ async function getHolderInfo(address){
   } catch (e) {
     console.warn("Points sheet fetch error:", e);
   }
+
+    // === in-flight cache for holder lookups ===
+const holderPromises = new Map();
+async function getHolderInfoOnce(addr){
+  const lc = (addr||'').toLowerCase();
+  if (holderPromises.has(lc)) return holderPromises.get(lc);
+  const p = getHolderInfo(lc).finally(()=> holderPromises.delete(lc));
+  holderPromises.set(lc, p);
+  return p;
+}
 
   // 3) тягнемо SNAPSHOT (щоб визначити холдера та imageId)
   let imageId = null;
@@ -2506,7 +2516,7 @@ if (img) img.style.display = "none";
 if (ptsEl) ptsEl.style.display = "none";
 
 // оновлюємо з мережі
-getHolderInfo(address).then(info => {
+getHolderInfoOnce(address).then(info => {
   cachedHolderInfo = info;
 
   // аватар показуємо тільки якщо є imageId
@@ -3384,9 +3394,12 @@ prefetchNickname(senderFull).then(nick => {
                 function isValidETH(addr) {
   return /^0x[a-fA-F0-9]{40}$/.test(addr.trim());
 }
-function isValidBTC(addr) {
-  // P2PKH/NP2WPKH/P2TR/bech32 (спрощено)
-  return /^(bc1|[13])[a-zA-HJ-NP-Z0-9]{25,62}$/.test(addr.trim());
+function isValidBTC(addr){
+  const s = (addr || '').trim();
+  return (
+    /^bc1[a-z0-9]{25,62}$/.test(s) ||
+    /^[13][a-km-zA-HJ-NP-Z1-9]{25,34}$/.test(s) 
+  );
 }
 
                 function isValidTwitterHandle(h){
@@ -3611,8 +3624,14 @@ async function compressImage(file, maxW=MAX_W, maxH=MAX_H, outType='image/webp',
 // готуємо файл: перевіряємо тип/розмір і стискаємо
 async function prepareImageForUpload(file){
   if (!isImage(file)) throw new Error('Only PNG/JPG/WEBP/GIF are allowed.');
+
+  // 🔽 NEW: special-case GIF
+  if (/^image\/gif$/i.test(file.type)) {
+    if (file.size <= MAX_UPLOAD_MB * 1024 * 1024) return file;
+    throw new Error('GIF is larger than 5MB. Please optimize it before sending.');
+  }
+
   if (file.size > MAX_UPLOAD_MB * 1024 * 1024) {
-    // спробуємо стиснути; якщо й після компресії > 5MB — відхиляємо
     const blob = await compressImage(file);
     if (!blob || blob.size > MAX_UPLOAD_MB * 1024 * 1024) {
       throw new Error('Max image size is 5MB.');
@@ -3621,7 +3640,7 @@ async function prepareImageForUpload(file){
     blob.lastModified = Date.now();
     return blob;
   }
-  // невелике зображення — все одно проганяємо через webp, щоб легше кешилось
+
   const blob = await compressImage(file);
   blob.name = (file.name || 'img') + '.webp';
   blob.lastModified = Date.now();
@@ -3676,7 +3695,7 @@ async function connectUniSatWallet() {
     renderMyCollection(address);
 
     // коли підтягнеться статус холдера — оновлюємо доступ
-    getHolderInfo(address).then(async info => {
+    getHolderInfoOnce(address).then(async info => {
   const isHolder = !!info?.found;
   currentIsHolder = isHolder;
   setSidebarAccess({ loggedIn: true, isHolder });
@@ -3757,7 +3776,7 @@ if (!currentWallet) {
   initSettingsUI(currentWallet);
   renderMyCollection(currentWallet);
 
-  getHolderInfo(currentWallet).then(async info => {
+  getHolderInfoOnce(currentWallet).then(async info => {
   const isHolder = !!info?.found;
   setSidebarAccess({ loggedIn: true, isHolder });
   setChatInputsEnabled(isHolder, currentWallet);
