@@ -3660,6 +3660,25 @@ await auth.signInAnonymously().catch(console.error);
 auth.onAuthStateChanged(u => {
   window.CURRENT_UID = u ? u.uid : null;
 });
+    
+
+document.querySelectorAll('#sidebar-nav a[data-section]').forEach(link => {
+  link.addEventListener('click', async (e) => {
+    const target = link.getAttribute('data-section');
+    if (!target) return;
+    const liVisible = link.closest('li')?.style.display !== 'none';
+    if (!liVisible) { e.preventDefault(); return; }
+
+    e.preventDefault();
+    hideAllSections();
+    showSection(target);
+
+    const w = getConnectedWalletAddress();
+    if (target === 'collection' && w) renderMyCollection(w);
+    if (target === 'raffles' && w) { renderRafflesEligibility(w); renderRafflesGrid(); }
+    if (w) await markAsRead(target, w);
+  });
+});
 
     let currentWallet = getConnectedWalletAddress() || null;
     
@@ -4125,7 +4144,8 @@ if (chosen.length) {
     try {
       const imgBlob  = await prepareImageForUpload(original);
       const ext      = (imgBlob.type.split('/')[1] || 'webp').toLowerCase();
-      const fileName = `chat_images/${sender}/${Date.now()}_${cryptoRand(7)}.${ext}`;
+      const uid = window.CURRENT_UID;   
+const fileName = `chat_images/${uid}/${Date.now()}_${cryptoRand(7)}.${ext}`;
       const sref     = storage.ref().child(fileName);
 
       const task = sref.put(imgBlob, {
