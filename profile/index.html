@@ -1759,17 +1759,7 @@ async function getHolderInfo(address){
   } catch (e) {
     console.warn("Points sheet fetch error:", e);
   }
-
-    // === in-flight cache for holder lookups ===
-const holderPromises = new Map();
-async function getHolderInfoOnce(addr){
-  const lc = (addr||'').toLowerCase();
-  if (holderPromises.has(lc)) return holderPromises.get(lc);
-  const p = getHolderInfo(lc).finally(()=> holderPromises.delete(lc));
-  holderPromises.set(lc, p);
-  return p;
-}
-
+    
   // 3) тягнемо SNAPSHOT (щоб визначити холдера та imageId)
   let imageId = null;
   try {
@@ -1820,7 +1810,16 @@ body = rows.slice(1);
   return result;
 }
 
-
+// === in-flight cache for holder lookups (top-level) ===
+const holderPromises = new Map();
+async function getHolderInfoOnce(addr){
+  const lc = (addr||'').toLowerCase();
+  if (holderPromises.has(lc)) return holderPromises.get(lc);
+  const p = getHolderInfo(lc).finally(()=> holderPromises.delete(lc));
+  holderPromises.set(lc, p);
+  return p;
+}
+                
 async function getAllOwlsForAddress(address) {
   if (!address) return [];
 
