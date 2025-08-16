@@ -3675,7 +3675,7 @@ document.querySelectorAll('#sidebar-nav a[data-section]').forEach(link => {
 });
 
     let currentWallet = getConnectedWalletAddress() || null;
-    
+    const seenMessages = new Set();
 // === ALWAYS-AVAILABLE: wallet connect + listeners ===
 
 // 1) Функція підключення гаманця (доступна завжди)
@@ -3802,8 +3802,7 @@ if (initiallyActive && initiallyActive.id?.startsWith('section-') && currentWall
   const activeSection = initiallyActive.id.replace('section-', '');
   await markAsRead(activeSection, currentWallet);
 }
-
-  const seenMessages = new Set();
+    seenMessages.clear();
 
   document.querySelectorAll('#sidebar-nav a[data-section]').forEach(link => {
   link.addEventListener('click', async (e) => {
