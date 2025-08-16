@@ -1045,7 +1045,11 @@ display: block;
   object-fit:cover; background:#0e0e0e;
 }
 
+.raffle-chip.live     { background:#2ecc71; color:#000; }
+.raffle-chip.upcoming { background:#f1c40f; color:#000; }
+.raffle-chip.ended    { background:#7f8c8d; color:#000; }
 
+        
     </style>
 </head>
 
@@ -2038,6 +2042,19 @@ function rarityToClass(r){
   if (t) return 'rarity-common';
   return 'rarity-legendary'; // якщо рарності нема — зробимо “золоту” (можеш змінити)
 }
+                function fmt(dtMs){
+  if (!dtMs) return '–';
+  const d = new Date(dtMs);
+  return d.toLocaleString([], {year:'numeric', month:'short', day:'2-digit', hour:'2-digit', minute:'2-digit'});
+}
+
+function raffleStatus(r){
+  const now = Date.now();
+  if (r.endAt && now > r.endAt)   return {label:'Ended',   cls:'ended'};
+  if (r.startAt && now < r.startAt) return {label:'Upcoming',cls:'upcoming'};
+  return {label:'Live', cls:'live'};
+}
+
                 
 function buildMagicEdenUrl({ number, inscriptionId }) {
   if (inscriptionId) {
@@ -2186,16 +2203,22 @@ async function renderMyCollection(address){
   if (!list.length){
     grid.innerHTML = `<div class="empty-state">No raffles yet.</div>`;
   } else {
-    grid.innerHTML = list.map(r => `
-      <div class="raffle-card" data-id="${r.id}">
-        <img class="raffle-img" src="${escapeHTML(r.coverUrl || '../logo1.png')}" onerror="this.src='../logo1.png'">
-        <img class="raffle-logo" src="${escapeHTML(r.logoUrl || '../logo1.png')}" onerror="this.src='../logo1.png'">
-        <div class="raffle-meta">
-          <span class="raffle-title">${escapeHTML(r.title || 'Raffle')}</span>
-          <span class="raffle-chip">${(r.chain || 'btc').toUpperCase()}</span>
-        </div>
+    grid.innerHTML = list.map(r => {
+  const st = raffleStatus(r);
+  return `
+    <div class="raffle-card" data-id="${r.id}">
+      <img class="raffle-img" src="${escapeHTML(r.coverUrl || '../logo1.png')}" onerror="this.src='../logo1.png'">
+      <img class="raffle-logo" src="${escapeHTML(r.logoUrl || '../logo1.png')}" onerror="this.src='../logo1.png'">
+      <div class="raffle-meta">
+        <span class="raffle-title">${escapeHTML(r.title || 'Raffle')}</span>
+        <span class="raffle-chip ${st.cls}">${st.label}</span>
       </div>
-    `).join('');
+      <div class="muted" style="padding:0 12px 10px 12px; font-size:12px;">
+        ${fmt(r.startAt)} → ${fmt(r.endAt)}
+      </div>
+    </div>
+  `;
+}).join('');
 
     grid.querySelectorAll('.raffle-card').forEach(card=>{
       card.addEventListener('click', async ()=>{
@@ -2213,8 +2236,7 @@ async function renderMyCollection(address){
 
 function openCreateRaffleModal(){
   const mask = document.getElementById('raffle-create-mask');
-  mask.innerHTML = '';
-  mask.style.display = 'flex';
+  mask.innerHTML = ''; mask.style.display = 'flex';
 
   const modal = document.createElement('div');
   modal.className = 'modal';
@@ -2222,14 +2244,15 @@ function openCreateRaffleModal(){
     <h3>Create raffle</h3>
 
     <div class="row">
-      <input id="rf-title" type="text" placeholder="Project name *" maxlength="60">
+      <input id="rf-title" type="text" placeholder="Project name *" maxlength="60" style="flex:1;">
       <select id="rf-chain">
         <option value="btc">BTC</option>
         <option value="evm">EVM</option>
       </select>
     </div>
+
     <div class="row">
-      <textarea id="rf-desc" placeholder="Main info about project *"></textarea>
+      <textarea id="rf-desc" placeholder="Main info about project *" style="width:100%;"></textarea>
     </div>
 
     <div class="row">
@@ -2240,6 +2263,17 @@ function openCreateRaffleModal(){
       <div style="display:flex; flex-direction:column; gap:6px; width:50%;">
         <span>Round logo</span>
         <input id="rf-logo" type="file" accept="image/*">
+      </div>
+    </div>
+
+    <div class="row">
+      <div style="display:flex; flex-direction:column; gap:6px; width:50%;">
+        <span>Start (UTC)</span>
+        <input id="rf-start" type="datetime-local">
+      </div>
+      <div style="display:flex; flex-direction:column; gap:6px; width:50%;">
+        <span>End (UTC)</span>
+        <input id="rf-end" type="datetime-local">
       </div>
     </div>
 
@@ -2273,12 +2307,10 @@ function openCreateRaffleModal(){
     </div>
   `;
 
-  // ✅ ГОЛОВНЕ ВИПРАВЛЕННЯ — додати модал у маску
   mask.appendChild(modal);
 
-  // локальні масиви
   const follows = [];
-  const extras  = []; // {label,url}
+  const extras  = [];
 
   function renderPills(){
     const fl = modal.querySelector('#rf-follow-list');
@@ -2318,7 +2350,15 @@ function openCreateRaffleModal(){
     const desc  = modal.querySelector('#rf-desc').value.trim();
     const chain = modal.querySelector('#rf-chain').value || 'btc';
     const tweet = modal.querySelector('#rf-tweet').value.trim();
+
+    // часи
+    const startVal = modal.querySelector('#rf-start').value;
+    const endVal   = modal.querySelector('#rf-end').value;
+    const startAt  = startVal ? Date.parse(startVal) : Date.now();
+    const endAt    = endVal   ? Date.parse(endVal)   : 0;
+
     if (!title || !desc) return alert('Заповни назву та опис');
+    if (!startAt || !endAt || endAt <= startAt) return alert('Перевір дату/час: End має бути пізніше Start.');
 
     const creator  = getConnectedWalletAddress() || 'unknown';
     const coverFile = modal.querySelector('#rf-cover').files[0] || null;
@@ -2338,7 +2378,10 @@ function openCreateRaffleModal(){
         await ref.put(blob, { contentType: 'image/webp', cacheControl:'public,max-age=31536000,immutable' });
         logoUrl = await ref.getDownloadURL();
       }
-    }catch(e){ console.error(e); return alert('Image upload failed'); }
+    }catch(e){
+      console.error(e);
+      return alert('Image upload failed (перевір CORS / розмір файлу).');
+    }
 
     const id  = getRafflesRef().push().key;
     const doc = {
@@ -2347,6 +2390,7 @@ function openCreateRaffleModal(){
       tweetUrl: tweet || '',
       extraTasks: extras,
       coverUrl, logoUrl,
+      startAt, endAt,
       createdAt: Date.now(),
       createdBy: creator
     };
@@ -2621,7 +2665,7 @@ const firebaseConfig = {
   authDomain: "owl-chat-e4233.firebaseapp.com",
   databaseURL: "https://owl-chat-e4233-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "owl-chat-e4233",
-  storageBucket: "owl-chat-e4233.appspot.com",
+  storageBucket: "owl-chat-e4233.firebasestorage.app",
   messagingSenderId: "671987704789",
   appId: "1:671987704789:web:5ffad58bc9c00ba772935c",
   measurementId: "G-ELQRLCLGZT"
@@ -3643,8 +3687,11 @@ async function prepareImageForUpload(file){
 /* ==== Старт програми ==== */
 window.addEventListener("DOMContentLoaded", async () => {
   // Firebase
- app = firebase.initializeApp(firebaseConfig);
-db = firebase.database(app);
+ app = (firebase.apps && firebase.apps.length)
+  ? firebase.app()
+  : firebase.initializeApp(firebaseConfig);
+
+db = firebase.database();
 storage = firebase.storage();
 
 const auth = firebase.auth();
