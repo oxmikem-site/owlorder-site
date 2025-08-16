@@ -2211,9 +2211,10 @@ async function renderMyCollection(address){
   if (wrap) sec.appendChild(wrap);
 }
 
-                function openCreateRaffleModal(){
+function openCreateRaffleModal(){
   const mask = document.getElementById('raffle-create-mask');
-  mask.innerHTML = ''; mask.style.display = 'flex';
+  mask.innerHTML = '';
+  mask.style.display = 'flex';
 
   const modal = document.createElement('div');
   modal.className = 'modal';
@@ -2272,6 +2273,8 @@ async function renderMyCollection(address){
     </div>
   `;
 
+  // ✅ ГОЛОВНЕ ВИПРАВЛЕННЯ — додати модал у маску
+  mask.appendChild(modal);
 
   // локальні масиви
   const follows = [];
@@ -2315,11 +2318,9 @@ async function renderMyCollection(address){
     const desc  = modal.querySelector('#rf-desc').value.trim();
     const chain = modal.querySelector('#rf-chain').value || 'btc';
     const tweet = modal.querySelector('#rf-tweet').value.trim();
-
     if (!title || !desc) return alert('Заповни назву та опис');
 
-    // завантажимо картинки (якщо обрані)
-    const creator = getConnectedWalletAddress() || 'unknown';
+    const creator  = getConnectedWalletAddress() || 'unknown';
     const coverFile = modal.querySelector('#rf-cover').files[0] || null;
     const logoFile  = modal.querySelector('#rf-logo').files[0]  || null;
 
@@ -2344,7 +2345,7 @@ async function renderMyCollection(address){
       title, description: desc, chain,
       followHandles: follows,
       tweetUrl: tweet || '',
-      extraTasks: extras, // [{label,url}]
+      extraTasks: extras,
       coverUrl, logoUrl,
       createdAt: Date.now(),
       createdBy: creator
@@ -2353,8 +2354,6 @@ async function renderMyCollection(address){
 
     mask.style.display='none';
     renderRafflesGrid();
-
-    // оновимо бейджі у всіх (у тебе вже live-підписка зроблена в initUnreadTracking; для raffle додали окремо нижче)
   };
 }
 
