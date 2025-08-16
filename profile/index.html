@@ -2116,6 +2116,22 @@ async function renderMyCollection(address){
 }).join('');
 }
 
+                // оновлюємо підписи раз на хвилину
+if (window.__raffleCountdown) clearInterval(window.__raffleCountdown);
+window.__raffleCountdown = setInterval(() => {
+  const cards = sec.querySelectorAll('.raffle-card');
+  cards.forEach(card => {
+    const id = card.getAttribute('data-id');
+    const item = (id && list.find(x => x.id === id)) || null;
+    if (!item) return;
+    const rel = card.querySelector('.raffle-rel');
+    if (rel) rel.textContent = relativeRaffleLine(item);
+    const st = raffleStatus(item);
+    const chip = card.querySelector('.raffle-chip');
+    if (chip) { chip.textContent = st.label; chip.className = `raffle-chip ${st.cls}`; }
+  });
+}, 60_000);
+
                 async function renderRafflesEligibility(wallet){
   const sec = document.getElementById('section-raffles');
   if (!sec) return;
@@ -2167,6 +2183,25 @@ async function renderMyCollection(address){
     if (link) link.click();
   };
 }
+                // коротка людиночитна тривалість: 2d 4h / 3h 15m / 7m
+function formatShortDuration(ms) {
+  const s = Math.max(0, Math.floor(ms / 1000));
+  const d = Math.floor(s / 86400);
+  const h = Math.floor((s % 86400) / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  if (d > 0) return `${d}d ${h}h`;
+  if (h > 0) return `${h}h ${m}m`;
+  return `${Math.max(1, m)}m`;
+}
+
+// рядок під карткою рафлу: Starts in … / Ends in … / Ended
+function relativeRaffleLine(r) {
+  const now = Date.now();
+  if (r.startAt && now < r.startAt) return `Starts in ${formatShortDuration(r.startAt - now)}`;
+  if (r.endAt && now <= r.endAt)   return `Ends in ${formatShortDuration(r.endAt - now)}`;
+  return 'Ended';
+}
+
 
                 async function renderRafflesGrid(){
   const sec = document.getElementById('section-raffles');
@@ -2213,9 +2248,9 @@ async function renderMyCollection(address){
         <span class="raffle-title">${escapeHTML(r.title || 'Raffle')}</span>
         <span class="raffle-chip ${st.cls}">${st.label}</span>
       </div>
-      <div class="muted" style="padding:0 12px 10px 12px; font-size:12px;">
-        ${fmt(r.startAt)} → ${fmt(r.endAt)}
-      </div>
+      <div class="muted raffle-rel" style="padding:0 12px 10px 12px; font-size:12px;">
+  ${relativeRaffleLine(r)}
+</div>
     </div>
   `;
 }).join('');
