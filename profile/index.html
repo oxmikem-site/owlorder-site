@@ -1578,33 +1578,41 @@ const HOLDER_ONLY = new Set(["links","announcements","general","share-art","spot
 
 // показати/сховати лінки сайдбару та відповідні секції
 function setSidebarAccess({ loggedIn, isHolder }) {
-  document.querySelectorAll('#sidebar-nav a[data-section]').forEach(a => {
-    const sec = a.getAttribute('data-section');
-    const li = a.closest('li');
-    const panel = document.getElementById('section-' + sec);
-    const allow = !!loggedIn && !!isHolder && HOLDER_ONLY.has(sec);
+  const wallet   = getConnectedWalletAddress();
+  const amAdmin  = isAdmin(wallet);
+  const canAccess = !!loggedIn && (amAdmin || !!isHolder);
 
-    if (allow) {
+  document.querySelectorAll('#sidebar-nav a[data-section]').forEach(a => {
+    const sec   = a.getAttribute('data-section');
+    const li    = a.closest('li');
+    const panel = document.getElementById('section-' + sec);
+
+    // секції зі списку HOLDER_ONLY показуємо лише для holder або admin
+    // інші — якщо просто залогінений
+    const requiresHolder = HOLDER_ONLY.has(sec);
+    const show = requiresHolder ? canAccess : !!loggedIn;
+
+    if (show) {
       if (li) li.style.display = "";
-      if (panel) panel.style.display = ""; // не активує, просто робить видимою
+      if (panel) panel.style.display = "";
     } else {
       if (li) li.style.display = "none";
       if (panel) { panel.classList.remove("active"); panel.style.display = "none"; }
     }
   });
 
-    // Показ/приховування пункту Logout у сайдбарі
-const logoutLink = document.querySelector('#sidebar-nav .sidebar-logout');
-if (logoutLink) {
-  const logoutLi = logoutLink.closest('li');
-  if (logoutLi) logoutLi.style.display = loggedIn ? "" : "none";
-}
+  // Logout у сайдбарі
+  const logoutLink = document.querySelector('#sidebar-nav .sidebar-logout');
+  if (logoutLink) {
+    const logoutLi = logoutLink.closest('li');
+    if (logoutLi) logoutLi.style.display = loggedIn ? "" : "none";
+  }
 
-// Також сховаємо дропдаун у хедері, якщо не залогінений
-const headerDropdown = document.getElementById("wallet-header-dropdown");
-if (headerDropdown && !loggedIn) headerDropdown.style.display = "none";
+  // Хедерний дропдаун
+  const headerDropdown = document.getElementById("wallet-header-dropdown");
+  if (headerDropdown && !loggedIn) headerDropdown.style.display = "none";
 
-  // кнопка Connect у сайдбарі
+  // Кнопка Connect у сайдбарі
   const connectBtn = document.getElementById("sidebar-connect-btn");
   if (connectBtn) connectBtn.style.display = loggedIn ? "none" : "inline-block";
 }
@@ -3855,22 +3863,24 @@ async function connectUniSatWallet() {
     // оновлюємо «глобальний» стейт
     currentWallet = address;
 
-    // показуємо інтерфейс як залогінений (поки без прав холдера)
-    setSidebarAccess({ loggedIn: true, isHolder: false });
-    setChatInputsEnabled(false, currentWallet);
+   // тимчасово даємо доступ адмінам (до завершення перевірки холдера)
+const amAdmin = isAdmin(address);
+setSidebarAccess({ loggedIn: true, isHolder: amAdmin });
+setChatInputsEnabled(amAdmin, currentWallet);
 
     // завантажуємо бейджі/налаштування/колекцію
     initUnreadTracking(address);
     initSettingsUI(address);
     renderMyCollection(address);
 
-    // коли підтягнеться статус холдера — оновлюємо доступ
-    getHolderInfoOnce(address).then(async info => {
-  const isHolder = !!info?.found;
-  currentIsHolder = isHolder;
-  setSidebarAccess({ loggedIn: true, isHolder });
-  setChatInputsEnabled(isHolder, currentWallet);
-  if (isHolder) showSection('collection');
+   getHolderInfoOnce(address).then(async info => {
+  const can = amAdmin || !!info?.found; 
+  currentIsHolder = !!info?.found;
+
+  setSidebarAccess({ loggedIn: true, isHolder: can });
+  setChatInputsEnabled(can, currentWallet);
+
+  if (can) showSection('collection');
   await recalcSectionIndicators(address);
 });
   } catch (e) {
@@ -3936,9 +3946,11 @@ if (!currentWallet) {
   setSidebarAccess({ loggedIn: false, isHolder: false });
   setChatInputsEnabled(false, currentWallet);
 } else {
-  // поки перевіряємо snapshot — умикаємо loggedIn, але без доступу
-  setSidebarAccess({ loggedIn: true, isHolder: false });
-  setChatInputsEnabled(false, currentWallet);
+  const amAdmin0 = isAdmin(currentWallet);
+
+  // тимчасово даємо доступ адмінам
+  setSidebarAccess({ loggedIn: true, isHolder: amAdmin0 });
+  setChatInputsEnabled(amAdmin0, currentWallet);
 
   updateWalletButtons(currentWallet);
   populateSidebarUserInfo(currentWallet);
@@ -3947,12 +3959,12 @@ if (!currentWallet) {
   renderMyCollection(currentWallet);
 
   getHolderInfoOnce(currentWallet).then(async info => {
-  const isHolder = !!info?.found;
-  setSidebarAccess({ loggedIn: true, isHolder });
-  setChatInputsEnabled(isHolder, currentWallet);
-  if (isHolder) showSection('collection');
-  await recalcSectionIndicators(currentWallet);
-});
+    const can = amAdmin0 || !!info?.found; // ← ключове місце
+    setSidebarAccess({ loggedIn: true, isHolder: can });
+    setChatInputsEnabled(can, currentWallet);
+    if (can) showSection('collection');
+    await recalcSectionIndicators(currentWallet);
+  });
 
     // якщо на старті якась секція вже активна — познач її прочитаною
 const initiallyActive = document.querySelector('.profile-section.active');
@@ -4283,10 +4295,11 @@ function setPreviewProgress(section, idx, pct){
   const hasSelectedImages = (selectedFilesBySection[section] || []).length > 0;
   if ((!text && !hasSelectedImages) || !sender) return;
 
-  if (!cachedHolderInfo?.found) {
-    alert("Only verified holders can send messages.");
-    return;
-  }
+  const amAdminSender = isAdmin(sender);
+if (!amAdminSender && !cachedHolderInfo?.found) {
+  alert("Only verified holders can send messages.");
+  return;
+}
 
 let imageUrls = [];
 const chosen = (selectedFilesBySection[section] || []).slice(0, MAX_IMAGES_PER_MSG);
