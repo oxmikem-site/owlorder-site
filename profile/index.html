@@ -1087,7 +1087,56 @@ display: block;
 .raffle-view .enter{
   width:100%; padding:12px; margin-top:14px; border-radius:14px; font-weight:700;
 }
-        
+
+        /* ===== RAFFLE MODAL LAYOUT ===== */
+.modal.raffle-modal { padding: 0 12px 14px 12px; }
+
+.raffle-banner{
+  width:100%;
+  height:220px;              /* підганяй за смаком */
+  object-fit:cover;
+  border-radius:12px;
+  display:block;
+}
+
+/* +50% до аватарки: було ~56 → стало 84 */
+.avatar-round{
+  width:84px; height:84px;
+  border-radius:50%;
+  border:3px solid #1a1a1a;
+  box-shadow:0 2px 10px rgba(0,0,0,.35);
+}
+
+.rfv-header{
+  margin-top:-28px;          /* злегка “наїжджає” на банер, як бейдж */
+  display:flex;
+  gap:16px;
+  align-items:center;
+  padding:0 2px;
+}
+
+.rfv-title{ margin:0; font-size:20px; font-weight:700; }
+
+.rfv-meta{
+  margin:8px 2px 0 2px;
+  color:#bdbdbd;
+  font-size:12px;
+}
+
+/* майже на всю ширину — тонка лінія */
+.raffle-sep{
+  height:1px;
+  background:#2a2a2a;
+  margin:12px -6px 12px -6px;   /* “виходить” за падинги модалки */
+  opacity:.9;
+}
+
+.rfv-desc{ white-space:pre-wrap; line-height:1.5; margin:0 2px 16px 2px; }
+
+/* трохи більше простору перед тасками */
+.rfv-tasks{ margin-top:6px; }
+.rfv-tasks-title{ margin:0 0 6px 0; font-size:14px; color:#ddd; }
+
     </style>
 </head>
 
@@ -2306,77 +2355,43 @@ function openCreateRaffleModal(){
   const mask = document.getElementById('raffle-create-mask');
   mask.innerHTML = ''; mask.style.display = 'flex';
 
-  const modal = document.createElement('div');
-  modal.className = 'modal';
-  modal.innerHTML = `
-    <h3>Create raffle</h3>
+const modal = document.createElement('div');
+modal.className = 'modal raffle-modal';
+modal.innerHTML = `
+  <img class="raffle-banner" src="${escapeHTML(data.coverUrl || '../logo1.png')}"
+       onerror="this.src='../logo1.png'">
 
-    <div class="row">
-  <input id="rf-title" type="text" placeholder="Project name *" maxlength="60" style="flex:1;">
-  <select id="rf-chain">
-    <option value="btc">BTC</option>
-    <option value="evm">EVM</option>
-  </select>
-  <input id="rf-winners" type="number" min="1" value="1" title="Winners" style="width:120px" />
-</div>
-
-    <div class="row">
-      <textarea id="rf-desc" placeholder="Main info about project *" style="width:100%;"></textarea>
+  <div class="rfv-header">
+    <img src="${escapeHTML(data.logoUrl || '../logo1.png')}"
+         class="avatar-round" onerror="this.src='../logo1.png'">
+    <div>
+      <h3 class="rfv-title">${escapeHTML(data.title || 'Raffle')}</h3>
     </div>
+  </div>
 
-    <div class="row">
-      <div style="display:flex; flex-direction:column; gap:6px; width:50%;">
-        <span>Header image</span>
-        <input id="rf-cover" type="file" accept="image/*">
-      </div>
-      <div style="display:flex; flex-direction:column; gap:6px; width:50%;">
-        <span>Round logo</span>
-        <input id="rf-logo" type="file" accept="image/*">
-      </div>
-    </div>
+  <div class="rfv-meta">
+    ${(data.chain||'btc').toUpperCase()} • ${relativeRaffleLine(data)} • ${(data.winnersCount||1)} winner${(data.winnersCount||1)>1?'s':''}
+  </div>
 
-    <div class="row">
-      <div style="display:flex; flex-direction:column; gap:6px; width:50%;">
-        <span>Start (UTC)</span>
-        <input id="rf-start" type="datetime-local">
-      </div>
-      <div style="display:flex; flex-direction:column; gap:6px; width:50%;">
-        <span>End (UTC)</span>
-        <input id="rf-end" type="datetime-local">
-      </div>
-    </div>
+  <div class="raffle-sep"></div>
 
-    <div class="row" style="flex-direction:column; align-items:flex-start;">
-      <strong>Follow accounts (X/Twitter)</strong>
-      <div style="display:flex; gap:8px; width:100%;">
-        <input id="rf-follow" type="text" placeholder="@acc1, @acc2, ..." />
-        <button id="add-follow" class="btn">Add</button>
-      </div>
-      <div id="rf-follow-list" style="display:flex; gap:6px; flex-wrap:wrap;"></div>
-    </div>
+  <div class="rfv-desc">${escapeHTML(data.description || '')}</div>
 
-    <div class="row" style="flex-direction:column; align-items:flex-start;">
-      <strong>Like + Retweet tweet (optional)</strong>
-      <input id="rf-tweet" type="text" placeholder="https://x.com/user/status/123..." />
-    </div>
+  <div class="rfv-tasks">
+    <h4 class="rfv-tasks-title">Tasks</h4>
+    <ol id="rfv-tasks" style="margin-top:6px; padding-left:18px;"></ol>
+  </div>
 
-    <div class="row" style="flex-direction:column; align-items:flex-start;">
-      <strong>Extra tasks</strong>
-      <div style="display:flex; gap:8px; width:100%; flex-wrap:wrap;">
-        <input id="rf-extra-label" type="text" placeholder="Task title (Visit website / Join Discord ...)" style="flex:2;">
-        <input id="rf-extra-url" type="text" placeholder="https://..." style="flex:3;">
-        <button id="add-extra" class="btn">Add</button>
-      </div>
-      <div id="rf-extra-list" style="display:flex; gap:6px; flex-wrap:wrap;"></div>
-    </div>
-
-    <div class="actions">
-      <button class="btn" id="rf-cancel">Cancel</button>
-      <button class="btn primary" id="rf-publish">Publish</button>
-    </div>
-  `;
-
-  mask.appendChild(modal);
+  <div class="row" style="margin-top:10px;">
+    <select id="rfv-wallet">
+      <option value="">Choose your ${(data.chain||'btc').toUpperCase()} address</option>
+      ${((wallets[data.chain||'btc']||[]).map(a=>`<option value="${a}">${shortenAddress(a)}</option>`).join(''))}
+    </select>
+    <button id="rfv-enter" class="btn primary" disabled>Enter</button>
+    <button id="rfv-close" class="btn">Close</button>
+  </div>
+`;
+mask.appendChild(modal);
 
   const follows = [];
   const extras  = [];
