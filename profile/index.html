@@ -1049,6 +1049,44 @@ display: block;
 .raffle-chip.upcoming { background:#f1c40f; color:#000; }
 .raffle-chip.ended    { background:#7f8c8d; color:#000; }
 
+/* RAFFLE VIEW */
+.modal.raffle-view { width: 560px; max-width: 95vw; }
+.raffle-view .banner{
+  position: relative; height:180px;
+  background:#111 center/cover no-repeat;
+  border-radius:16px;
+}
+.raffle-view .logo{
+  position:absolute; left:16px; bottom:-24px;
+  width:56px; height:56px; border-radius:50%;
+  border:3px solid #121212; background:#222; object-fit:cover;
+}
+.raffle-view .title-row{ display:flex; align-items:center; gap:12px; margin-top:32px; }
+.raffle-view .title{ font-size:18px; font-weight:700; }
+.raffle-view .meta{ color:#b7b7b7; font-size:12px; margin-top:4px; }
+.raffle-view .project-info{ white-space:pre-wrap; margin-top:10px; }
+
+.task-row{
+  display:flex; align-items:center; gap:10px;
+  padding:10px 12px; margin-top:8px;
+  background:#1a1a1a; border:1px solid #2a2a2a; border-radius:12px;
+}
+.task-row .dot{
+  width:18px; height:18px; border-radius:50%;
+  border:2px solid #555; display:inline-flex; align-items:center;
+  justify-content:center; font-size:14px; line-height:1;
+}
+.task-row.done .dot{ background:#ffd84d; border-color:#ffd84d; color:#000; }
+.task-row .grow{ flex:1; }
+.task-row a.btn{ padding:6px 10px; border-radius:10px; border:1px solid #333; }
+
+.raffle-view select{
+  width:100%; padding:10px; border-radius:10px;
+  background:#111; border:1px solid #2a2a2a; color:#eee;
+}
+.raffle-view .enter{
+  width:100%; padding:12px; margin-top:14px; border-radius:14px; font-weight:700;
+}
         
     </style>
 </head>
@@ -2185,23 +2223,18 @@ window.__raffleCountdown = setInterval(() => {
 }
                 // коротка людиночитна тривалість: 2d 4h / 3h 15m / 7m
 function formatShortDuration(ms) {
-  const s = Math.max(0, Math.floor(ms / 1000));
-  const d = Math.floor(s / 86400);
-  const h = Math.floor((s % 86400) / 3600);
-  const m = Math.floor((s % 3600) / 60);
+  const s = Math.max(0, Math.floor(ms/1000));
+  const d = Math.floor(s/86400), h = Math.floor((s%86400)/3600), m = Math.floor((s%3600)/60);
   if (d > 0) return `${d}d ${h}h`;
   if (h > 0) return `${h}h ${m}m`;
-  return `${Math.max(1, m)}m`;
+  return `${Math.max(1,m)}m`;
 }
-
-// рядок під карткою рафлу: Starts in … / Ends in … / Ended
 function relativeRaffleLine(r) {
   const now = Date.now();
   if (r.startAt && now < r.startAt) return `Starts in ${formatShortDuration(r.startAt - now)}`;
   if (r.endAt && now <= r.endAt)   return `Ends in ${formatShortDuration(r.endAt - now)}`;
   return 'Ended';
 }
-
 
                 async function renderRafflesGrid(){
   const sec = document.getElementById('section-raffles');
@@ -2279,12 +2312,13 @@ function openCreateRaffleModal(){
     <h3>Create raffle</h3>
 
     <div class="row">
-      <input id="rf-title" type="text" placeholder="Project name *" maxlength="60" style="flex:1;">
-      <select id="rf-chain">
-        <option value="btc">BTC</option>
-        <option value="evm">EVM</option>
-      </select>
-    </div>
+  <input id="rf-title" type="text" placeholder="Project name *" maxlength="60" style="flex:1;">
+  <select id="rf-chain">
+    <option value="btc">BTC</option>
+    <option value="evm">EVM</option>
+  </select>
+  <input id="rf-winners" type="number" min="1" value="1" title="Winners" style="width:120px" />
+</div>
 
     <div class="row">
       <textarea id="rf-desc" placeholder="Main info about project *" style="width:100%;"></textarea>
@@ -2385,6 +2419,7 @@ function openCreateRaffleModal(){
     const desc  = modal.querySelector('#rf-desc').value.trim();
     const chain = modal.querySelector('#rf-chain').value || 'btc';
     const tweet = modal.querySelector('#rf-tweet').value.trim();
+    const winnersCount = Math.max(1, parseInt(modal.querySelector('#rf-winners').value, 10) || 1);
 
     // часи
     const startVal = modal.querySelector('#rf-start').value;
@@ -2426,6 +2461,7 @@ function openCreateRaffleModal(){
       extraTasks: extras,
       coverUrl, logoUrl,
       startAt, endAt,
+      winnersCount,
       createdAt: Date.now(),
       createdBy: creator
     };
@@ -2436,107 +2472,133 @@ function openCreateRaffleModal(){
   };
 }
 
-                async function openRaffleViewModal(id, data){
+async function openRaffleViewModal(id, data){
   const mask = document.getElementById('raffle-view-mask');
   mask.innerHTML=''; mask.style.display='flex';
 
   const me = getConnectedWalletAddress() || '';
-  // підтягнемо збережені адреси для потрібної мережі
+  // підтягнемо збережені адреси
   let wallets = { btc:[], evm:[] };
-  try{
-    const snap = await getUserProfileRef(me).child('wallets').get();
-    wallets = snap.val() || { btc:[], evm:[] };
-  }catch{}
+  try { const snap = await getUserProfileRef(me).child('wallets').get();
+        wallets = snap.val() || { btc:[], evm:[] }; } catch {}
 
   const modal = document.createElement('div');
-  modal.className = 'modal';
+  modal.className = 'modal raffle-view';
   modal.innerHTML = `
-    <div style="display:flex; gap:14px; align-items:center;">
-      <img src="${escapeHTML(data.logoUrl || '../logo1.png')}" class="avatar-round" onerror="this.src='../logo1.png'">
-      <div>
-        <h3 style="margin:0">${escapeHTML(data.title || 'Raffle')}</h3>
-        <div class="muted">${(data.chain || 'btc').toUpperCase()} raffle</div>
-      </div>
+    <div class="banner" style="background-image:url('${escapeHTML(data.coverUrl || '../logo1.png')}')">
+      <img class="logo" src="${escapeHTML(data.logoUrl || '../logo1.png')}" onerror="this.src='../logo1.png'">
     </div>
 
-    <div class="row"><div style="white-space:pre-wrap;">${escapeHTML(data.description || '')}</div></div>
-
-    <div class="row" style="flex-direction:column; align-items:flex-start;">
-      <strong>Tasks</strong>
-      <ol id="rfv-tasks" style="margin-top:6px; padding-left:18px;"></ol>
+    <div class="title-row">
+      <div class="title">${escapeHTML(data.title || 'Raffle')}</div>
     </div>
+    <div class="meta">
+  ${(data.chain||'btc').toUpperCase()} • ${relativeRaffleLine(data)} • ${(data.winnersCount||1)} winner${(data.winnersCount||1)>1?'s':''}
+</div>
 
-    <div class="row">
-      <select id="rfv-wallet">
-        <option value="">Choose your ${(data.chain||'btc').toUpperCase()} address</option>
-        ${((wallets[data.chain||'btc']||[]).map(a=>`<option value="${a}">${shortenAddress(a)}</option>`).join(''))}
-      </select>
-      <button id="rfv-enter" class="btn primary" disabled>Enter</button>
-      <button id="rfv-close" class="btn">Close</button>
-    </div>
+    <div class="project-info">${escapeHTML(data.description || '')}</div>
+
+    <div id="tasks"></div>
+
+    <button id="rfv-enter" class="btn primary enter">Enter</button>
+    <button id="rfv-close" class="btn" style="width:100%; margin-top:6px;">Close</button>
   `;
   mask.appendChild(modal);
 
-                     try {
-    const meLc = me.toLowerCase();
-    const existing = (await getRaffleEntriesRef(id).child(meLc).get()).val();
-    if (existing) {
-      const enterBtn = modal.querySelector('#rfv-enter');
-      if (enterBtn) {
-        enterBtn.textContent = 'Entered';
-        enterBtn.disabled = true;
-      }
-    }
-  } catch (e) { /* noop */ }
+  // чи активний зараз
+  const now = Date.now();
+  const isActive = (!data.startAt || now >= data.startAt) && (!data.endAt || now <= data.endAt);
 
-  // список тасків (клік по лінку = виконано)
+  /* ---------- TASKS UI ---------- */
+  const tasksEl = modal.querySelector('#tasks');
   const done = new Set();
 
-  const list = modal.querySelector('#rfv-tasks');
-
-  // follow tasks
-  (data.followHandles||[]).forEach(h=>{
-    const li = document.createElement('li');
-    const url = `https://x.com/${encodeURIComponent(h)}`;
-    li.innerHTML = `Follow <a href="${url}" target="_blank" rel="noopener">@${h}</a>`;
-    li.querySelector('a').addEventListener('click', ()=>{ done.add(`f:${h}`); checkDone(); });
-    list.appendChild(li);
-  });
-
-  // like+retweet
-  if (data.tweetUrl){
-    const li = document.createElement('li');
-    li.innerHTML = `Like & Retweet <a href="${escapeHTML(data.tweetUrl)}" target="_blank" rel="noopener">this tweet</a>`;
-    li.querySelector('a').addEventListener('click', ()=>{ done.add('tweet'); checkDone(); });
-    list.appendChild(li);
+  function makeRow(id, label, href){
+    const row = document.createElement('div');
+    row.className = 'task-row';
+    row.dataset.id = id;
+    row.innerHTML = `
+      <span class="dot">•</span>
+      <div class="grow">${label}</div>
+      ${href ? `<a class="btn" target="_blank" rel="noopener" href="${escapeHTML(href)}">Open</a>` : ``}
+    `;
+    tasksEl.appendChild(row);
+    return row;
   }
-
-  // extra tasks
-  (data.extraTasks||[]).forEach((t,i)=>{
-    const li = document.createElement('li');
-    const url = t.url || '#';
-    li.innerHTML = `${escapeHTML(t.label || 'Open link')}: <a href="${escapeHTML(url)}" target="_blank" rel="noopener">${escapeHTML(url)}</a>`;
-    li.querySelector('a').addEventListener('click', ()=>{ done.add(`x:${i}`); checkDone(); });
-    list.appendChild(li);
-  });
-
+  function markDone(id){
+    done.add(id);
+    const r = tasksEl.querySelector(`.task-row[data-id="${CSS.escape(id)}"]`);
+    if (r) r.classList.add('done');
+    updateState();
+  }
   function totalTasks(){
     return (data.followHandles||[]).length + (data.tweetUrl?1:0) + (data.extraTasks||[]).length;
   }
-  function checkDone(){
-    const ok = done.size >= totalTasks();
-    const addr = modal.querySelector('#rfv-wallet').value;
-    modal.querySelector('#rfv-enter').disabled = !(ok && addr);
+  function allDone(){ return done.size >= totalTasks(); }
+
+  // 1) Submit wallet
+  const walletRow = makeRow('wallet', 'Submit wallet');
+  const sel = document.createElement('select');
+  sel.id = 'rfv-wallet';
+  sel.innerHTML = `<option value="">Choose your ${(data.chain||'btc').toUpperCase()} address</option>` +
+    ((wallets[data.chain||'btc']||[]).map(a=>`<option value="${a}">${shortenAddress(a)}</option>`).join(''));
+  walletRow.appendChild(sel);
+
+  const toSettings = document.createElement('a');
+  toSettings.href = '#'; toSettings.className = 'btn'; toSettings.textContent = 'Settings';
+  toSettings.onclick = (e)=>{ e.preventDefault(); document.querySelector('#sidebar-nav a[data-section="settings"]')?.click(); };
+  walletRow.appendChild(toSettings);
+
+  // 2) Follow tasks
+  (data.followHandles||[]).forEach(h=>{
+    const row = makeRow(`f:${h}`, `Follow @${h}`, `https://x.com/${encodeURIComponent(h)}`);
+    row.querySelector('a').addEventListener('click', ()=> markDone(`f:${h}`));
+  });
+
+  // 3) Like + retweet
+  if (data.tweetUrl){
+    const row = makeRow('tweet', 'Like & Retweet this post', data.tweetUrl);
+    row.querySelector('a').addEventListener('click', ()=> markDone('tweet'));
   }
 
-  modal.querySelector('#rfv-wallet').addEventListener('change', checkDone);
+  // 4) Extra tasks
+  (data.extraTasks||[]).forEach((t,i)=>{
+    const row = makeRow(`x:${i}`, escapeHTML(t.label || 'Open link'), t.url || '#');
+    row.querySelector('a').addEventListener('click', ()=> markDone(`x:${i}`));
+  });
+
+  /* ---------- кнопки ---------- */
+  const enterBtn = modal.querySelector('#rfv-enter');
+
+  // якщо вже зайшов — блокуємо
+  try {
+    const meLc = (me||'').toLowerCase();
+    const existing = (await getRaffleEntriesRef(id).child(meLc).get()).val();
+    if (existing) {
+      enterBtn.textContent = 'Entered';
+      enterBtn.disabled = true;
+    }
+  } catch {}
+
+  if (!isActive){
+    enterBtn.disabled = true;
+    enterBtn.textContent = (data.endAt && now > data.endAt) ? 'Ended' : 'Not started';
+  }
+
+  function updateState(){
+    const addr = sel.value;
+    enterBtn.disabled = !(isActive && addr && allDone());
+  }
+  sel.addEventListener('change', updateState);
+  updateState();
+
   modal.querySelector('#rfv-close').onclick = ()=> mask.style.display='none';
 
-  modal.querySelector('#rfv-enter').onclick = async ()=>{
-    const addr = modal.querySelector('#rfv-wallet').value;
+  enterBtn.onclick = async () => {
+    const addr = sel.value;
     if (!addr) return;
 
-    await getRaffleEntriesRef(id).child(me.toLowerCase()).set({
+    await getRaffleEntriesRef(id).child((me||'').toLowerCase()).set({
       at: Date.now(),
       chain: data.chain || 'btc',
       address: addr,
