@@ -4235,78 +4235,75 @@ const fileName = `chat_images/${uid}/${Date.now()}_${cryptoRand(7)}.${ext}`;
     
 
   chatSections.forEach(section => {
-    const chatInput = document.getElementById(`chat-input-${section}`);
-    const sendBtn = document.querySelector(`.send-btn[data-section="${section}"]`);
-    const toggleBtn = document.querySelector(`.toggle-emoji-picker[data-section="${section}"]`);
-    const emojiPicker = document.querySelector(`.emoji-picker[data-section="${section}"]`);
-    if (!chatInput || !sendBtn || !toggleBtn || !emojiPicker) return;
+  const chatInput = document.getElementById(`chat-input-${section}`);
+  const sendBtn = document.querySelector(`.send-btn[data-section="${section}"]`);
+  const toggleBtn = document.querySelector(`.toggle-emoji-picker[data-section="${section}"]`);
+  const emojiPicker = document.querySelector(`.emoji-picker[data-section="${section}"]`);
+  if (!chatInput || !sendBtn || !toggleBtn || !emojiPicker) return;
 
-    chatInput.addEventListener("input", () => {
-      chatInput.style.height = "auto";
-      chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + "px";
-    });
-    chatInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        sendBtn.click();
-      } else if (e.key === "Enter" && e.shiftKey) {
-        const start = chatInput.selectionStart;
-        const end = chatInput.selectionEnd;
-        chatInput.value = chatInput.value.slice(0, start) + "\n" + chatInput.value.slice(end);
-        chatInput.selectionStart = chatInput.selectionEnd = start + 1;
-        e.preventDefault();
-      }
-    });
+  chatInput.addEventListener("input", () => {
+    chatInput.style.height = "auto";
+    chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + "px";
+  });
 
-    toggleBtn.addEventListener("click", (e) => {
-  e.stopPropagation();
-
-  const willShow = emojiPicker.style.display !== "block";
-  // скинемо попередні координати
-  emojiPicker.style.top = "auto";
-  emojiPicker.style.bottom = "auto";
-
-  if (willShow) {
-    // оцінюємо куди є місце: над чи під кнопкою
-    const r = toggleBtn.getBoundingClientRect();
-    const estH = emojiPicker.offsetHeight || 300; // fallback
-    const spaceBelow = window.innerHeight - r.bottom;
-    const spaceAbove = r.top;
-
-    // контейнер у тебе вже position:relative (inline в розмітці)
-    if (spaceBelow >= estH + 12) {
-      // під кнопкою
-      emojiPicker.style.top = "45px";
-    } else {
-      // над кнопкою
-      emojiPicker.style.bottom = "45px";
+  chatInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendBtn.click();
+    } else if (e.key === "Enter" && e.shiftKey) {
+      const start = chatInput.selectionStart;
+      const end = chatInput.selectionEnd;
+      chatInput.value = chatInput.value.slice(0, start) + "\n" + chatInput.value.slice(end);
+      chatInput.selectionStart = chatInput.selectionEnd = start + 1;
+      e.preventDefault();
     }
-  }
+  });
 
-  emojiPicker.style.display = willShow ? "block" : "none";
-});
+  toggleBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
 
+    const willShow = emojiPicker.style.display !== "block";
+    // скидаємо координати
+    emojiPicker.style.top = "auto";
+    emojiPicker.style.bottom = "auto";
 
-    document.addEventListener("click", (e) => {
-      if (!emojiPicker.contains(e.target) && !toggleBtn.contains(e.target)) {
-        emojiPicker.style.display = "none";
+    if (willShow) {
+      const r = toggleBtn.getBoundingClientRect();
+      const estH = emojiPicker.offsetHeight || 300;
+      const spaceBelow = window.innerHeight - r.bottom;
+
+      if (spaceBelow >= estH + 12) {
+        emojiPicker.style.top = "45px";     // під кнопкою
+      } else {
+        emojiPicker.style.bottom = "45px";  // над кнопкою
       }
-    });
+    }
 
-        customElements.whenDefined("emoji-picker").then(() => {
-      emojiPicker.addEventListener("emoji-click", (event) => {
-        const emoji = event.detail.unicode;
-        const cursorPos = chatInput.selectionStart;
-        const before = chatInput.value.substring(0, cursorPos);
-        const after  = chatInput.value.substring(cursorPos);
-        chatInput.value = before + emoji + after;
-        chatInput.selectionStart = chatInput.selectionEnd = cursorPos + emoji.length;
-        chatInput.focus();
-        emojiPicker.style.display = "none";
-      });
-    });
+    emojiPicker.style.display = willShow ? "block" : "none";
+  });
 
-                let lightboxEl = null, lightboxIdx = 0, lightboxList = [];
+  document.addEventListener("click", (e) => {
+    if (!emojiPicker.contains(e.target) && !toggleBtn.contains(e.target)) {
+      emojiPicker.style.display = "none";
+    }
+  });
+
+  customElements.whenDefined("emoji-picker").then(() => {
+    emojiPicker.addEventListener("emoji-click", (event) => {
+      const emoji = event.detail.unicode;
+      const cursorPos = chatInput.selectionStart;
+      const before = chatInput.value.substring(0, cursorPos);
+      const after  = chatInput.value.substring(cursorPos);
+      chatInput.value = before + emoji + after;
+      chatInput.selectionStart = chatInput.selectionEnd = cursorPos + emoji.length;
+      chatInput.focus();
+      emojiPicker.style.display = "none";
+    });
+  });
+}); 
+
+    
+    let lightboxEl = null, lightboxIdx = 0, lightboxList = [];
 
 function ensureLightbox() {
       if (lightboxEl) return lightboxEl;
