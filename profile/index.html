@@ -13,6 +13,8 @@
     <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@1.9.0/index.js"></script>
     <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
     <script defer src="https://cdn.fxtwitter.com/embed.js" data-fxtw="1"></script>
+    <script defer src="https://unpkg.com/sats-connect@1.1.6/dist/index.umd.js" crossorigin="anonymous"></script>
+
     
     <style>
         :root {
@@ -2853,6 +2855,7 @@ const firebaseConfig = {
   measurementId: "G-ELQRLCLGZT"
 };
                 // === Xverse (sats-connect) bootstrap ===
+// === Xverse (sats-connect) bootstrap ===
 let SatsWallet = null;
 let AddressPurpose = null;
 let getProviders = null;
@@ -2861,12 +2864,12 @@ let getProviderById = null;
 async function loadSatsConnect() {
   if (SatsWallet) return SatsWallet;
 
-  // 1) Перший шлях — ESM
+  // 1) ESM (стабільний CDN)
   try {
-    const mod = await import('https://cdn.jsdelivr.net/npm/sats-connect@1.1.4/+esm');
-    AddressPurpose  = mod.AddressPurpose || AddressPurpose;
-    getProviders    = mod.getProviders   || getProviders;
-    getProviderById = mod.getProviderById || getProviderById;
+    const mod = await import('https://esm.sh/sats-connect@1.1.6');
+    AddressPurpose   = mod.AddressPurpose  || AddressPurpose;
+    getProviders     = mod.getProviders    || getProviders;
+    getProviderById  = mod.getProviderById || getProviderById;
     if (typeof mod.request === 'function') {
       SatsWallet = { request: mod.request };
     }
@@ -2874,10 +2877,14 @@ async function loadSatsConnect() {
     console.warn('ESM sats-connect import failed:', e);
   }
 
-  // 2) Фолбек — UMD глобал (якщо Shields/адблок щось порізали)
+  // 2) UMD fallback (глобал з <head> через unpkg)
   if ((!SatsWallet || typeof SatsWallet.request !== 'function') &&
       window.satsConnect && typeof window.satsConnect.request === 'function') {
-    SatsWallet = window.satsConnect;
+    const g = window.satsConnect;
+    AddressPurpose   = g.AddressPurpose  || AddressPurpose;
+    getProviders     = g.getProviders    || getProviders;
+    getProviderById  = g.getProviderById || getProviderById;
+    SatsWallet = { request: g.request };
   }
 
   return SatsWallet;
@@ -4000,19 +4007,17 @@ async function connectXverseWallet() {
       return;
     }
 
-    // Перевіряємо наявність провайдера Xverse
-    let hasXverse = true;
+    // Перевіримо наявність Xverse, якщо API доступне
     try {
       if (typeof getProviders === "function") {
         const providers = await getProviders();
-        hasXverse = providers?.some(p => p.id === "xverse");
+        const hasXverse = providers?.some(p => p.id === "xverse");
+        if (!hasXverse) {
+          alert("Xverse not available. Install the Xverse wallet.");
+          return;
+        }
       }
     } catch {}
-
-    if (!hasXverse) {
-      alert("Xverse not available. Install Xverse wallet.");
-      return;
-    }
 
     // Авторизація застосунку
     await wallet.request("wallet_connect", {
@@ -4040,13 +4045,13 @@ async function connectXverseWallet() {
       return;
     }
 
-    // Зберігаємо та оновлюємо UI/стан
+    // Зберігаємо/оновлюємо стан
     localStorage.setItem("taproot_wallet", chosen);
     updateWalletButtons(chosen);
     await populateSidebarUserInfo(chosen);
     window.currentWallet = chosen;
 
-    // Тимчасово надаємо доступ адмінам
+    // Тимчасово даємо права адмінам, поки чекаємо холдера
     const amAdmin = isAdmin(chosen);
     setSidebarAccess({ loggedIn: true, isHolder: amAdmin });
     setChatInputsEnabled(amAdmin, chosen);
