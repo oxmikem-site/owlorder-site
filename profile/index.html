@@ -2497,19 +2497,22 @@ function openCreateRaffleModal(){
     const logoFile  = modal.querySelector('#rf-logo').files[0]  || null;
 
     let coverUrl = '', logoUrl = '';
-    try{
-      if (coverFile){
-        const blob = await prepareImageForUpload(coverFile);
-        const ref  = storage.ref().child(`raffles/${Date.now()}_${creator}_cover.webp`);
-        await ref.put(blob, { contentType: blob.type || 'image/webp', cacheControl:'public,max-age=31536000,immutable' });
-        coverUrl = await ref.getDownloadURL();
-      }
-      if (logoFile){
-        const blob = await compressImage(logoFile, 600, 600, 'image/webp', 0.9);
-        const ref  = storage.ref().child(`raffles/${Date.now()}_${creator}_logo.webp`);
-        await ref.put(blob, { contentType: 'image/webp', cacheControl:'public,max-age=31536000,immutable' });
-        logoUrl = await ref.getDownloadURL();
-      }
+let coverPath = '', logoPath = '';
+try{
+  if (coverFile){
+    const blob = await prepareImageForUpload(coverFile);
+    const refC = storage.ref().child(`raffles/${Date.now()}_${creator}_cover.webp`);
+    await refC.put(blob, { contentType: blob.type || 'image/webp', cacheControl:'public,max-age=31536000,immutable' });
+    coverUrl  = await refC.getDownloadURL();
+    coverPath = refC.fullPath;          // <— зберігаємо шлях
+  }
+  if (logoFile){
+    const blob = await compressImage(logoFile, 600, 600, 'image/webp', 0.9);
+    const refL = storage.ref().child(`raffles/${Date.now()}_${creator}_logo.webp`);
+    await refL.put(blob, { contentType: 'image/webp', cacheControl:'public,max-age=31536000,immutable' });
+    logoUrl  = await refL.getDownloadURL();
+    logoPath = refL.fullPath;           // <— зберігаємо шлях
+  }
     }catch(e){
       console.error(e);
       return alert('Image upload failed (перевір CORS / розмір файлу).');
@@ -2677,8 +2680,23 @@ async function openRaffleViewModal(id, data){
 function getRaffleEntriesRef(id){ return db.ref(`raffleEntries/${id}`); }
                 // ——— admin helper: delete raffle + entries
 async function deleteRaffleById(id){
+  // 1) читаємо, щоб мати шляхи до файлів
+  const snap = await getRafflesRef().child(id).get();
+  const r = snap.val() || {};
+
+  // 2) видаляємо записи
   await getRafflesRef().child(id).remove();
   try { await db.ref(`raffleEntries/${id}`).remove(); } catch {}
+
+  // 3) намагаємось видалити файли зі Storage
+  try {
+    const jobs = [];
+    if (r.coverPath) jobs.push(storage.ref(r.coverPath).delete());
+    else if (r.coverUrl) jobs.push(storage.refFromURL(r.coverUrl).delete());
+    if (r.logoPath)  jobs.push(storage.ref(r.logoPath).delete());
+    else if (r.logoUrl)  jobs.push(storage.refFromURL(r.logoUrl).delete());
+    await Promise.all(jobs);
+  } catch(e) { console.warn('Storage delete failed:', e); }
 }
                 
 /* Заповнення сайдбару профілю */
