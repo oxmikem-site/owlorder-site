@@ -13,7 +13,6 @@
     <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@1.9.0/index.js"></script>
     <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
     <script defer src="https://cdn.fxtwitter.com/embed.js" data-fxtw="1"></script>
-    <script src="https://unpkg.com/sats-connect@1.0.2/dist/index.umd.js"></script>
     
     <style>
         :root {
@@ -2860,17 +2859,27 @@ let getProviders = null;
 let getProviderById = null;
 
 async function loadSatsConnect() {
-  if (SatsWallet) return SatsWallet; // вже завантажено
+  if (SatsWallet) return SatsWallet;
+
+  // 1) Перший шлях — ESM
   try {
-    // ESM-імпорт з CDN (працює без збірника)
     const mod = await import('https://cdn.jsdelivr.net/npm/sats-connect@1.1.4/+esm');
-    AddressPurpose   = mod.AddressPurpose;
-    getProviders     = mod.getProviders;
-    getProviderById  = mod.getProviderById;
-    SatsWallet       = mod.default || { request: mod.request };
+    AddressPurpose  = mod.AddressPurpose || AddressPurpose;
+    getProviders    = mod.getProviders   || getProviders;
+    getProviderById = mod.getProviderById || getProviderById;
+    if (typeof mod.request === 'function') {
+      SatsWallet = { request: mod.request };
+    }
   } catch (e) {
-    console.warn('sats-connect import failed', e);
+    console.warn('ESM sats-connect import failed:', e);
   }
+
+  // 2) Фолбек — UMD глобал (якщо Shields/адблок щось порізали)
+  if ((!SatsWallet || typeof SatsWallet.request !== 'function') &&
+      window.satsConnect && typeof window.satsConnect.request === 'function') {
+    SatsWallet = window.satsConnect;
+  }
+
   return SatsWallet;
 }
 
@@ -3983,47 +3992,88 @@ bindSidebarNavOnce();
     let currentWallet = getConnectedWalletAddress() || null;
     const seenMessages = new Set();
 
-   async function connectXverseWallet() {
+async function connectXverseWallet() {
   try {
     const wallet = await loadSatsConnect();
-    if (!wallet || !wallet.request || !getProviders) {
-      alert('Sats-Connect not ready'); 
+    if (!wallet || typeof wallet.request !== "function") {
+      alert("Sats-Connect failed to load. If you use Brave, turn Shields off for this site and reload.");
       return;
     }
 
-    // 1) Виявляємо Xverse серед провайдерів
-    const providers = await getProviders();
-    const hasXverse = providers.some(p => p.id === 'xverse');
+    // Перевіримо, чи видно провайдера Xverse (якщо API доступне)
+    let hasXverse = true;
+    try {
+      if (typeof getProviders === "function") {
+        const providers = await getProviders();
+        hasXverse = providers?.some(p => p.id === "xverse");
+      }
+    } catch {}
+
     if (!hasXverse) {
-      alert('Xverse not available. Install Xverse wallet.');
-      return; // <- це popup, який ти бачив, але тепер перевірка коректна
+      alert("Xverse not available. Install Xverse wallet.");
+      return;
     }
 
-    // 2) Даємо гамцю знати про наш застосунок і просимо дозвіл на адреси
-    await wallet.request('wallet_connect', {
-      permissions: ['getAddresses'],
-      appInfo: {
-        name: 'OWL Club',
-        // постав свій логотип, якщо хочеш
-        // logo: location.origin + '/logo1.png'
-      }
-    }); // після цього відкриється нативний Xverse connect. :contentReference[oaicite:2]{index=2}
+    // Авторизація застосунку
+    await wallet.request("wallet_connect", {
+      permissions: ["getAddresses"],
+      appInfo: { name: "OWL Club" }
+    });
 
-    // 3) Тягнемо адреси: Ordinals (taproot) + Payment
-    const resp = await wallet.request('getAddresses', {
-      purposes: [AddressPurpose.Ordinals, AddressPurpose.Payment],
-      message: 'Connect OWL Club to view holder status'
-    }); // повертає масив адрес. :contentReference[oaicite:3]{index=3}
+    // Отримуємо адреси Ordinals/Payment
+    const purposes = [];
+    if (AddressPurpose?.Ordinals) purposes.push(AddressPurpose.Ordinals);
+    if (AddressPurpose?.Payment)  purposes.push(AddressPurpose.Payment);
+
+    const resp = await wallet.request("getAddresses", {
+      purposes: purposes.length ? purposes : undefined,
+      message: "Connect OWL Club to view holder status"
+    });
 
     const addrs = Array.isArray(resp?.result?.addresses) ? resp.result.addresses : [];
-    const ord = addrs.find(a => a.purpose === AddressPurpose.Ordinals)?.address || '';
-    const pay = addrs.find(a => a.purpose === AddressPurpose.Payment )?.address || '';
-    const chosen = ord || pay;
+    const ord = addrs.find(a => a.purpose === AddressPurpose?.Ordinals)?.address || "";
+    const pay = addrs.find(a => a.purpose === AddressPurpose?.Payment )?.address || "";
+    const chosen = ord || pay || addrs[0]?.address || "";
 
     if (!chosen) {
-      alert('Failed to obtain address from Xverse.');
+      alert("Failed to obtain address from Xverse.");
       return;
     }
+
+    // Зберігаємо та оновлюємо UI/стан
+    localStorage.setItem("taproot_wallet", chosen);
+    updateWalletButtons(chosen);
+    await populateSidebarUserInfo(chosen);
+    window.currentWallet = chosen;
+
+    // Тимчасово надаємо доступ адмінам (доки не підтверджено холдера)
+    const amAdmin = isAdmin(chosen);
+    setSidebarAccess({ loggedIn: true, isHolder: amAdmin });
+    setChatInputsEnabled(amAdmin, chosen);
+
+    initUnreadTracking(chosen);
+    initSettingsUI(chosen);
+    renderMyCollection(chosen);
+
+    // Після перевірки холдера — оновлюємо права
+    try {
+      const info = await getHolderInfoOnce(chosen);
+      const can  = amAdmin || !!info?.found;
+      currentIsHolder = !!info?.found;
+
+      setSidebarAccess({ loggedIn: true, isHolder: can });
+      setChatInputsEnabled(can, chosen);
+
+      if (can) showSection("collection");
+      await recalcSectionIndicators(chosen);
+    } catch (e) {
+      console.warn("Holder check failed:", e);
+    }
+  } catch (e) {
+    console.error(e);
+    alert("Xverse connection failed. Check the extension permissions.");
+  }
+}
 
     // Ми всюди у коді використовуємо taproot_wallet — збережемо ту саму змінну
     localStorage.setItem('taproot_wallet', chosen);
