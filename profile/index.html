@@ -2211,21 +2211,6 @@ async function renderMyCollection(address){
 }).join('');
 }
 
-                // оновлюємо підписи раз на хвилину
-if (window.__raffleCountdown) clearInterval(window.__raffleCountdown);
-window.__raffleCountdown = setInterval(() => {
-  const cards = sec.querySelectorAll('.raffle-card');
-  cards.forEach(card => {
-    const id = card.getAttribute('data-id');
-    const item = (id && list.find(x => x.id === id)) || null;
-    if (!item) return;
-    const rel = card.querySelector('.raffle-rel');
-    if (rel) rel.textContent = relativeRaffleLine(item);
-    const st = raffleStatus(item);
-    const chip = card.querySelector('.raffle-chip');
-    if (chip) { chip.textContent = st.label; chip.className = `raffle-chip ${st.cls}`; }
-  });
-}, 60_000);
 
                 async function renderRafflesEligibility(wallet){
   const sec = document.getElementById('section-raffles');
@@ -2357,49 +2342,76 @@ function relativeRaffleLine(r) {
   // і ще раз — панель вимог завжди в самому низу
   const wrap = sec.querySelector('.raffles-wrap');
   if (wrap) sec.appendChild(wrap);
+                      // ——— оновлення статусів та "Ends/Starts in" раз на хвилину — всередині renderRafflesGrid
+  if (window.__raffleCountdown) clearInterval(window.__raffleCountdown);
+  window.__raffleCountdown = setInterval(() => {
+    sec.querySelectorAll('.raffle-card').forEach(card => {
+      const id = card.getAttribute('data-id');
+      const item = list.find(x => x.id === id);
+      if (!item) return;
+      const rel = card.querySelector('.raffle-rel');
+      if (rel) rel.textContent = relativeRaffleLine(item);
+      const st = raffleStatus(item);
+      const chip = card.querySelector('.raffle-chip');
+      if (chip) { chip.textContent = st.label; chip.className = `raffle-chip ${st.cls}`; }
+    });
+  }, 60_000);
 }
 
 function openCreateRaffleModal(){
   const mask = document.getElementById('raffle-create-mask');
-  mask.innerHTML = ''; mask.style.display = 'flex';
+  mask.innerHTML = ''; 
+  mask.style.display = 'flex';
 
-const modal = document.createElement('div');
-modal.className = 'modal raffle-modal';
-modal.innerHTML = `
-  <img class="raffle-banner" src="${escapeHTML(data.coverUrl || '../logo1.png')}"
-       onerror="this.src='../logo1.png'">
+  const modal = document.createElement('div');
+  modal.className = 'modal raffle-modal';
+  modal.innerHTML = `
+    <h3 style="margin:0 0 10px 0;">Create Raffle</h3>
 
-  <div class="rfv-header">
-    <img src="${escapeHTML(data.logoUrl || '../logo1.png')}"
-         class="avatar-round" onerror="this.src='../logo1.png'">
-    <div>
-      <h3 class="rfv-title">${escapeHTML(data.title || 'Raffle')}</h3>
+    <div class="row"><input id="rf-title" type="text" placeholder="Title" /></div>
+    <div class="row"><textarea id="rf-desc" placeholder="Description"></textarea></div>
+
+    <div class="row">
+      <select id="rf-chain">
+        <option value="btc">BTC</option>
+        <option value="evm">EVM</option>
+      </select>
+      <input id="rf-winners" type="number" min="1" value="1" style="max-width:120px;" />
     </div>
-  </div>
 
-  <div class="rfv-meta">
-    ${(data.chain||'btc').toUpperCase()} • ${relativeRaffleLine(data)} • ${(data.winnersCount||1)} winner${(data.winnersCount||1)>1?'s':''}
-  </div>
+    <div class="row">
+      <input id="rf-start" type="datetime-local" />
+      <input id="rf-end" type="datetime-local" />
+    </div>
 
-  <div class="raffle-sep"></div>
+    <div class="row">
+      <input id="rf-tweet" type="url" placeholder="Tweet URL (optional)" />
+    </div>
 
-  <div class="rfv-desc">${escapeHTML(data.description || '')}</div>
+    <div class="row">
+      <input id="rf-follow" type="text" placeholder="@handle1, @handle2 (optional)" />
+      <button id="add-follow" class="btn">Add</button>
+    </div>
+    <div id="rf-follow-list" class="row" style="gap:6px; flex-wrap:wrap;"></div>
 
-  <div class="rfv-tasks">
-    <h4 class="rfv-tasks-title">Tasks</h4>
-    <ol id="rfv-tasks" style="margin-top:6px; padding-left:18px;"></ol>
-  </div>
+    <div class="row">
+      <input id="rf-extra-label" type="text" placeholder="Extra task label" />
+      <input id="rf-extra-url" type="url" placeholder="https://..." />
+      <button id="add-extra" class="btn">Add</button>
+    </div>
+    <div id="rf-extra-list" class="row" style="gap:6px; flex-wrap:wrap;"></div>
 
-  <div class="row" style="margin-top:10px;">
-    <select id="rfv-wallet">
-      <option value="">Choose your ${(data.chain||'btc').toUpperCase()} address</option>
-      ${((wallets[data.chain||'btc']||[]).map(a=>`<option value="${a}">${shortenAddress(a)}</option>`).join(''))}
-    </select>
-    <button id="rfv-enter" class="btn primary" disabled>Enter</button>
-    <button id="rfv-close" class="btn">Close</button>
-  </div>
-`;
-mask.appendChild(modal);
+    <div class="row">
+      <label>Cover: <input id="rf-cover" type="file" accept="image/*" /></label>
+      <label>Logo: <input id="rf-logo" type="file" accept="image/*" /></label>
+    </div>
+
+    <div class="actions">
+      <button id="rf-publish" class="btn primary">Publish</button>
+      <button id="rf-cancel" class="btn">Close</button>
+    </div>
+  `;
+  mask.appendChild(modal);
 
   const follows = [];
   const extras  = [];
@@ -2444,7 +2456,6 @@ mask.appendChild(modal);
     const tweet = modal.querySelector('#rf-tweet').value.trim();
     const winnersCount = Math.max(1, parseInt(modal.querySelector('#rf-winners').value, 10) || 1);
 
-    // часи
     const startVal = modal.querySelector('#rf-start').value;
     const endVal   = modal.querySelector('#rf-end').value;
     const startAt  = startVal ? Date.parse(startVal) : Date.now();
@@ -3147,6 +3158,15 @@ function linkify(text) {
   ));
 }
 
+if (typeof window.CSS === 'undefined') window.CSS = {};
+if (typeof CSS.escape !== 'function') {
+  CSS.escape = function (value) {
+    return String(value).replace(/[^a-zA-Z0-9_\-]/g, function (c) {
+      return '\\' + c;
+    });
+  };
+}
+
 function extractTweetInfo(url){
   const m = url.match(/https?:\/\/(?:www\.)?(?:mobile\.)?(?:twitter|x)\.com\/([^\/\s]+)\/status\/(\d+)/i);
   if (!m) return null;
@@ -3820,25 +3840,33 @@ await auth.signInAnonymously().catch(console.error);
 auth.onAuthStateChanged(u => {
   window.CURRENT_UID = u ? u.uid : null;
 });
-    
 
-document.querySelectorAll('#sidebar-nav a[data-section]').forEach(link => {
-  link.addEventListener('click', async (e) => {
-    const target = link.getAttribute('data-section');
-    if (!target) return;
-    const liVisible = link.closest('li')?.style.display !== 'none';
-    if (!liVisible) { e.preventDefault(); return; }
+    let __navBound = false;
+function bindSidebarNavOnce(){
+  if (__navBound) return; 
+  __navBound = true;
+  document.querySelectorAll('#sidebar-nav a[data-section]').forEach(link => {
+    link.addEventListener('click', async (e) => {
+      const target = link.getAttribute('data-section');
+      if (!target) return;
+      const liVisible = link.closest('li')?.style.display !== 'none';
+      if (!liVisible) { e.preventDefault(); return; }
 
-    e.preventDefault();
-    hideAllSections();
-    showSection(target);
-
-    const w = getConnectedWalletAddress();
-    if (target === 'collection' && w) renderMyCollection(w);
-    if (target === 'raffles' && w) { renderRafflesEligibility(w); renderRafflesGrid(); }
-    if (w) await markAsRead(target, w);
+      e.preventDefault();
+      hideAllSections();
+      showSection(target);
+      if (target !== 'raffles' && window.__raffleCountdown) {
+  clearInterval(window.__raffleCountdown);
+}
+      const w = getConnectedWalletAddress();
+      if (target === 'collection' && w) renderMyCollection(w);
+      if (target === 'raffles' && w) { renderRafflesEligibility(w); renderRafflesGrid(); }
+      if (w) await markAsRead(target, w);
+    });
   });
-});
+}
+
+bindSidebarNavOnce();
 
     let currentWallet = getConnectedWalletAddress() || null;
     const seenMessages = new Set();
@@ -3974,33 +4002,7 @@ if (initiallyActive && initiallyActive.id?.startsWith('section-') && currentWall
 }
     seenMessages.clear();
 
-  document.querySelectorAll('#sidebar-nav a[data-section]').forEach(link => {
-  link.addEventListener('click', async (e) => {
-    const target = link.getAttribute('data-section');
-    if (!target) return;
-
-   
-    const liVisible = link.closest('li')?.style.display !== 'none';
-    if (!liVisible) { e.preventDefault(); return; }
-
-    e.preventDefault();
-    hideAllSections();
-    showSection(target);
-
-    if (target === 'collection' && currentWallet) {
-      renderMyCollection(currentWallet);
-    }
-
-      if (target === 'raffles' && currentWallet) {
-  renderRafflesEligibility(currentWallet);
-  renderRafflesGrid(); 
-}
-
-    if (currentWallet) {
-      await markAsRead(target, currentWallet);
-    }
-  });
-});
+bindSidebarNavOnce();
 
   // Logout
   document.querySelectorAll(".logout-btn, .sidebar-logout").forEach(el => {
@@ -4296,7 +4298,8 @@ function setPreviewProgress(section, idx, pct){
   if ((!text && !hasSelectedImages) || !sender) return;
 
   const amAdminSender = isAdmin(sender);
-if (!amAdminSender && !cachedHolderInfo?.found) {
+const canPostAsHolder = isWalletHolderSync(sender) || (cachedHolderInfo && cachedHolderInfo.found);
+if (!amAdminSender && !canPostAsHolder) {
   alert("Only verified holders can send messages.");
   return;
 }
@@ -4358,6 +4361,16 @@ const fileName = `chat_images/${uid}/${Date.now()}_${cryptoRand(7)}.${ext}`;
   // ---- save message ----
   const uid = window.CURRENT_UID;
   if (!uid) { alert("Auth not ready, try again."); return; }
+
+       // простий rate limit: мінімум 3 секунди між відправками
+try {
+  const last = (await db.ref(`/rateLimit/${uid}`).get()).val() || 0;
+  if (Date.now() - last < 3000) {
+    alert('Too fast. Please wait.');
+    return;
+  }
+} catch {}
+
 
   const msgKey    = db.ref().child(`chats/${section}`).push().key;
   const replyData = replyToMessageBySection[section];
