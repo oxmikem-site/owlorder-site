@@ -2292,9 +2292,10 @@ function relativeRaffleLine(r) {
   }
 
   const btnPlus = topbar.querySelector('#btn-create-raffle');
-  const w = getConnectedWalletAddress();
-  btnPlus.classList.toggle('show', isAdmin(w));
-  if (isAdmin(w)) btnPlus.onclick = openCreateRaffleModal;
+const w = getConnectedWalletAddress();
+const amAdmin = isAdmin(w);
+btnPlus.classList.toggle('show', amAdmin);
+if (amAdmin) btnPlus.onclick = openCreateRaffleModal;
 
   // сам грід
   let grid = sec.querySelector('.raffles-grid');
@@ -2315,19 +2316,26 @@ function relativeRaffleLine(r) {
   } else {
     grid.innerHTML = list.map(r => {
   const st = raffleStatus(r);
-  return `
-    <div class="raffle-card" data-id="${r.id}">
-      <img class="raffle-img" src="${escapeHTML(r.coverUrl || '../logo1.png')}" onerror="this.src='../logo1.png'">
-      <img class="raffle-logo" src="${escapeHTML(r.logoUrl || '../logo1.png')}" onerror="this.src='../logo1.png'">
-      <div class="raffle-meta">
-        <span class="raffle-title">${escapeHTML(r.title || 'Raffle')}</span>
-        <span class="raffle-chip ${st.cls}">${st.label}</span>
-      </div>
-      <div class="muted raffle-rel" style="padding:0 12px 10px 12px; font-size:12px;">
-  ${relativeRaffleLine(r)}
-</div>
+ return `
+  <div class="raffle-card" data-id="${r.id}" style="position:relative;">
+    ${amAdmin ? `
+      <button class="raffle-del" data-id="${r.id}" title="Delete"
+              style="position:absolute; top:6px; right:6px; z-index:2;
+                     width:28px; height:28px; border:none; border-radius:6px;
+                     background:#2a2a2a; color:#fff; cursor:pointer; opacity:.85;">
+        ×
+      </button>` : ``}
+    <img class="raffle-img" src="${escapeHTML(r.coverUrl || '../logo1.png')}" onerror="this.src='../logo1.png'">
+    <img class="raffle-logo" src="${escapeHTML(r.logoUrl || '../logo1.png')}" onerror="this.src='../logo1.png'">
+    <div class="raffle-meta">
+      <span class="raffle-title">${escapeHTML(r.title || 'Raffle')}</span>
+      <span class="raffle-chip ${st.cls}">${st.label}</span>
     </div>
-  `;
+    <div class="muted raffle-rel" style="padding:0 12px 10px 12px; font-size:12px;">
+      ${relativeRaffleLine(r)}
+    </div>
+  </div>
+`;
 }).join('');
 
     grid.querySelectorAll('.raffle-card').forEach(card=>{
@@ -2338,6 +2346,26 @@ function relativeRaffleLine(r) {
       });
     });
   }
+                    // admin-only: delete buttons
+if (amAdmin) {
+  grid.querySelectorAll('.raffle-del').forEach(btn => {
+    btn.addEventListener('click', async (ev) => {
+      ev.stopPropagation(); // щоб не відкривалося вікно перегляду
+      const id = btn.getAttribute('data-id');
+      if (!id) return;
+      const ok = confirm('Delete this raffle? All its entries will also be removed.');
+      if (!ok) return;
+      try {
+        await deleteRaffleById(id);
+        // Перерендер, щоб список оновився
+        renderRafflesGrid();
+      } catch (e) {
+        console.error(e);
+        alert('Failed to delete raffle. Check permissions / Firebase rules.');
+      }
+    });
+  });
+}
 
   // і ще раз — панель вимог завжди в самому низу
   const wrap = sec.querySelector('.raffles-wrap');
@@ -2647,6 +2675,11 @@ async function openRaffleViewModal(id, data){
 
                 function getRafflesRef(){ return db.ref('raffles/items'); }
 function getRaffleEntriesRef(id){ return db.ref(`raffleEntries/${id}`); }
+                // ——— admin helper: delete raffle + entries
+async function deleteRaffleById(id){
+  await getRafflesRef().child(id).remove();
+  try { await db.ref(`raffleEntries/${id}`).remove(); } catch {}
+}
                 
 /* Заповнення сайдбару профілю */
 async function populateSidebarUserInfo(address) {
