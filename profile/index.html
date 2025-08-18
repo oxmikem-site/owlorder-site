@@ -2840,6 +2840,24 @@ async function markAsRead(section, wallet) {
   }
 }
 
+                // === Sats Connect loader (для Xverse/Leather) ===
+async function ensureSatsConnect() {
+  if (window.satsConnect?.request && window.satsConnect?.getProviders) return window.satsConnect;
+
+  // підгружаємо UMD збірку
+  if (!document.querySelector('script[data-satsconnect]')) {
+    const s = document.createElement('script');
+    s.src = 'https://unpkg.com/sats-connect@1/dist/index.umd.js';
+    s.async = true;
+    s.setAttribute('data-satsconnect','1');
+    document.head.appendChild(s);
+    await new Promise((res, rej) => { s.onload = res; s.onerror = rej; });
+  } else {
+    // якщо скрипт уже є — чекаємо поки він ініціалізується
+    await new Promise(r => setTimeout(r, 0));
+  }
+  return window.satsConnect || null;
+}
                 
 /* ==== Firebase ==== */
 let app, db, storage;
@@ -4039,6 +4057,71 @@ bindSidebarNavOnce();
     const seenMessages = new Set();
 // === ALWAYS-AVAILABLE: wallet connect + listeners ===
 
+    async function connectXverseWallet() {
+  try {
+    const sc = await ensureSatsConnect();
+    if (!sc || !sc.getProviders || !sc.request) {
+      alert('Sats Connect not loaded.');
+      return;
+    }
+
+    // шукаємо провайдера Xverse
+    const providers = await sc.getProviders();
+    const xverse = (providers || []).find(p => p.id === 'xverse');
+    if (!xverse) {
+      alert('Xverse wallet not detected. Make sure the extension is enabled on this site and refresh the page.');
+      return;
+    }
+
+    // запит на конект (wallet_connect) — попросимо ordinals+payment
+    const resp = await sc.request('wallet_connect', {
+      addresses: ['ordinals', 'payment'],
+      network: 'Mainnet',                   // або 'Testnet' / 'Signet' якщо треба
+      message: 'Connect to OWL profile'
+    }, { getProvider: () => xverse });
+
+    if (resp.status !== 'success') {
+      // користувач міг відхилити
+      const err = resp.error;
+      alert(err?.message || 'Xverse connection declined.');
+      return;
+    }
+
+    // зберігаємо taproot (ordinals) адресу у локальне сховище — твій код очікує саме її
+    const ordItem = resp.result.addresses.find(a => a.purpose === 'ordinals');
+    const payment = resp.result.addresses.find(a => a.purpose === 'payment');
+    const address = (ordItem?.address || payment?.address || '').toLowerCase();
+
+    if (!address) {
+      alert('No address returned by Xverse.');
+      return;
+    }
+
+    localStorage.setItem('taproot_wallet', address);
+
+    // далі — твій існуючий флоу оновлення UI
+    updateWalletButtons(address);
+    await populateSidebarUserInfo(address);
+
+    const amAdmin  = isAdmin(address);
+    setSidebarAccess({ loggedIn: true, isHolder: amAdmin });     // тимчасово
+    setChatInputsEnabled(amAdmin, address);
+
+    getHolderInfoOnce(address).then(async info => {
+      const can = amAdmin || !!info?.found;
+      setSidebarAccess({ loggedIn: true, isHolder: can });
+      setChatInputsEnabled(can, address);
+      if (can) showSection('collection');
+      await recalcSectionIndicators(address);
+    });
+
+  } catch (e) {
+    console.error(e);
+    alert(e?.message || 'Failed to connect Xverse.');
+  }
+}
+
+
 // 1) Функція підключення гаманця (доступна завжди)
 async function connectUniSatWallet() {
   if (!window.unisat) {
@@ -4107,7 +4190,28 @@ if (wrapper && dropdown) {
     e.stopPropagation();
     const saved = getConnectedWalletAddress();
     if (!saved) {
-      openWalletPicker();   // ← тепер вибір гаманця
+      // маленький пікер
+      const pick = document.createElement('div');
+      pick.style.position = 'fixed';
+      pick.style.inset = '0';
+      pick.style.display = 'flex';
+      pick.style.alignItems = 'center';
+      pick.style.justifyContent = 'center';
+      pick.style.background = 'rgba(0,0,0,.5)';
+      pick.style.zIndex = '10000';
+      pick.innerHTML = `
+        <div style="background:#161616; border:1px solid #333; border-radius:12px; padding:16px; width:320px;">
+          <h3 style="margin:0 0 12px 0; font-size:16px;">Connect wallet</h3>
+          <div style="display:flex; gap:8px; flex-direction:column;">
+            <button id="pick-xverse" class="btn primary">Xverse</button>
+            <button id="pick-unisat" class="btn">UniSat</button>
+            <button id="pick-cancel" class="btn" style="width:100%; margin-top:6px;">Cancel</button>
+          </div>
+        </div>`;
+      document.body.appendChild(pick);
+      pick.querySelector('#pick-xverse').onclick = () => { pick.remove(); connectXverseWallet(); };
+      pick.querySelector('#pick-unisat').onclick = () => { pick.remove(); connectUniSatWallet(); };
+      pick.querySelector('#pick-cancel').onclick = () => pick.remove();
       return;
     }
     dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
