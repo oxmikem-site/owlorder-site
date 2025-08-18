@@ -4000,7 +4000,7 @@ async function connectXverseWallet() {
       return;
     }
 
-    // Перевіримо, чи видно провайдера Xverse (якщо API доступне)
+    // Перевіряємо наявність провайдера Xverse
     let hasXverse = true;
     try {
       if (typeof getProviders === "function") {
@@ -4046,7 +4046,7 @@ async function connectXverseWallet() {
     await populateSidebarUserInfo(chosen);
     window.currentWallet = chosen;
 
-    // Тимчасово надаємо доступ адмінам (доки не підтверджено холдера)
+    // Тимчасово надаємо доступ адмінам
     const amAdmin = isAdmin(chosen);
     setSidebarAccess({ loggedIn: true, isHolder: amAdmin });
     setChatInputsEnabled(amAdmin, chosen);
@@ -4072,37 +4072,6 @@ async function connectXverseWallet() {
   } catch (e) {
     console.error(e);
     alert("Xverse connection failed. Check the extension permissions.");
-  }
-}
-
-    // Ми всюди у коді використовуємо taproot_wallet — збережемо ту саму змінну
-    localStorage.setItem('taproot_wallet', chosen);
-    updateWalletButtons(chosen);
-    await populateSidebarUserInfo(chosen);
-
-    // далі твоя штатна ініціалізація після конекту
-    window.currentWallet = chosen;
-
-    const amAdmin = isAdmin(chosen);
-    setSidebarAccess({ loggedIn: true, isHolder: amAdmin });
-    setChatInputsEnabled(amAdmin, chosen);
-
-    initUnreadTracking(chosen);
-    initSettingsUI(chosen);
-    renderMyCollection(chosen);
-
-    // Перевірка холдера за snapshot — як і було
-    getHolderInfoOnce(chosen).then(async info => {
-      const can = amAdmin || !!info?.found;
-      currentIsHolder = !!info?.found;
-      setSidebarAccess({ loggedIn: true, isHolder: can });
-      setChatInputsEnabled(can, chosen);
-      if (can) showSection('collection');
-      await recalcSectionIndicators(chosen);
-    });
-  } catch (e) {
-    console.error(e);
-    alert('Xverse connection failed. Check the extension permissions.');
   }
 }
 
