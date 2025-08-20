@@ -3942,11 +3942,11 @@ function openWalletPicker(){
     <div style="font-size:18px;font-weight:600;margin-bottom:12px;">Connect wallet</div>
     <div style="display:flex;flex-direction:column;gap:10px;">
       <button id="pick-unisat" style="display:flex;gap:10px;align-items:center;justify-content:center;padding:12px;border-radius:10px;background:#1f1f1f;color:#fff;border:0;cursor:pointer;">
-        <img src="https://unisat.io/static/media/logo.2c0a3c27.svg" width="20" height="20" alt="UniSat">
+       <img src="..unisat.png" width="20" height="20" alt="Xverse">
         <span>UniSat (Taproot)</span>
       </button>
       <button id="pick-xverse" style="display:flex;gap:10px;align-items:center;justify-content:center;padding:12px;border-radius:10px;background:#1f1f1f;color:#fff;border:0;cursor:pointer;">
-        <img src="https://assets.xverse.app/static/favicon/favicon-32x32.png" width="20" height="20" alt="Xverse">
+        <img src="..xverse.png" width="20" height="20" alt="Xverse">
         <span>Xverse (Ordinals)</span>
       </button>
       <button id="pick-cancel" style="padding:10px;margin-top:6px;border-radius:10px;background:#222;color:#fff;border:0;cursor:pointer;">Cancel</button>
@@ -4030,6 +4030,79 @@ async function connectUniSatWallet() {
   } catch (e) {
     console.error(e);
     alert("Failed to connect wallet.");
+  }
+}
+
+    async function connectXverseWallet() {
+  // ❶ Швидка перевірка: чи видно розширення Xverse у сторінці
+  const hasXverse =
+    !!window.BitcoinProvider ||
+    !!window.XverseProviders ||
+    !!window.xverseProviders ||
+    (window?.bitcoin && typeof window.bitcoin.request === "function");
+
+  if (!hasXverse) {
+    alert("Xverse extension не знайдено. Встановіть/увімкніть розширення та перезавантажте сторінку.");
+    return;
+  }
+
+  try {
+    // ❷ Завантажуємо Sats Connect v3 (твій локальний фолбек вже налаштований)
+    const { request, AddressPurpose } = await window.loadSatsV3();
+
+    // ❸ Примусово вибираємо провайдера 'xverse', щоб не відкривався селектор
+    try {
+      const core = await import("https://cdn.jsdelivr.net/npm/@sats-connect/core@0.6.11/+esm");
+      if (typeof core.setDefaultProvider === "function") core.setDefaultProvider("xverse");
+    } catch { /* не критично */ }
+
+    // ❹ Основний виклик v3
+    let res = await request("getAddresses", {
+      purposes: [AddressPurpose.Ordinals, AddressPurpose.Payment],
+      message: "Connect to OWL"
+    });
+
+    // ❺ Нормалізація відповіді (деякі провайдери вкладають результат глибше)
+    let addresses = res?.addresses || res?.result?.addresses || [];
+    if (!Array.isArray(addresses)) addresses = [];
+
+    if (!addresses.length) throw new Error("No addresses returned");
+
+    const ord = addresses.find(a => a.purpose === AddressPurpose.Ordinals) || addresses[0];
+    const address = ord?.address;
+    if (!address) throw new Error("No address");
+
+    // ❻ Зберігаємо та оновлюємо UI так само, як у тебе було
+    localStorage.setItem("taproot_wallet", address);
+    updateWalletButtons(address);
+    await populateSidebarUserInfo(address);
+
+    // далі — твоя існуюча ініціалізація
+    const amAdmin = isAdmin(address);
+    setSidebarAccess({ loggedIn: true, isHolder: amAdmin });
+    setChatInputsEnabled(amAdmin, address);
+    initUnreadTracking(address);
+    initSettingsUI(address);
+    renderMyCollection(address);
+
+    getHolderInfoOnce(address).then(async info => {
+      const can = amAdmin || !!info?.found;
+      setSidebarAccess({ loggedIn: true, isHolder: can });
+      setChatInputsEnabled(can, address);
+      if (can) showSection("collection");
+      await recalcSectionIndicators(address);
+    });
+  } catch (err) {
+    console.error("Xverse connect error:", err);
+
+    const msg = (err && err.message) || String(err);
+    if (/No wallets detected|provider/i.test(msg)) {
+      alert("Xverse не надав провайдера на цій сторінці. Дозвольте сайту доступ у налаштуваннях розширення (Site access: On all sites).");
+    } else if (/USER_REJECTION|rejected/i.test(msg)) {
+      alert("Запит у Xverse було відхилено у вікні розширення.");
+    } else {
+      alert("Xverse connection failed. Перевірте консоль для деталей.");
+    }
   }
 }
 
