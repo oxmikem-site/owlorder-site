@@ -3,6 +3,7 @@
 
 <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Profile | OWL</title>
     <link rel="icon" type="image/png" href="../logo2.png" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
@@ -421,8 +422,8 @@
             border: none;
             cursor: pointer;
             border-radius: 0px;
-            width: 15px;
-            height: 15px;
+            width: 23px;
+            height: 23px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -433,10 +434,6 @@
             width: 23px;
             height: 23px;
             display: block;
-        }
-
-        .send-btn:hover {
-            box-shadow: 0 0 13px rgba(212, 200, 124, 0.6);
         }
 
         .image-preview-container {
@@ -1146,8 +1143,8 @@ display: block;
         <header>
             <div class="logo"><img src="../logo1.png" alt="logo" /></div>
             <div class="nav-buttons">
-                <a href="https://owlbtc.art/leaderboard/" class="button" target="_blank">LEADERBOARD</a>
-                <a href="https://owlbtc.art/collection/" class="button" target="_blank">COLLECTION</a>
+                <a href="https://owlbtc.art/leaderboard/" class="button">LEADERBOARD</a>
+                <a href="https://owlbtc.art/collection/"  class="button">COLLECTION</a>
                 <div class="wallet-wrapper">
                     <button class="connect-wallet wallet-trigger" id="wallet-header-btn">CONNECT WALLET</button>
                     <div class="wallet-dropdown-content" id="wallet-header-dropdown">
@@ -3981,14 +3978,12 @@ bindSidebarNavOnce();
     let currentWallet = getConnectedWalletAddress() || null;
     const seenMessages = new Set();
 
-async function connectXverseWallet() {
+// === Wallet connect (UniSat + Xverse) ===
 
-// 1) Функція підключення гаманця (доступна завжди)
+// UniSat (Taproot)
 async function connectUniSatWallet() {
   if (!window.unisat) {
     alert("UniSat Wallet not found. Please install the UniSat extension.");
-    // Можеш розкоментувати наступний рядок для редіректу на сторінку встановлення:
-    // window.open("https://unisat.io/download", "_blank");
     return;
   }
   try {
@@ -4002,47 +3997,85 @@ async function connectUniSatWallet() {
     // оновлюємо «глобальний» стейт
     currentWallet = address;
 
-   // тимчасово даємо доступ адмінам (до завершення перевірки холдера)
-const amAdmin = isAdmin(address);
-setSidebarAccess({ loggedIn: true, isHolder: amAdmin });
-setChatInputsEnabled(amAdmin, currentWallet);
+    // тимчасово даємо доступ адмінам (до перевірки холдера)
+    const amAdmin = isAdmin(address);
+    setSidebarAccess({ loggedIn: true, isHolder: amAdmin });
+    setChatInputsEnabled(amAdmin, currentWallet);
 
-    // завантажуємо бейджі/налаштування/колекцію
+    // ініціалізації
     initUnreadTracking(address);
     initSettingsUI(address);
     renderMyCollection(address);
 
-   getHolderInfoOnce(address).then(async info => {
-  const can = amAdmin || !!info?.found; 
-  currentIsHolder = !!info?.found;
-
-  setSidebarAccess({ loggedIn: true, isHolder: can });
-  setChatInputsEnabled(can, currentWallet);
-
-  if (can) showSection('collection');
-  await recalcSectionIndicators(address);
-});
+    // фінальна перевірка холдера
+    getHolderInfoOnce(address).then(async info => {
+      const can = amAdmin || !!info?.found;
+      currentIsHolder = !!info?.found;
+      setSidebarAccess({ loggedIn: true, isHolder: can });
+      setChatInputsEnabled(can, currentWallet);
+      if (can) showSection('collection');
+      await recalcSectionIndicators(address);
+    });
   } catch (e) {
     console.error(e);
     alert("Failed to connect wallet.");
   }
 }
 
-// 2) Прив'язуємо ВСІ кнопки з класом .wallet-trigger (і в хедері, і в сайдбарі)
+// Xverse (sats-connect v3)
+async function connectXverseWallet() {
+  try {
+    const { request, AddressPurpose } = await window.loadSatsV3();
+    const { addresses = [] } = await request("getAddresses", {
+      purposes: [AddressPurpose.Ordinals, AddressPurpose.Payment],
+      message: "Connect to OWL",
+    });
+
+    const ord = addresses.find(a => a.purpose === AddressPurpose.Ordinals) || addresses[0];
+    const address = ord?.address;
+    if (!address) throw new Error("No address returned");
+
+    localStorage.setItem("taproot_wallet", address);
+    updateWalletButtons(address);
+    await populateSidebarUserInfo(address);
+
+    currentWallet = address;
+
+    const amAdmin = isAdmin(address);
+    setSidebarAccess({ loggedIn: true, isHolder: amAdmin });
+    setChatInputsEnabled(amAdmin, currentWallet);
+
+    initUnreadTracking(address);
+    initSettingsUI(address);
+    renderMyCollection(address);
+
+    getHolderInfoOnce(address).then(async info => {
+      const can = amAdmin || !!info?.found;
+      currentIsHolder = !!info?.found;
+      setSidebarAccess({ loggedIn: true, isHolder: can });
+      setChatInputsEnabled(can, currentWallet);
+      if (can) showSection('collection');
+      await recalcSectionIndicators(address);
+    });
+  } catch (e) {
+    console.error(e);
+    alert("Xverse connection failed or was rejected. Make sure Xverse is installed.");
+  }
+}
+
+// Пікер «обрати гаманець»
 document.querySelectorAll(".wallet-trigger").forEach(btn => {
   btn.addEventListener("click", async (e) => {
     const saved = getConnectedWalletAddress();
     if (!saved) {
       e.preventDefault();
       e.stopPropagation();
-      await openWalletPicker();   // ← тепер показуємо вибір UniSat / Xverse
+      await openWalletPicker();   // показати вікно з двома кнопками
     }
   });
 });
 
-// 3) Логіка хедерного «гаманець»-дропдауну:
-//    - якщо не залогінений → пробуємо конект
-//    - якщо залогінений → просто відкриваємо/закриваємо дропдаун
+// Дропдаун у хедері
 const wrapper = document.querySelector(".wallet-wrapper");
 const dropdown = document.getElementById("wallet-header-dropdown");
 if (wrapper && dropdown) {
@@ -4050,7 +4083,7 @@ if (wrapper && dropdown) {
     e.stopPropagation();
     const saved = getConnectedWalletAddress();
     if (!saved) {
-      // маленький пікер
+      // маленький вибірник
       const pick = document.createElement('div');
       pick.style.position = 'fixed';
       pick.style.inset = '0';
@@ -4078,7 +4111,6 @@ if (wrapper && dropdown) {
   });
 }
 
-// 4) Клік поза меню — закриває всі дропдауни
 document.addEventListener("click", () => {
   document.querySelectorAll(".wallet-dropdown-content").forEach(dd => dd.style.display = "none");
 });
@@ -4512,7 +4544,7 @@ try {
   sender,
   text,
   timestamp: Date.now(),
-  imageId: cachedHolderInfo.imageId || null,
+  imageId: (cachedHolderInfo && cachedHolderInfo.imageId) || null,
   imageUrls: imageUrls,
   imageUrl: imageUrls[0] || null,
   ...(mentions.roles.length || mentions.users.length ? { mentions } : {}),
