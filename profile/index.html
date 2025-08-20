@@ -13,9 +13,7 @@
     <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@1.9.0/index.js"></script>
     <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
     <script defer src="https://cdn.fxtwitter.com/embed.js" data-fxtw="1"></script>
-    <script defer src="https://unpkg.com/sats-connect@1.1.6/dist/index.umd.js" crossorigin="anonymous"></script>
 
-    
     <style>
         :root {
   --bg-dark: #0b0b0b;
@@ -2854,41 +2852,25 @@ const firebaseConfig = {
   appId: "1:671987704789:web:5ffad58bc9c00ba772935c",
   measurementId: "G-ELQRLCLGZT"
 };
-                // === Xverse (sats-connect) bootstrap ===
-// === Xverse (sats-connect) bootstrap ===
-let SatsWallet = null;
-let AddressPurpose = null;
-let getProviders = null;
-let getProviderById = null;
 
-async function loadSatsConnect() {
-  if (SatsWallet) return SatsWallet;
+                // === Sats Connect v3 loader (ESM) ===
+// Завантажуємо модуль з jsDelivr; якщо Brave/мережа блокує CDN — беремо локальний файл.
+window.loadSatsV3 = async function () {
+  if (window.__sats) return window.__sats; // кеш
 
-  // 1) ESM (стабільний CDN)
   try {
-    const mod = await import('https://esm.sh/sats-connect@1.1.6');
-    AddressPurpose   = mod.AddressPurpose  || AddressPurpose;
-    getProviders     = mod.getProviders    || getProviders;
-    getProviderById  = mod.getProviderById || getProviderById;
-    if (typeof mod.request === 'function') {
-      SatsWallet = { request: mod.request };
-    }
+    // основний шлях (офіційні білди — з NPM)
+    const mod = await import('https://cdn.jsdelivr.net/npm/sats-connect@3.6.1/+esm');
+    window.__sats = { request: mod.request, AddressPurpose: mod.AddressPurpose };
   } catch (e) {
-    console.warn('ESM sats-connect import failed:', e);
+    console.warn('CDN import failed, using self-hosted ESM', e);
+    // фолбек: поклади файл у свій проєкт (див. крок 3)
+    const localUrl = new URL('vendor/sats-connect-3.6.1.esm.js', document.baseURI).href;
+const mod = await import(localUrl);
+    window.__sats = { request: mod.request, AddressPurpose: mod.AddressPurpose };
   }
-
-  // 2) UMD fallback (глобал з <head> через unpkg)
-  if ((!SatsWallet || typeof SatsWallet.request !== 'function') &&
-      window.satsConnect && typeof window.satsConnect.request === 'function') {
-    const g = window.satsConnect;
-    AddressPurpose   = g.AddressPurpose  || AddressPurpose;
-    getProviders     = g.getProviders    || getProviders;
-    getProviderById  = g.getProviderById || getProviderById;
-    SatsWallet = { request: g.request };
-  }
-
-  return SatsWallet;
-}
+  return window.__sats;
+};
 
                 // збереження останніх переглядів для кожного гаманця/секції
 function getReadsRef(wallet, section) {
@@ -4000,86 +3982,6 @@ bindSidebarNavOnce();
     const seenMessages = new Set();
 
 async function connectXverseWallet() {
-  try {
-    const wallet = await loadSatsConnect();
-    if (!wallet || typeof wallet.request !== "function") {
-      alert("Sats-Connect failed to load. If you use Brave, turn Shields off for this site and reload.");
-      return;
-    }
-
-    // Перевіримо наявність Xverse, якщо API доступне
-    try {
-      if (typeof getProviders === "function") {
-        const providers = await getProviders();
-        const hasXverse = providers?.some(p => p.id === "xverse");
-        if (!hasXverse) {
-          alert("Xverse not available. Install the Xverse wallet.");
-          return;
-        }
-      }
-    } catch {}
-
-    // Авторизація застосунку
-    await wallet.request("wallet_connect", {
-      permissions: ["getAddresses"],
-      appInfo: { name: "OWL Club" }
-    });
-
-    // Отримуємо адреси Ordinals/Payment
-    const purposes = [];
-    if (AddressPurpose?.Ordinals) purposes.push(AddressPurpose.Ordinals);
-    if (AddressPurpose?.Payment)  purposes.push(AddressPurpose.Payment);
-
-    const resp = await wallet.request("getAddresses", {
-      purposes: purposes.length ? purposes : undefined,
-      message: "Connect OWL Club to view holder status"
-    });
-
-    const addrs = Array.isArray(resp?.result?.addresses) ? resp.result.addresses : [];
-    const ord = addrs.find(a => a.purpose === AddressPurpose?.Ordinals)?.address || "";
-    const pay = addrs.find(a => a.purpose === AddressPurpose?.Payment )?.address || "";
-    const chosen = ord || pay || addrs[0]?.address || "";
-
-    if (!chosen) {
-      alert("Failed to obtain address from Xverse.");
-      return;
-    }
-
-    // Зберігаємо/оновлюємо стан
-    localStorage.setItem("taproot_wallet", chosen);
-    updateWalletButtons(chosen);
-    await populateSidebarUserInfo(chosen);
-    window.currentWallet = chosen;
-
-    // Тимчасово даємо права адмінам, поки чекаємо холдера
-    const amAdmin = isAdmin(chosen);
-    setSidebarAccess({ loggedIn: true, isHolder: amAdmin });
-    setChatInputsEnabled(amAdmin, chosen);
-
-    initUnreadTracking(chosen);
-    initSettingsUI(chosen);
-    renderMyCollection(chosen);
-
-    // Після перевірки холдера — оновлюємо права
-    try {
-      const info = await getHolderInfoOnce(chosen);
-      const can  = amAdmin || !!info?.found;
-      currentIsHolder = !!info?.found;
-
-      setSidebarAccess({ loggedIn: true, isHolder: can });
-      setChatInputsEnabled(can, chosen);
-
-      if (can) showSection("collection");
-      await recalcSectionIndicators(chosen);
-    } catch (e) {
-      console.warn("Holder check failed:", e);
-    }
-  } catch (e) {
-    console.error(e);
-    alert("Xverse connection failed. Check the extension permissions.");
-  }
-}
-
 
 // 1) Функція підключення гаманця (доступна завжди)
 async function connectUniSatWallet() {
