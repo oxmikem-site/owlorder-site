@@ -1,279 +1,192 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>OWL Leaderboard</title>
-  <link rel="icon" type="image/png" href="../logo2.png">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="../logo2.png" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+
+  <!-- Firebase v8 -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+
   <style>
-    :root {
-      --bg-dark: #0b0b0b;
-      --bg-panel: linear-gradient(145deg, #141414, #0f0f0f);
-      --text-primary: #e6e6e6;
-      --text-secondary: #9f9f9f;
-      --accent: #fff065;
-      --accent-muted: #8a7f5a;
-      --header-bg: linear-gradient(145deg, #151515, #0d0d0d);
+    :root{
+      --bg-dark:#0b0b0b;
+      --bg-panel:linear-gradient(145deg,#141414,#0f0f0f);
+      --text-primary:#e6e6e6;
+      --text-secondary:#9f9f9f;
+      --accent:#fff065;
+      --accent-muted:#8a7f5a;
     }
 
-    * {
-      box-sizing: border-box;
+    *{ box-sizing:border-box; }
+
+    html,body{
+      height:100vh; margin:0; overflow:hidden;
+      background:var(--bg-dark); color:var(--text-primary);
+      font-family:'Inter',sans-serif;
     }
 
-    html, body {
-      height: 100vh;
-      margin: 0;
-      overflow: hidden;
-      background: var(--bg-dark);
-      color: var(--text-primary);
-      font-family: 'Inter', sans-serif;
+    /* ---------- HEADER (такий самий як на профілі) ---------- */
+    .site-header{
+      width:100%; max-width:1000px; margin:20px auto 0;
+      height:64px; min-height:64px;
+      display:flex; align-items:center; justify-content:space-between;
+      padding:0 14px 0 20px;
+      border-radius:20px;
+      background:linear-gradient(145deg,#1b1b1b,#101010);
+      border:1px solid rgba(255,255,255,.05);
+      box-shadow:
+        0 4px 10px rgba(0,0,0,.6),
+        inset 0 1px 0 rgba(255,255,255,.05),
+        inset 0 -1px 0 rgba(0,0,0,.4);
+      position:relative; z-index:10;
     }
 
-    header {
-      width: 100%;
-      max-width: 1000px;
-      margin: 20px auto 0;
-      height: 64px;
-      min-height: 64px;
-      background: var(--header-bg);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0 20px;
-      border-radius: 20px;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
-      z-index: 10;
-      box-shadow: 
-    0 4px 10px rgba(0, 0, 0, 0.6), 
-    inset 0 1px 0 rgba(255, 255, 255, 0.05), 
-    inset 0 -1px 0 rgba(0, 0, 0, 0.4); 
-  background: linear-gradient(145deg, #1b1b1b, #101010); 
-  border: 1px solid rgba(255, 255, 255, 0.05); 
+    .logo{ display:flex; align-items:center; gap:12px; }
+    .logo img{ width:50px; height:50px; }
+
+    .nav-buttons{ display:flex; align-items:center; gap:4px; }
+    .button{
+      padding:8px 10px; background:transparent; border:none; color:var(--text-primary);
+      text-decoration:none; font-weight:500; font-size:18px; transition:.2s;
+    }
+    .button:hover{ color:var(--accent); }
+    .twitter-icon{ width:26px; height:26px; }
+
+    .wallet-wrapper{ position:relative; display:flex; align-items:center; gap:8px; }
+    .connect-wallet{
+      background:#202020; border:1px solid #333; color:#e6e6e6;
+      border-radius:12px; padding:10px 14px; font-weight:600; cursor:pointer; transition:.15s;
+    }
+    .connect-wallet:hover{ border-color:#fff065; color:#fff065; }
+
+    .wallet-dropdown-content{
+      display:none; position:absolute; right:0; top:52px; z-index:20;
+      background:#141414; border:1px solid #333; border-radius:12px;
+      min-width:200px; box-shadow:0 10px 30px rgba(0,0,0,.5); padding:6px;
+    }
+    .wallet-dropdown-content .dd-item,
+    .wallet-dropdown-content .dd-line{
+      display:block; width:100%; text-align:left; padding:10px 12px; border-radius:10px;
+      color:#e6e6e6; background:transparent; border:none; cursor:pointer; font:inherit;
+    }
+    .wallet-dropdown-content .dd-item:hover{ background:#1d1d1d; }
+    .wallet-dropdown-content .short-addr{ color:#9f9f9f; cursor:default; }
+
+    /* ---------- ДЕКОР З БОКІВ ---------- */
+    .side-image{
+      position:absolute; top:120px; width:720px; opacity:1; z-index:0; pointer-events:none;
+    }
+    .side-left{ left:-24px; }
+    .side-right{ right:-24px; }
+
+    /* ---------- КОНТЕНТ ---------- */
+    .container{
+      width:100%; max-width:1000px; margin:0 auto; padding:20px;
+      position:relative; z-index:1; display:flex; flex-direction:column; align-items:center;
+    }
+    .leaderboard-title{
+      font-size:28px; font-weight:700; margin:10px 0 24px;
+      color:var(--accent-muted); text-align:center; letter-spacing:1px;
+    }
+    .search-input{
+      margin:0 auto 22px; display:block; padding:12px 18px; width:100%; max-width:400px;
+      background:#1a1a1a; border:1px solid var(--accent-muted); border-radius:10px; color:var(--text-primary); font-size:15px;
     }
 
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 12px;
+    .leaderboard-header{
+      display:grid; grid-template-columns:80px 2fr 150px; align-items:center;
+      padding:16px 24px; border-radius:12px; text-align:center; color:var(--accent-muted);
+      font-size:14px; text-transform:uppercase; letter-spacing:.5px; margin-bottom:8px; width:100%;
+      background:linear-gradient(145deg,#1b1b1b,#101010);
+      border:1px solid rgba(255,255,255,.05);
+      box-shadow:
+        0 4px 10px rgba(0,0,0,.6),
+        inset 0 1px 0 rgba(255,255,255,.05),
+        inset 0 -1px 0 rgba(0,0,0,.4);
     }
 
-    .logo img {
-      width: 50px;
-      height: 50px;
+    .scroll-area{
+      overflow-y:auto; flex-grow:1; width:100%; max-height:calc(100vh - 300px);
+      scrollbar-width:none; -ms-overflow-style:none;
+    }
+    .scroll-area::-webkit-scrollbar{ display:none; }
+
+    .leaderboard-entry{
+      display:grid; grid-template-columns:80px 2fr 150px; align-items:center;
+      padding:16px 24px; border-radius:12px; text-align:center; margin-bottom:12px;
+      background:var(--bg-panel); transition:transform .2s;
+      border:1px solid rgba(255,255,255,.05);
+      box-shadow:
+        0 4px 10px rgba(0,0,0,.6),
+        inset 0 1px 0 rgba(255,255,255,.05),
+        inset 0 -1px 0 rgba(0,0,0,.4);
+    }
+    .leaderboard-entry:hover{ transform:scale(1.01); }
+
+    .rank,.points{ font-weight:600; font-size:15px; color:var(--text-primary); }
+    .rank.golden-ring{ position:relative; z-index:1; }
+    .rank.golden-ring::before{
+      content:""; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+      width:50px; height:50px; border-radius:50%;
+      background:radial-gradient(circle, rgba(255,165,0,0.0) 0%, rgba(255,0,0,0.0) 70%);
+      box-shadow:0 0 15px 5px rgba(255,165,0,.5); animation:fire-glow 1.5s infinite alternate; z-index:-1;
+    }
+    @keyframes fire-glow{
+      0%{ box-shadow:0 0 15px rgba(255,140,0,.4); }
+      100%{ box-shadow:0 0 30px rgba(255,69,0,.8); }
     }
 
-    .nav-buttons {
-      display: flex;
-      align-items: center;
-      gap: 4px;
+    .wallet{
+      display:flex; align-items:center; justify-content:flex-start; gap:12px; color:var(--text-primary); padding-left:56px;
     }
-
-    .button {
-      padding: 8px 10px;
-      background-color: transparent;
-      border: none;
-      color: var(--text-primary);
-      text-decoration: none;
-      font-weight: 500;
-      font-size: 18px;
-      transition: all 0.2s ease;
-    }
-
-    .button:hover {
-      color: var(--accent);
-    }
-
-    .twitter-icon {
-      width: 26px;
-      height: 26px;
-    }
-
-    .side-image {
-      position: absolute;
-      top: 150px;
-      width: 700px;
-      opacity: 1;
-      z-index: 0;
-      pointer-events: none;
-    }
-
-    .side-left {
-      left: 0;
-    }
-
-    .side-right {
-      right: 0;
-    }
-
-    .container {
-      width: 100%;
-      max-width: 1000px;
-      margin: 0 auto;
-      padding: 20px;
-      position: relative;
-      z-index: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    .leaderboard-title {
-      font-size: 28px;
-      font-weight: 700;
-      margin-bottom: 30px;
-      color: var(--accent-muted);
-      text-align: center;
-      letter-spacing: 1px;
-    }
-
-    .search-input {
-      margin: 0 auto 30px;
-      display: block;
-      padding: 12px 18px;
-      width: 100%;
-      max-width: 400px;
-      background-color: #1a1a1a;
-      border: 1px solid var(--accent-muted);
-      border-radius: 10px;
-      color: var(--text-primary);
-      font-size: 15px;
-    }
-
-    .leaderboard-header {
-      display: grid;
-      grid-template-columns: 80px 2fr 150px;
-      align-items: center;
-      padding: 16px 24px;
-      border-radius: 12px;
-      text-align: center;
-      color: var(--accent-muted);
-      font-size: 14px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 8px;
-      background: #111;
-      width: 100%;
-       0 4px 10px rgba(0, 0, 0, 0.6), 
-    inset 0 1px 0 rgba(255, 255, 255, 0.05), 
-    inset 0 -1px 0 rgba(0, 0, 0, 0.4); 
-  background: linear-gradient(145deg, #1b1b1b, #101010); 
-  border: 1px solid rgba(255, 255, 255, 0.05); 
-    }
-
-    .scroll-area {
-      overflow-y: scroll;
-      flex-grow: 1;
-      width: 100%;
-      max-height: calc(100vh - 300px);
-      scrollbar-width: none;
-      -ms-overflow-style: none;
-    }
-
-    .scroll-area::-webkit-scrollbar {
-      display: none;
-    }
-
-    .leaderboard-entry {
-      display: grid;
-      grid-template-columns: 80px 2fr 150px;
-      align-items: center;
-      padding: 16px 24px;
-      border-radius: 12px;
-      text-align: center;
-      background: var(--bg-panel);
-      margin-bottom: 12px;
-      transition: transform 0.2s;
-      box-shadow: 
-    0 4px 10px rgba(0, 0, 0, 0.6), 
-    inset 0 1px 0 rgba(255, 255, 255, 0.05), 
-    inset 0 -1px 0 rgba(0, 0, 0, 0.4); 
-  background: linear-gradient(145deg, #1b1b1b, #101010); 
-  border: 1px solid rgba(255, 255, 255, 0.05); 
-    }
-
-    .leaderboard-entry:hover {
-      transform: scale(1.01);
-    }
-
-    .rank,
-    .points {
-      font-weight: 600;
-      font-size: 15px;
-      color: var(--text-primary);
-    }
-
-    .rank.golden-ring {
-      position: relative;
-      z-index: 1;
-    }
-
-    .rank.golden-ring::before {
-      content: "";
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(255,165,0,0.0) 0%, rgba(255,0,0,0.0) 70%);
-      box-shadow: 0 0 15px 5px rgba(255, 165, 0, 0.5);
-      z-index: -1;
-      animation: fire-glow 1.5s infinite alternate;
-    }
-
-    @keyframes fire-glow {
-      0% { box-shadow: 0 0 15px rgba(255, 140, 0, 0.4); }
-      100% { box-shadow: 0 0 30px rgba(255, 69, 0, 0.8); }
-    }
-
-    .wallet {
-      display: flex;
-      align-items: center;
-      justify-content: flex-start;
-      gap: 12px;
-      color: var(--text-primary);
-      padding-left: 56px;
-    }
-
-    .wallet img {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      border: 1px solid var(--accent-muted);
-    }
-
-    .wallet span {
-      font-weight: 500;
-      font-size: 15px;
-    }
+    .wallet img{ width:36px; height:36px; border-radius:50%; border:1px solid var(--accent-muted); }
+    .wallet span{ font-weight:500; font-size:15px; }
   </style>
 </head>
 <body>
 
-  <header>
+  <!-- HEADER -->
+  <header class="site-header">
     <div class="logo">
-      <img src="../logo1.png" alt="logo">
+      <a href="/"><img src="../logo1.png" alt="logo" /></a>
     </div>
-    <div class="nav-buttons">
+
+    <nav class="nav-buttons">
       <a href="/collection" class="button">Collection</a>
-      <a href="/leaderboard" class="button" style="color: var(--accent-muted)">Leaderboard</a>
-      <a href="https://x.com/OwlOrderBTC" target="_blank">
-        <img src="../twitter-white.png" alt="twitter" class="twitter-icon">
+      <a href="/leaderboard" class="button" style="color:var(--accent-muted)">Leaderboard</a>
+      <a href="https://x.com/OwlOrderBTC" target="_blank" rel="noopener noreferrer" aria-label="X/Twitter">
+        <img src="../twitter-white.png" alt="" class="twitter-icon" />
       </a>
+    </nav>
+
+    <div class="wallet-wrapper">
+      <button id="wallet-header-btn" class="connect-wallet wallet-trigger">CONNECT WALLET</button>
+      <div id="wallet-header-dropdown" class="wallet-dropdown-content">
+        <div class="dd-line short-addr" id="wallet-short">–</div>
+        <a class="dd-item" href="/profile/">Open Profile</a>
+        <button class="dd-item logout-btn">Logout</button>
+      </div>
     </div>
   </header>
 
-  <img src="../LEFTSIDE2.png" alt="left side decor" class="side-image side-left">
-  <img src="../RIGHTSIDE2.png" alt="right side decor" class="side-image side-right">
+  <!-- DECOR -->
+  <img src="../LEFTSIDE2.png"  alt="" class="side-image side-left" />
+  <img src="../RIGHTSIDE2.png" alt="" class="side-image side-right" />
 
+  <!-- MAIN -->
   <div class="container">
     <h1 class="leaderboard-title">LEADERBOARD</h1>
-    <input type="text" id="search" class="search-input" placeholder="Search wallet address...">
+
+    <input type="text" id="search" class="search-input" placeholder="Search wallet address..." />
 
     <div class="leaderboard-header">
-      <div style="padding-left: 16px;">RANK</div>
-      <div style="padding-left: 56px; text-align: left;">WALLET</div>
+      <div style="padding-left:16px;">RANK</div>
+      <div style="padding-left:56px; text-align:left;">WALLET</div>
       <div>POINTS</div>
     </div>
 
@@ -281,56 +194,214 @@
   </div>
 
   <script>
-    let allEntries = [];
+    /* -------- Firebase -------- */
+    const firebaseConfig = {
+      apiKey:"AIzaSyD2v-w99aaVgKYrycfIV515BEbjaTOp7z4",
+      authDomain:"owl-chat-e4233.firebaseapp.com",
+      databaseURL:"https://owl-chat-e4233-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId:"owl-chat-e4233",
+      storageBucket:"owl-chat-e4233.firebasestorage.app",
+      messagingSenderId:"671987704789",
+      appId:"1:671987704789:web:5ffad58bc9c00ba772935c",
+      measurementId:"G-ELQRLCLGZT"
+    };
+    const app = (firebase.apps && firebase.apps.length) ? firebase.app() : firebase.initializeApp(firebaseConfig);
+    const db  = firebase.database();
+    const auth = firebase.auth();
+    auth.signInAnonymously().catch(()=>{});
+    auth.onAuthStateChanged(u => { window.CURRENT_UID = u ? u.uid : null; });
 
-    async function loadLeaderboard() {
-      const url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?output=csv&gid=1127131432';
-      const response = await fetch(url);
-      const text = await response.text();
-
-      const rows = text.trim().split('\n').map(row => {
-        const match = row.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g);
-        return match.map(cell => cell.replace(/^"|"$/g, ''));
-      });
-
-      allEntries = rows.slice(1).map(row => {
-        const [rank, address, , pointsRaw] = row;
-        const cleanPoints = pointsRaw.replace(/,/g, '');
-        return { rank, address, points: cleanPoints };
-      });
-
-      renderEntries(allEntries);
+    /* -------- Хелпери хедера -------- */
+    function shorten(a){ return a ? a.slice(0,6)+'...'+a.slice(-4) : ''; }
+    function getConnectedWalletAddress(){ return localStorage.getItem('taproot_wallet'); }
+    function updateWalletUI(address){
+      const btn = document.getElementById('wallet-header-btn');
+      const short = document.getElementById('wallet-short');
+      if (btn)   btn.textContent = address ? shorten(address) : 'CONNECT WALLET';
+      if (short) short.textContent = address ? shorten(address) : '–';
     }
 
-    function renderEntries(entries) {
-      const container = document.getElementById('leaderboard-list');
-      container.innerHTML = '';
+    /* -------- Sats-Connect v3 loader -------- */
+    window.loadSatsV3 = async function(){
+      if (window.__sats) return window.__sats;
+      const sources = [
+        'https://cdn.jsdelivr.net/npm/sats-connect@3.6.1/+esm',
+        'https://esm.sh/sats-connect@3.6.1',
+        '/profile/sats-connect-3.6.1.esm.js'
+      ];
+      let last;
+      for (const src of sources){
+        try{
+          const mod = await import(src);
+          const request = mod?.request || mod?.default?.request;
+          const AddressPurpose = mod?.AddressPurpose || mod?.default?.AddressPurpose;
+          if (request && AddressPurpose){ window.__sats = { request, AddressPurpose }; return window.__sats; }
+        }catch(e){ last = e; }
+      }
+      console.error('Failed to load sats-connect', last);
+      throw new Error('sats-connect not available');
+    };
 
-      entries.forEach(({ rank, address, points }) => {
-        const shortAddr = address.slice(0, 6) + '...' + address.slice(-4);
+    /* -------- Wallet picker -------- */
+    function ensurePickerMask(){
+      let m = document.getElementById('wallet-picker-mask');
+      if (m) return m;
+      m = document.createElement('div');
+      m.id = 'wallet-picker-mask';
+      m.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:10000;';
+      document.body.appendChild(m);
+      return m;
+    }
+    async function openWalletPicker(){
+      const mask = ensurePickerMask(); mask.innerHTML=''; mask.style.display='flex';
+      const box = document.createElement('div');
+      box.style.cssText = 'width:360px;max-width:92vw;background:#141414;color:#eee;border:1px solid #333;border-radius:14px;padding:18px;';
+      box.innerHTML = `
+        <div style="font-size:18px;font-weight:600;margin-bottom:12px;">Connect wallet</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <button id="pick-unisat" style="display:flex;gap:10px;align-items:center;justify-content:center;padding:12px;border-radius:10px;background:#1f1f1f;color:#fff;border:0;cursor:pointer;">
+            <img src="/profile/unisat.png" width="20" height="20" alt="UniSat"><span>UniSat (Taproot)</span>
+          </button>
+          <button id="pick-xverse" style="display:flex;gap:10px;align-items:center;justify-content:center;padding:12px;border-radius:10px;background:#1f1f1f;color:#fff;border:0;cursor:pointer;">
+            <img src="/profile/xverse.png" width="20" height="20" alt="Xverse"><span>Xverse (Ordinals)</span>
+          </button>
+          <button id="pick-cancel" style="padding:10px;margin-top:6px;border-radius:10px;background:#222;color:#fff;border:0;cursor:pointer;">Cancel</button>
+        </div>`;
+      mask.appendChild(box);
+      box.querySelector('#pick-unisat').onclick = async ()=>{ try{ await connectUniSatWallet(); } finally{ mask.style.display='none'; } };
+      box.querySelector('#pick-xverse').onclick = async ()=>{ try{ await connectXverseWallet(); } finally{ mask.style.display='none'; } };
+      box.querySelector('#pick-cancel').onclick = ()=> mask.style.display='none';
+      mask.addEventListener('click',(e)=>{ if(e.target===mask) mask.style.display='none'; }, {once:true});
+    }
+
+    /* -------- UniSat -------- */
+    async function connectUniSatWallet(){
+      if (!window.unisat){ alert('UniSat Wallet not found.'); return; }
+      await window.unisat.requestAccounts();
+      const address = (await window.unisat.getAccounts())[0];
+      localStorage.setItem('taproot_wallet', address);
+      updateWalletUI(address);
+    }
+
+    /* -------- Xverse + підпис -------- */
+    async function connectXverseWallet(){
+      try{
+        const hasXverse = !!window.BitcoinProvider || !!window.xverseProviders || (window?.bitcoin && typeof window.bitcoin.request === 'function');
+        if (!hasXverse){ alert('Xverse не знайдено. Дозволь сайту доступ у налаштуваннях розширення.'); return; }
+
+        const { request, AddressPurpose } = await window.loadSatsV3();
+
+        // 1) отримати адреси
+        const resp = await request('wallet_connect', {
+          addresses: [AddressPurpose.Ordinals, AddressPurpose.Payment],
+          message: 'Connect to OWL',
+          network: 'Mainnet'
+        });
+        const addresses =
+          resp?.result?.addresses ||
+          resp?.addresses ||
+          (resp?.status === 'success' ? resp.result?.addresses : []) || [];
+
+        if (!Array.isArray(addresses) || !addresses.length){
+          alert('Xverse did not return the address. Create an Ordinals account and do not uncheck the box in the popup.');
+          return;
+        }
+        const ord = addresses.find(a => (a.purpose||'').toLowerCase()==='ordinals');
+        const chosen = ord || addresses[0];
+        const address = chosen.address;
+
+        // 2) підтвердити володіння підписом
+        const nonce = Array.from(crypto.getRandomValues(new Uint8Array(16))).map(x=>x.toString(16).padStart(2,'0')).join('');
+        const message = `OWL login
+Domain: ${location.origin}
+Address: ${address}
+Nonce: ${nonce}
+Time: ${new Date().toISOString()}`;
+        const sign = await request('signMessage', { address, message, signatureType: 'bip322-simple' });
+        const signature = sign?.result?.signature || sign?.signature || sign?.result?.signatureHex || '';
+
+        // 3) необовʼязково: зберегти доказ
+        const uid = window.CURRENT_UID;
+        if (uid && signature){
+          await db.ref(`proofs/${address.toLowerCase()}`).set({
+            uid, wallet:'xverse', address, message, signature, createdAt: Date.now(), version:1
+          }).catch(()=>{});
+        }
+
+        localStorage.setItem('taproot_wallet', address);
+        updateWalletUI(address);
+
+      } catch(err){
+        const msg = (err?.error?.message || err?.message || '').toString();
+        if (/USER_REJECTION|rejected|cancel/i.test(msg)) alert('Запит у Xverse відхилено у вікні розширення.');
+        else { console.error('Xverse connect error:', err); alert('Xverse connection failed. Переконайся, що створено Ordinals-акаунт і не зняті галочки в попапі.'); }
+      }
+    }
+
+    /* -------- Хедер поведінка -------- */
+    document.addEventListener('DOMContentLoaded', () => {
+      updateWalletUI(getConnectedWalletAddress());
+
+      const wrapper = document.querySelector('.wallet-wrapper');
+      const dd = document.getElementById('wallet-header-dropdown');
+      if (wrapper && dd){
+        wrapper.addEventListener('click', (e)=>{
+          e.stopPropagation();
+          const addr = getConnectedWalletAddress();
+          if (!addr){ openWalletPicker(); return; }
+          dd.style.display = (dd.style.display === 'block' ? 'none' : 'block');
+        });
+      }
+      document.addEventListener('click', ()=> {
+        document.querySelectorAll('.wallet-dropdown-content').forEach(d => d.style.display='none');
+      });
+      document.querySelectorAll('.logout-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          localStorage.removeItem('taproot_wallet');
+          updateWalletUI(null);
+          document.getElementById('wallet-header-dropdown').style.display = 'none';
+        });
+      });
+    });
+
+    /* -------- Leaderboard -------- */
+    let allEntries = [];
+    async function loadLeaderboard(){
+      const url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?output=csv&gid=1127131432';
+      const res = await fetch(url); const text = await res.text();
+      const rows = text.trim().split('\n').map(row => {
+        const match = row.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g) || [];
+        return match.map(cell => cell.replace(/^"|"$/g, ''));
+      });
+      allEntries = rows.slice(1).map(r => {
+        const [rank, address, , pointsRaw] = r;
+        const clean = (pointsRaw||'').replace(/,/g,'');
+        return { rank, address, points: clean };
+      });
+      renderEntries(allEntries);
+    }
+    function renderEntries(entries){
+      const wrap = document.getElementById('leaderboard-list'); wrap.innerHTML = '';
+      entries.forEach(({rank,address,points})=>{
+        const shortAddr = address.slice(0,6)+'...'+address.slice(-4);
         const avatarUrl = `https://api.dicebear.com/7.x/identicon/svg?seed=${address}`;
-        const isTopTen = parseInt(rank) <= 10;
-
-        const entry = document.createElement('div');
-        entry.className = 'leaderboard-entry';
-        entry.innerHTML = `
+        const isTopTen = parseInt(rank,10) <= 10;
+        const el = document.createElement('div');
+        el.className = 'leaderboard-entry';
+        el.innerHTML = `
           <div class="rank ${isTopTen ? 'golden-ring' : ''}">${rank}</div>
           <div class="wallet">
             <img src="${avatarUrl}" alt="Avatar">
             <span>${shortAddr}</span>
           </div>
-          <div class="points">${points}</div>
-        `;
-        container.appendChild(entry);
+            <div class="points">${points}</div>`;
+        wrap.appendChild(el);
       });
     }
-
-    document.getElementById('search').addEventListener('input', (e) => {
-      const value = e.target.value.toLowerCase();
-      const filtered = allEntries.filter(entry => entry.address.toLowerCase().includes(value));
-      renderEntries(filtered);
+    document.getElementById('search').addEventListener('input', (e)=>{
+      const v = e.target.value.toLowerCase();
+      renderEntries(allEntries.filter(x => (x.address||'').toLowerCase().includes(v)));
     });
-
     loadLeaderboard();
     setInterval(loadLeaderboard, 3600000);
   </script>
