@@ -1,11 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>OWL Collection</title>
-  <link rel="icon" type="image/png" href="../logo2.png">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="../logo2.png" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
   <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+
+  <!-- Firebase (для функціоналу хедера як на профілі) -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+
   <style>
     :root {
       --bg-dark: #000000;
@@ -15,11 +22,14 @@
       --accent: #fff065;
       --accent-muted: #8a7f5a;
       --header-bg: linear-gradient(145deg, #151515, #0d0d0d);
+
+      /* Позиціювання бокових зображень (як на лідерборді з підняттям вище) */
+      --side-art-top: 95px;     /* було ~150px */
+      --side-art-offset: -60px; /* зсув назовні від країв */
+      --side-art-width: 720px;
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     html, body {
       height: 100vh;
@@ -31,146 +41,167 @@
       font-family: 'Inter', sans-serif;
     }
 
-    header {
-      width: 100%;
-      max-width: 1000px;
-      margin: 20px auto 0;
-      height: 64px;
-      background: var(--header-bg);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0 20px;
-      border-radius: 20px;
-      box-shadow: 
-    0 4px 10px rgba(0, 0, 0, 0.6), 
-    inset 0 1px 0 rgba(255, 255, 255, 0.05), 
-    inset 0 -1px 0 rgba(0, 0, 0, 0.4); 
-  background: linear-gradient(145deg, #1b1b1b, #101010); 
-  border: 1px solid rgba(255, 255, 255, 0.05); 
+    /* ==== Хедер як на сторінці профілю ==== */
+    .site-header{
+      width:100%;
+      max-width:1000px;
+      margin:20px auto 0;
+      height:64px; min-height:64px;
+      display:flex; align-items:center; justify-content:space-between;
+      padding:0 14px 0 20px;
+      border-radius:20px;
+      background:linear-gradient(145deg,#1b1b1b,#101010);
+      border:1px solid rgba(255,255,255,.05);
+      box-shadow:
+        0 4px 10px rgba(0,0,0,.6),
+        inset 0 1px 0 rgba(255,255,255,.05),
+        inset 0 -1px 0 rgba(0,0,0,.4);
+      position:relative; z-index:10;
     }
 
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
+    .logo{display:flex; align-items:center; gap:12px;}
+    .logo img{width:50px; height:50px;}
 
-    .logo img {
-      width: 50px;
-      height: 50px;
+    .nav-buttons{display:flex; align-items:center; gap:4px;}
+    .button{
+      padding:8px 10px; background:transparent; border:none;
+      color:var(--text-primary); text-decoration:none;
+      font-weight:500; font-size:18px; transition:color .2s ease;
+      margin-left:10px;
     }
+    .button:hover{ color:var(--accent); }
+    .twitter-icon{ width:26px; height:26px; margin-left:20px; }
 
-    .nav-buttons {
-      display: flex;
-      align-items: center;
-      gap: 2px;
+    .wallet-wrapper{position:relative; display:flex; align-items:center; gap:8px;}
+    .connect-wallet{
+      background:#202020; border:1px solid #333; color:#e6e6e6;
+      border-radius:12px; padding:10px 14px; font-weight:600;
+      cursor:pointer; user-select:none;
+      transition:border-color .15s ease, color .15s ease, transform .12s ease;
     }
+    .connect-wallet:hover{ border-color:#fff065; color:#fff065; }
+    .connect-wallet:active{ transform:translateY(1px); }
 
-    .button {
-      padding: 8px 10px;
-      background-color: transparent;
-      border: none;
-      color: var(--text-primary);
-      text-decoration: none;
-      font-weight: 500;
-      font-size: 18px;
-      transition: all 0.2s ease;
-      margin-left: 10px;
+    .wallet-dropdown-content{
+      display:none; position:absolute; right:0; top:52px;
+      background:#141414; border:1px solid #333; border-radius:12px;
+      min-width:200px; box-shadow:0 10px 30px rgba(0,0,0,.5);
+      padding:6px; z-index:20;
     }
-
-    .button:hover {
-      color: var(--accent);
+    .wallet-dropdown-content .dd-item,
+    .wallet-dropdown-content .dd-line{
+      display:block; width:100%; text-align:left; padding:10px 12px; border-radius:10px;
+      color:#e6e6e6; background:transparent; border:none; cursor:pointer; font:inherit;
     }
+    .wallet-dropdown-content .dd-item:hover{ background:#1d1d1d; }
+    .wallet-dropdown-content .short-addr{ color:#9f9f9f; cursor:default; }
 
-    .twitter-icon {
-      width: 26px;
-      height: 26px;
-      margin-left: 20px;
-    }
-
-    .main-wrapper {
-      width: 100%;
-      max-width: 1000px;
+    /* ==== Основний вміст (без змін) ==== */
+    .main-wrapper{
+      width:100%; max-width:1000px;
       height: calc(100vh - 100px); /* 100vh мінус header */
-      margin: 0 auto;
+      margin:0 auto;
       overflow-y: scroll;
-      padding: 20px;
+      padding:20px;
       position: relative;
-      scrollbar-width: none; /* Firefox */
-      -ms-overflow-style: none; /* IE 10+ */
+      scrollbar-width:none; -ms-overflow-style:none;
     }
+    .main-wrapper::-webkit-scrollbar{ display:none; }
 
-    .main-wrapper::-webkit-scrollbar {
-      display: none; /* Chrome, Safari */
-    }
-
-    .background-strip {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
+    .background-strip{
+      position:absolute; inset:0;
       background: linear-gradient(145deg, #141414, #0f0f0f);
-      opacity: 0.12;
-      z-index: 0;
-      box-shadow: 
-    0 4px 10px rgba(0, 0, 0, 0.6), 
-    inset 0 1px 0 rgba(255, 255, 255, 0.05), 
-    inset 0 -1px 0 rgba(0, 0, 0, 0.4); 
-  background: linear-gradient(145deg, #1b1b1b, #101010); 
-  border: 1px solid rgba(255, 255, 255, 0.05); 
+      opacity:.12; z-index:0;
+      box-shadow:
+        0 4px 10px rgba(0,0,0,.6),
+        inset 0 1px 0 rgba(255,255,255,.05),
+        inset 0 -1px 0 rgba(0,0,0,.4);
+      background: linear-gradient(145deg, #1b1b1b, #101010);
+      border: 1px solid rgba(255, 255, 255, 0.05);
     }
 
-    .grid {
-      position: relative;
-      z-index: 1;
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-      gap: 12px;
-      box-sizing: border-box;
+    .grid{
+      position:relative; z-index:1;
+      display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap:12px; box-sizing:border-box;
     }
 
-    .frame {
-      position: relative;
-      width: 100%;
-      aspect-ratio: 1 / 1.4;
-      overflow: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+    .frame{
+      position:relative; width:100%; aspect-ratio:1 / 1.4; overflow:hidden;
+      display:flex; align-items:center; justify-content:center;
       background: var(--bg-panel);
-      border-radius: 8px;
-      padding: 0px;
-       box-shadow: 
-    0 4px 10px rgba(0, 0, 0, 0.6), 
-    inset 0 1px 0 rgba(255, 255, 255, 0.05), 
-    inset 0 -1px 0 rgba(0, 0, 0, 0.4); 
-  background: linear-gradient(145deg, #1b1b1b, #101010); 
-  border: 1px solid rgba(255, 255, 255, 0.05); 
+      border-radius:8px; padding:0;
+      box-shadow:
+        0 4px 10px rgba(0,0,0,.6),
+        inset 0 1px 0 rgba(255,255,255,.05),
+        inset 0 -1px 0 rgba(0,0,0,.4);
+      background: linear-gradient(145deg, #1b1b1b, #101010);
+      border: 1px solid rgba(255, 255, 255, 0.05);
     }
+    model-viewer{ width:100%; height:100%; transform: scale(1.2); }
 
-    model-viewer {
-      width: 100%;
-      height: 100%;
-      transform: scale(1.2);
+    /* ==== Бокові зображення як на лідерборді ==== */
+    .side-image{
+      position:absolute;
+      top: var(--side-art-top);
+      width: min(44vw, var(--side-art-width));
+      opacity: 1;
+      pointer-events: none;
+      z-index: 0; /* нижче за контент/хедер */
+    }
+    .side-left  { left:  var(--side-art-offset); }
+    .side-right { right: var(--side-art-offset); }
+
+    @media (min-width:1440px){
+      :root{
+        --side-art-top: 85px;
+        --side-art-offset: -80px;
+        --side-art-width: 780px;
+      }
+    }
+    @media (max-width:1024px){
+      :root{
+        --side-art-top: 110px;
+        --side-art-offset: -24px;
+      }
+      .side-image{ width: 54vw; opacity:.85; }
+    }
+    @media (max-width:640px){
+      .side-image{ display:none; }
     }
   </style>
 </head>
 <body>
-  <header>
+
+  <!-- Хедер 1:1 як на сторінці профілю -->
+  <header class="site-header">
     <div class="logo">
-      <img src="../logo1.png" alt="logo">
+      <a href="/"><img src="../logo1.png" alt="logo" /></a>
     </div>
-    <div class="nav-buttons">
+
+    <nav class="nav-buttons">
       <a href="/collection" class="button" style="color: var(--accent-muted)">Collection</a>
       <a href="/leaderboard" class="button">Leaderboard</a>
-      <a href="https://x.com/OwlOrderBTC" target="_blank">
-        <img src="../twitter-white.png" alt="twitter" class="twitter-icon">
+      <a href="https://x.com/OwlOrderBTC" target="_blank" aria-label="X/Twitter">
+        <img src="../twitter-white.png" alt="" class="twitter-icon" />
       </a>
+    </nav>
+
+    <div class="wallet-wrapper">
+      <button id="wallet-header-btn" class="connect-wallet wallet-trigger">CONNECT WALLET</button>
+      <div id="wallet-header-dropdown" class="wallet-dropdown-content">
+        <div class="dd-line short-addr" id="wallet-short">–</div>
+        <a class="dd-item" href="/profile/">Open Profile</a>
+        <button class="dd-item logout-btn">Logout</button>
+      </div>
     </div>
   </header>
 
+  <!-- Бокові зображення (фон) -->
+  <img src="/LEFTSIDE2.png"  alt="" class="side-image side-left"  decoding="async" fetchpriority="low">
+  <img src="/RIGHTSIDE2.png" alt="" class="side-image side-right" decoding="async" fetchpriority="low">
+
+  <!-- Основний контент (БЕЗ ЗМІН) -->
   <div class="main-wrapper">
     <div class="background-strip"></div>
     <div class="grid" id="grid">
@@ -2279,32 +2310,212 @@ environment-image="neutral"
 <a id="download_150" href="../images/150.webp" download></a>
 </div>
 
-</script>
-
   <script>  
-  document.querySelectorAll(".frame").forEach((frame) => {
-    const id = frame.dataset.id;
-    const model = frame.querySelector("model-viewer");
-    const link = document.getElementById("download_" + id);
+  const firebaseConfig = {
+      apiKey:"AIzaSyD2v-w99aaVgKYrycfIV515BEbjaTOp7z4",
+      authDomain:"owl-chat-e4233.firebaseapp.com",
+      databaseURL:"https://owl-chat-e4233-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId:"owl-chat-e4233",
+      storageBucket:"owl-chat-e4233.firebasestorage.app",
+      messagingSenderId:"671987704789",
+      appId:"1:671987704789:web:5ffad58bc9c00ba772935c",
+      measurementId:"G-ELQRLCLGZT"
+    };
+    const app = (firebase.apps && firebase.apps.length) ? firebase.app() : firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const auth = firebase.auth();
+    auth.signInAnonymously().catch(()=>{});
 
-    const initialOrbit = "0deg 90deg 105%";
-    const hoverOrbit = "180deg 90deg 105%";
-
-    model.setAttribute("camera-orbit", initialOrbit);
-
-    model.addEventListener("mouseenter", () => {
-      model.setAttribute("camera-orbit", hoverOrbit);
-    });
-
-    model.addEventListener("mouseleave", () => {
-      model.setAttribute("camera-orbit", initialOrbit);
-    });
-
-    if (link) {
-      frame.addEventListener("click", () => link.click());
+    /* === Утиліти хедера === */
+    function shorten(a){ return a ? a.slice(0,6) + '...' + a.slice(-4) : ''; }
+    function getConnectedWalletAddress(){ return localStorage.getItem('taproot_wallet'); }
+    function updateWalletUI(address){
+      const btn = document.getElementById('wallet-header-btn');
+      const short = document.getElementById('wallet-short');
+      if (btn) btn.textContent = address ? shorten(address) : 'CONNECT WALLET';
+      if (short) short.textContent = address ? shorten(address) : '–';
     }
-  });
-</script>
 
+    /* === Sats-Connect v3 loader === */
+    window.loadSatsV3 = async function(){
+      if (window.__sats) return window.__sats;
+      const sources = [
+        'https://cdn.jsdelivr.net/npm/sats-connect@3.6.1/+esm',
+        'https://esm.sh/sats-connect@3.6.1',
+        '/profile/sats-connect-3.6.1.esm.js'
+      ];
+      let last;
+      for (const src of sources){
+        try{
+          const mod = await import(src);
+          const request = mod?.request || mod?.default?.request;
+          const AddressPurpose = mod?.AddressPurpose || mod?.default?.AddressPurpose;
+          if (request && AddressPurpose){ window.__sats = { request, AddressPurpose }; return window.__sats; }
+        }catch(e){ last = e; }
+      }
+      console.error('Failed to load sats-connect', last);
+      throw new Error('sats-connect not available');
+    };
+
+    /* === Wallet picker === */
+    function ensurePickerMask(){
+      let m = document.getElementById('wallet-picker-mask');
+      if (m) return m;
+      m = document.createElement('div');
+      m.id = 'wallet-picker-mask';
+      m.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:10000;';
+      document.body.appendChild(m);
+      return m;
+    }
+    async function openWalletPicker(){
+      const mask = ensurePickerMask(); mask.innerHTML=''; mask.style.display='flex';
+      const box = document.createElement('div');
+      box.style.cssText = 'width:360px;max-width:92vw;background:#141414;color:#eee;border:1px solid #333;border-radius:14px;padding:18px;';
+      box.innerHTML = `
+        <div style="font-size:18px;font-weight:600;margin-bottom:12px;">Connect wallet</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <button id="pick-unisat" style="display:flex;gap:10px;align-items:center;justify-content:center;padding:12px;border-radius:10px;background:#1f1f1f;color:#fff;border:0;cursor:pointer;">
+            <img src="/profile/unisat.png" width="20" height="20" alt="UniSat"><span>UniSat (Taproot)</span>
+          </button>
+          <button id="pick-xverse" style="display:flex;gap:10px;align-items:center;justify-content:center;padding:12px;border-radius:10px;background:#1f1f1f;color:#fff;border:0;cursor:pointer;">
+            <img src="/profile/xverse.png" width="20" height="20" alt="Xverse"><span>Xverse (Ordinals)</span>
+          </button>
+          <button id="pick-cancel" style="padding:10px;margin-top:6px;border-radius:10px;background:#222;color:#fff;border:0;cursor:pointer;">Cancel</button>
+        </div>`;
+      mask.appendChild(box);
+      box.querySelector('#pick-unisat').onclick = async ()=>{ try{ await connectUniSatWallet(); } finally{ mask.style.display='none'; } };
+      box.querySelector('#pick-xverse').onclick = async ()=>{ try{ await connectXverseWallet(); } finally{ mask.style.display='none'; } };
+      box.querySelector('#pick-cancel').onclick = ()=> mask.style.display='none';
+      mask.addEventListener('click',(e)=>{ if(e.target===mask) mask.style.display='none'; }, {once:true});
+    }
+
+    /* === UniSat connect === */
+    async function connectUniSatWallet(){
+      if (!window.unisat){ alert('UniSat Wallet not found.'); return; }
+      await window.unisat.requestAccounts();
+      const address = (await window.unisat.getAccounts())[0];
+      localStorage.setItem('taproot_wallet', address);
+      updateWalletUI(address);
+    }
+
+    /* === Xverse connect + BIP322 sign === */
+    async function connectXverseWallet(){
+      try {
+        const hasXverse =
+          !!window.BitcoinProvider ||
+          !!window.xverseProviders ||
+          (window?.bitcoin && typeof window.bitcoin.request === 'function');
+        if (!hasXverse) { alert('Xverse не знайдено. Дозволь сайту доступ у налаштуваннях розширення.'); return; }
+
+        const { request, AddressPurpose } = await window.loadSatsV3();
+
+        // 1) Отримуємо адреси
+        const resp = await request('wallet_connect', {
+          addresses: [AddressPurpose.Ordinals, AddressPurpose.Payment],
+          message: 'Connect to OWL',
+          network: 'Mainnet'
+        });
+        const addresses =
+          resp?.result?.addresses ||
+          resp?.addresses ||
+          (resp?.status === 'success' ? resp.result?.addresses : []) ||
+          [];
+        if (!Array.isArray(addresses) || !addresses.length){
+          alert('Xverse did not return the address. Create an Ordinals account and do not uncheck the box in the popup.');
+          return;
+        }
+        const ord = addresses.find(a => (a.purpose || '').toLowerCase() === 'ordinals');
+        const chosen = ord || addresses[0];
+        const address = chosen.address;
+
+        // 2) Підпис BIP322
+        const nonce = Array.from(crypto.getRandomValues(new Uint8Array(16))).map(x=>x.toString(16).padStart(2,'0')).join('');
+        const message = `OWL login
+Domain: ${location.origin}
+Address: ${address}
+Nonce: ${nonce}
+Time: ${new Date().toISOString()}`;
+
+        const sign = await request('signMessage', { address, message, signatureType: 'bip322-simple' });
+        const signature = sign?.result?.signature || sign?.signature || sign?.result?.signatureHex || '';
+
+        // 3) Збереження доказу (не блокує конект, якщо відхилить правила)
+        const uid = (firebase.auth().currentUser || {}).uid;
+        if (uid && signature){
+          await db.ref(`proofs/${address.toLowerCase()}`).set({
+            uid, wallet:'xverse', address, message, signature, createdAt: Date.now(), version:1
+          }).catch(()=>{});
+        }
+
+        localStorage.setItem('taproot_wallet', address);
+        updateWalletUI(address);
+
+      } catch (err) {
+        const msg = (err?.error?.message || err?.message || '').toString();
+        if (/USER_REJECTION|rejected|cancel/i.test(msg)) {
+          alert('Запит у Xverse відхилено у вікні розширення.');
+        } else {
+          console.error('Xverse connect error:', err);
+          alert('Xverse connection failed. Переконайся, що створено Ordinals-акаунт і не зняті галочки в попапі.');
+        }
+      }
+    }
+
+    /* === Поведінка хедера === */
+    document.addEventListener('DOMContentLoaded', () => {
+      // початковий стан
+      updateWalletUI(getConnectedWalletAddress());
+
+      // клік по кнопці/аватару у хедері
+      const wrapper = document.querySelector('.wallet-wrapper');
+      const dd = document.getElementById('wallet-header-dropdown');
+      if (wrapper && dd){
+        wrapper.addEventListener('click', (e)=>{
+          e.stopPropagation();
+          const addr = getConnectedWalletAddress();
+          if (!addr){ openWalletPicker(); return; }
+          dd.style.display = (dd.style.display === 'block' ? 'none' : 'block');
+        });
+      }
+
+      // закриття дропдауну кліком поза ним
+      document.addEventListener('click', ()=> {
+        document.querySelectorAll('.wallet-dropdown-content').forEach(d => d.style.display='none');
+      });
+
+      // Logout
+      document.querySelectorAll('.logout-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          localStorage.removeItem('taproot_wallet');
+          updateWalletUI(null);
+          const el = document.getElementById('wallet-header-dropdown');
+          if (el) el.style.display = 'none';
+        });
+      });
+    });
+    
+    document.querySelectorAll(".frame").forEach((frame) => {
+      const id = frame.dataset.id;
+      const model = frame.querySelector("model-viewer");
+      const link = document.getElementById("download_" + id);
+
+      const initialOrbit = "0deg 90deg 105%";
+      const hoverOrbit = "180deg 90deg 105%";
+
+      model.setAttribute("camera-orbit", initialOrbit);
+
+      model.addEventListener("mouseenter", () => {
+        model.setAttribute("camera-orbit", hoverOrbit);
+      });
+
+      model.addEventListener("mouseleave", () => {
+        model.setAttribute("camera-orbit", initialOrbit);
+      });
+
+      if (link) {
+        frame.addEventListener("click", () => link.click());
+      }
+    });
+  </script>
 </body>
 </html>
