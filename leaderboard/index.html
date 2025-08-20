@@ -55,6 +55,11 @@
       position:relative; z-index:10;
     }
 
+    .header-right{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
     .logo{ display:flex; align-items:center; gap:12px; }
     .logo img{ width:50px; height:50px; }
 
@@ -68,7 +73,7 @@
       height:40px; display:flex; align-items:center;
     }
     .button:hover{ color: var(--accent-color); }
-    .twitter-icon{ width:26px; height:26px; }
+    .button.active{ color: var(--accent-color); font-weight:600; }
 
     .wallet-wrapper { position: relative; display: inline-block; }
     .connect-wallet{
@@ -203,17 +208,15 @@
 <body>
 
   <!-- HEADER -->
-  <header class="site-header">
-    <div class="logo">
-      <a href="/"><img src="../logo1.png" alt="logo" /></a>
-    </div>
+<header class="site-header">
+  <div class="logo">
+    <a href="/"><img src="../logo1.png" alt="logo" /></a>
+  </div>
 
+  <div class="header-right">
     <nav class="nav-buttons">
       <a href="/collection" class="button">Collection</a>
-      <a href="/leaderboard" class="button" style="color:var(--accent-color)">Leaderboard</a>
-      <a href="https://x.com/OwlOrderBTC" target="_blank" rel="noopener noreferrer" aria-label="X/Twitter">
-        <img src="../twitter-white.png" alt="" class="twitter-icon" />
-      </a>
+      <a href="/leaderboard" class="button active">Leaderboard</a>
     </nav>
 
     <div class="wallet-wrapper">
@@ -224,7 +227,8 @@
         <button class="dd-item logout-btn">Logout</button>
       </div>
     </div>
-  </header>
+  </div>
+</header>
 
   <!-- DECOR -->
   <img src="../LEFTSIDE2.png"  alt="" class="side-image side-left" />
