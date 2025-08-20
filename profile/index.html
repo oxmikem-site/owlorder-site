@@ -4168,37 +4168,6 @@ Time: ${new Date().toISOString()}`;
   }
 }
 
-    const ord = addresses.find(a => (a.purpose || "").toLowerCase() === "ordinals") || addresses[0];
-    const address = ord?.address;
-    if (!address) throw new Error("No address");
-
-    // 5) далі як у тебе
-    localStorage.setItem("taproot_wallet", address);
-    updateWalletButtons(address);
-    await populateSidebarUserInfo(address);
-
-    const amAdmin = isAdmin(address);
-    setSidebarAccess({ loggedIn: true, isHolder: amAdmin });
-    setChatInputsEnabled(amAdmin, address);
-    initUnreadTracking(address);
-    initSettingsUI(address);
-    renderMyCollection(address);
-
-    getHolderInfoOnce(address).then(async info => {
-      const can = amAdmin || !!info?.found;
-      setSidebarAccess({ loggedIn: true, isHolder: can });
-      setChatInputsEnabled(can, address);
-      if (can) showSection("collection");
-      await recalcSectionIndicators(address);
-    });
-  } catch (err) {
-    console.error("connectXverseWallet:", err);
-    const msg = (err?.message || "").toLowerCase();
-    if (msg.includes("rejected")) alert("Xverse rejected");
-    else alert("Xverse connection failed.");
-  }
-}
-
 // Пікер «обрати гаманець»
 document.querySelectorAll(".wallet-trigger").forEach(btn => {
   btn.addEventListener("click", async (e) => {
