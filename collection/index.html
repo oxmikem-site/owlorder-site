@@ -1,2346 +1,425 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>OWL Collection</title>
-  <link rel="icon" type="image/png" href="../logo2.png">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+  <link rel="icon" type="image/png" href="../logo2.png" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+
+  <!-- Firebase v8 -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+
   <style>
-    :root {
-      --bg-dark: #000000;
-      --bg-panel: linear-gradient(145deg, #141414, #0f0f0f);
-      --text-primary: #e6e6e6;
-      --text-secondary: #9f9f9f;
-      --accent: #fff065;
-      --accent-muted: #8a7f5a;
-      --header-bg: linear-gradient(145deg, #151515, #0d0d0d);
+    :root{
+      --bg-dark:#000;
+      --bg-panel:linear-gradient(145deg,#141414,#0f0f0f);
+      --text-primary:#e6e6e6;
+      --text-secondary:#9f9f9f;
+      --accent:#fff065;
+      --accent-muted:#8a7f5a;
+    }
+    *{ box-sizing:border-box; }
+    html,body{
+      height:100vh; margin:0; overflow:hidden;
+      background:var(--bg-dark); color:var(--text-primary);
+      font-family:'Inter',sans-serif;
     }
 
-    * {
-      box-sizing: border-box;
+    /* ---------- HEADER (єдиний стиль із профілем/лідербордом) ---------- */
+    .site-header{
+      width:100%; max-width:1000px; margin:20px auto 0;
+      height:64px; min-height:64px;
+      display:flex; align-items:center; justify-content:space-between;
+      padding:0 14px 0 20px; border-radius:20px;
+      background:linear-gradient(145deg,#1b1b1b,#101010);
+      border:1px solid rgba(255,255,255,.05);
+      box-shadow:0 4px 10px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.05), inset 0 -1px 0 rgba(0,0,0,.4);
+      position:relative; z-index:10;
+    }
+    .logo{ display:flex; align-items:center; gap:12px; }
+    .logo img{ width:50px; height:50px; }
+    .nav-buttons{ display:flex; align-items:center; gap:4px; }
+    .button{
+      padding:8px 10px; background:transparent; border:none; color:var(--text-primary);
+      text-decoration:none; font-weight:500; font-size:18px; transition:.2s; margin-left:10px;
+    }
+    .button:hover{ color:var(--accent); }
+    .twitter-icon{ width:26px; height:26px; margin-left:20px; }
+
+    .wallet-wrapper{ position:relative; display:flex; align-items:center; gap:8px; }
+    .connect-wallet{
+      background:#202020; border:1px solid #333; color:#e6e6e6; border-radius:12px; padding:10px 14px;
+      font-weight:600; cursor:pointer; transition:.15s;
+    }
+    .connect-wallet:hover{ border-color:#fff065; color:#fff065; }
+    .wallet-dropdown-content{
+      display:none; position:absolute; right:0; top:52px; background:#141414; border:1px solid #333;
+      border-radius:12px; min-width:200px; box-shadow:0 10px 30px rgba(0,0,0,.5); padding:6px; z-index:20;
+    }
+    .wallet-dropdown-content .dd-item,
+    .wallet-dropdown-content .dd-line{
+      display:block; width:100%; text-align:left; padding:10px 12px; border-radius:10px;
+      color:#e6e6e6; background:transparent; border:none; cursor:pointer; font:inherit;
+    }
+    .wallet-dropdown-content .dd-item:hover{ background:#1d1d1d; }
+    .wallet-dropdown-content .short-addr{ color:#9f9f9f; cursor:default; }
+
+    /* ---------- SIDE ART ---------- */
+    :root{
+      --side-art-top: 95px;
+      --side-art-offset: -60px;
+      --side-art-width: 720px;
+    }
+    .side-image{
+      position:absolute; top:var(--side-art-top);
+      width:min(44vw, var(--side-art-width));
+      opacity:1; pointer-events:none; z-index:0;
+      filter:drop-shadow(0 0 24px rgba(0,0,0,.45));
+    }
+    .side-left{ left:var(--side-art-offset); }
+    .side-right{ right:var(--side-art-offset); }
+    @media (min-width:1440px){
+      :root{ --side-art-top:85px; --side-art-offset:-80px; --side-art-width:780px; }
+    }
+    @media (max-width:1024px){
+      :root{ --side-art-top:110px; --side-art-offset:-24px; }
+      .side-image{ width:54vw; opacity:.85; }
+    }
+    @media (max-width:640px){
+      .side-image{ display:none; }
     }
 
-    html, body {
-      height: 100vh;
-      overflow: hidden;
-      margin: 0;
-      padding: 0;
-      background: var(--bg-dark);
-      color: var(--text-primary);
-      font-family: 'Inter', sans-serif;
+    /* ---------- MAIN ---------- */
+    .main-wrapper{
+      width:100%; max-width:1000px; height:calc(100vh - 100px);
+      margin:0 auto; overflow-y:auto; padding:20px; position:relative;
+      scrollbar-width:none; -ms-overflow-style:none;
+    }
+    .main-wrapper::-webkit-scrollbar{ display:none; }
+
+    .grid{
+      position:relative; z-index:1;
+      display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr));
+      gap:14px;
     }
 
-    header {
-      width: 100%;
-      max-width: 1000px;
-      margin: 20px auto 0;
-      height: 64px;
-      background: var(--header-bg);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0 20px;
-      border-radius: 20px;
-      box-shadow: 
-    0 4px 10px rgba(0, 0, 0, 0.6), 
-    inset 0 1px 0 rgba(255, 255, 255, 0.05), 
-    inset 0 -1px 0 rgba(0, 0, 0, 0.4); 
-  background: linear-gradient(145deg, #1b1b1b, #101010); 
-  border: 1px solid rgba(255, 255, 255, 0.05); 
+    /* Картка NFT у стилі панелей */
+    .nft-card{
+      position:relative; overflow:hidden; border-radius:12px;
+      background:var(--bg-panel);
+      border:1px solid rgba(255,255,255,.05);
+      box-shadow:0 4px 10px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.05), inset 0 -1px 0 rgba(0,0,0,.4);
+      transition:transform .18s ease;
+      cursor:pointer;
+    }
+    .nft-card:hover{ transform:scale(1.01); }
+
+    .nft-thumb{
+      width:100%; aspect-ratio:1/1; display:flex; align-items:center; justify-content:center;
+      background:#0f0f0f;
+    }
+    .nft-thumb img{
+      display:block; width:100%; height:100%; object-fit:cover;
     }
 
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 12px;
+    .nft-meta{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      padding:10px 12px; border-top:1px solid rgba(255,255,255,.06);
+      background:linear-gradient(145deg,#1b1b1b,#121212);
     }
-
-    .logo img {
-      width: 50px;
-      height: 50px;
+    .nft-number{ font-weight:700; letter-spacing:.3px; }
+    .rarity-badge{
+      font-size:12px; line-height:1; padding:6px 8px; border-radius:999px;
+      border:1px solid rgba(255,255,255,.12);
+      background:#151515; color:#ddd; white-space:nowrap;
     }
-
-    .nav-buttons {
-      display: flex;
-      align-items: center;
-      gap: 2px;
-    }
-
-    .button {
-      padding: 8px 10px;
-      background-color: transparent;
-      border: none;
-      color: var(--text-primary);
-      text-decoration: none;
-      font-weight: 500;
-      font-size: 18px;
-      transition: all 0.2s ease;
-      margin-left: 10px;
-    }
-
-    .button:hover {
-      color: var(--accent);
-    }
-
-    .twitter-icon {
-      width: 26px;
-      height: 26px;
-      margin-left: 20px;
-    }
-
-    .main-wrapper {
-      width: 100%;
-      max-width: 1000px;
-      height: calc(100vh - 100px); /* 100vh мінус header */
-      margin: 0 auto;
-      overflow-y: scroll;
-      padding: 20px;
-      position: relative;
-      scrollbar-width: none; /* Firefox */
-      -ms-overflow-style: none; /* IE 10+ */
-    }
-
-    .main-wrapper::-webkit-scrollbar {
-      display: none; /* Chrome, Safari */
-    }
-
-    .background-strip {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(145deg, #141414, #0f0f0f);
-      opacity: 0.12;
-      z-index: 0;
-      box-shadow: 
-    0 4px 10px rgba(0, 0, 0, 0.6), 
-    inset 0 1px 0 rgba(255, 255, 255, 0.05), 
-    inset 0 -1px 0 rgba(0, 0, 0, 0.4); 
-  background: linear-gradient(145deg, #1b1b1b, #101010); 
-  border: 1px solid rgba(255, 255, 255, 0.05); 
-    }
-
-    .grid {
-      position: relative;
-      z-index: 1;
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-      gap: 12px;
-      box-sizing: border-box;
-    }
-
-    .frame {
-      position: relative;
-      width: 100%;
-      aspect-ratio: 1 / 1.4;
-      overflow: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--bg-panel);
-      border-radius: 8px;
-      padding: 0px;
-       box-shadow: 
-    0 4px 10px rgba(0, 0, 0, 0.6), 
-    inset 0 1px 0 rgba(255, 255, 255, 0.05), 
-    inset 0 -1px 0 rgba(0, 0, 0, 0.4); 
-  background: linear-gradient(145deg, #1b1b1b, #101010); 
-  border: 1px solid rgba(255, 255, 255, 0.05); 
-    }
-
-    model-viewer {
-      width: 100%;
-      height: 100%;
-      transform: scale(1.2);
-    }
-
-      .side-image{
-    position: fixed;          /* щоб тримались країв екрана як фон */
-    top: 150px;               /* як у leaderboard */
-    width: clamp(480px, 42vw, 780px);
-    opacity: 1;
-    pointer-events: none;     /* не перекриває кліки */
-    z-index: 0;               /* нижче за контент */
-    filter: drop-shadow(0 0 24px rgba(0,0,0,.45));
-  }
-  .side-left{ left: 0; }
-  .side-right{ right: 0; }
-
-  /* Весь основний контент поверх фону */
-  header,
-  #sidebar,
-  .profile-section,
-  .wallet-wrapper,
-  .panel,
-  .collection-wrap,
-  .raffles-topbar,
-  .raffles-grid {
-    position: relative;
-    z-index: 1;
-  }
-
-  /* Адаптив: приглушити/сховати на вузьких екранах */
-  @media (max-width: 1024px){
-    .side-image{ opacity: .5; width: 60vw; }
-  }
-  @media (max-width: 640px){
-    .side-image{ display: none; }
-  }
+    .rarity-common{ color:#d7d7d7; }
+    .rarity-uncommon{ color:#a1e3a1; border-color:rgba(161,227,161,.25); }
+    .rarity-rare{ color:#80c7ff; border-color:rgba(128,199,255,.25); }
+    .rarity-epic{ color:#d7a7ff; border-color:rgba(215,167,255,.25); }
+    .rarity-legendary{ color:#ffd86b; border-color:rgba(255,216,107,.35); }
+    .rarity-mythic{ color:#ff8e8e; border-color:rgba(255,142,142,.35); }
   </style>
 </head>
 <body>
-  <header>
+
+  <!-- HEADER -->
+  <header class="site-header">
     <div class="logo">
-      <img src="../logo1.png" alt="logo">
+      <a href="/"><img src="../logo1.png" alt="logo" /></a>
     </div>
-    <div class="nav-buttons">
-      <a href="/collection" class="button" style="color: var(--accent-muted)">Collection</a>
+
+    <nav class="nav-buttons">
+      <a href="/collection" class="button" style="color:var(--accent)">Collection</a>
       <a href="/leaderboard" class="button">Leaderboard</a>
-      <a href="https://x.com/OwlOrderBTC" target="_blank">
-        <img src="../twitter-white.png" alt="twitter" class="twitter-icon">
+      <a href="https://x.com/OwlOrderBTC" target="_blank" rel="noopener noreferrer" aria-label="X/Twitter">
+        <img src="../twitter-white.png" alt="" class="twitter-icon" />
       </a>
+    </nav>
+
+    <div class="wallet-wrapper">
+      <button id="wallet-header-btn" class="connect-wallet wallet-trigger">CONNECT WALLET</button>
+      <div id="wallet-header-dropdown" class="wallet-dropdown-content">
+        <div class="dd-line short-addr" id="wallet-short">–</div>
+        <a class="dd-item" href="/profile/">Open Profile</a>
+        <button class="dd-item logout-btn">Logout</button>
+      </div>
     </div>
   </header>
 
+  <!-- SIDE ART -->
   <img src="/LEFTSIDE2.png"  alt="" class="side-image side-left"  decoding="async" fetchpriority="low">
   <img src="/RIGHTSIDE2.png" alt="" class="side-image side-right" decoding="async" fetchpriority="low">
 
+  <!-- MAIN -->
   <div class="main-wrapper">
-    <div class="background-strip"></div>
-    <div class="grid" id="grid">
-    
-    <div class="frame" data-id="1">
-      <model-viewer src="../models/1.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="2">
-      <model-viewer src="../models/2.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="3">
-      <model-viewer src="../models/3.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="4">
-      <model-viewer src="../models/4.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="5">
-      <model-viewer src="../models/5.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="6">
-      <model-viewer src="../models/6.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="7">
-      <model-viewer src="../models/7.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="8">
-      <model-viewer src="../models/8.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="9">
-      <model-viewer src="../models/9.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="10">
-      <model-viewer src="../models/10.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="11">
-      <model-viewer src="../models/11.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="12">
-      <model-viewer src="../models/12.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="13">
-      <model-viewer src="../models/13.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="14">
-      <model-viewer src="../models/14.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="15">
-      <model-viewer src="../models/15.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="16">
-      <model-viewer src="../models/16.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="17">
-      <model-viewer src="../models/17.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="18">
-      <model-viewer src="../models/18.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="19">
-      <model-viewer src="../models/19.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="20">
-      <model-viewer src="../models/20.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="21">
-      <model-viewer src="../models/21.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="22">
-      <model-viewer src="../models/22.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="23">
-      <model-viewer src="../models/23.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="24">
-      <model-viewer src="../models/24.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="25">
-      <model-viewer src="../models/25.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="26">
-      <model-viewer src="../models/26.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="27">
-      <model-viewer src="../models/27.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="28">
-      <model-viewer src="../models/28.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="29">
-      <model-viewer src="../models/29.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="30">
-      <model-viewer src="../models/30.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="31">
-      <model-viewer src="../models/31.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="32">
-      <model-viewer src="../models/32.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="33">
-      <model-viewer src="../models/33.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="34">
-      <model-viewer src="../models/34.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="35">
-      <model-viewer src="../models/35.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="36">
-      <model-viewer src="../models/36.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="37">
-      <model-viewer src="../models/37.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="38">
-      <model-viewer src="../models/38.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="39">
-      <model-viewer src="../models/39.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="40">
-      <model-viewer src="../models/40.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="41">
-      <model-viewer src="../models/41.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="42">
-      <model-viewer src="../models/42.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="43">
-      <model-viewer src="../models/43.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="44">
-      <model-viewer src="../models/44.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="45">
-      <model-viewer src="../models/45.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="46">
-      <model-viewer src="../models/46.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="47">
-      <model-viewer src="../models/47.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="48">
-      <model-viewer src="../models/48.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="49">
-      <model-viewer src="../models/49.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="50">
-      <model-viewer src="../models/50.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="51">
-      <model-viewer src="../models/51.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="52">
-      <model-viewer src="../models/52.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="53">
-      <model-viewer src="../models/53.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="54">
-      <model-viewer src="../models/54.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="55">
-      <model-viewer src="../models/55.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="56">
-      <model-viewer src="../models/56.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="57">
-      <model-viewer src="../models/57.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="58">
-      <model-viewer src="../models/58.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="59">
-      <model-viewer src="../models/59.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="60">
-      <model-viewer src="../models/60.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="61">
-      <model-viewer src="../models/61.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="62">
-      <model-viewer src="../models/62.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="63">
-      <model-viewer src="../models/63.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="64">
-      <model-viewer src="../models/64.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="65">
-      <model-viewer src="../models/65.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="66">
-      <model-viewer src="../models/66.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="67">
-      <model-viewer src="../models/67.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="68">
-      <model-viewer src="../models/68.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="69">
-      <model-viewer src="../models/69.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="70">
-      <model-viewer src="../models/70.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="71">
-      <model-viewer src="../models/71.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="72">
-      <model-viewer src="../models/72.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="73">
-      <model-viewer src="../models/73.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="74">
-      <model-viewer src="../models/74.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="75">
-      <model-viewer src="../models/75.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="76">
-      <model-viewer src="../models/76.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="77">
-      <model-viewer src="../models/77.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="78">
-      <model-viewer src="../models/78.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="79">
-      <model-viewer src="../models/79.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="80">
-      <model-viewer src="../models/80.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="81">
-      <model-viewer src="../models/81.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="82">
-      <model-viewer src="../models/82.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="83">
-      <model-viewer src="../models/83.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="84">
-      <model-viewer src="../models/84.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="85">
-      <model-viewer src="../models/85.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="86">
-      <model-viewer src="../models/86.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="87">
-      <model-viewer src="../models/87.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="88">
-      <model-viewer src="../models/88.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="89">
-      <model-viewer src="../models/89.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="90">
-      <model-viewer src="../models/90.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="91">
-      <model-viewer src="../models/91.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="92">
-      <model-viewer src="../models/92.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="93">
-      <model-viewer src="../models/93.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="94">
-      <model-viewer src="../models/94.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="95">
-      <model-viewer src="../models/95.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="96">
-      <model-viewer src="../models/96.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="97">
-      <model-viewer src="../models/97.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="98">
-      <model-viewer src="../models/98.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="99">
-      <model-viewer src="../models/99.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="100">
-      <model-viewer src="../models/100.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="101">
-      <model-viewer src="../models/101.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="102">
-      <model-viewer src="../models/102.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="103">
-      <model-viewer src="../models/103.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="104">
-      <model-viewer src="../models/104.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="105">
-      <model-viewer src="../models/105.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="106">
-      <model-viewer src="../models/106.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="107">
-      <model-viewer src="../models/107.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="108">
-      <model-viewer src="../models/108.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="109">
-      <model-viewer src="../models/109.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="110">
-      <model-viewer src="../models/110.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="111">
-      <model-viewer src="../models/111.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="112">
-      <model-viewer src="../models/112.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="113">
-      <model-viewer src="../models/113.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="114">
-      <model-viewer src="../models/114.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="115">
-      <model-viewer src="../models/115.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="116">
-      <model-viewer src="../models/116.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="117">
-      <model-viewer src="../models/117.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="118">
-      <model-viewer src="../models/118.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="119">
-      <model-viewer src="../models/119.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="120">
-      <model-viewer src="../models/120.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="121">
-      <model-viewer src="../models/121.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="122">
-      <model-viewer src="../models/122.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="123">
-      <model-viewer src="../models/123.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="124">
-      <model-viewer src="../models/124.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="125">
-      <model-viewer src="../models/125.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="126">
-      <model-viewer src="../models/126.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="127">
-      <model-viewer src="../models/127.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="128">
-      <model-viewer src="../models/128.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="129">
-      <model-viewer src="../models/129.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="130">
-      <model-viewer src="../models/130.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="131">
-      <model-viewer src="../models/131.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="132">
-      <model-viewer src="../models/132.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="133">
-      <model-viewer src="../models/133.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="134">
-      <model-viewer src="../models/134.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="135">
-      <model-viewer src="../models/135.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="136">
-      <model-viewer src="../models/136.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="137">
-      <model-viewer src="../models/137.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="138">
-      <model-viewer src="../models/138.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="139">
-      <model-viewer src="../models/139.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="140">
-      <model-viewer src="../models/140.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="141">
-      <model-viewer src="../models/141.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="142">
-      <model-viewer src="../models/142.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="143">
-      <model-viewer src="../models/143.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="144">
-      <model-viewer src="../models/144.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="145">
-      <model-viewer src="../models/145.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="146">
-      <model-viewer src="../models/146.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="147">
-      <model-viewer src="../models/147.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="148">
-      <model-viewer src="../models/148.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="149">
-      <model-viewer src="../models/149.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
-    
-    <div class="frame" data-id="150">
-      <model-viewer src="../models/150.glb"
-environment-image="neutral"
-  exposure="1.0"
-  shadow-intensity="5"
-  background-color="transparent"
-  camera-orbit="0deg 90deg 105%"
-  disable-zoom
-  interaction-prompt="none"
-                    disable-zoom>
-      </model-viewer>
-    </div>
+    <div class="grid" id="grid"></div>
+  </div>
 
-<!-- Скрите посилання на зображення для кожного ID -->
-<div style="display: none">
-<a id="download_1" href="../images/1.webp" download></a>
-<a id="download_2" href="../images/2.webp" download></a>
-<a id="download_3" href="../images/3.webp" download></a>
-<a id="download_4" href="../images/4.webp" download></a>
-<a id="download_5" href="../images/5.webp" download></a>
-<a id="download_6" href="../images/6.webp" download></a>
-<a id="download_7" href="../images/7.webp" download></a>
-<a id="download_8" href="../images/8.webp" download></a>
-<a id="download_9" href="../images/9.webp" download></a>
-<a id="download_10" href="../images/10.webp" download></a>
-<a id="download_11" href="../images/11.webp" download></a>
-<a id="download_12" href="../images/12.webp" download></a>
-<a id="download_13" href="../images/13.webp" download></a>
-<a id="download_14" href="../images/14.webp" download></a>
-<a id="download_15" href="../images/15.webp" download></a>
-<a id="download_16" href="../images/16.webp" download></a>
-<a id="download_17" href="../images/17.webp" download></a>
-<a id="download_18" href="../images/18.webp" download></a>
-<a id="download_19" href="../images/19.webp" download></a>
-<a id="download_20" href="../images/20.webp" download></a>
-<a id="download_21" href="../images/21.webp" download></a>
-<a id="download_22" href="../images/22.webp" download></a>
-<a id="download_23" href="../images/23.webp" download></a>
-<a id="download_24" href="../images/24.webp" download></a>
-<a id="download_25" href="../images/25.webp" download></a>
-<a id="download_26" href="../images/26.webp" download></a>
-<a id="download_27" href="../images/27.webp" download></a>
-<a id="download_28" href="../images/28.webp" download></a>
-<a id="download_29" href="../images/29.webp" download></a>
-<a id="download_30" href="../images/30.webp" download></a>
-<a id="download_31" href="../images/31.webp" download></a>
-<a id="download_32" href="../images/32.webp" download></a>
-<a id="download_33" href="../images/33.webp" download></a>
-<a id="download_34" href="../images/34.webp" download></a>
-<a id="download_35" href="../images/35.webp" download></a>
-<a id="download_36" href="../images/36.webp" download></a>
-<a id="download_37" href="../images/37.webp" download></a>
-<a id="download_38" href="../images/38.webp" download></a>
-<a id="download_39" href="../images/39.webp" download></a>
-<a id="download_40" href="../images/40.webp" download></a>
-<a id="download_41" href="../images/41.webp" download></a>
-<a id="download_42" href="../images/42.webp" download></a>
-<a id="download_43" href="../images/43.webp" download></a>
-<a id="download_44" href="../images/44.webp" download></a>
-<a id="download_45" href="../images/45.webp" download></a>
-<a id="download_46" href="../images/46.webp" download></a>
-<a id="download_47" href="../images/47.webp" download></a>
-<a id="download_48" href="../images/48.webp" download></a>
-<a id="download_49" href="../images/49.webp" download></a>
-<a id="download_50" href="../images/50.webp" download></a>
-<a id="download_51" href="../images/51.webp" download></a>
-<a id="download_52" href="../images/52.webp" download></a>
-<a id="download_53" href="../images/53.webp" download></a>
-<a id="download_54" href="../images/54.webp" download></a>
-<a id="download_55" href="../images/55.webp" download></a>
-<a id="download_56" href="../images/56.webp" download></a>
-<a id="download_57" href="../images/57.webp" download></a>
-<a id="download_58" href="../images/58.webp" download></a>
-<a id="download_59" href="../images/59.webp" download></a>
-<a id="download_60" href="../images/60.webp" download></a>
-<a id="download_61" href="../images/61.webp" download></a>
-<a id="download_62" href="../images/62.webp" download></a>
-<a id="download_63" href="../images/63.webp" download></a>
-<a id="download_64" href="../images/64.webp" download></a>
-<a id="download_65" href="../images/65.webp" download></a>
-<a id="download_66" href="../images/66.webp" download></a>
-<a id="download_67" href="../images/67.webp" download></a>
-<a id="download_68" href="../images/68.webp" download></a>
-<a id="download_69" href="../images/69.webp" download></a>
-<a id="download_70" href="../images/70.webp" download></a>
-<a id="download_71" href="../images/71.webp" download></a>
-<a id="download_72" href="../images/72.webp" download></a>
-<a id="download_73" href="../images/73.webp" download></a>
-<a id="download_74" href="../images/74.webp" download></a>
-<a id="download_75" href="../images/75.webp" download></a>
-<a id="download_76" href="../images/76.webp" download></a>
-<a id="download_77" href="../images/77.webp" download></a>
-<a id="download_78" href="../images/78.webp" download></a>
-<a id="download_79" href="../images/79.webp" download></a>
-<a id="download_80" href="../images/80.webp" download></a>
-<a id="download_81" href="../images/81.webp" download></a>
-<a id="download_82" href="../images/82.webp" download></a>
-<a id="download_83" href="../images/83.webp" download></a>
-<a id="download_84" href="../images/84.webp" download></a>
-<a id="download_85" href="../images/85.webp" download></a>
-<a id="download_86" href="../images/86.webp" download></a>
-<a id="download_87" href="../images/87.webp" download></a>
-<a id="download_88" href="../images/88.webp" download></a>
-<a id="download_89" href="../images/89.webp" download></a>
-<a id="download_90" href="../images/90.webp" download></a>
-<a id="download_91" href="../images/91.webp" download></a>
-<a id="download_92" href="../images/92.webp" download></a>
-<a id="download_93" href="../images/93.webp" download></a>
-<a id="download_94" href="../images/94.webp" download></a>
-<a id="download_95" href="../images/95.webp" download></a>
-<a id="download_96" href="../images/96.webp" download></a>
-<a id="download_97" href="../images/97.webp" download></a>
-<a id="download_98" href="../images/98.webp" download></a>
-<a id="download_99" href="../images/99.webp" download></a>
-<a id="download_100" href="../images/100.webp" download></a>
-<a id="download_101" href="../images/101.webp" download></a>
-<a id="download_102" href="../images/102.webp" download></a>
-<a id="download_103" href="../images/103.webp" download></a>
-<a id="download_104" href="../images/104.webp" download></a>
-<a id="download_105" href="../images/105.webp" download></a>
-<a id="download_106" href="../images/106.webp" download></a>
-<a id="download_107" href="../images/107.webp" download></a>
-<a id="download_108" href="../images/108.webp" download></a>
-<a id="download_109" href="../images/109.webp" download></a>
-<a id="download_110" href="../images/110.webp" download></a>
-<a id="download_111" href="../images/111.webp" download></a>
-<a id="download_112" href="../images/112.webp" download></a>
-<a id="download_113" href="../images/113.webp" download></a>
-<a id="download_114" href="../images/114.webp" download></a>
-<a id="download_115" href="../images/115.webp" download></a>
-<a id="download_116" href="../images/116.webp" download></a>
-<a id="download_117" href="../images/117.webp" download></a>
-<a id="download_118" href="../images/118.webp" download></a>
-<a id="download_119" href="../images/119.webp" download></a>
-<a id="download_120" href="../images/120.webp" download></a>
-<a id="download_121" href="../images/121.webp" download></a>
-<a id="download_122" href="../images/122.webp" download></a>
-<a id="download_123" href="../images/123.webp" download></a>
-<a id="download_124" href="../images/124.webp" download></a>
-<a id="download_125" href="../images/125.webp" download></a>
-<a id="download_126" href="../images/126.webp" download></a>
-<a id="download_127" href="../images/127.webp" download></a>
-<a id="download_128" href="../images/128.webp" download></a>
-<a id="download_129" href="../images/129.webp" download></a>
-<a id="download_130" href="../images/130.webp" download></a>
-<a id="download_131" href="../images/131.webp" download></a>
-<a id="download_132" href="../images/132.webp" download></a>
-<a id="download_133" href="../images/133.webp" download></a>
-<a id="download_134" href="../images/134.webp" download></a>
-<a id="download_135" href="../images/135.webp" download></a>
-<a id="download_136" href="../images/136.webp" download></a>
-<a id="download_137" href="../images/137.webp" download></a>
-<a id="download_138" href="../images/138.webp" download></a>
-<a id="download_139" href="../images/139.webp" download></a>
-<a id="download_140" href="../images/140.webp" download></a>
-<a id="download_141" href="../images/141.webp" download></a>
-<a id="download_142" href="../images/142.webp" download></a>
-<a id="download_143" href="../images/143.webp" download></a>
-<a id="download_144" href="../images/144.webp" download></a>
-<a id="download_145" href="../images/145.webp" download></a>
-<a id="download_146" href="../images/146.webp" download></a>
-<a id="download_147" href="../images/147.webp" download></a>
-<a id="download_148" href="../images/148.webp" download></a>
-<a id="download_149" href="../images/149.webp" download></a>
-<a id="download_150" href="../images/150.webp" download></a>
-</div>
+  <script>
+    /* -------- Firebase -------- */
+    const firebaseConfig = {
+      apiKey:"AIzaSyD2v-w99aaVgKYrycfIV515BEbjaTOp7z4",
+      authDomain:"owl-chat-e4233.firebaseapp.com",
+      databaseURL:"https://owl-chat-e4233-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId:"owl-chat-e4233",
+      storageBucket:"owl-chat-e4233.firebasestorage.app",
+      messagingSenderId:"671987704789",
+      appId:"1:671987704789:web:5ffad58bc9c00ba772935c",
+      measurementId:"G-ELQRLCLGZT"
+    };
+    (firebase.apps && firebase.apps.length) ? firebase.app() : firebase.initializeApp(firebaseConfig);
+    const db  = firebase.database(); const auth = firebase.auth();
+    auth.signInAnonymously().catch(()=>{}); auth.onAuthStateChanged(u => { window.CURRENT_UID = u ? u.uid : null; });
 
-</script>
-
-  <script>  
-  document.querySelectorAll(".frame").forEach((frame) => {
-    const id = frame.dataset.id;
-    const model = frame.querySelector("model-viewer");
-    const link = document.getElementById("download_" + id);
-
-    const initialOrbit = "0deg 90deg 105%";
-    const hoverOrbit = "180deg 90deg 105%";
-
-    model.setAttribute("camera-orbit", initialOrbit);
-
-    model.addEventListener("mouseenter", () => {
-      model.setAttribute("camera-orbit", hoverOrbit);
-    });
-
-    model.addEventListener("mouseleave", () => {
-      model.setAttribute("camera-orbit", initialOrbit);
-    });
-
-    if (link) {
-      frame.addEventListener("click", () => link.click());
+    /* -------- Хедер утиліти -------- */
+    function shorten(a){ return a ? a.slice(0,6)+'...'+a.slice(-4) : ''; }
+    function getConnectedWalletAddress(){ return localStorage.getItem('taproot_wallet'); }
+    function updateWalletUI(address){
+      const btn = document.getElementById('wallet-header-btn');
+      const short = document.getElementById('wallet-short');
+      if (btn)   btn.textContent = address ? shorten(address) : 'CONNECT WALLET';
+      if (short) short.textContent = address ? shorten(address) : '–';
     }
-  });
-</script>
 
+    /* -------- Sats-Connect loader -------- */
+    window.loadSatsV3 = async function(){
+      if (window.__sats) return window.__sats;
+      const sources = [
+        'https://cdn.jsdelivr.net/npm/sats-connect@3.6.1/+esm',
+        'https://esm.sh/sats-connect@3.6.1',
+        '/profile/sats-connect-3.6.1.esm.js'
+      ];
+      let last;
+      for (const src of sources){
+        try{
+          const mod = await import(src);
+          const request = mod?.request || mod?.default?.request;
+          const AddressPurpose = mod?.AddressPurpose || mod?.default?.AddressPurpose;
+          if (request && AddressPurpose){ window.__sats = { request, AddressPurpose }; return window.__sats; }
+        }catch(e){ last = e; }
+      }
+      console.error('Failed to load sats-connect', last);
+      throw new Error('sats-connect not available');
+    };
+
+    /* -------- Wallet picker (скорочено) -------- */
+    function ensurePickerMask(){
+      let m = document.getElementById('wallet-picker-mask');
+      if (m) return m;
+      m = document.createElement('div');
+      m.id = 'wallet-picker-mask';
+      m.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:10000;';
+      document.body.appendChild(m);
+      return m;
+    }
+    async function openWalletPicker(){
+      const mask = ensurePickerMask(); mask.innerHTML=''; mask.style.display='flex';
+      const box = document.createElement('div');
+      box.style.cssText = 'width:360px;max-width:92vw;background:#141414;color:#eee;border:1px solid #333;border-radius:14px;padding:18px;';
+      box.innerHTML = `
+        <div style="font-size:18px;font-weight:600;margin-bottom:12px;">Connect wallet</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <button id="pick-unisat" style="display:flex;gap:10px;align-items:center;justify-content:center;padding:12px;border-radius:10px;background:#1f1f1f;color:#fff;border:0;cursor:pointer;">
+            <img src="/profile/unisat.png" width="20" height="20" alt="UniSat"><span>UniSat (Taproot)</span>
+          </button>
+          <button id="pick-xverse" style="display:flex;gap:10px;align-items:center;justify-content:center;padding:12px;border-radius:10px;background:#1f1f1f;color:#fff;border:0;cursor:pointer;">
+            <img src="/profile/xverse.png" width="20" height="20" alt="Xverse"><span>Xverse (Ordinals)</span>
+          </button>
+          <button id="pick-cancel" style="padding:10px;margin-top:6px;border-radius:10px;background:#222;color:#fff;border:0;cursor:pointer;">Cancel</button>
+        </div>`;
+      mask.appendChild(box);
+      box.querySelector('#pick-unisat').onclick = async ()=>{ try{ await connectUniSatWallet(); } finally{ mask.style.display='none'; } };
+      box.querySelector('#pick-xverse').onclick = async ()=>{ try{ await connectXverseWallet(); } finally{ mask.style.display='none'; } };
+      box.querySelector('#pick-cancel').onclick = ()=> mask.style.display='none';
+      mask.addEventListener('click',(e)=>{ if(e.target===mask) mask.style.display='none'; }, {once:true});
+    }
+
+    async function connectUniSatWallet(){
+      if (!window.unisat){ alert('UniSat Wallet not found.'); return; }
+      await window.unisat.requestAccounts();
+      const address = (await window.unisat.getAccounts())[0];
+      localStorage.setItem('taproot_wallet', address);
+      updateWalletUI(address);
+    }
+    async function connectXverseWallet(){
+      try{
+        const hasXverse = !!window.BitcoinProvider || !!window.xverseProviders || (window?.bitcoin && typeof window.bitcoin.request === 'function');
+        if (!hasXverse){ alert('Xverse не знайдено. Дозволь сайту доступ у налаштуваннях розширення.'); return; }
+
+        const { request, AddressPurpose } = await window.loadSatsV3();
+        const resp = await request('wallet_connect', {
+          addresses: [AddressPurpose.Ordinals, AddressPurpose.Payment],
+          message: 'Connect to OWL', network: 'Mainnet'
+        });
+        const addresses = resp?.result?.addresses || resp?.addresses || [];
+        if (!Array.isArray(addresses) || !addresses.length){ alert('Xverse did not return the address.'); return; }
+        const ord = addresses.find(a => (a.purpose||'').toLowerCase()==='ordinals');
+        const address = (ord || addresses[0]).address;
+
+        // необовʼязково: зберегти доказ підпису
+        const nonce = Array.from(crypto.getRandomValues(new Uint8Array(16))).map(x=>x.toString(16).padStart(2,'0')).join('');
+        const message = `OWL login
+Domain: ${location.origin}
+Address: ${address}
+Nonce: ${nonce}
+Time: ${new Date().toISOString()}`;
+        const sign = await request('signMessage', { address, message, signatureType:'bip322-simple' }).catch(()=>null);
+        const signature = sign?.result?.signature || sign?.signature || '';
+        const uid = (firebase.auth().currentUser || {}).uid;
+        if (uid && signature){
+          db.ref(`proofs/${address.toLowerCase()}`).set({ uid, wallet:'xverse', address, message, signature, createdAt:Date.now(), version:1 }).catch(()=>{});
+        }
+
+        localStorage.setItem('taproot_wallet', address);
+        updateWalletUI(address);
+      }catch(err){
+        const msg = (err?.error?.message || err?.message || '').toString();
+        if (/USER_REJECTION|rejected|cancel/i.test(msg)) alert('Запит у Xverse відхилено.');
+        else { console.error(err); alert('Xverse connection failed.'); }
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      updateWalletUI(getConnectedWalletAddress());
+
+      const wrapper = document.querySelector('.wallet-wrapper');
+      const dd = document.getElementById('wallet-header-dropdown');
+      if (wrapper && dd){
+        wrapper.addEventListener('click', (e)=>{
+          e.stopPropagation();
+          const addr = getConnectedWalletAddress();
+          if (!addr){ openWalletPicker(); return; }
+          dd.style.display = (dd.style.display === 'block' ? 'none' : 'block');
+        });
+      }
+      document.addEventListener('click', ()=> {
+        document.querySelectorAll('.wallet-dropdown-content').forEach(d => d.style.display='none');
+      });
+      document.querySelectorAll('.logout-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          localStorage.removeItem('taproot_wallet');
+          updateWalletUI(null);
+          document.getElementById('wallet-header-dropdown').style.display = 'none';
+        });
+      });
+    });
+
+   <script>
+  /* -------- Collection grid (images, no 3D) -------- */
+ const SNAPSHOT_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?output=csv&gid=0";
+
+  // За замовчуванням (перезапишемо після парсингу)
+  let TOTAL = 150;
+  const grid = document.getElementById('grid');
+  let rarityMap = {};
+
+  // CSS-класи під колір бейджа
+  function rarityClass(name){
+    const v = (name || '').toLowerCase();
+    if (v.includes('myth')) return 'rarity-mythic';
+    if (v.includes('legen')) return 'rarity-legendary';
+    if (v.includes('epic')) return 'rarity-epic';
+    if (v.includes('rare')) return 'rarity-rare';
+    if (v.includes('uncommon')) return 'rarity-uncommon';
+    if (v.includes('common')) return 'rarity-common';
+    return '';
+  }
+
+  // 2) Тягнемо рарність із CSV; шукаємо динамічно колонки ID та Rarity/Tier
+  async function loadRaritiesFromSnapshot(){
+    try{
+      const res = await fetch(SNAPSHOT_CSV_URL, { cache: 'no-store' });
+      const text = await res.text();
+
+      // нормальний CSV парсер на regex (обробляє лапки/коми)
+      const rows = text.trim().split('\n').map(r => {
+        const m = r.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g) || [];
+        return m.map(c => c.replace(/^"|"$/g, '').trim());
+      });
+
+      const header = (rows[0] || []).map(h => h.toLowerCase());
+      const idIdx = header.findIndex(h => /(^|[^a-z])(id|token|#|number|nft|owl)([^a-z]|$)/i.test(h));
+      const rarityIdx = header.findIndex(h => /(rarity|tier|class|rank)/i.test(h));
+
+      rarityMap = {};
+      for (let i = 1; i < rows.length; i++){
+        const row = rows[i];
+        const rawId = (row[idIdx] || '').toString();
+        const id = rawId.replace(/\D/g, ''); // лише цифри
+        const rarity = row[rarityIdx] || 'Unknown';
+        if (id) rarityMap[id] = rarity;
+      }
+
+      // якщо у снапшоті всі ID присутні — визначимо TOTAL автоматично
+      const ids = Object.keys(rarityMap).map(n => +n).filter(n => Number.isFinite(n));
+      const maxId = Math.max(...ids);
+      if (ids.length && Number.isFinite(maxId)) TOTAL = maxId;
+    }catch(e){
+      console.warn('Не вдалося розпарсити снапшот рарностей:', e);
+      rarityMap = {}; // fallback: усе Unknown
+    }
+  }
+
+  // 3) Малюємо картку (звичайне зображення, без 3D та анімацій)
+  function makeCard(id){
+    const src = `../images/${id}.webp`;
+    const rarity = rarityMap[id] || 'Unknown';
+    const card = document.createElement('div');
+    card.className = 'nft-card';
+    card.dataset.id = id;
+    card.innerHTML = `
+      <div class="nft-thumb">
+        <img src="${src}" alt="Owl #${id}" loading="lazy" decoding="async">
+      </div>
+      <div class="nft-meta">
+        <div class="nft-number">Owl #${id}</div>
+        <div class="rarity-badge ${rarityClass(rarity)}">${rarity}</div>
+      </div>
+    `;
+    // клік — скачати зображення
+    card.addEventListener('click', () => {
+      const a = document.createElement('a');
+      a.href = src;
+      a.download = `${id}.webp`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    });
+    return card;
+  }
+
+  // 4) Ініціалізація
+  (async function initCollection(){
+    await loadRaritiesFromSnapshot();
+    const frag = document.createDocumentFragment();
+    for (let i = 1; i <= TOTAL; i++) frag.appendChild(makeCard(i));
+    grid.innerHTML = '';
+    grid.appendChild(frag);
+  })();
+</script>
 </body>
 </html>
