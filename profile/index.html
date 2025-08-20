@@ -1166,6 +1166,49 @@ display: block;
   @media (max-width: 640px){
     .side-image{ display: none; }
   }
+
+        /* ——— Side art: вище і ближче до зовнішніх країв ——— */
+:root{
+  --side-art-top: 95px;     /* було 150px — підняли вище */
+  --side-art-offset: -60px; /* негативне значення — зсув назовні від краю вьюпорту */
+  --side-art-width: 720px;  /* максимальна ширина зображення */
+}
+
+.side-image{
+  position: absolute;
+  top: var(--side-art-top);
+  width: min(44vw, var(--side-art-width));
+  opacity: 1;
+  pointer-events: none;
+  z-index: 0;               /* нижче за панелі */
+}
+
+.side-left  { left:  var(--side-art-offset); }
+.side-right { right: var(--side-art-offset); }
+
+/* Трохи агресивніше на великих екранах */
+@media (min-width: 1440px){
+  :root{
+    --side-art-top: 85px;
+    --side-art-offset: -80px;
+    --side-art-width: 780px;
+  }
+}
+
+/* Піджимаємо на планшетах */
+@media (max-width: 1024px){
+  :root{
+    --side-art-top: 110px;
+    --side-art-offset: -24px;
+  }
+  .side-image{ width: 54vw; opacity: .85; }
+}
+
+/* На мобільних ховаємо (щоб не заважало) */
+@media (max-width: 640px){
+  .side-image{ display: none; }
+}
+
         
     </style>
 </head>
