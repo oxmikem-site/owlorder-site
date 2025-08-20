@@ -2197,7 +2197,7 @@ async function renderMyCollection(address){
   const url   = buildMagicEdenUrl({ number, inscriptionId });
 
   return `
-    <a class="owl-card" href="${url}" target="_blank" rel="noopener noreferrer" title="Open on Magic Eden">
+      <a class="owl-card" href="${url}" title="Open on Magic Eden">
       <img class="owl-img" src="${imageBaseURL}${number}.webp" alt="OWL #${number}" onerror="this.src='../logo1.png'">
       <div class="owl-meta">
         <span class="owl-num">OWL #${number}</span>
@@ -2580,11 +2580,12 @@ async function openRaffleViewModal(id, data){
     const row = document.createElement('div');
     row.className = 'task-row';
     row.dataset.id = id;
-    row.innerHTML = `
-      <span class="dot">•</span>
-      <div class="grow">${label}</div>
-      ${href ? `<a class="btn" target="_blank" rel="noopener" href="${escapeHTML(href)}">Open</a>` : ``}
-    `;
+row.innerHTML = `
+  <span class="dot">•</span>
+  <div class="grow">${label}</div>
+  ${href ? `<a class="btn" href="${escapeHTML(href)}">Open</a>` : ``}
+`;
+
     tasksEl.appendChild(row);
     return row;
   }
@@ -2758,7 +2759,7 @@ getHolderInfoOnce(address).then(info => {
       connectBtn.style.display = "none"; // є аватар — ховаємо кнопку
     } else {
       connectBtn.textContent = "Get your OWL";
-      connectBtn.onclick = () => window.open("https://owlbtc.art/collection", "_blank");
+      connectBtn.onclick = () => { window.location.href = "https://owlbtc.art/collection"; };
       connectBtn.style.display = "inline-block";
     }
   }
@@ -2851,23 +2852,33 @@ const firebaseConfig = {
 };
 
                 // === Sats Connect v3 loader (ESM) ===
-// Завантажуємо модуль з jsDelivr; якщо Brave/мережа блокує CDN — беремо локальний файл.
+// === Sats Connect v3 loader (стійкий до CDN/експортів) ===
 window.loadSatsV3 = async function () {
-  if (window.__sats) return window.__sats; // кеш
+  if (window.__sats) return window.__sats;
 
-  try {
-    // основний шлях (офіційні білди — з NPM)
-    const mod = await import('https://cdn.jsdelivr.net/npm/sats-connect@3.6.1/+esm');
-    window.__sats = { request: mod.request, AddressPurpose: mod.AddressPurpose };
-  } catch (e) {
-    console.warn('CDN import failed, using self-hosted ESM', e);
-    // фолбек: поклади файл у свій проєкт (див. крок 3)
-    const localUrl = new URL('vendor/sats-connect-3.6.1.esm.js', document.baseURI).href;
-const mod = await import(localUrl);
-    window.__sats = { request: mod.request, AddressPurpose: mod.AddressPurpose };
+  const sources = [
+    'https://cdn.jsdelivr.net/npm/sats-connect@3.6.1/+esm',
+    'https://esm.sh/sats-connect@3.6.1',
+    // ↓ самохост: ВИБЕРИ ОДИН шлях і переконайся, що файл існує
+    '../vendor/sats-connect-3.6.1.esm.js',
+  ];
+
+  let lastErr;
+  for (const src of sources) {
+    try {
+      const mod = await import(src);
+      const request = mod?.request || mod?.default?.request;
+      const AddressPurpose = mod?.AddressPurpose || mod?.default?.AddressPurpose;
+      if (request && AddressPurpose) {
+        window.__sats = { request, AddressPurpose };
+        return window.__sats;
+      }
+    } catch (e) { lastErr = e; }
   }
-  return window.__sats;
+  console.error('Failed to load sats-connect', lastErr);
+  throw new Error('sats-connect module not available');
 };
+
 
                 // збереження останніх переглядів для кожного гаманця/секції
 function getReadsRef(wallet, section) {
@@ -3217,7 +3228,7 @@ function replaceEmojisWithIconify(text) {
 }
 function linkify(text) {
   const urlPattern = /(https?:\/\/[^\s]+)/g;
-  return (text || "").replace(urlPattern, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
+  return (text || "").replace(urlPattern, '<a href="$1">$1</a>');
 }
                 
                 function escapeHTML(str = "") {
