@@ -516,6 +516,39 @@
   text-decoration: none;         
 }
 
+      .side-image{
+    position: fixed;          /* щоб тримались країв екрана як фон */
+    top: 150px;               /* як у leaderboard */
+    width: clamp(480px, 42vw, 780px);
+    opacity: 1;
+    pointer-events: none;     /* не перекриває кліки */
+    z-index: 0;               /* нижче за контент */
+    filter: drop-shadow(0 0 24px rgba(0,0,0,.45));
+  }
+  .side-left{ left: 0; }
+  .side-right{ right: 0; }
+
+  /* Весь основний контент поверх фону */
+  header,
+  #sidebar,
+  .profile-section,
+  .wallet-wrapper,
+  .panel,
+  .collection-wrap,
+  .raffles-topbar,
+  .raffles-grid {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Адаптив: приглушити/сховати на вузьких екранах */
+  @media (max-width: 1024px){
+    .side-image{ opacity: .5; width: 60vw; }
+  }
+  @media (max-width: 640px){
+    .side-image{ display: none; }
+  }
+
   </style>
 </head>
 <body>
@@ -534,6 +567,9 @@
         </div>
       </div>
     </header>
+
+    <img src="/LEFTSIDE2.png"  alt="" class="side-image side-left"  decoding="async" fetchpriority="low">
+    <img src="/RIGHTSIDE2.png" alt="" class="side-image side-right" decoding="async" fetchpriority="low">
 
     <div class="main">
       <!-- LEFT COLUMN -->
