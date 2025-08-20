@@ -4033,8 +4033,8 @@ async function connectUniSatWallet() {
   }
 }
 
-    async function connectXverseWallet() {
-  // ❶ Швидка перевірка: чи видно розширення Xverse у сторінці
+  async function connectXverseWallet() {
+  // 1) Перевіряємо, що розширення видиме сторінці
   const hasXverse =
     !!window.BitcoinProvider ||
     !!window.XverseProviders ||
@@ -4042,42 +4042,106 @@ async function connectUniSatWallet() {
     (window?.bitcoin && typeof window.bitcoin.request === "function");
 
   if (!hasXverse) {
-    alert("Xverse extension не знайдено. Встановіть/увімкніть розширення та перезавантажте сторінку.");
+    alert("Xverse не знайдено. Увімкніть розширення і дозвольте доступ сайту (Site access: On all sites).");
     return;
   }
 
   try {
-    // ❷ Завантажуємо Sats Connect v3 (твій локальний фолбек вже налаштований)
+    // 2) Завантажуємо Sats-Connect v3 (у вас уже є window.loadSatsV3)
     const { request, AddressPurpose } = await window.loadSatsV3();
 
-    // ❸ Примусово вибираємо провайдера 'xverse', щоб не відкривався селектор
-    try {
-      const core = await import("https://cdn.jsdelivr.net/npm/@sats-connect/core@0.6.11/+esm");
-      if (typeof core.setDefaultProvider === "function") core.setDefaultProvider("xverse");
-    } catch { /* не критично */ }
-
-    // ❹ Основний виклик v3
-    let res = await request("getAddresses", {
+    // (не обовʼязково, але краще одразу просити обидві адреси)
+    const resp = await request("getAddresses", {
       purposes: [AddressPurpose.Ordinals, AddressPurpose.Payment],
-      message: "Connect to OWL"
+      message: "Connect to OWL",
     });
 
-    // ❺ Нормалізація відповіді (деякі провайдери вкладають результат глибше)
-    let addresses = res?.addresses || res?.result?.addresses || [];
-    if (!Array.isArray(addresses)) addresses = [];
+    // універсальне діставання масиву адрес із різних форм відповіді
+    let list =
+      (Array.isArray(resp?.result) ? resp.result : null) ||
+      resp?.addresses ||
+      resp?.result?.addresses ||
+      [];
 
-    if (!addresses.length) throw new Error("No addresses returned");
+    if (!Array.isArray(list) || list.length === 0) {
+      alert("Xverse did not return the address. Create an Ordinals account and do not uncheck the box in the popup.");
+      return;
+    }
 
-    const ord = addresses.find(a => a.purpose === AddressPurpose.Ordinals) || addresses[0];
-    const address = ord?.address;
-    if (!address) throw new Error("No address");
+    // 3) Вибираємо Ordinals (bc1p…), інакше — Payment
+    const ord = list.find(a => a.purpose === "ordinals" || a.purpose === AddressPurpose.Ordinals);
+    const pay = list.find(a => a.purpose === "payment"  || a.purpose === AddressPurpose.Payment);
+    const chosen = ord || pay || list[0];
 
-    // ❻ Зберігаємо та оновлюємо UI так само, як у тебе було
+    const address = chosen?.address;
+    if (!address) {
+      alert("Xverse returned an invalid response (no address field).");
+      return;
+    }
+    if (!ord) {
+      console.warn("Ordinals address was not shared; falling back to Payment.");
+    }
+
+    // 4) Генеруємо nonce і просимо ПІДПИС (BIP322-simple)
+    const nonce = (() => {
+      const b = new Uint8Array(16);
+      crypto.getRandomValues(b);
+      return Array.from(b).map(x => x.toString(16).padStart(2, "0")).join("");
+    })();
+
+    const message =
+`OWL login
+Domain: ${location.origin}
+Address: ${address}
+Nonce: ${nonce}
+Time: ${new Date().toISOString()}`;
+
+    let signResp;
+    try {
+      signResp = await request("signMessage", {
+        address,                  // яку адресу підтверджуємо (краще Ordinals)
+        message,                  // що саме підписуємо
+        signatureType: "bip322-simple", // Xverse підтримує BIP-322
+      });
+    } catch (e) {
+      // якщо юзер відмінив
+      if (String(e?.error?.code || e?.code || "").includes("USER_REJECTION")) {
+        alert("Підпис відхилено у вікні Xverse.");
+        return;
+      }
+      throw e;
+    }
+
+    const signature =
+      signResp?.result?.signature ||
+      signResp?.signature ||
+      signResp?.result?.signatureHex ||
+      "";
+
+    if (!signature) {
+      alert("Xverse did not return a signature.");
+      return;
+    }
+
+    // 5) Зберігаємо доказ у Firebase (за потреби будете верифікувати на бекенді)
+    const uid = window.CURRENT_UID;
+    if (!uid) { alert("Auth not ready, try again."); return; }
+
+    await db.ref(`proofs/${address.toLowerCase()}`).set({
+      uid,
+      wallet: "xverse",
+      address,
+      message,
+      signature,
+      createdAt: Date.now(),
+      version: 1,
+    });
+
+    // 6) Далі — ваш існуючий флоу (UI, доступи, колекція тощо)
     localStorage.setItem("taproot_wallet", address);
     updateWalletButtons(address);
     await populateSidebarUserInfo(address);
 
-    // далі — твоя існуюча ініціалізація
     const amAdmin = isAdmin(address);
     setSidebarAccess({ loggedIn: true, isHolder: amAdmin });
     setChatInputsEnabled(amAdmin, address);
@@ -4092,66 +4156,17 @@ async function connectUniSatWallet() {
       if (can) showSection("collection");
       await recalcSectionIndicators(address);
     });
+
   } catch (err) {
     console.error("Xverse connect error:", err);
-
-    const msg = (err && err.message) || String(err);
-    if (/No wallets detected|provider/i.test(msg)) {
-      alert("Xverse did not provide a provider on this page. Allow the site access in the extension settings. (Site access: On all sites).");
-    } else if (/USER_REJECTION|rejected/i.test(msg)) {
+    const msg = (err?.error?.message || err?.message || "").toString();
+    if (/USER_REJECTION/i.test(msg)) {
       alert("Запит у Xverse було відхилено у вікні розширення.");
     } else {
-      alert("Xverse connection failed.Check the console for details.");
+      alert("Xverse connection failed. Переконайтесь, що створено Ordinals-акаунт і не зняті галочки в попапі.");
     }
   }
 }
-
-async function connectXverseWallet() {
-  // є провайдер?
-  const hasXverse =
-    !!window.BitcoinProvider ||
-    !!window.XverseProviders ||
-    !!window.xverseProviders ||
-    (window?.bitcoin && typeof window.bitcoin.request === "function");
-
-  if (!hasXverse) {
-    alert("Xverse extension not found. Enable the extension and allow Site access: On all sites.");
-    return;
-  }
-
-  try {
-    // 1) Sats Connect v3 (із самохост-фолбеком)
-    const { request, AddressPurpose } = await window.loadSatsV3();
-
-    // 2) зафіксуємо саме Xverse, щоб не з’являвся селектор
-    try {
-      const core = await import("https://cdn.jsdelivr.net/npm/@sats-connect/core@0.6.11/+esm");
-      if (typeof core.setDefaultProvider === "function") core.setDefaultProvider("xverse");
-    } catch {}
-
-    // 3) основний запит
-    let res = await request("getAddresses", {
-      purposes: [AddressPurpose.Ordinals, AddressPurpose.Payment],
-      message: "Connect to OWL",
-    });
-
-    let addresses = res?.addresses || res?.result?.addresses || [];
-
-    // 4) фолбек: інколи повертають лише після окремого ordinals-запиту
-    if (!addresses.length && window?.bitcoin?.request) {
-      try {
-        const res2 = await window.bitcoin.request("getAddresses", {
-          purposes: ["ordinals"],
-          message: "Connect to OWL",
-        });
-        addresses = res2?.addresses || res2?.result?.addresses || [];
-      } catch {}
-    }
-
-    if (!addresses.length) {
-      alert("Xverse did not return the address. Create an Ordinals account and do not uncheck the box in the popup.");
-      return;
-    }
 
     const ord = addresses.find(a => (a.purpose || "").toLowerCase() === "ordinals") || addresses[0];
     const address = ord?.address;
