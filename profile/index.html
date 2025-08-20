@@ -3942,11 +3942,11 @@ function openWalletPicker(){
     <div style="font-size:18px;font-weight:600;margin-bottom:12px;">Connect wallet</div>
     <div style="display:flex;flex-direction:column;gap:10px;">
       <button id="pick-unisat" style="display:flex;gap:10px;align-items:center;justify-content:center;padding:12px;border-radius:10px;background:#1f1f1f;color:#fff;border:0;cursor:pointer;">
-       <img src="..unisat.png" width="20" height="20" alt="Xverse">
+       <img src="/unisat.png" width="20" height="20" alt="UniSat">
         <span>UniSat (Taproot)</span>
       </button>
       <button id="pick-xverse" style="display:flex;gap:10px;align-items:center;justify-content:center;padding:12px;border-radius:10px;background:#1f1f1f;color:#fff;border:0;cursor:pointer;">
-        <img src="..xverse.png" width="20" height="20" alt="Xverse">
+       <img src="/xverse.png"  width="20" height="20" alt="Xverse">
         <span>Xverse (Ordinals)</span>
       </button>
       <button id="pick-cancel" style="padding:10px;margin-top:6px;border-radius:10px;background:#222;color:#fff;border:0;cursor:pointer;">Cancel</button>
@@ -4097,53 +4097,90 @@ async function connectUniSatWallet() {
 
     const msg = (err && err.message) || String(err);
     if (/No wallets detected|provider/i.test(msg)) {
-      alert("Xverse не надав провайдера на цій сторінці. Дозвольте сайту доступ у налаштуваннях розширення (Site access: On all sites).");
+      alert("Xverse did not provide a provider on this page. Allow the site access in the extension settings. (Site access: On all sites).");
     } else if (/USER_REJECTION|rejected/i.test(msg)) {
       alert("Запит у Xverse було відхилено у вікні розширення.");
     } else {
-      alert("Xverse connection failed. Перевірте консоль для деталей.");
+      alert("Xverse connection failed.Check the console for details.");
     }
   }
 }
 
-// Xverse (sats-connect v3)
 async function connectXverseWallet() {
+  // є провайдер?
+  const hasXverse =
+    !!window.BitcoinProvider ||
+    !!window.XverseProviders ||
+    !!window.xverseProviders ||
+    (window?.bitcoin && typeof window.bitcoin.request === "function");
+
+  if (!hasXverse) {
+    alert("Xverse extension not found. Enable the extension and allow Site access: On all sites.");
+    return;
+  }
+
   try {
+    // 1) Sats Connect v3 (із самохост-фолбеком)
     const { request, AddressPurpose } = await window.loadSatsV3();
-    const { addresses = [] } = await request("getAddresses", {
+
+    // 2) зафіксуємо саме Xverse, щоб не з’являвся селектор
+    try {
+      const core = await import("https://cdn.jsdelivr.net/npm/@sats-connect/core@0.6.11/+esm");
+      if (typeof core.setDefaultProvider === "function") core.setDefaultProvider("xverse");
+    } catch {}
+
+    // 3) основний запит
+    let res = await request("getAddresses", {
       purposes: [AddressPurpose.Ordinals, AddressPurpose.Payment],
       message: "Connect to OWL",
     });
 
-    const ord = addresses.find(a => a.purpose === AddressPurpose.Ordinals) || addresses[0];
-    const address = ord?.address;
-    if (!address) throw new Error("No address returned");
+    let addresses = res?.addresses || res?.result?.addresses || [];
 
+    // 4) фолбек: інколи повертають лише після окремого ordinals-запиту
+    if (!addresses.length && window?.bitcoin?.request) {
+      try {
+        const res2 = await window.bitcoin.request("getAddresses", {
+          purposes: ["ordinals"],
+          message: "Connect to OWL",
+        });
+        addresses = res2?.addresses || res2?.result?.addresses || [];
+      } catch {}
+    }
+
+    if (!addresses.length) {
+      alert("Xverse did not return the address. Create an Ordinals account and do not uncheck the box in the popup.");
+      return;
+    }
+
+    const ord = addresses.find(a => (a.purpose || "").toLowerCase() === "ordinals") || addresses[0];
+    const address = ord?.address;
+    if (!address) throw new Error("No address");
+
+    // 5) далі як у тебе
     localStorage.setItem("taproot_wallet", address);
     updateWalletButtons(address);
     await populateSidebarUserInfo(address);
 
-    currentWallet = address;
-
     const amAdmin = isAdmin(address);
     setSidebarAccess({ loggedIn: true, isHolder: amAdmin });
-    setChatInputsEnabled(amAdmin, currentWallet);
-
+    setChatInputsEnabled(amAdmin, address);
     initUnreadTracking(address);
     initSettingsUI(address);
     renderMyCollection(address);
 
     getHolderInfoOnce(address).then(async info => {
       const can = amAdmin || !!info?.found;
-      currentIsHolder = !!info?.found;
       setSidebarAccess({ loggedIn: true, isHolder: can });
-      setChatInputsEnabled(can, currentWallet);
-      if (can) showSection('collection');
+      setChatInputsEnabled(can, address);
+      if (can) showSection("collection");
       await recalcSectionIndicators(address);
     });
-  } catch (e) {
-    console.error(e);
-    alert("Xverse connection failed or was rejected. Make sure Xverse is installed.");
+  } catch (err) {
+    console.error("connectXverseWallet:", err);
+    const msg = (err?.message || "").toLowerCase();
+    if (msg.includes("rejected")) alert("Xverse rejected");
+    else alert("Xverse connection failed.");
   }
 }
 
