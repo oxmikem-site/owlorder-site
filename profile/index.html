@@ -4033,8 +4033,8 @@ async function connectUniSatWallet() {
   }
 }
 
-  async function connectXverseWallet() {
-  // 1) Перевіряємо, що розширення видиме сторінці
+  async function connectXverseWallet () {
+  // 1) перевірка провайдера
   const hasXverse =
     !!window.BitcoinProvider ||
     !!window.XverseProviders ||
@@ -4042,51 +4042,62 @@ async function connectUniSatWallet() {
     (window?.bitcoin && typeof window.bitcoin.request === "function");
 
   if (!hasXverse) {
-    alert("Xverse не знайдено. Увімкніть розширення і дозвольте доступ сайту (Site access: On all sites).");
+    alert("Xverse не знайдено. Увімкніть розширення і дозвольте доступ сайту.");
     return;
   }
 
   try {
-    // 2) Завантажуємо Sats-Connect v3 (у вас уже є window.loadSatsV3)
     const { request, AddressPurpose } = await window.loadSatsV3();
 
-    // (не обовʼязково, але краще одразу просити обидві адреси)
-    const resp = await request("getAddresses", {
-      purposes: [AddressPurpose.Ordinals, AddressPurpose.Payment],
-      message: "Connect to OWL",
-    });
+    // 2) РЕКОМЕНДОВАНО: wallet_connect
+    let resp;
+    try {
+      resp = await request('wallet_connect', {
+        // якщо у тебе тестнет — постав 'Testnet'
+        network: 'Mainnet',
+        // можна не вказувати: за замовчуванням запитує ordinals/payment/stacks
+        addresses: ['ordinals', 'payment', 'stacks'],
+        message: 'Connect to OWL',
+      });
+    } catch (e) {
+      // фолбек на старі провайдери
+      const prov = window.BitcoinProvider || window.bitcoin;
+      if (!prov || typeof prov.request !== 'function') throw e;
+      resp = await prov.request('wallet_connect', {
+        network: 'Mainnet',
+        addresses: ['ordinals', 'payment', 'stacks'],
+        message: 'Connect to OWL',
+      });
+    }
 
-    // універсальне діставання масиву адрес із різних форм відповіді
-    let list =
-      (Array.isArray(resp?.result) ? resp.result : null) ||
-      resp?.addresses ||
-      resp?.result?.addresses ||
+    console.log('wallet_connect raw:', resp);
+
+    // 3) Нормалізуємо відповідь (у різних версіях ключ може бути різним)
+    const list =
+      (Array.isArray(resp?.result?.addresses) && resp.result.addresses) ||
+      (Array.isArray(resp?.addresses) && resp.addresses) ||
+      (Array.isArray(resp?.result) && resp.result) ||
       [];
 
-    if (!Array.isArray(list) || list.length === 0) {
+    if (!list.length) {
       alert("Xverse did not return the address. Create an Ordinals account and do not uncheck the box in the popup.");
       return;
     }
 
-    // 3) Вибираємо Ordinals (bc1p…), інакше — Payment
-    const ord = list.find(a => a.purpose === "ordinals" || a.purpose === AddressPurpose.Ordinals);
-    const pay = list.find(a => a.purpose === "payment"  || a.purpose === AddressPurpose.Payment);
+    const ord = list.find(a => a.purpose === 'ordinals' || a.purpose === AddressPurpose.Ordinals);
+    const pay = list.find(a => a.purpose === 'payment'  || a.purpose === AddressPurpose.Payment);
     const chosen = ord || pay || list[0];
-
     const address = chosen?.address;
+
     if (!address) {
       alert("Xverse returned an invalid response (no address field).");
       return;
     }
-    if (!ord) {
-      console.warn("Ordinals address was not shared; falling back to Payment.");
-    }
 
-    // 4) Генеруємо nonce і просимо ПІДПИС (BIP322-simple)
+    // 4) (опційно) підтвердження володіння — BIP322 simple
     const nonce = (() => {
-      const b = new Uint8Array(16);
-      crypto.getRandomValues(b);
-      return Array.from(b).map(x => x.toString(16).padStart(2, "0")).join("");
+      const b = new Uint8Array(16); crypto.getRandomValues(b);
+      return Array.from(b).map(x => x.toString(16).padStart(2, '0')).join('');
     })();
 
     const message =
@@ -4098,15 +4109,15 @@ Time: ${new Date().toISOString()}`;
 
     let signResp;
     try {
-      signResp = await request("signMessage", {
-        address,                  // яку адресу підтверджуємо (краще Ordinals)
-        message,                  // що саме підписуємо
-        signatureType: "bip322-simple", // Xverse підтримує BIP-322
+      signResp = await request('signMessage', {
+        address,
+        message,
+        signatureType: 'bip322-simple',
       });
     } catch (e) {
-      // якщо юзер відмінив
-      if (String(e?.error?.code || e?.code || "").includes("USER_REJECTION")) {
-        alert("Підпис відхилено у вікні Xverse.");
+      const code = String(e?.error?.code || e?.code || '');
+      if (code.includes('USER_REJECTION')) {
+        alert('Підпис відхилено у вікні Xverse.');
         return;
       }
       throw e;
@@ -4115,30 +4126,23 @@ Time: ${new Date().toISOString()}`;
     const signature =
       signResp?.result?.signature ||
       signResp?.signature ||
-      signResp?.result?.signatureHex ||
-      "";
+      signResp?.result?.signatureHex || '';
 
     if (!signature) {
-      alert("Xverse did not return a signature.");
+      alert('Xverse did not return a signature.');
       return;
     }
 
-    // 5) Зберігаємо доказ у Firebase (за потреби будете верифікувати на бекенді)
+    // 5) твій потік після успіху
     const uid = window.CURRENT_UID;
-    if (!uid) { alert("Auth not ready, try again."); return; }
+    if (!uid) { alert('Auth not ready, try again.'); return; }
 
     await db.ref(`proofs/${address.toLowerCase()}`).set({
-      uid,
-      wallet: "xverse",
-      address,
-      message,
-      signature,
-      createdAt: Date.now(),
-      version: 1,
+      uid, wallet: 'xverse', address, message, signature,
+      createdAt: Date.now(), version: 1,
     });
 
-    // 6) Далі — ваш існуючий флоу (UI, доступи, колекція тощо)
-    localStorage.setItem("taproot_wallet", address);
+    localStorage.setItem('taproot_wallet', address);
     updateWalletButtons(address);
     await populateSidebarUserInfo(address);
 
@@ -4153,17 +4157,17 @@ Time: ${new Date().toISOString()}`;
       const can = amAdmin || !!info?.found;
       setSidebarAccess({ loggedIn: true, isHolder: can });
       setChatInputsEnabled(can, address);
-      if (can) showSection("collection");
+      if (can) showSection('collection');
       await recalcSectionIndicators(address);
     });
 
   } catch (err) {
-    console.error("Xverse connect error:", err);
-    const msg = (err?.error?.message || err?.message || "").toString();
+    console.error('Xverse connect error:', err);
+    const msg = (err?.error?.message || err?.message || '').toString();
     if (/USER_REJECTION/i.test(msg)) {
-      alert("Запит у Xverse було відхилено у вікні розширення.");
+      alert('Запит у Xverse було відхилено у вікні розширення.');
     } else {
-      alert("Xverse connection failed. Переконайтесь, що створено Ordinals-акаунт і не зняті галочки в попапі.");
+      alert('Xverse connection failed. Переконайтесь, що не зняли галочку з адрес і обрано правильну мережу.');
     }
   }
 }
