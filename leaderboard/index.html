@@ -13,144 +13,112 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
 
   <style>
-    :root {
-      --bg-dark: #0b0b0b;
-      --bg-panel: linear-gradient(145deg, #1d1d1d, #111111);
-      --text-primary: #ffffff;
-      --text-secondary: #ffffff;
-      --accent: linear-gradient(90deg, #bfa758, #d4c87c);
-      --accent-color: #8a7f5a;
-      --container-max: 1200px;
+    :root{
+      --bg-dark:#0b0b0b;
+      --bg-panel:linear-gradient(145deg,#1d1d1d,#111111);
+      --text-primary:#fff;
+      --accent:linear-gradient(90deg,#bfa758,#d4c87c);
+      --accent-color:#8a7f5a;
+      --container-max:1200px;
 
       /* side art */
-      --side-art-top: 95px;
-      --side-art-offset: -60px;
-      --side-art-width: 720px;
+      --side-art-top:95px;
+      --side-art-offset:-60px;
+      --side-art-width:720px;
     }
-
     *{ box-sizing:border-box; }
+    html,body{ height:100vh; margin:0; background:var(--bg-dark); color:var(--text-primary); font-family:Inter,sans-serif; overflow:hidden; }
 
-    html, body{
-      height:100vh; margin:0;
-      background:var(--bg-dark); color:var(--text-primary);
-      font-family:'Inter',sans-serif;
-      overflow:hidden; /* скрол всередині .scroll-area */
-    }
-
-    /* ---------- HEADER як на профілі ---------- */
+    /* ===== HEADER як на базовій ===== */
     .site-header{
       width:100%;
-      max-width: var(--container-max);
+      max-width:var(--container-max);
       margin:20px auto 0;
-      height:64px; min-height:64px;
+      height:64px;
       display:flex; align-items:center; justify-content:space-between;
       padding:0 20px;
       border-radius:20px;
-      background: linear-gradient(145deg, #1b1b1b, #101010);
-      border:1px solid rgba(255,255,255,0.05);
-      box-shadow:
-        0 4px 10px rgba(0,0,0,0.6),
-        inset 0 1px 0 rgba(255,255,255,0.05),
-        inset 0 -1px 0 rgba(0,0,0,0.4);
-      position:relative; z-index:10;
+      background:linear-gradient(145deg,#1b1b1b,#101010);
+      border:1px solid rgba(255,255,255,.05);
+      box-shadow:0 4px 10px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.05), inset 0 -1px 0 rgba(0,0,0,.4);
+      position:relative; z-index:50;
     }
-
-    .header-right{
-  display:flex;
-  align-items:center;
-  gap:12px;
-}
     .logo{ display:flex; align-items:center; gap:12px; }
     .logo img{ width:50px; height:50px; }
 
+    .header-right{ display:flex; align-items:center; gap:12px; }
     .nav-buttons{ display:flex; align-items:center; gap:8px; height:100%; }
     .button{
       padding:8px 10px;
       background:transparent; border:none;
-      color:var(--text-primary);
-      text-decoration:none; font-weight:500; font-size:18px;
+      color:var(--text-primary); text-decoration:none;
+      font-weight:500; font-size:18px; letter-spacing:.5px; text-transform:uppercase;
       cursor:pointer; transition:color .2s ease;
       height:40px; display:flex; align-items:center;
     }
-    .button:hover{ color: var(--accent-color); }
-    .button.active{ color: var(--accent-color); font-weight:600; }
+    .button:hover{ color:var(--accent-color); }
+    .button.active{ color:var(--accent-color); font-weight:600; }
 
-    .wallet-wrapper { position: relative; display: inline-block; }
+    .wallet-wrapper{ position:relative; display:inline-block; }
     .connect-wallet{
       max-width:200px; text-align:center;
       padding:6px 14px; border-radius:12px; border:none;
       font-weight:600; font-size:15px;
-      background: var(--accent); color:#000;
-      cursor:pointer; transition: filter .3s ease;
+      background:var(--accent); color:#000; cursor:pointer;
+      transition:filter .3s ease;
     }
-    .connect-wallet:hover{ filter: brightness(1.15); }
+    .connect-wallet:hover{ filter:brightness(1.15); }
 
+    /* Дропдаун як у дашборді: fixed + великий z-index, JS ставить координати */
     .wallet-dropdown-content{
-      display:none; position:absolute; top:44px; right:0;
-      background: var(--bg-panel);
-      min-width:160px; border-radius:12px;
+      display:none;
+      position:fixed !important;
+      background:var(--bg-panel);
+      min-width:180px; border-radius:12px;
       box-shadow:0 4px 12px rgba(0,0,0,.6);
-      z-index:1000; border:1px solid rgba(255,255,255,.05);
+      z-index:10000 !important; overflow:hidden;
+      border:1px solid rgba(255,255,255,.05);
+      left:auto; right:auto; top:0; /* перезаписуємо default */
     }
     .wallet-dropdown-content a,
     .wallet-dropdown-content .dd-item,
     .wallet-dropdown-content .dd-line{
       display:block; width:100%;
       padding:10px 14px; color:var(--text-primary);
-      text-decoration:none; font-size:14px;
-      background:transparent; border:none; text-align:left;
+      text-decoration:none; font-size:14px; background:transparent; border:none; text-align:left;
     }
     .wallet-dropdown-content a:hover,
-    .wallet-dropdown-content .dd-item:hover{
-      background: rgba(255,255,255,.05);
-    }
+    .wallet-dropdown-content .dd-item:hover{ background:rgba(255,255,255,.05); }
 
-    /* ---------- ДЕКОР З БОКІВ як на профілі ---------- */
+    /* ===== Декор з боків ===== */
     .side-image{
-      position: absolute;
-      top: var(--side-art-top);
-      width: min(44vw, var(--side-art-width));
-      opacity: 1;
-      pointer-events: none;
-      z-index: 0;
-      filter: drop-shadow(0 0 24px rgba(0,0,0,.45));
+      position:fixed !important;
+      top:var(--side-art-top);
+      width:min(44vw,var(--side-art-width));
+      pointer-events:none; z-index:-1 !important;
+      filter:drop-shadow(0 0 24px rgba(0,0,0,.45));
     }
-    .side-left  { left:  var(--side-art-offset); }
-    .side-right { right: var(--side-art-offset); }
+    .side-left{ left:var(--side-art-offset); }
+    .side-right{ right:var(--side-art-offset); }
+    @media (min-width:1440px){
+      :root{ --side-art-top:85px; --side-art-offset:-80px; --side-art-width:780px; }
+    }
+    @media (max-width:1024px){
+      :root{ --side-art-top:110px; --side-art-offset:-24px; }
+      .side-image{ width:54vw; opacity:.85; }
+    }
+    @media (max-width:640px){ .side-image{ display:none; } }
 
-    @media (min-width: 1440px){
-      :root{
-        --side-art-top: 85px;
-        --side-art-offset: -80px;
-        --side-art-width: 780px;
-      }
-    }
-    @media (max-width: 1024px){
-      :root{ --side-art-top: 110px; --side-art-offset: -24px; }
-      .side-image{ width: 54vw; opacity: .85; }
-    }
-    @media (max-width: 640px){
-      .side-image{ display:none; }
-    }
-
-    /* ---------- КОНТЕНТ ---------- */
+    /* ===== Контент ===== */
     .container{
-      width:100%;
-      max-width: var(--container-max);
-      margin:0 auto;
-      padding:20px;
-      position:relative; z-index:1;
+      width:100%; max-width:var(--container-max);
+      margin:0 auto; padding:20px; position:relative; z-index:10;
       display:flex; flex-direction:column; align-items:center;
     }
-    .leaderboard-title{
-      font-size:28px; font-weight:700; margin:10px 0 24px;
-      color: var(--accent-color); text-align:center; letter-spacing:1px;
-    }
+    .leaderboard-title{ font-size:28px; font-weight:700; margin:10px 0 24px; color:var(--accent-color); text-align:center; letter-spacing:1px; }
     .search-input{
       margin:0 auto 22px; display:block; padding:12px 18px; width:100%; max-width:400px;
-      background:#1a1a1a;
-      border:1px solid rgba(255,255,255,.12);
-      border-radius:10px; color:var(--text-primary); font-size:15px;
+      background:#1a1a1a; border:1px solid rgba(255,255,255,.12); border-radius:10px; color:var(--text-primary); font-size:15px;
       box-shadow: inset 3px 3px 6px #0c0c0c, inset -3px -3px 6px #2a2a2a;
     }
     .search-input:focus{ outline:none; }
@@ -161,27 +129,18 @@
       font-size:14px; text-transform:uppercase; letter-spacing:.5px; margin-bottom:8px; width:100%;
       background:linear-gradient(145deg,#1b1b1b,#101010);
       border:1px solid rgba(255,255,255,.05);
-      box-shadow:
-        0 4px 10px rgba(0,0,0,.6),
-        inset 0 1px 0 rgba(255,255,255,.05),
-        inset 0 -1px 0 rgba(0,0,0,0.4);
+      box-shadow:0 4px 10px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.05), inset 0 -1px 0 rgba(0,0,0,.4);
     }
 
-    .scroll-area{
-      overflow-y:auto; flex-grow:1; width:100%; max-height:calc(100vh - 300px);
-      scrollbar-width:none; -ms-overflow-style:none;
-    }
+    .scroll-area{ overflow-y:auto; flex-grow:1; width:100%; max-height:calc(100vh - 300px); scrollbar-width:none; -ms-overflow-style:none; }
     .scroll-area::-webkit-scrollbar{ display:none; }
 
     .leaderboard-entry{
       display:grid; grid-template-columns:80px 2fr 150px; align-items:center;
       padding:16px 24px; border-radius:12px; text-align:center; margin-bottom:12px;
-      background:var(--bg-panel); transition:transform .2s;
-      border:1px solid rgba(255,255,255,.05);
-      box-shadow:
-        0 4px 10px rgba(0,0,0,.6),
-        inset 0 1px 0 rgba(255,255,255,.05),
-        inset 0 -1px 0 rgba(0,0,0,.4);
+      background:var(--bg-panel); border:1px solid rgba(255,255,255,.05);
+      box-shadow:0 4px 10px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.05), inset 0 -1px 0 rgba(0,0,0,.4);
+      transition:transform .2s;
     }
     .leaderboard-entry:hover{ transform:scale(1.01); }
 
@@ -193,14 +152,9 @@
       background:radial-gradient(circle, rgba(255,165,0,0.0) 0%, rgba(255,0,0,0.0) 70%);
       box-shadow:0 0 15px 5px rgba(255,165,0,.5); animation:fire-glow 1.5s infinite alternate; z-index:-1;
     }
-    @keyframes fire-glow{
-      0%{ box-shadow:0 0 15px rgba(255,140,0,.4); }
-      100%{ box-shadow:0 0 30px rgba(255,69,0,.8); }
-    }
+    @keyframes fire-glow{ 0%{box-shadow:0 0 15px rgba(255,140,0,.4);} 100%{box-shadow:0 0 30px rgba(255,69,0,.8);} }
 
-    .wallet{
-      display:flex; align-items:center; justify-content:flex-start; gap:12px; color:var(--text-primary); padding-left:56px;
-    }
+    .wallet{ display:flex; align-items:center; justify-content:flex-start; gap:12px; color:var(--text-primary); padding-left:56px; }
     .wallet img{ width:36px; height:36px; border-radius:50%; border:1px solid var(--accent-color); }
     .wallet span{ font-weight:500; font-size:15px; }
   </style>
@@ -208,27 +162,27 @@
 <body>
 
   <!-- HEADER -->
-<header class="site-header">
-  <div class="logo">
-    <a href="/"><img src="../logo1.png" alt="logo" /></a>
-  </div>
+  <header class="site-header">
+    <div class="logo">
+      <a href="/"><img src="../logo1.png" alt="logo" /></a>
+    </div>
 
-  <div class="header-right">
-    <nav class="nav-buttons">
-      <a href="/collection" class="button">Collection</a>
-      <a href="/leaderboard" class="button active">Leaderboard</a>
-    </nav>
+    <div class="header-right">
+      <nav class="nav-buttons">
+        <a href="/leaderboard" class="button active">LEADERBOARD</a>
+        <a href="/collection"  class="button">COLLECTION</a>
+      </nav>
 
-    <div class="wallet-wrapper">
-      <button id="wallet-header-btn" class="connect-wallet wallet-trigger">CONNECT WALLET</button>
-      <div id="wallet-header-dropdown" class="wallet-dropdown-content">
-        <div class="dd-line short-addr" id="wallet-short">–</div>
-        <a class="dd-item" href="/profile/">Open Profile</a>
-        <button class="dd-item logout-btn">Logout</button>
+      <div class="wallet-wrapper">
+        <button id="wallet-header-btn" class="connect-wallet wallet-trigger">CONNECT WALLET</button>
+        <div id="wallet-header-dropdown" class="wallet-dropdown-content">
+          <div class="dd-line short-addr" id="wallet-short">–</div>
+          <a class="dd-item" href="/profile/">Open Profile</a>
+          <button class="dd-item logout-btn">Logout</button>
+        </div>
       </div>
     </div>
-  </div>
-</header>
+  </header>
 
   <!-- DECOR -->
   <img src="../LEFTSIDE2.png"  alt="" class="side-image side-left" />
@@ -237,7 +191,6 @@
   <!-- MAIN -->
   <div class="container">
     <h1 class="leaderboard-title">LEADERBOARD</h1>
-
     <input type="text" id="search" class="search-input" placeholder="Search wallet address..." />
 
     <div class="leaderboard-header">
@@ -250,7 +203,7 @@
   </div>
 
   <script>
-    /* -------- Firebase -------- */
+    /* ===== Firebase ===== */
     const firebaseConfig = {
       apiKey:"AIzaSyD2v-w99aaVgKYrycfIV515BEbjaTOp7z4",
       authDomain:"owl-chat-e4233.firebaseapp.com",
@@ -267,18 +220,18 @@
     auth.signInAnonymously().catch(()=>{});
     auth.onAuthStateChanged(u => { window.CURRENT_UID = u ? u.uid : null; });
 
-    /* -------- Хелпери хедера -------- */
-    function shorten(a){ return a ? a.slice(0,6)+'...'+a.slice(-4) : ''; }
-    function getConnectedWalletAddress(){ return localStorage.getItem('taproot_wallet'); }
+    /* ===== Helpers ===== */
+    const shorten = a => a ? a.slice(0,6)+'...'+a.slice(-4) : '';
+    const getConnectedWalletAddress = () => localStorage.getItem('taproot_wallet');
     function updateWalletUI(address){
-      const btn = document.getElementById('wallet-header-btn');
+      const btn   = document.getElementById('wallet-header-btn');
       const short = document.getElementById('wallet-short');
-      if (btn)   btn.textContent = address ? shorten(address) : 'CONNECT WALLET';
+      if (btn)   btn.textContent   = address ? shorten(address) : 'CONNECT WALLET';
       if (short) short.textContent = address ? shorten(address) : '–';
     }
 
-    /* -------- Sats-Connect v3 loader -------- */
-    window.loadSatsV3 = async function(){
+    /* ===== Sats-Connect v3 loader (для Xverse) ===== */
+    window.loadSatsV3 = async function () {
       if (window.__sats) return window.__sats;
       const sources = [
         'https://cdn.jsdelivr.net/npm/sats-connect@3.6.1/+esm',
@@ -298,28 +251,28 @@
       throw new Error('sats-connect not available');
     };
 
-    /* -------- Wallet picker -------- */
+    /* ===== Wallet picker (такий як у дашборді) ===== */
     function ensurePickerMask(){
       let m = document.getElementById('wallet-picker-mask');
       if (m) return m;
       m = document.createElement('div');
-      m.id = 'wallet-picker-mask';
-      m.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:10000;';
+      m.id='wallet-picker-mask';
+      m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:10000;';
       document.body.appendChild(m);
       return m;
     }
-    async function openWalletPicker(){
+    function openWalletPicker(){
       const mask = ensurePickerMask(); mask.innerHTML=''; mask.style.display='flex';
       const box = document.createElement('div');
-      box.style.cssText = 'width:360px;max-width:92vw;background:#141414;color:#eee;border:1px solid #333;border-radius:14px;padding:18px;';
-      box.innerHTML = `
+      box.style.cssText='width:360px;max-width:92vw;background:#141414;color:#eee;border:1px solid #333;border-radius:14px;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.5)';
+      box.innerHTML=`
         <div style="font-size:18px;font-weight:600;margin-bottom:12px;">Connect wallet</div>
         <div style="display:flex;flex-direction:column;gap:10px;">
-          <button id="pick-unisat" style="display:flex;gap:10px;align-items:center;justify-content:center;padding:12px;border-radius:10px;background:#1f1f1f;color:#fff;border:0;cursor:pointer;">
-            <img src="/profile/unisat.png" width="20" height="20" alt="UniSat"><span>UniSat (Taproot)</span>
-          </button>
           <button id="pick-xverse" style="display:flex;gap:10px;align-items:center;justify-content:center;padding:12px;border-radius:10px;background:#1f1f1f;color:#fff;border:0;cursor:pointer;">
-            <img src="/profile/xverse.png" width="20" height="20" alt="Xverse"><span>Xverse (Ordinals)</span>
+            <img src="/xverse.png" width="20" height="20" alt="Xverse"><span>Xverse (Ordinals)</span>
+          </button>
+          <button id="pick-unisat" style="display:flex;gap:10px;align-items:center;justify-content:center;padding:12px;border-radius:10px;background:#1f1f1f;color:#fff;border:0;cursor:pointer;">
+            <img src="/unisat.png" width="20" height="20" alt="UniSat"><span>UniSat (Taproot)</span>
           </button>
           <button id="pick-cancel" style="padding:10px;margin-top:6px;border-radius:10px;background:#222;color:#fff;border:0;cursor:pointer;">Cancel</button>
         </div>`;
@@ -327,125 +280,143 @@
       box.querySelector('#pick-unisat').onclick = async ()=>{ try{ await connectUniSatWallet(); } finally{ mask.style.display='none'; } };
       box.querySelector('#pick-xverse').onclick = async ()=>{ try{ await connectXverseWallet(); } finally{ mask.style.display='none'; } };
       box.querySelector('#pick-cancel').onclick = ()=> mask.style.display='none';
-      mask.addEventListener('click',(e)=>{ if(e.target===mask) mask.style.display='none'; }, {once:true});
+      mask.addEventListener('click',(e)=>{ if (e.target===mask) mask.style.display='none'; }, {once:true});
     }
 
-    /* -------- UniSat -------- */
+    /* ===== Позиціювання дропдауну (fixed) ===== */
+    function showDropdownNear(trigger, dd){
+      const r = trigger.getBoundingClientRect();
+      dd.style.display = 'block';
+      dd.style.top  = (r.bottom + 8) + 'px';
+      dd.style.left = Math.max(8, Math.min(window.innerWidth - dd.offsetWidth - 8, r.right - dd.offsetWidth)) + 'px';
+    }
+
+    /* ===== UniSat ===== */
     async function connectUniSatWallet(){
-      if (!window.unisat){ alert('UniSat Wallet not found.'); return; }
-      await window.unisat.requestAccounts();
-      const address = (await window.unisat.getAccounts())[0];
+      if (!window.unisat){ alert('UniSat Wallet not found. Install/enable the extension.'); return; }
+      let address;
+      try{
+        const req = await window.unisat.requestAccounts();
+        if (Array.isArray(req) && req.length) address = req[0];
+        if (!address){
+          const accs = await window.unisat.getAccounts();
+          if (Array.isArray(accs) && accs.length) address = accs[0];
+        }
+      }catch(e){ console.error(e); alert('Approve the connection in UniSat.'); return; }
+      if (!address){ alert('No address returned by UniSat.'); return; }
       localStorage.setItem('taproot_wallet', address);
       updateWalletUI(address);
     }
 
-    /* -------- Xverse + підпис -------- */
+    /* ===== Xverse (через sats-connect) з підписом ===== */
     async function connectXverseWallet(){
+      const hasXverse = !!window.BitcoinProvider || !!window.XverseProviders || !!window.xverseProviders || (window?.bitcoin && typeof window.bitcoin.request==='function');
+      if (!hasXverse){ alert('Xverse не знайдено. Дозвольте сайту доступ у налаштуваннях розширення.'); return; }
       try{
-        const hasXverse = !!window.BitcoinProvider || !!window.xverseProviders || (window?.bitcoin && typeof window.bitcoin.request === 'function');
-        if (!hasXverse){ alert('Xverse не знайдено. Дозволь сайту доступ у налаштуваннях розширення.'); return; }
-
         const { request, AddressPurpose } = await window.loadSatsV3();
-
-        // 1) отримати адреси
-        const resp = await request('wallet_connect', {
-          addresses: [AddressPurpose.Ordinals, AddressPurpose.Payment],
-          message: 'Connect to OWL',
-          network: 'Mainnet'
+        let resp = await request('wallet_connect', {
+          network:'Mainnet', addresses:[AddressPurpose.Ordinals, AddressPurpose.Payment], message:'Connect to OWL'
         });
-        const addresses =
-          resp?.result?.addresses ||
-          resp?.addresses ||
-          (resp?.status === 'success' ? resp.result?.addresses : []) || [];
+        const list = resp?.result?.addresses || resp?.addresses || resp?.result || [];
+        const ord = list.find(a => (a.purpose||'').toLowerCase()==='ordinals');
+        const chosen = ord || list[0];
+        const address = chosen?.address;
+        if (!address){ alert('Xverse did not return address.'); return; }
 
-        if (!Array.isArray(addresses) || !addresses.length){
-          alert('Xverse did not return the address. Create an Ordinals account and do not uncheck the box in the popup.');
-          return;
-        }
-        const ord = addresses.find(a => (a.purpose||'').toLowerCase()==='ordinals');
-        const chosen = ord || addresses[0];
-        const address = chosen.address;
-
-        // 2) підтвердити володіння підписом
+        // підпис (не обовʼязково, але як у базовому)
         const nonce = Array.from(crypto.getRandomValues(new Uint8Array(16))).map(x=>x.toString(16).padStart(2,'0')).join('');
         const message = `OWL login
 Domain: ${location.origin}
 Address: ${address}
 Nonce: ${nonce}
 Time: ${new Date().toISOString()}`;
-        const sign = await request('signMessage', { address, message, signatureType: 'bip322-simple' });
-        const signature = sign?.result?.signature || sign?.signature || sign?.result?.signatureHex || '';
-
-        // 3) необовʼязково: зберегти доказ
-        const uid = window.CURRENT_UID;
-        if (uid && signature){
-          await db.ref(`proofs/${address.toLowerCase()}`).set({
-            uid, wallet:'xverse', address, message, signature, createdAt: Date.now(), version:1
-          }).catch(()=>{});
-        }
+        try{ await request('signMessage', { address, message, signatureType:'bip322-simple' }); }catch(e){ /* optional */ }
 
         localStorage.setItem('taproot_wallet', address);
         updateWalletUI(address);
-
-      } catch(err){
+      }catch(err){
         const msg = (err?.error?.message || err?.message || '').toString();
-        if (/USER_REJECTION|rejected|cancel/i.test(msg)) alert('Запит у Xverse відхилено у вікні розширення.');
-        else { console.error('Xverse connect error:', err); alert('Xverse connection failed. Переконайся, що створено Ordinals-акаунт і не зняті галочки в попапі.'); }
+        if (/USER_REJECTION|rejected|cancel/i.test(msg)) alert('Запит у Xverse відхилено.');
+        else { console.error(err); alert('Xverse connection failed.'); }
       }
     }
 
-    /* -------- Хедер поведінка -------- */
-    document.addEventListener('DOMContentLoaded', () => {
+    /* ===== Реакція на події UniSat (як у базовому) ===== */
+    if (window.unisat){
+      window.unisat.on?.('accountsChanged', (accounts)=>{
+        const addr = Array.isArray(accounts) && accounts[0] ? accounts[0] : null;
+        if (addr){ localStorage.setItem('taproot_wallet', addr); updateWalletUI(addr); }
+        else { localStorage.removeItem('taproot_wallet'); updateWalletUI(null); }
+      });
+      window.unisat.on?.('networkChanged', ()=>{
+        const saved = getConnectedWalletAddress(); if (saved) updateWalletUI(saved);
+      });
+    }
+
+    /* ===== Header behaviour ===== */
+    document.addEventListener('DOMContentLoaded', ()=>{
       updateWalletUI(getConnectedWalletAddress());
 
-      const wrapper = document.querySelector('.wallet-wrapper');
+      const trigger = document.getElementById('wallet-header-btn');
       const dd = document.getElementById('wallet-header-dropdown');
-      if (wrapper && dd){
-        wrapper.addEventListener('click', (e)=>{
-          e.stopPropagation();
-          const addr = getConnectedWalletAddress();
-          if (!addr){ openWalletPicker(); return; }
-          dd.style.display = (dd.style.display === 'block' ? 'none' : 'block');
+
+      // відкриття пікера, якщо ще не підключено
+      document.querySelectorAll('.wallet-trigger').forEach(btn=>{
+        btn.addEventListener('click', (e)=>{
+          const saved = getConnectedWalletAddress();
+          if (!saved){ e.preventDefault(); e.stopPropagation(); openWalletPicker(); }
         });
-      }
+      });
+
+      // клік по кнопці з підключеним гаманцем — показати дропдаун поверх
+      trigger.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        const saved = getConnectedWalletAddress();
+        if (!saved) return; // пікер вже відкриється вище
+        if (dd.style.display === 'block') dd.style.display = 'none';
+        else showDropdownNear(trigger, dd);
+      });
+
+      // клік поза дропдауном — закрити
       document.addEventListener('click', ()=> {
         document.querySelectorAll('.wallet-dropdown-content').forEach(d => d.style.display='none');
       });
-      document.querySelectorAll('.logout-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
+
+      // Logout
+      document.querySelectorAll('.logout-btn').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
           localStorage.removeItem('taproot_wallet');
           updateWalletUI(null);
-          const d = document.getElementById('wallet-header-dropdown');
-          if (d) d.style.display = 'none';
+          dd.style.display='none';
         });
       });
     });
 
-    /* -------- Leaderboard -------- */
+    /* ===== Leaderboard ===== */
     let allEntries = [];
     async function loadLeaderboard(){
-      const url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?output=csv&gid=1127131432';
+      const url='https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?output=csv&gid=1127131432';
       const res = await fetch(url); const text = await res.text();
       const rows = text.trim().split('\n').map(row => {
         const match = row.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g) || [];
-        return match.map(cell => cell.replace(/^"|"$/g, ''));
+        return match.map(cell => cell.replace(/^"|"$/g,''));
       });
-      allEntries = rows.slice(1).map(r => {
-        const [rank, address, , pointsRaw] = r;
+      allEntries = rows.slice(1).map(r=>{
+        const [rank,address,,pointsRaw] = r;
         const clean = (pointsRaw||'').replace(/,/g,'');
         return { rank, address, points: clean };
       });
       renderEntries(allEntries);
     }
     function renderEntries(entries){
-      const wrap = document.getElementById('leaderboard-list'); wrap.innerHTML = '';
+      const wrap = document.getElementById('leaderboard-list'); wrap.innerHTML='';
       entries.forEach(({rank,address,points})=>{
         const shortAddr = address.slice(0,6)+'...'+address.slice(-4);
         const avatarUrl = `https://api.dicebear.com/7.x/identicon/svg?seed=${address}`;
         const isTopTen = parseInt(rank,10) <= 10;
         const el = document.createElement('div');
-        el.className = 'leaderboard-entry';
-        el.innerHTML = `
+        el.className='leaderboard-entry';
+        el.innerHTML=`
           <div class="rank ${isTopTen ? 'golden-ring' : ''}">${rank}</div>
           <div class="wallet">
             <img src="${avatarUrl}" alt="Avatar">
