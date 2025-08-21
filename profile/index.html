@@ -1170,22 +1170,27 @@ display: block;
 
         /* ——— Side art: вище і ближче до зовнішніх країв ——— */
 :root{
-  --side-art-top: 95px;     /* було 150px — підняли вище */
-  --side-art-offset: -60px; /* негативне значення — зсув назовні від краю вьюпорту */
-  --side-art-width: 720px;  /* максимальна ширина зображення */
+  --side-art-top: 95px;
+  --side-art-offset: -60px;
+  --side-art-width: 720px;
 }
 
+/* було z-index:-1 — замінив на 0 */
 .side-image{
-  position: absolute;
+  position: fixed !important;
   top: var(--side-art-top);
   width: min(44vw, var(--side-art-width));
-  opacity: 1;
   pointer-events: none;
-  z-index: 0;               /* нижче за панелі */
+  z-index: 0 !important;                 /* ← тут */
+  filter: drop-shadow(0 0 24px rgba(0,0,0,.45));
 }
+.side-left{  left:  var(--side-art-offset); }
+.side-right{ right: var(--side-art-offset); }
 
-.side-left  { left:  var(--side-art-offset); }
-.side-right { right: var(--side-art-offset); }
+/* контент поверх */
+.site-header{ position: relative; z-index: 50; }
+.container{ position: relative; z-index: 10; }
+
 
 /* Трохи агресивніше на великих екранах */
 @media (min-width: 1440px){
@@ -1232,8 +1237,10 @@ display: block;
             </div>
         </header>
 
-        <img src="/LEFTSIDE2.png"  alt="" class="side-image side-left"  decoding="async" fetchpriority="low">
-        <img src="/RIGHTSIDE2.png" alt="" class="side-image side-right" decoding="async" fetchpriority="low">
+        <!-- DECOR -->
+<img src="/LEFTSIDE2.png"  alt="" class="side-image side-left" />
+<img src="/RIGHTSIDE2.png" alt="" class="side-image side-right" />
+
 
         <!-- Головна секція профілю -->
         <div class="profile-main">
