@@ -3586,9 +3586,6 @@ if (!isContinuation) {
   }
 }
 
-  header.appendChild(left);
-  content.appendChild(header);
-
   const textEl = document.createElement("div");
   textEl.className = "message-text";
   const rawText = messageObj.text || "";
@@ -4487,18 +4484,26 @@ chatSections.forEach(section => {
     const MAX_IMAGES_PER_MSG = 5;
 const selectedFilesBySection = {}; // { section: File[] }
 
-    function pushIncomingFiles(section, incomingFiles){
+function pushIncomingFiles(section, incomingFiles){
   if (!Array.isArray(incomingFiles) || !incomingFiles.length) return;
 
   const list = selectedFilesBySection[section] || [];
+  // сигнатура для виявлення дублів
+  const seen = new Set(list.map(f => `${f.name}|${f.size}|${f.lastModified}`));
+
   for (const f of incomingFiles) {
     if (list.length >= MAX_IMAGES_PER_MSG) break;
-    if (!isImage(f)) continue;              // фільтруємо тільки image/*
+    if (!isImage(f)) continue;
+
+    const sig = `${f.name}|${f.size}|${f.lastModified}`;
+    if (seen.has(sig)) continue;       // пропускаємо дубль
+    seen.add(sig);
     list.push(f);
   }
   selectedFilesBySection[section] = list;
   renderPreviews(section);
 }
+
 
 function renderPreviews(section){
   const container = document.querySelector(`.image-preview-container[data-section="${section}"]`);
@@ -4542,24 +4547,12 @@ chatSections.forEach(section => {
 
   uploadBtn.addEventListener('click', () => fileInput.click());
 
-  fileInput.addEventListener('change', (e) => {
-    const incoming = Array.from(e.target.files || []);
-    if (!incoming.length) return;
-
-    const current = selectedFilesBySection[section] || [];
-    for (const f of incoming) {
-      if (current.length >= MAX_IMAGES_PER_MSG) break;
-      if (!isImage(f)) { alert('Only PNG/JPG/WEBP/GIF are allowed.'); continue; }
-      current.push(f);
-    }
-    selectedFilesBySection[section] = current;
-    renderPreviews(section);
-
-
-    fileInput.value = '';
-  });
+fileInput.addEventListener('change', (e) => {
+  const incoming = Array.from(e.target.files || []);
+  if (!incoming.length) return;
+  pushIncomingFiles(section, incoming);
+  fileInput.value = '';
 });
-
 
   chatSections.forEach(section => {
     const ref = getChatMessagesRef(section);
@@ -4839,24 +4832,30 @@ try {
   if (!chatInput || !sendBtn || !toggleBtn || !emojiPicker) return;
 
         // --- PASTE скріншотів / зображень у чат ---
-  chatInput.addEventListener('paste', (e) => {
-    const items = (e.clipboardData && e.clipboardData.items)
-      ? Array.from(e.clipboardData.items)
-      : [];
-    const imageFilesFromItems = items
-      .filter(it => it.type && it.type.startsWith('image/'))
-      .map(it => it.getAsFile())
-      .filter(Boolean);
-    const files = (e.clipboardData && e.clipboardData.files)
-      ? Array.from(e.clipboardData.files)
-      : [];
-    const imageFilesFromFiles = files.filter(f => f.type && f.type.startsWith('image/'));
-    const all = [...imageFilesFromItems, ...imageFilesFromFiles];
-    if (all.length) {
-      e.preventDefault();
-      pushIncomingFiles(section, all);
-    }
-  });
+chatInput.addEventListener('paste', (e) => {
+  const dt = e.clipboardData;
+  if (!dt) return;
+
+  // 1) нормальний шлях: беремо з items (без дублювання)
+  const items = Array.from(dt.items || []);
+  const imageItems = items.filter(it => it.kind === 'file' && it.type && it.type.startsWith('image/'));
+  if (imageItems.length) {
+    e.preventDefault();
+    // якщо ОС поклала кілька представлень одного скріна (png/jpg) — беремо перше png або перше-ліпше
+    const preferred = imageItems.find(it => it.type === 'image/png') || imageItems[0];
+    const file = preferred.getAsFile();
+    if (file) pushIncomingFiles(section, [file]);
+    return;
+  }
+
+  // 2) фолбек: інколи тільки files (старі браузери)
+  const files = Array.from(dt.files || []).filter(f => f.type && f.type.startsWith('image/'));
+  if (files.length) {
+    e.preventDefault();
+    pushIncomingFiles(section, files);
+  }
+});
+
 
   chatInput.addEventListener("input", () => {
     chatInput.style.height = "auto";
