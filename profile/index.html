@@ -24,6 +24,8 @@
   --accent: linear-gradient(90deg, #bfa758, #d4c87c);
   --accent-color: #8a7f5a;
   --container-max: 1200px;
+  --avatar: 35px;     
+  --bubble-gap: 8px;
 }
 
         * {
@@ -1215,11 +1217,14 @@ display: block;
   .side-image{ display: none; }
 }
 
-        .message-wrapper.compact { margin-top: 4px; }
+.message-wrapper.compact{
+  margin-top: 4px;
+  margin-left: calc(var(--avatar) + var(--bubble-gap));
+
 .message-wrapper.compact .avatar,
 .message-wrapper.compact .message-header,
-.message-wrapper.compact .hover-menu { display: none; }
-.message-wrapper.compact .chat-message { padding-top: 2px; }
+.message-wrapper.compact .hover-menu{ display: none; }
+.message-wrapper.compact .chat-message{ padding-top: 2px; }
         
     </style>
 </head>
