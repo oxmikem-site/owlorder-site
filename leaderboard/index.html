@@ -91,15 +91,22 @@
     .wallet-dropdown-content .dd-item:hover{ background:rgba(255,255,255,.05); }
 
     /* ===== Декор з боків ===== */
-    .side-image{
-      position:fixed !important;
-      top:var(--side-art-top);
-      width:min(44vw,var(--side-art-width));
-      pointer-events:none; z-index:-1 !important;
-      filter:drop-shadow(0 0 24px rgba(0,0,0,.45));
-    }
-    .side-left{ left:var(--side-art-offset); }
-    .side-right{ right:var(--side-art-offset); }
+  /* ЗАМІНИ цей блок */
+.side-image{
+  position: absolute;            /* було fixed */
+  top: var(--side-art-top);
+  width: min(44vw, var(--side-art-width));
+  pointer-events: none;
+  z-index: 0;                    /* було -1 — через це не видно */
+  filter: drop-shadow(0 0 24px rgba(0,0,0,.45));
+}
+.side-left{  left:  var(--side-art-offset); }
+.side-right{ right: var(--side-art-offset); }
+
+/* ці значення вже ок */
+.site-header{ position: relative; z-index: 50; }
+.container{   position: relative; z-index: 10; }
+
     @media (min-width:1440px){
       :root{ --side-art-top:85px; --side-art-offset:-80px; --side-art-width:780px; }
     }
@@ -110,11 +117,15 @@
     @media (max-width:640px){ .side-image{ display:none; } }
 
     /* ===== Контент ===== */
-    .container{
-      width:100%; max-width:var(--container-max);
-      margin:0 auto; padding:20px; position:relative; z-index:10;
-      display:flex; flex-direction:column; align-items:center;
-    }
+   /* було: padding: 20px; */
+.container{
+  width:100%;
+  max-width: var(--container-max);
+  margin:0 auto;
+  padding: 0 20px 20px;   /* зверху 0, зліва/справа 20 — як на базовій */
+  position:relative; z-index:10;
+  display:flex; flex-direction:column; align-items:center;
+}
     .leaderboard-title{ font-size:28px; font-weight:700; margin:10px 0 24px; color:var(--accent-color); text-align:center; letter-spacing:1px; }
     .search-input{
       margin:0 auto 22px; display:block; padding:12px 18px; width:100%; max-width:400px;
@@ -185,8 +196,8 @@
   </header>
 
   <!-- DECOR -->
-  <img src="../LEFTSIDE2.png"  alt="" class="side-image side-left" />
-  <img src="../RIGHTSIDE2.png" alt="" class="side-image side-right" />
+<img src="/LEFTSIDE2.png"  alt="" class="side-image side-left" />
+<img src="/RIGHTSIDE2.png" alt="" class="side-image side-right" />
 
   <!-- MAIN -->
   <div class="container">
