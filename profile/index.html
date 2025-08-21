@@ -1215,6 +1215,11 @@ display: block;
   .side-image{ display: none; }
 }
 
+        .message-wrapper.compact { margin-top: 4px; }
+.message-wrapper.compact .avatar,
+.message-wrapper.compact .message-header,
+.message-wrapper.compact .hover-menu { display: none; }
+.message-wrapper.compact .chat-message { padding-top: 2px; }
         
     </style>
 </head>
@@ -1588,8 +1593,10 @@ const imageBaseURL = "https://raw.githubusercontent.com/oxmikem-site/owlorder-si
 const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?gid=1127131432&single=true&output=csv";
 const ME_COLLECTION_SLUG = "owl"; 
 
-/* Перелік секцій, де є чат */
+
 const chatSections = ["links", "announcements", "general", "share-art", "spot-request"];
+const GROUP_WINDOW_MS = 5 * 60 * 1000; // 5 хв
+
 
                 // --- хто може писати і де ---
 const ADMIN_ONLY_SECTIONS = new Set(["announcements","links"]);
@@ -3474,10 +3481,28 @@ container.style.height = Math.ceil(h * scale) + 'px';
   }, 250);
 }
 
+                function shouldCompactWithPrev(section, msg) {
+  const box = document.querySelector(`.chat-messages[data-section="${section}"]`);
+  const prevWrap = box?.firstElementChild;
+  if (!prevWrap || !prevWrap.classList?.contains('message-wrapper')) return false;
+
+  const prevMsg = prevWrap.querySelector('.chat-message');
+  if (!prevMsg) return false;
+
+  const prevSender = (prevMsg.dataset.senderFull || '').toLowerCase();
+  const curSender  = (msg.sender || '').toLowerCase();
+  if (!prevSender || prevSender !== curSender) return false;
+
+  const prevTs = Number(prevMsg.dataset.ts || 0);
+  const curTs  = Number(msg.timestamp || 0);
+  return prevTs && curTs && (curTs - prevTs) <= GROUP_WINDOW_MS;
+}
+
 
 function appendMessageToChat(messageObj, key = null, section = "general", currentWallet = null) {
   const chatBox = document.querySelector(`.chat-messages[data-section="${section}"]`);
   if (!chatBox) return;
+    const isContinuation = shouldCompactWithPrev(section, messageObj);
 
   if (key && document.querySelector(`.chat-message[data-key="${key}"]`)) return;
 
@@ -3486,14 +3511,18 @@ function appendMessageToChat(messageObj, key = null, section = "general", curren
   if (key) msgEl.dataset.key = key;
   msgEl.dataset.senderFull = messageObj.sender || "";
   msgEl.dataset.rawText = messageObj.text || "";
+  msgEl.dataset.ts = String(messageObj.timestamp || 0);
 
   const avatar = document.createElement("img");
   avatar.className = "avatar";
   avatar.src = messageObj.imageId ? `${imageBaseURL}${messageObj.imageId}.webp` : "../logo1.png";
 
-  const content = document.createElement("div");
-  content.className = "message-content";
+const content = document.createElement("div");
+content.className = "message-content";
 
+let right = null; // меню показуємо тільки для «повного» повідомлення
+
+if (!isContinuation) {
   const header = document.createElement("div");
   header.className = "message-header";
 
@@ -3505,10 +3534,8 @@ function appendMessageToChat(messageObj, key = null, section = "general", curren
 
   const nameEl = document.createElement("span");
   nameEl.className = "sender-name";
-  nameEl.textContent = getDisplayNameSync(messageObj.sender);   
-prefetchNickname(messageObj.sender).then(nick => {            
-  if (nick) nameEl.textContent = nick;
-});
+  nameEl.textContent = getDisplayNameSync(messageObj.sender);
+  prefetchNickname(messageObj.sender).then(nick => { if (nick) nameEl.textContent = nick; });
 
   const timeEl = document.createElement("span");
   timeEl.className = "message-time";
@@ -3516,33 +3543,27 @@ prefetchNickname(messageObj.sender).then(nick => {
   const now = Date.now();
   const diffHours = (now - messageObj.timestamp) / (1000 * 60 * 60);
   const timeStr = time.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-  if (diffHours > 24) {
-    const dateStr = time.toLocaleDateString([], { day: "2-digit", month: "2-digit", year: "numeric" });
-    timeEl.textContent = `${dateStr}, ${timeStr}`;
-  } else {
-    timeEl.textContent = timeStr;
-  }
+  timeEl.textContent = diffHours > 24
+    ? `${time.toLocaleDateString([], { day: "2-digit", month: "2-digit", year: "numeric" })}, ${timeStr}`
+    : timeStr;
 
   left.appendChild(nameEl);
 
-// бейджі ролей автора
-const badges = makeRoleBadges(computeRolesForAddress(messageObj.sender, messageObj));
-left.appendChild(badges);
-// якщо про холдера нічого не відомо — тихо перевіримо і додамо пізніше
-ensureHolderBadgeAsync(messageObj.sender, badges);
+  const badges = makeRoleBadges(computeRolesForAddress(messageObj.sender, messageObj));
+  left.appendChild(badges);
+  ensureHolderBadgeAsync(messageObj.sender, badges);
 
-left.appendChild(timeEl);
+  left.appendChild(timeEl);
+  header.appendChild(left);
+  content.appendChild(header);
 
   // RIGHT (hover menu)
-  const right = document.createElement("div");
+  right = document.createElement("div");
   right.className = "hover-menu";
 
   const btnReact = document.createElement("button");
   btnReact.innerHTML = '<iconify-icon icon="mdi:emoticon-outline" width="14"></iconify-icon>';
-  btnReact.addEventListener("click", (e) => {
-    e.stopPropagation(); // щоб клік по кнопці не закривав пікер
-    openReactionPicker(e, key, section);
-});
+  btnReact.addEventListener("click", (e) => { e.stopPropagation(); openReactionPicker(e, key, section); });
   right.appendChild(btnReact);
 
   const btnReply = document.createElement("button");
@@ -3551,18 +3572,18 @@ left.appendChild(timeEl);
   right.appendChild(btnReply);
 
   const amAdmin = isAdmin(currentWallet);
-const isMine  = (messageObj.sender || "").toLowerCase() === (currentWallet || "").toLowerCase();
+  const isMine  = (messageObj.sender || "").toLowerCase() === (currentWallet || "").toLowerCase();
+  if (amAdmin || isMine) {
+    const btnEdit = document.createElement("button");
+    btnEdit.innerHTML = '<iconify-icon icon="mdi:pencil" width="14"></iconify-icon>';
+    btnEdit.addEventListener("click", () => editMessage(key, section));
+    right.appendChild(btnEdit);
 
-if (amAdmin || isMine) {
-  const btnEdit = document.createElement("button");
-  btnEdit.innerHTML = '<iconify-icon icon="mdi:pencil" width="14"></iconify-icon>';
-  btnEdit.addEventListener("click", () => editMessage(key, section));
-  right.appendChild(btnEdit);
-
-  const btnDel = document.createElement("button");
-  btnDel.innerHTML = '<iconify-icon icon="ic:baseline-delete" width="14"></iconify-icon>';
-  btnDel.addEventListener("click", () => deleteMessage(key, section));
-  right.appendChild(btnDel);
+    const btnDel = document.createElement("button");
+    btnDel.innerHTML = '<iconify-icon icon="ic:baseline-delete" width="14"></iconify-icon>';
+    btnDel.addEventListener("click", () => deleteMessage(key, section));
+    right.appendChild(btnDel);
+  }
 }
 
   header.appendChild(left);
@@ -3619,14 +3640,14 @@ if (tweetUrls){
   });
 }
 
-  msgEl.appendChild(avatar);
+  if (!isContinuation) msgEl.appendChild(avatar);
   msgEl.appendChild(content);
 
   // WRAPPER (для reply + меню)
   const wrapper = document.createElement("div");
   wrapper.className = "message-wrapper";
 
-  if (messageObj.replyTo) {
+  if (!isContinuation && messageObj.replyTo) {
     const replyBlock = document.createElement("div");
     replyBlock.className = "reply-preview";
     replyBlock.dataset.replyKey = messageObj.replyTo.key;
@@ -3680,11 +3701,10 @@ if (isMentionForWallet(messageObj, currentWallet)) {
   wrapper.classList.add('reply-highlight');
 }
 
-
-  wrapper.appendChild(msgEl);
-  wrapper.appendChild(right);
-
-  chatBox.prepend(wrapper);
+wrapper.classList.toggle('compact', isContinuation);
+wrapper.appendChild(msgEl);
+if (right) wrapper.appendChild(right);
+chatBox.prepend(wrapper);
 
   const urls = Array.isArray(messageObj.imageUrls) && messageObj.imageUrls.length
   ? messageObj.imageUrls
