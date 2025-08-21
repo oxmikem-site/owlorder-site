@@ -4428,11 +4428,11 @@ chatSections.forEach(section => {
   if (!box) return;
 
   let scrollTimer = null;
-  box.addEventListener('scroll', async () => {
 
+  // === scroll: маркуємо як прочитане, коли доскролили вгору
+  box.addEventListener('scroll', async () => {
     const isActive = document.getElementById(`section-${section}`)?.classList.contains('active');
     if (!isActive || !currentWallet) return;
-
 
     if (scrollTimer) clearTimeout(scrollTimer);
     scrollTimer = setTimeout(async () => {
@@ -4441,10 +4441,44 @@ chatSections.forEach(section => {
       }
     }, 120);
   });
+
+  // === DRAG & DROP зображень у поле чату
+  box.addEventListener('dragover', (e) => {
+    e.preventDefault();            // важливо: щоб браузер не відкривав файл
+    box.classList.add('dragover'); // підсвітка зони дропу (опціонально стилізуй у CSS)
+  });
+
+  box.addEventListener('dragleave', () => {
+    box.classList.remove('dragover');
+  });
+
+  box.addEventListener('drop', (e) => {
+    e.preventDefault();
+    box.classList.remove('dragover');
+    const files = Array.from(e.dataTransfer?.files || []);
+    const imageFiles = files.filter(f => f.type && f.type.startsWith('image/'));
+    if (imageFiles.length) {
+      // додасть у твою існуючу чергу + промалює прев’ю
+      pushIncomingFiles(section, imageFiles);
+    }
+  });
 });
 
     const MAX_IMAGES_PER_MSG = 5;
 const selectedFilesBySection = {}; // { section: File[] }
+
+    function pushIncomingFiles(section, incomingFiles){
+  if (!Array.isArray(incomingFiles) || !incomingFiles.length) return;
+
+  const list = selectedFilesBySection[section] || [];
+  for (const f of incomingFiles) {
+    if (list.length >= MAX_IMAGES_PER_MSG) break;
+    if (!isImage(f)) continue;              // фільтруємо тільки image/*
+    list.push(f);
+  }
+  selectedFilesBySection[section] = list;
+  renderPreviews(section);
+}
 
 function renderPreviews(section){
   const container = document.querySelector(`.image-preview-container[data-section="${section}"]`);
@@ -4783,6 +4817,26 @@ try {
   const toggleBtn = document.querySelector(`.toggle-emoji-picker[data-section="${section}"]`);
   const emojiPicker = document.querySelector(`.emoji-picker[data-section="${section}"]`);
   if (!chatInput || !sendBtn || !toggleBtn || !emojiPicker) return;
+
+        // --- PASTE скріншотів / зображень у чат ---
+  chatInput.addEventListener('paste', (e) => {
+    const items = (e.clipboardData && e.clipboardData.items)
+      ? Array.from(e.clipboardData.items)
+      : [];
+    const imageFilesFromItems = items
+      .filter(it => it.type && it.type.startsWith('image/'))
+      .map(it => it.getAsFile())
+      .filter(Boolean);
+    const files = (e.clipboardData && e.clipboardData.files)
+      ? Array.from(e.clipboardData.files)
+      : [];
+    const imageFilesFromFiles = files.filter(f => f.type && f.type.startsWith('image/'));
+    const all = [...imageFilesFromItems, ...imageFilesFromFiles];
+    if (all.length) {
+      e.preventDefault();
+      pushIncomingFiles(section, all);
+    }
+  });
 
   chatInput.addEventListener("input", () => {
     chatInput.style.height = "auto";
