@@ -3320,9 +3320,10 @@ function replaceEmojisWithIconify(text) {
       : match;
   });
 }
+                
 function linkify(text) {
   const urlPattern = /(https?:\/\/[^\s]+)/g;
-  return (text || "").replace(urlPattern, '<a href="$1">$1</a>');
+  return (text || "").replace(urlPattern, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
 }
                 
                 function escapeHTML(str = "") {
@@ -4481,7 +4482,7 @@ chatSections.forEach(section => {
   });
 });
 
-    // === Firebase chat subscriptions — attach once (НЕ вкладати всередину інших forEach) ===
+// === Firebase chat subscriptions — attach once (НЕ вкладати всередину інших forEach) ===
 chatSections.forEach((section) => {
   const ref = getChatMessagesRef(section);
 
@@ -4490,14 +4491,14 @@ chatSections.forEach((section) => {
     const msg = snapshot.val();
     const key = snapshot.key;
 
-    // надійна дедуплікація — по ключу ноди
+    // дедуплікація
     if (seenMessages.has(key)) return;
     seenMessages.add(key);
     if (seenMessages.size > 500) seenMessages.clear();
 
     appendMessageToChat(msg, key, section, currentWallet);
 
-    // автопрокрутка (у тебе список “перевернутий”)
+    // автопрокрутка (список “перевернутий”)
     setTimeout(() => {
       const chatBox = document.querySelector(`.chat-messages[data-section="${section}"]`);
       if (chatBox) chatBox.scrollTop = 0;
@@ -4514,7 +4515,7 @@ chatSections.forEach((section) => {
     );
     if (!msgCard) return;
 
-    // оновлення тексту (із захистом від XSS + лінки + емодзі)
+    // оновити текст (XSS-safe + лінки + емодзі)
     const newRaw = updatedMsg.text || "";
     const oldRaw = msgCard.dataset.rawText || "";
     if (newRaw !== oldRaw) {
@@ -4527,7 +4528,7 @@ chatSections.forEach((section) => {
         textEl.innerHTML = replaceEmojisWithIconify(linked);
       }
 
-      // перерендер твітів (видалити старі й додати нові)
+      // перерендер твітів
       msgCard.querySelectorAll(".tweet-embed").forEach(n => n.remove());
       const tweetUrls = newRaw.match(/https?:\/\/(?:www\.)?(?:mobile\.)?(?:twitter|x)\.com\/[^\/\s]+\/status\/\d+[^\s]*/gi);
       if (tweetUrls) {
@@ -4541,7 +4542,17 @@ chatSections.forEach((section) => {
       }
     }
 
-  // видалення повідомлення
+    // оновити рядок реакцій
+    let reactionRow = msgCard.querySelector(".reaction-row");
+    if (!reactionRow) {
+      reactionRow = document.createElement("div");
+      reactionRow.className = "reaction-row";
+      msgCard.querySelector(".message-content").appendChild(reactionRow);
+    }
+    updateReactionButtons(reactionRow, updatedMsg, section, key);
+  });
+
+  // видалення повідомлення (ОКРЕМО від child_changed)
   ref.on("child_removed", (snapshot) => {
     const key = snapshot.key;
 
@@ -4636,16 +4647,6 @@ chatSections.forEach(section => {
     pushIncomingFiles(section, incoming);
     fileInput.value = '';
   });
-});
-
-let reactionRow = msgCard.querySelector(".reaction-row");
-if (!reactionRow) {
-  reactionRow = document.createElement("div");
-  reactionRow.className = "reaction-row";
-  msgCard.querySelector(".message-content").appendChild(reactionRow);
-}
-updateReactionButtons(reactionRow, updatedMsg, section, key);
-   });
 });
 
     function ensureUploadStatus(section){
