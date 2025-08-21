@@ -4541,16 +4541,6 @@ chatSections.forEach((section) => {
       }
     }
 
-    // оновлення реакцій
-    let reactionRow = msgCard.querySelector(".reaction-row");
-    if (!reactionRow) {
-      reactionRow = document.createElement("div");
-      reactionRow.className = "reaction-row";
-      msgCard.querySelector(".message-content").appendChild(reactionRow);
-    }
-    updateReactionButtons(reactionRow, updatedMsg, section, key);
-  });
-
   // видалення повідомлення
   ref.on("child_removed", (snapshot) => {
     const key = snapshot.key;
@@ -4640,11 +4630,12 @@ chatSections.forEach(section => {
 
   uploadBtn.addEventListener('click', () => fileInput.click());
 
-fileInput.addEventListener('change', (e) => {
-  const incoming = Array.from(e.target.files || []);
-  if (!incoming.length) return;
-  pushIncomingFiles(section, incoming);
-  fileInput.value = '';
+  fileInput.addEventListener('change', (e) => {
+    const incoming = Array.from(e.target.files || []);
+    if (!incoming.length) return;
+    pushIncomingFiles(section, incoming);
+    fileInput.value = '';
+  });
 });
 
 let reactionRow = msgCard.querySelector(".reaction-row");
