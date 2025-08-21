@@ -4481,6 +4481,99 @@ chatSections.forEach(section => {
   });
 });
 
+    // === Firebase chat subscriptions — attach once (НЕ вкладати всередину інших forEach) ===
+chatSections.forEach((section) => {
+  const ref = getChatMessagesRef(section);
+
+  // додавання повідомлення
+  ref.on("child_added", (snapshot) => {
+    const msg = snapshot.val();
+    const key = snapshot.key;
+
+    // надійна дедуплікація — по ключу ноди
+    if (seenMessages.has(key)) return;
+    seenMessages.add(key);
+    if (seenMessages.size > 500) seenMessages.clear();
+
+    appendMessageToChat(msg, key, section, currentWallet);
+
+    // автопрокрутка (у тебе список “перевернутий”)
+    setTimeout(() => {
+      const chatBox = document.querySelector(`.chat-messages[data-section="${section}"]`);
+      if (chatBox) chatBox.scrollTop = 0;
+    }, 100);
+  });
+
+  // оновлення повідомлення (редагування/реакції)
+  ref.on("child_changed", (snapshot) => {
+    const key = snapshot.key;
+    const updatedMsg = snapshot.val();
+
+    const msgCard = document.querySelector(
+      `.chat-messages[data-section="${section}"] .chat-message[data-key="${key}"]`
+    );
+    if (!msgCard) return;
+
+    // оновлення тексту (із захистом від XSS + лінки + емодзі)
+    const newRaw = updatedMsg.text || "";
+    const oldRaw = msgCard.dataset.rawText || "";
+    if (newRaw !== oldRaw) {
+      msgCard.dataset.rawText = newRaw;
+
+      const textEl = msgCard.querySelector(".message-text");
+      if (textEl) {
+        const safe = escapeHTML(newRaw);
+        const linked = linkify(safe);
+        textEl.innerHTML = replaceEmojisWithIconify(linked);
+      }
+
+      // перерендер твітів (видалити старі й додати нові)
+      msgCard.querySelectorAll(".tweet-embed").forEach(n => n.remove());
+      const tweetUrls = newRaw.match(/https?:\/\/(?:www\.)?(?:mobile\.)?(?:twitter|x)\.com\/[^\/\s]+\/status\/\d+[^\s]*/gi);
+      if (tweetUrls) {
+        const contentEl = msgCard.querySelector(".message-content");
+        tweetUrls.forEach(u => {
+          const holder = document.createElement("div");
+          holder.className = "tweet-embed";
+          contentEl.appendChild(holder);
+          renderTweetEmbed(holder, u);
+        });
+      }
+    }
+
+    // оновлення реакцій
+    let reactionRow = msgCard.querySelector(".reaction-row");
+    if (!reactionRow) {
+      reactionRow = document.createElement("div");
+      reactionRow.className = "reaction-row";
+      msgCard.querySelector(".message-content").appendChild(reactionRow);
+    }
+    updateReactionButtons(reactionRow, updatedMsg, section, key);
+  });
+
+  // видалення повідомлення
+  ref.on("child_removed", (snapshot) => {
+    const key = snapshot.key;
+
+    const msg = document.querySelector(
+      `.chat-messages[data-section="${section}"] .chat-message[data-key="${key}"]`
+    );
+    if (msg) msg.closest(".message-wrapper")?.remove();
+
+    // прибрати прев'ю реплаїв на видалене повідомлення
+    document
+      .querySelectorAll(
+        `.chat-messages[data-section="${section}"] .reply-preview[data-reply-key="${key}"]`
+      )
+      .forEach((preview) => {
+        const wrapper = preview.closest(".message-wrapper");
+        preview.remove();
+        const chatMsg = wrapper?.querySelector(".chat-message");
+        if (chatMsg) chatMsg.style.borderRadius = "8px";
+      });
+  });
+});
+
     const MAX_IMAGES_PER_MSG = 5;
 const selectedFilesBySection = {}; // { section: File[] }
 
@@ -4554,68 +4647,6 @@ fileInput.addEventListener('change', (e) => {
   fileInput.value = '';
 });
 
-  chatSections.forEach(section => {
-    const ref = getChatMessagesRef(section);
-    ref.on("child_added", (snapshot) => {
-      const msg = snapshot.val();
-      const key = snapshot.key;
-
-      const uniqueId = `${msg.sender}_${msg.timestamp}`;
-      if (seenMessages.has(uniqueId)) return;
-      seenMessages.add(uniqueId);
-      if (seenMessages.size > 500) seenMessages.clear();
-
-      appendMessageToChat(msg, key, section, currentWallet);
-
-      setTimeout(() => {
-        const chatBox = document.querySelector(`.chat-messages[data-section="${section}"]`);
-        if (chatBox) chatBox.scrollTop = 0;
-      }, 100);
-    });
-  });
-
-
-  chatSections.forEach(section => {
-    const ref = getChatMessagesRef(section);
-    ref.on("child_changed", (snapshot) => {
-      const key = snapshot.key;
-const updatedMsg = snapshot.val();
-
-const msgCard = document.querySelector(`.chat-messages[data-section="${section}"] .chat-message[data-key="${key}"]`);
-if (!msgCard) return;
-
-// порівнюємо старий і новий сирий текст
-const newRaw = updatedMsg.text || "";
-const oldRaw = msgCard.dataset.rawText || "";
-
-if (newRaw !== oldRaw) {
-  // зберігаємо новий сирий текст
-  msgCard.dataset.rawText = newRaw;
-
-  // оновлюємо розмітку тексту
-  const textEl = msgCard.querySelector(".message-text");
-  if (textEl) {
-    const safe = escapeHTML(newRaw);
-    const linked = linkify(safe);
-    const withEmoji = replaceEmojisWithIconify(linked);
-    textEl.innerHTML = withEmoji;
-  }
-
-  // перерендеримо твіти лише коли змінився текст
-  msgCard.querySelectorAll(".tweet-embed").forEach(n => n.remove());
-
-  const tweetUrls = newRaw.match(/https?:\/\/(?:www\.)?(?:mobile\.)?(?:twitter|x)\.com\/[^\/\s]+\/status\/\d+[^\s]*/gi);
-  if (tweetUrls) {
-    const contentEl = msgCard.querySelector(".message-content");
-    tweetUrls.forEach(u => {
-      const holder = document.createElement("div");
-      holder.className = "tweet-embed";
-      contentEl.appendChild(holder);
-      renderTweetEmbed(holder, u);
-    });
-  }
-}
-
 let reactionRow = msgCard.querySelector(".reaction-row");
 if (!reactionRow) {
   reactionRow = document.createElement("div");
@@ -4625,23 +4656,6 @@ if (!reactionRow) {
 updateReactionButtons(reactionRow, updatedMsg, section, key);
    });
 });
-
-  chatSections.forEach(section => {
-    const chatRef = getChatMessagesRef(section);
-    chatRef.on("child_removed", (snapshot) => {
-      const key = snapshot.key;
-      const msg = document.querySelector(`.chat-messages[data-section="${section}"] .chat-message[data-key="${key}"]`);
-      if (msg) msg.closest(".message-wrapper")?.remove();
-
-      document.querySelectorAll(`.chat-messages[data-section="${section}"] .reply-preview[data-reply-key="${key}"]`)
-        .forEach(preview => {
-          const wrapper = preview.closest(".message-wrapper");
-          preview.remove();
-          const chatMsg = wrapper?.querySelector(".chat-message");
-          if (chatMsg) chatMsg.style.borderRadius = "8px";
-        });
-    });
-  });
 
     function ensureUploadStatus(section){
   const actions = document.querySelector(`.send-btn[data-section="${section}"]`)?.closest('.chat-actions');
