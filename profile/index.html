@@ -1782,6 +1782,15 @@ function isWalletHolderSync(wallet){
 let currentUserNickname = "";
 let currentIsHolder = false;
 
+                // Бере нік з профілю (currentUserNickname) і аватар з NFT (cachedHolderInfo.imageId)
+function getCurrentDisplayNameAndAvatar(){
+  const wallet = getConnectedWalletAddress() || '';
+  const displayName = currentUserNickname || shortenAddress(wallet);
+  const photoURL = (cachedHolderInfo?.imageId)
+    ? `${imageBaseURL}${cachedHolderInfo.imageId}.webp`
+    : null;
+  return { displayName, photoURL };
+}
                 // кеш ніків інших користувачів
 const nicknameCache = {};
 
@@ -3520,8 +3529,11 @@ function appendMessageToChat(messageObj, key = null, section = "general", curren
   msgEl.dataset.ts = String(messageObj.timestamp || 0);
 
   const avatar = document.createElement("img");
-  avatar.className = "avatar";
-  avatar.src = messageObj.imageId ? `${imageBaseURL}${messageObj.imageId}.webp` : "../logo1.png";
+avatar.className = "avatar";
+avatar.src = messageObj.photoURL
+  ? messageObj.photoURL
+  : (messageObj.imageId ? `${imageBaseURL}${messageObj.imageId}.webp` : "../logo1.png");
+avatar.onerror = () => { avatar.src = "../logo1.png"; };
 
 const content = document.createElement("div");
 content.className = "message-content";
@@ -3540,8 +3552,10 @@ if (!isContinuation) {
 
   const nameEl = document.createElement("span");
   nameEl.className = "sender-name";
-  nameEl.textContent = getDisplayNameSync(messageObj.sender);
+  nameEl.textContent = messageObj.displayName || getDisplayNameSync(messageObj.sender);
+if (!messageObj.displayName) {
   prefetchNickname(messageObj.sender).then(nick => { if (nick) nameEl.textContent = nick; });
+}
 
   const timeEl = document.createElement("span");
   timeEl.className = "message-time";
@@ -3661,12 +3675,11 @@ if (tweetUrls){
 const previewSafe = escapeHTML(previewRaw);
 const previewText = replaceEmojisWithIconify(linkify(previewSafe));
 
-    const avatarSrc = messageObj.replyTo.imageId
-      ? `${imageBaseURL}${messageObj.replyTo.imageId}.webp`
-      : "../logo1.png";
+const avatarSrc = messageObj.replyTo?.photoURL
+  || (messageObj.replyTo?.imageId ? `${imageBaseURL}${messageObj.replyTo.imageId}.webp` : "../logo1.png");
 
-    // Спершу синхронно
-const replyName = getDisplayNameSync(messageObj.replyTo.sender);
+const replyName = messageObj.replyTo?.displayName
+  || getDisplayNameSync(messageObj.replyTo.sender);
 
 replyBlock.innerHTML = `
     <div class="reply-container">
@@ -3687,11 +3700,16 @@ if (replyNameEl){
   ensureHolderBadgeAsync(messageObj.replyTo.sender, rBadges);
 }
 
-prefetchNickname(messageObj.replyTo.sender).then(nick => {
+if (!messageObj.replyTo?.displayName) {
+  prefetchNickname(messageObj.replyTo.sender).then(nick => {
     if (!nick) return;
+    const key = (messageObj.replyTo.sender || '').toLowerCase();
+    nicknameCache[key] = nick;
+    mapNickname(messageObj.replyTo.sender, nick);   // ← щоб @ніки одразу працювали
     const el = replyBlock.querySelector('.reply-to-name');
     if (el) el.textContent = nick;
-});
+  });
+}
 
     wrapper.appendChild(replyBlock);
   }
@@ -3731,19 +3749,22 @@ function replyTo(key, section) {
   const msgEl = document.querySelector(`.chat-message[data-key="${key}"]`);
   if (!msgEl) return;
 
-  // беремо повну адресу з data-атрибуту, а не скорочений текст у .sender-name
   const senderFull = msgEl.dataset.senderFull || "";
   const text   = msgEl.querySelector(".message-text")?.innerText || "";
+  const avatarImg = msgEl.querySelector("img.avatar")?.src || null;
+  const display   = msgEl.querySelector(".sender-name")?.textContent || "";
 
-  const avatarImg = msgEl.querySelector("img.avatar")?.src;
-  let imageId = null;
-  if (avatarImg) {
-    const m = avatarImg.match(/(\d+)\.webp$/);
-    imageId = m ? m[1] : null;
-  }
-
-  // зберігаємо саме повну адресу в replyTo
-  replyToMessageBySection[section] = { key, sender: senderFull, text, imageId };
+  replyToMessageBySection[section] = {
+    key,
+    sender: senderFull,
+    displayName: display || "",   // ← ДОДАНО
+    photoURL: avatarImg || null,  // ← ДОДАНО
+    text,
+    imageId: (() => {
+      const m = (avatarImg || '').match(/(\d+)\.webp$/);
+      return m ? m[1] : null;
+    })()
+  };
 
   const input = document.getElementById(`chat-input-${section}`);
   if (input) {
@@ -4793,24 +4814,31 @@ try {
   const msgKey    = db.ref().child(`chats/${section}`).push().key;
   const replyData = replyToMessageBySection[section];
   const mentions = buildMentions(text);
-  const msgData = {
+  // Витягуємо ім’я/аватар для запису в RTDB
+const { displayName, photoURL } = getCurrentDisplayNameAndAvatar();
+const msgData = {
   uid,
-  sender,
+  sender,                 // повна адреса
+  displayName,            // ← ЛЮДСЬКИЙ НІК ДОДАНО
+  photoURL,               // ← АВАТАР ДОДАНО
   text,
   timestamp: Date.now(),
-  imageId: (cachedHolderInfo && cachedHolderInfo.imageId) || null,
+  imageId: (cachedHolderInfo && cachedHolderInfo.imageId) || null, // хай лишається для сумісності
   imageUrls: imageUrls,
   imageUrl: imageUrls[0] || null,
   ...(mentions.roles.length || mentions.users.length ? { mentions } : {}),
   ...(replyData && {
     replyTo: {
       key: replyData.key,
-      sender: replyData.sender,
+      sender: replyData.sender,                    // повна адреса автора оригіналу
+      displayName: replyData.displayName || "",    // ← ДОДАНО
+      photoURL: replyData.photoURL || null,        // ← ДОДАНО
       text: replyData.text,
       imageId: replyData.imageId || null
     }
   })
 };
+
 
   const updates = {};
   updates[`/chats/${section}/${msgKey}`] = msgData;
