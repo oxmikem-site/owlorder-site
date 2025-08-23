@@ -4814,25 +4814,26 @@ try {
   const msgKey    = db.ref().child(`chats/${section}`).push().key;
   const replyData = replyToMessageBySection[section];
   const mentions = buildMentions(text);
-  // Витягуємо ім’я/аватар для запису в RTDB
+
 const { displayName, photoURL } = getCurrentDisplayNameAndAvatar();
 const msgData = {
   uid,
-  sender,                 // повна адреса
-  displayName,            // ← ЛЮДСЬКИЙ НІК ДОДАНО
-  photoURL,               // ← АВАТАР ДОДАНО
+  origin: 'site',          
+  sender,
+  displayName,
+  photoURL,
   text,
   timestamp: Date.now(),
-  imageId: (cachedHolderInfo && cachedHolderInfo.imageId) || null, // хай лишається для сумісності
+  imageId: (cachedHolderInfo && cachedHolderInfo.imageId) || null,
   imageUrls: imageUrls,
   imageUrl: imageUrls[0] || null,
   ...(mentions.roles.length || mentions.users.length ? { mentions } : {}),
   ...(replyData && {
     replyTo: {
       key: replyData.key,
-      sender: replyData.sender,                    // повна адреса автора оригіналу
-      displayName: replyData.displayName || "",    // ← ДОДАНО
-      photoURL: replyData.photoURL || null,        // ← ДОДАНО
+      sender: replyData.sender,
+      displayName: replyData.displayName || "",
+      photoURL: replyData.photoURL || null,
       text: replyData.text,
       imageId: replyData.imageId || null
     }
