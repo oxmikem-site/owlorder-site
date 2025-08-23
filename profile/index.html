@@ -1782,8 +1782,6 @@ function setSidebarAccess({ loggedIn, isHolder }) {
     const li    = a.closest('li');
     const panel = document.getElementById('section-' + sec);
 
-    // секції зі списку HOLDER_ONLY показуємо лише для holder або admin
-    // інші — якщо просто залогінений
     const requiresHolder = HOLDER_ONLY.has(sec);
     const show = requiresHolder ? canAccess : !!loggedIn;
 
@@ -1794,57 +1792,10 @@ function setSidebarAccess({ loggedIn, isHolder }) {
       if (li) li.style.display = "none";
       if (panel) { panel.classList.remove("active"); panel.style.display = "none"; }
     }
+  });
+
+  // 🔧 викликаємо один раз після зміни видимості
   updateMobileSectionsDropdown();
-  });
-
-    /* === Mobile: секції в дропдауні гаманця + згортання сайдбару === */
-function collapseSidebarToTopBar(){
-  const el = document.getElementById('sidebar-nav');
-  const wrap = el ? (el.closest('aside') || el) : null;
-  if (wrap) wrap.style.display = 'none';   // ховаємо сайдбар
-}
-
-function expandSidebarFromTopBar(){
-  const el = document.getElementById('sidebar-nav');
-  const wrap = el ? (el.closest('aside') || el) : null;
-  if (wrap) wrap.style.display = '';       // показуємо сайдбар (на випадок, якщо треба)
-}
-
-/* наповнює #wallet-header-dropdown списком доступних секцій */
-function updateMobileSectionsDropdown(){
-  const dd = document.getElementById('wallet-header-dropdown');
-  if (!dd) return;
-
-  // створюємо контейнер під секції, якщо його ще нема
-  let box = dd.querySelector('.sections-dropdown');
-  if (!box){
-    box = document.createElement('div');
-    box.className = 'sections-dropdown';
-    dd.appendChild(box);
-  }
-
-  // беремо тільки ті секції, що реально видимі в сайдбарі
-  const items = Array.from(document.querySelectorAll('#sidebar-nav a[data-section]'))
-    .filter(a => a.closest('li')?.style.display !== 'none')
-    .map(a => ({ section: a.getAttribute('data-section'), label: (a.textContent || '').trim() }));
-
-  if (!items.length){ box.innerHTML = ''; return; }
-
-  box.innerHTML = `
-    <div class="dd-title">Sections</div>
-    ${items.map(it => `<button class="dd-item" data-section="${it.section}">${escapeHTML(it.label)}</button>`).join('')}
-  `;
-
-  box.querySelectorAll('.dd-item').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      const sec = btn.getAttribute('data-section');
-      if (typeof window.openRoom === 'function') window.openRoom(sec);
-      // сховаємо сайдбар і сам дропдаун
-      collapseSidebarToTopBar();
-      dd.style.display = 'none';
-    });
-  });
-}
 
   // Logout у сайдбарі
   const logoutLink = document.querySelector('#sidebar-nav .sidebar-logout');
@@ -1860,6 +1811,49 @@ function updateMobileSectionsDropdown(){
   // Кнопка Connect у сайдбарі
   const connectBtn = document.getElementById("sidebar-connect-btn");
   if (connectBtn) connectBtn.style.display = loggedIn ? "none" : "inline-block";
+}
+
+// ⬇️ ЦІ ТРИ ФУНКЦІЇ — ПОЗА setSidebarAccess
+function collapseSidebarToTopBar() {
+  const el = document.getElementById('sidebar-nav');
+  const wrap = el ? (el.closest('aside') || el) : null;
+  if (wrap) wrap.style.display = 'none';
+}
+function expandSidebarFromTopBar() {
+  const el = document.getElementById('sidebar-nav');
+  const wrap = el ? (el.closest('aside') || el) : null;
+  if (wrap) wrap.style.display = '';
+}
+function updateMobileSectionsDropdown() {
+  const dd = document.getElementById('wallet-header-dropdown');
+  if (!dd) return;
+
+  let box = dd.querySelector('.sections-dropdown');
+  if (!box){
+    box = document.createElement('div');
+    box.className = 'sections-dropdown';
+    dd.appendChild(box);
+  }
+
+  const items = Array.from(document.querySelectorAll('#sidebar-nav a[data-section]'))
+    .filter(a => a.closest('li')?.style.display !== 'none')
+    .map(a => ({ section: a.getAttribute('data-section'), label: (a.textContent || '').trim() }));
+
+  if (!items.length){ box.innerHTML = ''; return; }
+
+  box.innerHTML = `
+    <div class="dd-title">Sections</div>
+    ${items.map(it => `<button class="dd-item" data-section="${it.section}">${escapeHTML(it.label)}</button>`).join('')}
+  `;
+
+  box.querySelectorAll('.dd-item').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const sec = btn.getAttribute('data-section');
+      if (typeof window.openRoom === 'function') window.openRoom(sec);
+      collapseSidebarToTopBar();
+      dd.style.display = 'none';
+    });
+  });
 }
 
 function setChatInputsEnabled(enabled, wallet) {
