@@ -2177,23 +2177,28 @@ async function getAllOwlsForAddress(address) {
   let body = table;
   let addrIdx = 1, numIdx = 9, rarIdx = -1, insIdx = -1;
 
-  const hdr = table[0].map(c => (c || '').trim().toLowerCase());
-  const hasHeader = hdr.some(Boolean);
-  if (hasHeader) {
-    addrIdx = Math.max(hdr.indexOf('holder address'), hdr.indexOf('address'));
-    numIdx  = hdr.indexOf('№') !== -1 ? hdr.indexOf('№')
-            : Math.max(hdr.indexOf('number'), hdr.indexOf('nft number'), hdr.indexOf('owl'), hdr.indexOf('#'));
-    rarIdx  = hdr.indexOf('rarity') !== -1 ? hdr.indexOf('rarity') : hdr.indexOf('rank');
+const hdr = table[0].map(c => (c || '').trim().toLowerCase());
 
-    // колонка інскрипшена (гнучкий пошук заголовка)
-    const candHeaders = [
-      'inscription id','inscription','inscriptionid','insc id','insc',
-      'outpoint','location','satpoint','txid'
-    ];
-    insIdx = candHeaders.reduce((acc, key) => acc !== -1 ? acc : hdr.indexOf(key), -1);
+const hasHeader =
+  hdr.join(' ').includes('address') ||
+  hdr.join(' ').includes('holder')  ||
+  hdr.includes('№');
 
-    body = table.slice(1);
-  }
+if (hasHeader) {
+  addrIdx = Math.max(hdr.indexOf('holder address'), hdr.indexOf('address'));
+  numIdx  = hdr.indexOf('№') !== -1 ? hdr.indexOf('№')
+          : Math.max(hdr.indexOf('number'), hdr.indexOf('nft number'), hdr.indexOf('owl'), hdr.indexOf('#'));
+  rarIdx  = hdr.indexOf('rarity') !== -1 ? hdr.indexOf('rarity') : hdr.indexOf('rank');
+
+
+  const candHeaders = [
+    'inscription id','inscription','inscriptionid','insc id','insc',
+    'outpoint','location','satpoint','txid'
+  ];
+  insIdx = candHeaders.reduce((acc, key) => acc !== -1 ? acc : hdr.indexOf(key), -1);
+
+  body = table.slice(1);
+}
 
   // Витягуємо inscriptionId з рядка, навіть якщо немає явної колонки
   const pickInscriptionFromRow = (r) => {
@@ -3080,11 +3085,10 @@ async function markAsRead(section, wallet) {
 
   // 3. Оновити у Firebase "остання прочитана позиція"
   if (wallet && db) {
-    const now = Date.now();
-    await getReadsRef(wallet, section).update({
-      lastSeen: now,
-      lastReplySeen: now
-    });
+   await getReadsRef(wallet, section).update({
+  lastSeen: firebase.database.ServerValue.TIMESTAMP,
+  lastReplySeen: firebase.database.ServerValue.TIMESTAMP
+});
   }
 }
            
@@ -3870,9 +3874,11 @@ wrapper.appendChild(msgEl);
 if (right) wrapper.appendChild(right);
 chatBox.prepend(wrapper);
 
-  const urls = Array.isArray(messageObj.imageUrls) && messageObj.imageUrls.length
+const urlsRaw = Array.isArray(messageObj.imageUrls) && messageObj.imageUrls.length
   ? messageObj.imageUrls
   : (messageObj.imageUrl ? [messageObj.imageUrl] : []);
+
+const urls = urlsRaw.filter(u => /^https?:\/\//i.test(u));
 
 if (urls.length) {
   const grid = document.createElement('div');
@@ -5097,17 +5103,17 @@ const msgData = {
 };
 
 
-  const updates = {};
-  updates[`/chats/${section}/${msgKey}`] = msgData;
-  updates[`/rateLimit/${uid}`] = Date.now();
+const updates = {};
+updates[`/chats/${section}/${msgKey}`] = msgData;
+updates[`/rateLimit/${uid}`] = firebase.database.ServerValue.TIMESTAMP;
 
-  try {
-    await db.ref().update(updates);
-  } catch (e) {
-    console.error(e);
-    alert('Too fast. Please wait a moment and try again.');
-    return;
-  }
+try {
+  await db.ref().update(updates);
+} catch (e) {
+  console.error(e);
+  alert('Too fast. Please wait a moment and try again.');
+  return;
+}
 
   // ---- reset UI ----
   input.value = "";
