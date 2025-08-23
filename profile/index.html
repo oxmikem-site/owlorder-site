@@ -4611,7 +4611,8 @@ if (wrapper && dropdown) {
 }
 
 document.addEventListener("click", () => {
-  document.querySelectorAll(".wallet-dropdown-content").forEach(dd => dd.style.display = "none");
+  const dd = document.getElementById("wallet-header-dropdown");
+  if (dd) dd.style.display = "none";
 });
 
      db.ref('users').on('child_changed', snap => {
