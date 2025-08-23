@@ -1318,6 +1318,16 @@ body{
   width:8px; height:8px; border-radius:50%; background:#555;
 }
 
+
+  #wallet-header-dropdown .sections-dropdown{border-top:1px solid #2a2a2a;margin-top:6px;padding-top:6px}
+  #wallet-header-dropdown .sections-dropdown .dd-title{font-size:12px;color:#aaa;margin:6px 8px}
+  #wallet-header-dropdown .sections-dropdown .dd-item{
+    width:100%;text-align:left;background:#1b1b1b;border:1px solid #333;border-radius:8px;
+    padding:8px 10px;margin:6px 8px;cursor:pointer;color:#eaeaea
+  }
+  #wallet-header-dropdown .sections-dropdown .dd-item:hover{background:#222}
+
+
     </style>
 </head>
 
@@ -1784,7 +1794,57 @@ function setSidebarAccess({ loggedIn, isHolder }) {
       if (li) li.style.display = "none";
       if (panel) { panel.classList.remove("active"); panel.style.display = "none"; }
     }
+  updateMobileSectionsDropdown();
   });
+
+    /* === Mobile: секції в дропдауні гаманця + згортання сайдбару === */
+function collapseSidebarToTopBar(){
+  const el = document.getElementById('sidebar-nav');
+  const wrap = el ? (el.closest('aside') || el) : null;
+  if (wrap) wrap.style.display = 'none';   // ховаємо сайдбар
+}
+
+function expandSidebarFromTopBar(){
+  const el = document.getElementById('sidebar-nav');
+  const wrap = el ? (el.closest('aside') || el) : null;
+  if (wrap) wrap.style.display = '';       // показуємо сайдбар (на випадок, якщо треба)
+}
+
+/* наповнює #wallet-header-dropdown списком доступних секцій */
+function updateMobileSectionsDropdown(){
+  const dd = document.getElementById('wallet-header-dropdown');
+  if (!dd) return;
+
+  // створюємо контейнер під секції, якщо його ще нема
+  let box = dd.querySelector('.sections-dropdown');
+  if (!box){
+    box = document.createElement('div');
+    box.className = 'sections-dropdown';
+    dd.appendChild(box);
+  }
+
+  // беремо тільки ті секції, що реально видимі в сайдбарі
+  const items = Array.from(document.querySelectorAll('#sidebar-nav a[data-section]'))
+    .filter(a => a.closest('li')?.style.display !== 'none')
+    .map(a => ({ section: a.getAttribute('data-section'), label: (a.textContent || '').trim() }));
+
+  if (!items.length){ box.innerHTML = ''; return; }
+
+  box.innerHTML = `
+    <div class="dd-title">Sections</div>
+    ${items.map(it => `<button class="dd-item" data-section="${it.section}">${escapeHTML(it.label)}</button>`).join('')}
+  `;
+
+  box.querySelectorAll('.dd-item').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const sec = btn.getAttribute('data-section');
+      if (typeof window.openRoom === 'function') window.openRoom(sec);
+      // сховаємо сайдбар і сам дропдаун
+      collapseSidebarToTopBar();
+      dd.style.display = 'none';
+    });
+  });
+}
 
   // Logout у сайдбарі
   const logoutLink = document.querySelector('#sidebar-nav .sidebar-logout');
@@ -4302,6 +4362,8 @@ function bindSidebarNavOnce(){
       if (target === 'collection' && w) renderMyCollection(w);
       if (target === 'raffles' && w) { renderRafflesEligibility(w); renderRafflesGrid(); }
       if (w) await markAsRead(target, w);
+        collapseSidebarToTopBar();
+      updateMobileSectionsDropdown();
       maybeCollapseAfterPick();
       buildSectionsInWalletDropdown();
     });
@@ -4481,6 +4543,7 @@ Time: ${new Date().toISOString()}`;
       const can = amAdmin || !!info?.found;
       setSidebarAccess({ loggedIn: true, isHolder: can });
       setChatInputsEnabled(can, address);
+        updateMobileSectionsDropdown();
       if (can) showSection('collection');
       await recalcSectionIndicators(address);
     });
@@ -4573,13 +4636,15 @@ db.ref('users').on('child_added', snap => {
 if (!currentWallet) {
   setSidebarAccess({ loggedIn: false, isHolder: false });
   setChatInputsEnabled(false, currentWallet);
+  updateMobileSectionsDropdown();
 } else {
   const amAdmin0 = isAdmin(currentWallet);
 
   // тимчасово даємо доступ адмінам
   setSidebarAccess({ loggedIn: true, isHolder: amAdmin0 });
   setChatInputsEnabled(amAdmin0, currentWallet);
-
+  updateMobileSectionsDropdown();
+    
   updateWalletButtons(currentWallet);
   populateSidebarUserInfo(currentWallet);
   initUnreadTracking(currentWallet);
