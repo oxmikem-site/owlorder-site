@@ -1280,6 +1280,44 @@ body{
   padding-bottom: env(safe-area-inset-bottom, 0);
 }
 
+        /* ===== Mobile UI modes ===== */
+@media (max-width: 900px){
+  body.mobile-ui .profile-main{
+    grid-template-columns: 1fr;
+  }
+
+  body.mobile-ui.choose-mode .profile-sidebar{ display:block !important; }
+  body.mobile-ui.choose-mode .profile-section{ display:none !important; }
+
+
+  body.mobile-ui.collapsed-mode .profile-sidebar{ display:none !important; }
+  body.mobile-ui.collapsed-mode .profile-section.active{ display:flex !important; }
+
+  body.mobile-ui .nav-buttons{ display:none !important; }
+}
+
+
+.wallet-dropdown-content .menu-group{
+  padding: 6px 8px;
+  border-top: 1px solid #262626;
+}
+.wallet-dropdown-content .menu-title{
+  font-size: 12px;
+  color: #9aa0a6;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.wallet-dropdown-content .menu-item{
+  display:flex; align-items:center; gap:8px;
+  padding: 8px; border-radius: 8px; cursor:pointer;
+  color:#e5e5e5; text-decoration:none;
+}
+.wallet-dropdown-content .menu-item:hover{ background:#202020; }
+.wallet-dropdown-content .menu-item .dot{
+  width:8px; height:8px; border-radius:50%; background:#555;
+}
+
     </style>
 </head>
 
@@ -4085,6 +4123,94 @@ async function prepareImageForUpload(file){
 }
 
     window.CURRENT_UID = null;
+
+                /* ===== Mobile UI helpers ===== */
+const MOBILE_BP = 900;
+let __mobileReady = false;
+function isMobileUI(){ return window.innerWidth <= MOBILE_BP; }
+
+function ensureWalletDropdown(){
+  const dd = document.getElementById("wallet-header-dropdown");
+  if (!dd) return null;
+  let navGroup = dd.querySelector('.menu-group.header-links');
+  if (!navGroup){
+    navGroup = document.createElement('div');
+    navGroup.className = 'menu-group header-links';
+    navGroup.innerHTML = `<div class="menu-title">Navigation</div>`;
+    dd.prepend(navGroup);
+  }
+  let secGroup = dd.querySelector('.menu-group.section-links');
+  if (!secGroup){
+    secGroup = document.createElement('div');
+    secGroup.className = 'menu-group section-links';
+    secGroup.innerHTML = `<div class="menu-title">Sections</div>`;
+    dd.appendChild(secGroup);
+  }
+  return dd;
+}
+
+function moveHeaderButtonsIntoWalletMenu(){
+  const dd = ensureWalletDropdown(); if (!dd) return;
+  const navGroup = dd.querySelector('.menu-group.header-links'); if (!navGroup) return;
+  const header = document.querySelector('.nav-buttons'); if (!header) return;
+  navGroup.querySelectorAll('.menu-item.nav-port').forEach(n => n.remove());
+  header.querySelectorAll('a, button').forEach(el => {
+    const item = document.createElement((el.tagName === 'A') ? 'a' : 'button');
+    item.className = 'menu-item nav-port';
+    if (el.tagName === 'A') item.href = el.getAttribute('href') || '#';
+    item.textContent = (el.textContent || '').trim();
+    item.addEventListener('click', () => { if (el.tagName !== 'A') el.click(); dd.style.display = "none"; });
+    navGroup.appendChild(item);
+  });
+}
+
+function buildSectionsInWalletDropdown(){
+  const dd = ensureWalletDropdown(); if (!dd) return;
+  const secGroup = dd.querySelector('.menu-group.section-links'); if (!secGroup) return;
+  secGroup.querySelectorAll('.menu-item.sec-port').forEach(n => n.remove());
+  document.querySelectorAll('#sidebar-nav a[data-section]').forEach(a => {
+    const sec = a.getAttribute('data-section');
+    const title = (a.textContent || sec).trim();
+    const item = document.createElement('a');
+    item.className = 'menu-item sec-port'; item.href = '#';
+    item.innerHTML = `<span class="dot"></span><span>${title}</span>`;
+    item.addEventListener('click', (e) => { e.preventDefault(); a.click(); dd.style.display = "none"; });
+    secGroup.appendChild(item);
+  });
+  if (!secGroup.querySelector('.menu-item.reopen-sidebar')) {
+    const reopen = document.createElement('a');
+    reopen.href = '#'; reopen.className = 'menu-item reopen-sidebar';
+    reopen.innerHTML = 'Browse all sections…';
+    reopen.addEventListener('click', (e) => {
+      e.preventDefault(); expandSidebarForSelection(); dd.style.display = "none";
+    });
+    secGroup.appendChild(reopen);
+  }
+}
+
+function collapseSidebar(){
+  document.body.classList.remove('choose-mode');
+  document.body.classList.add('collapsed-mode');
+}
+function expandSidebarForSelection(){
+  document.body.classList.remove('collapsed-mode');
+  document.body.classList.add('choose-mode');
+  document.querySelector('.profile-sidebar')?.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function enterMobileMode(){
+  if (__mobileReady) return;
+  document.body.classList.add('mobile-ui');
+  expandSidebarForSelection();            // старт — тільки сайдбар
+  moveHeaderButtonsIntoWalletMenu();      // хедерні кнопки → дропер
+  buildSectionsInWalletDropdown();        // секції → дропер
+  __mobileReady = true;
+}
+function maybeCollapseAfterPick(){
+  if (!isMobileUI()) return;
+  if (!document.body.classList.contains('collapsed-mode')) collapseSidebar();
+}
+
 /* ==== Старт програми ==== */
 window.addEventListener("DOMContentLoaded", async () => {
   // Firebase
@@ -4102,9 +4228,23 @@ auth.onAuthStateChanged(u => {
   window.CURRENT_UID = u ? u.uid : null;
 });
 
-    /* ===== WALLET PICKER (UniSat + Xverse) ===== */
+    // ===== Mobile UI init & resize =====
+if (isMobileUI()) enterMobileMode();
+window.addEventListener('resize', () => {
+  const mobileNow = isMobileUI();
+  const wasMobile = document.body.classList.contains('mobile-ui');
+  if (mobileNow && !wasMobile) {
+    enterMobileMode();
+  } else if (!mobileNow && wasMobile) {
+    // повернення до десктопу
+    document.body.classList.remove('mobile-ui','choose-mode','collapsed-mode');
+    __mobileReady = false;
+    const header = document.querySelector('.nav-buttons');
+    if (header) header.style.display = '';
+  }
+});
 
-// легка маска/модалка без верстки
+    /* ===== WALLET PICKER (UniSat + Xverse) ===== */
 function ensurePickerMask(){
   let mask = document.getElementById('wallet-picker-mask');
   if (mask) return mask;
@@ -4162,6 +4302,8 @@ function bindSidebarNavOnce(){
       if (target === 'collection' && w) renderMyCollection(w);
       if (target === 'raffles' && w) { renderRafflesEligibility(w); renderRafflesGrid(); }
       if (w) await markAsRead(target, w);
+      maybeCollapseAfterPick();
+      buildSectionsInWalletDropdown();
     });
   });
 }
@@ -4398,6 +4540,9 @@ if (wrapper && dropdown) {
       pick.querySelector('#pick-cancel').onclick = () => pick.remove();
       return;
     }
+
+      moveHeaderButtonsIntoWalletMenu();
+      buildSectionsInWalletDropdown();
     dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
   });
 }
