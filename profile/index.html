@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Profile | OWL</title>
     <link rel="icon" type="image/png" href="../logo2.png" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
@@ -32,12 +32,12 @@
             box-sizing: border-box;
         }
 
-       html, body {
-  height: 100vh;
-  overflow: hidden;    
+html, body {
+  height: 100%;
+  min-height: 100dvh;  
   margin: 0;
-  overscroll-behavior: none;
-        }
+  overscroll-behavior-y: contain;
+}
 
         body {
             margin: 0;
@@ -1220,18 +1220,71 @@ display: block;
 .message-wrapper.compact{
   margin-top: 4px;
   margin-left: calc(var(--avatar) + var(--bubble-gap));
-
+}
 .message-wrapper.compact .avatar,
 .message-wrapper.compact .message-header,
 .message-wrapper.compact .hover-menu{ display: none; }
 .message-wrapper.compact .chat-message{ padding-top: 2px; }
-        
+
+        /* ===== MOBILE OVERRIDES ===== */
+@media (max-width: 1024px){
+  header{
+    position: sticky; top: env(safe-area-inset-top, 0);
+    margin-top: 10px; margin-bottom: 12px;
+  }
+  .logo img{ width: 42px; height: 42px; }
+  .button{ font-size: 15px; padding: 6px 8px; }
+  .connect-wallet{ font-size: 14px; padding: 6px 10px; }
+}
+
+@media (max-width: 900px){
+  .container{ padding: 0 14px 14px; }
+  .profile-main{
+    grid-template-columns: 1fr; 
+    overflow: visible; 
+  }
+  .profile-sidebar{ order: 1; }
+  .profile-section.active{ order: 2; }
+
+  .panel{ padding: 12px; }
+  .profile-section{ padding: 12px; }
+
+  .chat-input-wrapper{
+    padding-bottom: calc(env(safe-area-inset-bottom, 0) + 6px);
+  }
+
+  .tweet-embed{ width: 100%; min-width: auto; max-width: 100%; }
+
+  .avatar{ width: 30px; height: 30px; }
+  .message-time{ font-size: 11px; }
+  .message-text{ font-size: 13.5px; }
+}
+
+@media (max-width: 640px){
+  header{ height: 56px; }
+  .nav-buttons{ gap: 4px; }
+  .button{ font-size: 14px; padding: 6px 6px; }
+  .connect-wallet{ max-width: none; font-size: 13px; padding: 6px 10px; }
+
+  .side-image{ display: none !important; }
+
+  .collection-grid{
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+  }
+
+  .chat-messages{ padding: 8px 4px; }
+}
+
+body{
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
     </style>
 </head>
 
 <body>
     <div class="container">
-        <!-- Хедер -->
         <header>
             <div class="logo"><img src="../logo1.png" alt="logo" /></div>
             <div class="nav-buttons">
@@ -1251,8 +1304,6 @@ display: block;
 <img src="/LEFTSIDE2.png"  alt="" class="side-image side-left" />
 <img src="/RIGHTSIDE2.png" alt="" class="side-image side-right" />
 
-
-        <!-- Головна секція профілю -->
         <div class="profile-main">
             <!-- Sidebar -->
             <div class="panel profile-sidebar">
