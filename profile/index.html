@@ -1845,11 +1845,12 @@ function updateMobileSectionsDropdown() {
     btn.addEventListener('click', (e) => {
       e.preventDefault();
       const sec = btn.getAttribute('data-section');
-      document.querySelector(`#sidebar-nav a[data-section="${sec}"]`)?.click();
+      const a = document.querySelector(`#sidebar-nav a[data-section="${sec}"]`);
+      if (a) a.click();
+      dd.style.display = 'none';
     });
   });
 }
-
 
 function setChatInputsEnabled(enabled, wallet) {
   chatSections.forEach(sec => {
