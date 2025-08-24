@@ -1841,7 +1841,15 @@ function updateMobileSectionsDropdown() {
     ${items.map(it => `<button class="dd-item" data-section="${it.section}">${escapeHTML(it.label)}</button>`).join('')}
   `;
 
-box.querySelectorAll('.dd-item').forEach(btn => {
+  box.querySelectorAll('.dd-item').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const sec = btn.getAttribute('data-section');
+      document.querySelector(`#sidebar-nav a[data-section="${sec}"]`)?.click();
+    });
+  });
+}
+
 
 function setChatInputsEnabled(enabled, wallet) {
   chatSections.forEach(sec => {
