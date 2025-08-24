@@ -1691,7 +1691,6 @@ body{
 
             <!-- Скрипти -->
             <script>
-/* === CONFIG (дані для NFT/поінтів) === */
 const SNAPSHOT_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?output=csv&gid=0";
 const imageBaseURL = "https://raw.githubusercontent.com/oxmikem-site/owlorder-site/main/images2/";
 const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdLAOdM_GrsuOclMYL9ltUVyzC_Y7Z_9Jf7ITs-tYuqj1ekgrsH76KGu14CyZ0li7vnROOSpn6FpnG/pub?gid=1127131432&single=true&output=csv";
@@ -1699,13 +1698,12 @@ const ME_COLLECTION_SLUG = "owl";
 
 
 const chatSections = ["links", "announcements", "general", "share-art", "spot-request"];
-const GROUP_WINDOW_MS = 5 * 60 * 1000; // 5 хв
+const GROUP_WINDOW_MS = 5 * 60 * 1000;
 
 
-                // --- хто може писати і де ---
 const ADMIN_ONLY_SECTIONS = new Set(["announcements","links"]);
 
-// нижче впиши свої гаманці-адміни (у lower-case!)
+
 const ADMIN_WALLETS = new Set([
   "bc1pc7evznevnllyhduedcapfgklexkju43qhuxltr02c85pmdqzjp7qkdp9lt",
   "bc1pupv8g4h3q39y00s62x2cunuh03n4p3pnevf8cuk2vtndtmn0drkqeg9uv4"
@@ -1714,11 +1712,9 @@ const ADMIN_WALLETS = new Set([
 function isAdmin(wallet){
   return !!wallet && ADMIN_WALLETS.has(wallet.toLowerCase());
 }
-                /* === ролі користувача за адресою/повідомленням === */
+
 function hasHolderRoleFor(sender, messageObj){
-  // 1) якщо під час надсилання в msg був imageId — це холдер
   if (messageObj && messageObj.imageId) return true;
-  // 2) або якщо в локальному кеші є позитивний запис
   const cached = readHolderCache(sender || '');
   return !!cached?.found;
 }
@@ -1750,7 +1746,7 @@ function makeRoleBadges(roles){
 async function ensureHolderBadgeAsync(sender, badgesWrap){
   if (!badgesWrap) return;
 
-  // для council нічого не додаємо
+
   if (isAdmin(sender)) return;
 
   if (badgesWrap.querySelector('.role-badge.owl')) return;
@@ -1765,13 +1761,13 @@ async function ensureHolderBadgeAsync(sender, badgesWrap){
 
 function sectionAllowsPosting(section, wallet){
   if (ADMIN_ONLY_SECTIONS.has(section)) return isAdmin(wallet);
-  return true; // інші секції — як було
+  return true; 
 }
 
-// які секції показуємо лише холдерам (можеш додати/зняти будь-яку)
+
 const HOLDER_ONLY = new Set(["links","announcements","general","share-art","spot-request","raffles","settings","collection"]);
 
-// показати/сховати лінки сайдбару та відповідні секції
+
 function setSidebarAccess({ loggedIn, isHolder }) {
   const wallet   = getConnectedWalletAddress();
   const amAdmin  = isAdmin(wallet);
@@ -1794,26 +1790,25 @@ function setSidebarAccess({ loggedIn, isHolder }) {
     }
   });
 
-  // 🔧 викликаємо один раз після зміни видимості
+
   updateMobileSectionsDropdown();
 
-  // Logout у сайдбарі
   const logoutLink = document.querySelector('#sidebar-nav .sidebar-logout');
   if (logoutLink) {
     const logoutLi = logoutLink.closest('li');
     if (logoutLi) logoutLi.style.display = loggedIn ? "" : "none";
   }
 
-  // Хедерний дропдаун
+
   const headerDropdown = document.getElementById("wallet-header-dropdown");
   if (headerDropdown && !loggedIn) headerDropdown.style.display = "none";
 
-  // Кнопка Connect у сайдбарі
+
   const connectBtn = document.getElementById("sidebar-connect-btn");
   if (connectBtn) connectBtn.style.display = loggedIn ? "none" : "inline-block";
 }
 
-// ⬇️ ЦІ ТРИ ФУНКЦІЇ — ПОЗА setSidebarAccess
+
 function collapseSidebarToTopBar() {
   const el = document.getElementById('sidebar-nav');
   const wrap = el ? (el.closest('aside') || el) : null;
@@ -1846,15 +1841,7 @@ function updateMobileSectionsDropdown() {
     ${items.map(it => `<button class="dd-item" data-section="${it.section}">${escapeHTML(it.label)}</button>`).join('')}
   `;
 
-  box.querySelectorAll('.dd-item').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const sec = btn.getAttribute('data-section');
-      if (typeof window.openRoom === 'function') window.openRoom(sec);
-      collapseSidebarToTopBar();
-      dd.style.display = 'none';
-    });
-  });
-}
+box.querySelectorAll('.dd-item').forEach(btn => {
 
 function setChatInputsEnabled(enabled, wallet) {
   chatSections.forEach(sec => {
@@ -1867,7 +1854,7 @@ function setChatInputsEnabled(enabled, wallet) {
     const upload    = document.querySelector(`.upload-image-btn[data-section="${sec}"]`);
 
     if (inputWrap) inputWrap.style.display = canPost ? "flex" : "none";
-    if (preview)   preview.style.display   = "none"; // ховаємо прев'ю, якщо немає композера
+    if (preview)   preview.style.display   = "none";
 
     if (box) {
       box.disabled    = !canPost;
@@ -1880,13 +1867,13 @@ function setChatInputsEnabled(enabled, wallet) {
   });
 }
 
-/* Сховище reply для кожної секції */
+
 const replyToMessageBySection = {};
 
 let cachedHolderInfo = null;
 
-                // кеш холдера з TTL
-const HOLDER_CACHE_TTL = 6 * 60 * 60 * 1000; // 6 год
+
+const HOLDER_CACHE_TTL = 6 * 60 * 60 * 1000; 
 
 function readHolderCache(address){
   try {
@@ -1894,7 +1881,7 @@ function readHolderCache(address){
     if (!raw) return null;
     const obj = JSON.parse(raw);
     if (!obj?.ts || (Date.now() - obj.ts) > HOLDER_CACHE_TTL) return null;
-    return obj; // {found, address, imageId, points, ts}
+    return obj; 
   } catch { return null; }
 }
 
@@ -1912,20 +1899,19 @@ function isWalletHolderSync(wallet){
   const w = (wallet || '').toLowerCase();
   if (!w) return false;
 
-  // якщо це мій гаманець і вже відомо з cachedHolderInfo
+
   const me = (getConnectedWalletAddress() || '').toLowerCase();
   if (w === me && cachedHolderInfo && cachedHolderInfo.found) return true;
 
-  // інакше дивимось локальний кеш (офлайн)
+
   const cached = readHolderCache(w);
   return !!cached?.found;
 }
 
-                // === Мій профіль
+
 let currentUserNickname = "";
 let currentIsHolder = false;
 
-                // Бере нік з профілю (currentUserNickname) і аватар з NFT (cachedHolderInfo.imageId)
 function getCurrentDisplayNameAndAvatar(){
   const wallet = getConnectedWalletAddress() || '';
   const displayName = currentUserNickname || shortenAddress(wallet);
@@ -1934,10 +1920,10 @@ function getCurrentDisplayNameAndAvatar(){
     : null;
   return { displayName, photoURL };
 }
-                // кеш ніків інших користувачів
+
 const nicknameCache = {};
 
-                // індекс: nickname (lower) -> масив адрес
+
 const nicknameIndex = {};
 
 function mapNickname(addr, nick){
@@ -1955,7 +1941,6 @@ function unmapNickname(addr, nick){
   if (!nicknameIndex[n].length) delete nicknameIndex[n];
 }
 
-// синхронний варіант (повертає що є зараз у кеші або short)
 function getDisplayNameSync(addr) {
   if (!addr) return "";
   const me = (getConnectedWalletAddress() || "").toLowerCase();
@@ -1964,7 +1949,7 @@ function getDisplayNameSync(addr) {
   return cached ? cached : shortenAddress(addr);
 }
 
-// асинхронно підвантажує нік і оновлює кеш
+
 async function prefetchNickname(addr) {
   if (!addr) return null;
   const key = addr.toLowerCase();
@@ -1980,14 +1965,14 @@ async function prefetchNickname(addr) {
   }
 }
 
-/** Повертає, що показувати як ім'я автора повідомлення */
+
 function getDisplayName(addr) {
   if (!addr) return "";
   const me = (getConnectedWalletAddress() || "").toLowerCase();
   if (addr.toLowerCase() === me && currentUserNickname) {
-    return currentUserNickname;            // мій нікнейм замість скороченої адреси
+    return currentUserNickname;  
   }
-  return shortenAddress(addr);             // інші — як і було
+  return shortenAddress(addr);  
 }
 
   function isReplyToMe(replySenderRaw) {
@@ -1999,15 +1984,13 @@ function getDisplayName(addr) {
   return val === myFull || val === myShort || (myNick && val === myNick);
 }
 
-  /* ==== Ментіони/ролі ==== */
-// парсимо текст і витягаємо кому шлють
 function buildMentions(text){
   const roles = new Set();
   const users = new Set();
 
   const t = (text || "").trim();
 
-  // ролі (без регістру)
+
   if (/@owl\s+council\b/i.test(t)) roles.add('owlcouncil');
   if (/@owl\b/i.test(t)) roles.add('owl');
 
@@ -2049,20 +2032,35 @@ function isMentionForWallet(msg, wallet){
   return false;
 }
 
-/* === Хелпери інтерфейсу === */
+
 function shortenAddress(addr) {
   return addr ? addr.slice(0, 6) + "..." + addr.slice(-4) : "";
 }
-function getConnectedWalletAddress() {
-  return localStorage.getItem("taproot_wallet");
+function setConnectedWalletAddress(address){
+  const val = (address || '').trim() || null;
+  window.__taproot_wallet = val;
+  try { localStorage.setItem('taproot_wallet', val || ''); } catch {}
+  try { sessionStorage.setItem('taproot_wallet', val || ''); } catch {}
 }
+function getConnectedWalletAddress(){
+  if (window.__taproot_wallet) return window.__taproot_wallet;
+  try {
+    const v = localStorage.getItem('taproot_wallet');
+    if (v) return (window.__taproot_wallet = v);
+  } catch {}
+  try {
+    const v2 = sessionStorage.getItem('taproot_wallet');
+    if (v2) return (window.__taproot_wallet = v2);
+  } catch {}
+  return null;
+}
+                
 function updateWalletButtons(address) {
   const short = shortenAddress(address);
   const btn = document.getElementById("wallet-header-btn");
   if (btn) btn.textContent = short || "CONNECT WALLET";
 }
 
-// БІЛЬШЕ НЕ ТЯГНЕ МЕРЕЖУ
 function setProfileImageById(imageId) {
   const img = document.getElementById("profile-image");
   if (!img) return;
@@ -2078,11 +2076,11 @@ function setProfileImageById(imageId) {
 async function getHolderInfo(address){
   if (!address) return { found:false, address:null, imageId:null, points:null };
 
-  // 1) кеш
+
   const cached = readHolderCache(address);
   if (cached) return cached;
 
-  // 2) тягнемо ПОІНТИ (НЕ залежно від snapshot)
+
   let points = null;
   try {
     const res   = await fetch(sheetURL, { cache: 'no-store' });
@@ -2107,7 +2105,6 @@ async function getHolderInfo(address){
     console.warn("Points sheet fetch error:", e);
   }
     
-  // 3) тягнемо SNAPSHOT (щоб визначити холдера та imageId)
   let imageId = null;
   try {
     const resImg = await fetch(SNAPSHOT_CSV_URL, { cache: 'no-store' });
@@ -2144,15 +2141,14 @@ body = rows.slice(1);
     console.warn("SNAPSHOT fetch error:", e);
   }
 
-  // 4) формуємо результат:
   const result = {
-    found: !!imageId,     // статус холдера — за snapshot
+    found: !!imageId,    
     address,
     imageId: imageId || null,
     points: (points != null ? points : null)
   };
 
-  // 5) кеш (тепер пишемо завжди, навіть якщо found:false)
+
   writeHolderCache(address, result);
   return result;
 }
@@ -2200,7 +2196,7 @@ if (hasHeader) {
   body = table.slice(1);
 }
 
-  // Витягуємо inscriptionId з рядка, навіть якщо немає явної колонки
+
   const pickInscriptionFromRow = (r) => {
     const readCell = (v) => (((v || '') + '').trim());
     if (insIdx >= 0) {
@@ -2230,16 +2226,16 @@ if (hasHeader) {
     if (number) items.push({ number, rarity, inscriptionId });
   }
 
-  // унікалізуємо по номеру
+
   const seen = new Set();
   return items.filter(it => !seen.has(it.number) && seen.add(it.number));
 }
 
-/* Перевірка, чи власник (holder), + поінти — як у дашборді */
+
 async function checkHolderInSheet(address) {
   if (!address) return { found: false };
 
-  // 1) Перевіряємо, чи адреса є у SNAPSHOT (і беремо imageId = №)
+
   let imageId = null;
   try {
     const resImg = await fetch(SNAPSHOT_CSV_URL, { cache: 'no-store' });
@@ -2273,12 +2269,12 @@ async function checkHolderInSheet(address) {
 
   if (!imageId) return { found: false };
 
-  // 2) Тягнемо поінти лише для холдерів (як у дашборді по header-ах)
+
 let points = "-";
 try {
   const res   = await fetch(sheetURL, { cache: 'no-store' });
   const csv   = await res.text();
-  const table = parseCSV(csv); // ✅ надійний парсер (в тебе вже є вище)
+  const table = parseCSV(csv);
 
   if (table.length) {
     const header    = table[0].map(h => (h || '').trim().toLowerCase());
@@ -2292,7 +2288,7 @@ try {
 
       if (row) {
         const raw = ((row[pointsIdx] || '') + '').trim();
-        points = raw.replace(/,/g, "") || "0"; // хочеш «–» замість 0 — підстав "-"
+        points = raw.replace(/,/g, "") || "0"; 
       }
     }
   }
@@ -2302,7 +2298,7 @@ try {
 
 return { found: true, address, imageId, points };
 }
-                // --- robust CSV parser (лапки/коми всередині клітинок)
+
 function parseCSV(text) {
   const rows = [];
   let row = [], cur = '', inQuotes = false;
@@ -2327,8 +2323,7 @@ function parseCSV(text) {
   return rows;
 }
 
-                /* === SNAPSHOT кеш для колекції === */
-const SNAPSHOT_CACHE_TTL = 30 * 60 * 1000; // 30 хв — щоб не тягнути часто
+const SNAPSHOT_CACHE_TTL = 30 * 60 * 1000; 
 
 function readSnapshotCache(){
   try{
@@ -2336,7 +2331,7 @@ function readSnapshotCache(){
     if(!raw) return null;
     const {ts, rows} = JSON.parse(raw);
     if(!ts || Date.now()-ts > SNAPSHOT_CACHE_TTL) return null;
-    return rows; // масив рядків CSV (без заголовка)
+    return rows;
   }catch{ return null; }
 }
 function writeSnapshotCache(rows){
@@ -2367,19 +2362,17 @@ function parseSnapshotRows(csvText){
   }).filter(Boolean);
 }
 
-/* Завантажуємо/кешуємо snapshot */
 async function loadSnapshot(){
   const cached = readSnapshotCache();
   if (cached) return cached;
 
   const res = await fetch(SNAPSHOT_CSV_URL, { cache: 'no-store' });
   const csv = await res.text();
-  const rows = csv.trim().split('\n'); // кешуємо як масив рядків
+  const rows = csv.trim().split('\n'); 
   writeSnapshotCache(rows);
   return rows;
 }
 
-/* Класи під бейдж рарності */
 function rarityToClass(r){
   const t = (r||'').toLowerCase();
   if (t.includes('myth')) return 'rarity-mythic';
@@ -2388,7 +2381,7 @@ function rarityToClass(r){
   if (t.includes('rare')) return 'rarity-rare';
   if (t.includes('uncommon')) return 'rarity-uncommon';
   if (t) return 'rarity-common';
-  return 'rarity-legendary'; // якщо рарності нема — зробимо “золоту” (можеш змінити)
+  return 'rarity-legendary';
 }
                 function fmt(dtMs){
   if (!dtMs) return '–';
@@ -2443,7 +2436,7 @@ async function renderMyCollection(address){
     return;
   }
 
-  // сортуємо по номеру
+
   mine.sort((a,b)=> Number(a.number)-Number(b.number));
   if (cnt) cnt.textContent = `${mine.length} item(s)`;
 
@@ -2469,7 +2462,7 @@ async function renderMyCollection(address){
   const sec = document.getElementById('section-raffles');
   if (!sec) return;
 
-  // читаємо профіль
+
   const profSnap = await getUserProfileRef(wallet).get();
   const prof = profSnap.val() || {};
   const socials = prof.socials || {};
@@ -2481,12 +2474,12 @@ async function renderMyCollection(address){
   const btcCount    = Array.isArray(wallets.btc) ? wallets.btc.length : 0;
   const evmCount    = Array.isArray(wallets.evm) ? wallets.evm.length : 0;
 
-  // якщо всі умови виконані — забираємо панель і нічого не показуємо
+
   const allMet = isHolder && haveTwitter && haveDiscord && btcCount > 0 && evmCount > 0;
   const existing = sec.querySelector('.raffles-wrap');
   if (allMet) { if (existing) existing.remove(); return; }
 
-  // створюємо/оновлюємо контейнер
+
   let wrap = existing;
   if (!wrap) {
     wrap = document.createElement('div');
@@ -2507,7 +2500,7 @@ async function renderMyCollection(address){
     </div>
   `;
 
-  // панель завжди внизу центральної секції
+
   sec.appendChild(wrap);
 
   const btn = wrap.querySelector('#open-settings-from-raffles');
@@ -2516,7 +2509,7 @@ async function renderMyCollection(address){
     if (link) link.click();
   };
 }
-                // коротка людиночитна тривалість: 2d 4h / 3h 15m / 7m
+
 function formatShortDuration(ms) {
   const s = Math.max(0, Math.floor(ms/1000));
   const d = Math.floor(s/86400), h = Math.floor((s%86400)/3600), m = Math.floor((s%3600)/60);
@@ -2535,7 +2528,6 @@ function relativeRaffleLine(r) {
   const sec = document.getElementById('section-raffles');
   if (!sec) return;
 
-  // topbar без дублюючого заголовка
   let topbar = sec.querySelector('.raffles-topbar');
   if (!topbar){
     topbar = document.createElement('div');
@@ -2603,14 +2595,13 @@ if (amAdmin) btnPlus.onclick = openCreateRaffleModal;
 if (amAdmin) {
   grid.querySelectorAll('.raffle-del').forEach(btn => {
     btn.addEventListener('click', async (ev) => {
-      ev.stopPropagation(); // щоб не відкривалося вікно перегляду
+      ev.stopPropagation();
       const id = btn.getAttribute('data-id');
       if (!id) return;
       const ok = confirm('Delete this raffle? All its entries will also be removed.');
       if (!ok) return;
       try {
         await deleteRaffleById(id);
-        // Перерендер, щоб список оновився
         renderRafflesGrid();
       } catch (e) {
         console.error(e);
@@ -2620,10 +2611,9 @@ if (amAdmin) {
   });
 }
 
-  // і ще раз — панель вимог завжди в самому низу
+
   const wrap = sec.querySelector('.raffles-wrap');
   if (wrap) sec.appendChild(wrap);
-                      // ——— оновлення статусів та "Ends/Starts in" раз на хвилину — всередині renderRafflesGrid
   if (window.__raffleCountdown) clearInterval(window.__raffleCountdown);
   window.__raffleCountdown = setInterval(() => {
     sec.querySelectorAll('.raffle-card').forEach(card => {
@@ -2757,14 +2747,14 @@ try{
     const refC = storage.ref().child(`raffles/${Date.now()}_${creator}_cover.webp`);
     await refC.put(blob, { contentType: blob.type || 'image/webp', cacheControl:'public,max-age=31536000,immutable' });
     coverUrl  = await refC.getDownloadURL();
-    coverPath = refC.fullPath;          // <— зберігаємо шлях
+    coverPath = refC.fullPath; 
   }
   if (logoFile){
     const blob = await compressImage(logoFile, 600, 600, 'image/webp', 0.9);
     const refL = storage.ref().child(`raffles/${Date.now()}_${creator}_logo.webp`);
     await refL.put(blob, { contentType: 'image/webp', cacheControl:'public,max-age=31536000,immutable' });
     logoUrl  = await refL.getDownloadURL();
-    logoPath = refL.fullPath;           // <— зберігаємо шлях
+    logoPath = refL.fullPath; 
   }
     }catch(e){
       console.error(e);
@@ -2796,7 +2786,6 @@ async function openRaffleViewModal(id, data){
   mask.innerHTML=''; mask.style.display='flex';
 
   const me = getConnectedWalletAddress() || '';
-  // підтягнемо збережені адреси
   let wallets = { btc:[], evm:[] };
   try { const snap = await getUserProfileRef(me).child('wallets').get();
         wallets = snap.val() || { btc:[], evm:[] }; } catch {}
@@ -2824,7 +2813,6 @@ async function openRaffleViewModal(id, data){
   `;
    mask.appendChild(modal);
 
-  // чи активний зараз
   const now = Date.now();
   const isActive = (!data.startAt || now >= data.startAt) && (!data.endAt || now <= data.endAt);
 
@@ -2887,10 +2875,9 @@ row.innerHTML = `
     row.querySelector('a').addEventListener('click', ()=> markDone(`x:${i}`));
   });
 
-  /* ---------- кнопки ---------- */
+
   const enterBtn = modal.querySelector('#rfv-enter');
 
-  // якщо вже зайшов — блокуємо
   try {
     const meLc = (me||'').toLowerCase();
     const existing = (await getRaffleEntriesRef(id).child(meLc).get()).val();
@@ -2933,17 +2920,16 @@ row.innerHTML = `
 
                 function getRafflesRef(){ return db.ref('raffles/items'); }
 function getRaffleEntriesRef(id){ return db.ref(`raffleEntries/${id}`); }
-                // ——— admin helper: delete raffle + entries
+
 async function deleteRaffleById(id){
-  // 1) читаємо, щоб мати шляхи до файлів
+
   const snap = await getRafflesRef().child(id).get();
   const r = snap.val() || {};
 
-  // 2) видаляємо записи
+
   await getRafflesRef().child(id).remove();
   try { await db.ref(`raffleEntries/${id}`).remove(); } catch {}
 
-  // 3) намагаємось видалити файли зі Storage
   try {
     const jobs = [];
     if (r.coverPath) jobs.push(storage.ref(r.coverPath).delete());
@@ -2954,7 +2940,7 @@ async function deleteRaffleById(id){
   } catch(e) { console.warn('Storage delete failed:', e); }
 }
                 
-/* Заповнення сайдбару профілю */
+
 async function populateSidebarUserInfo(address) {
   const addrEl = document.getElementById("sidebar-wallet-addr");
   const ptsEl  = document.getElementById("sidebar-total-points");
@@ -2972,7 +2958,6 @@ async function populateSidebarUserInfo(address) {
   }
 
   if (addrEl) {
-  // пробуємо прочитати нік із БД (users/{wallet}/profile/nickname)
   try {
     const nickSnap = await db.ref(`users/${address}/profile/nickname`).get();
     const nickname = (nickSnap && nickSnap.val()) || "";
@@ -2984,22 +2969,21 @@ async function populateSidebarUserInfo(address) {
   addrEl.style.display = "block";
 }
 
- // стартово ховаємо
 if (img) img.style.display = "none";
 if (ptsEl) ptsEl.style.display = "none";
 
-// оновлюємо з мережі
+
 getHolderInfoOnce(address).then(info => {
   cachedHolderInfo = info;
 
-  // аватар показуємо тільки якщо є imageId
+
   if (info.imageId) {
     setProfileImageById(info.imageId);
   } else if (img) {
     img.style.display = "none";
   }
 
-  // ПОКАЗ поінтів — якщо вони є, незалежно від found
+
   if (ptsEl) {
     if (info.points != null && info.points !== "") {
       ptsEl.innerHTML = `<strong>Total Points:</strong> ${info.points}`;
@@ -3009,10 +2993,9 @@ getHolderInfoOnce(address).then(info => {
     }
   }
 
-  // кнопка в сайдбарі
   if (connectBtn) {
     if (info.imageId) {
-      connectBtn.style.display = "none"; // є аватар — ховаємо кнопку
+      connectBtn.style.display = "none";
     } else {
       connectBtn.textContent = "Get your OWL";
       connectBtn.onclick = () => { window.location.href = "https://owlbtc.art/collection"; };
@@ -3022,7 +3005,6 @@ getHolderInfoOnce(address).then(info => {
 });
 }
 
-/* Перемикання секцій */
 function hideAllSections() {
   document.querySelectorAll(".profile-section").forEach(sec => {
     sec.classList.remove("active");
@@ -3074,16 +3056,14 @@ function setBadgeCount(el, count) {
 }
  
 async function markAsRead(section, wallet) {
-  // 1. Знайти бейджі для цієї секції
+
   const badges = ensureSidebarBadges(section);
 
-  // 2. Скинути кількість непрочитаних і реплаїв у DOM
   if (badges) {
     setBadgeCount(badges.unread, 0);
     setBadgeCount(badges.replies, 0);
   }
 
-  // 3. Оновити у Firebase "остання прочитана позиція"
   if (wallet && db) {
    await getReadsRef(wallet, section).update({
   lastSeen: firebase.database.ServerValue.TIMESTAMP,
@@ -3107,14 +3087,12 @@ const firebaseConfig = {
 };
 
                 // === Sats Connect v3 loader (ESM) ===
-// === Sats Connect v3 loader (стійкий до CDN/експортів) ===
 window.loadSatsV3 = async function () {
   if (window.__sats) return window.__sats;
 
   const sources = [
     'https://cdn.jsdelivr.net/npm/sats-connect@3.6.1/+esm',
     'https://esm.sh/sats-connect@3.6.1',
-    // ↓ самохост: ВИБЕРИ ОДИН шлях і переконайся, що файл існує
     '../vendor/sats-connect-3.6.1.esm.js',
   ];
 
@@ -3134,8 +3112,6 @@ window.loadSatsV3 = async function () {
   throw new Error('sats-connect module not available');
 };
 
-
-                // збереження останніх переглядів для кожного гаманця/секції
 function getReadsRef(wallet, section) {
   return db.ref(`reads/${wallet}/${section}`);
 }
@@ -3153,13 +3129,13 @@ async function initUnreadTracking(wallet) {
     const badges = ensureSidebarBadges(section);
     if (!badges) continue;
 
-    // 1) lastSeen / lastReplySeen
+
     const readsSnap = await getReadsRef(wallet, section).get();
     const reads = readsSnap.val() || {};
     let lastSeen = reads.lastSeen || 0;
     let lastReplySeen = reads.lastReplySeen || 0;
 
-    // 2) первинний підрахунок
+
     let unreadCount = 0;
     let replyCount = 0;
 
@@ -3182,18 +3158,17 @@ if ((mentionedMe || repliedToMe) && m.timestamp > lastReplySeen) {
     setBadgeCount(badges.unread, unreadCount);
     setBadgeCount(badges.replies, replyCount);
 
-    // 2.5) скільки child_added треба ПРОПУСТИТИ (щоб не подвоїти після підписки)
     let toSkip = existing.numChildren();
 
       if (section === 'raffles') {
-  // первинний підрахунок
+
   const listSnap = await getRafflesRef().get();
   let newCount = 0;
   listSnap.forEach(s => { const r = s.val(); if (r?.createdAt > lastSeen) newCount++; });
 
-  // показуємо золотим (використаємо replies-бейдж)
+
   setBadgeCount(badges.unread, 0);
-  setBadgeCount(badges.replies, newCount); // золото
+  setBadgeCount(badges.replies, newCount); 
 
   // live
   let toSkipR = listSnap.numChildren();
@@ -3206,15 +3181,11 @@ if ((mentionedMe || repliedToMe) && m.timestamp > lastReplySeen) {
     }
   });
 
-  // ідемо далі до наступної секції
   continue;
 }
 
-    // 3) live-підписка
     getChatMessagesRef(section).on('child_added', snap => {
-      // пропускаємо перші "старі" події
       if (toSkip > 0) { toSkip--; return; }
-
       const m = snap.val(); 
       if (!m) return;
 
@@ -3247,17 +3218,15 @@ if (!isActive && (replyIsToMe || mentionIsToMe) && m.timestamp > lastReplySeen) 
     const lastSeen = reads.lastSeen || 0;
     const lastReplySeen = reads.lastReplySeen || 0;
 
-    // 🔸 окрема логіка для raffles
     if (section === 'raffles') {
       const snapR = await getRafflesRef().get();
       let newCount = 0;
       snapR.forEach(s => { const r = s.val(); if (r?.createdAt > lastSeen) newCount++; });
       setBadgeCount(badges.unread, 0);
-      setBadgeCount(badges.replies, newCount); // золотий бейдж
-      continue; // до наступної секції
+      setBadgeCount(badges.replies, newCount); 
+      continue; 
     }
 
-    // 🔸 чати — як було
     let unread = 0, replies = 0;
     const snap = await getChatMessagesRef(section).get();
     snap.forEach(s => {
@@ -3285,7 +3254,6 @@ if (!isActive && (replyIsToMe || mentionIsToMe) && m.timestamp > lastReplySeen) 
 
   const nickname = data.nickname || '';
 
-  // socials: підтримуємо старий формат (true/false) і новий (об’єкт)
   const rawSoc = data.socials || {};
   const socials = {
     twitter: (typeof rawSoc.twitter === 'object')
@@ -3398,7 +3366,7 @@ async function saveNickname() {
 
   await ref.update({
     nickname,
-    ...(hasOwner ? {} : { ownerUid: uid }) // перша фіксація власника
+    ...(hasOwner ? {} : { ownerUid: uid })
   });
 
   currentUserNickname = nickname;
@@ -3445,7 +3413,6 @@ loadSettings(wallet);
   const dcHandle = normalizeDiscordHandle(dcRaw);
 
   const ref = getUserProfileRef(wallet);
-  // фіксуємо власника профілю, якщо ще не зафіксований
   const snap = await ref.get();
   const hasOwner = !!(snap.val() && snap.val().ownerUid);
   const uid = window.CURRENT_UID;
@@ -3512,7 +3479,7 @@ function renderTweetEmbed(container, url) {
   const info = extractTweetInfo(url);
   if (!info) return;
 
-  // Допоміжні
+
   const twitterURL = `https://twitter.com/${info.user}/status/${info.id}`;
   const ensureFxScript = () => {
     if (document.querySelector('script[data-fxtw="1"]')) return;
@@ -3550,7 +3517,7 @@ const tryFixTweet = () => {
     if (window.twttr && twttr.widgets && typeof twttr.widgets.load === 'function') {
       twttr.widgets.load(container);
 
-      // Спробуємо зловити подію рендера; якщо ні — таймаут як фолбек
+
       if (twttr.events && typeof twttr.events.bind === 'function') {
         const handler = (ev) => {
           if (container.contains(ev.target)) {
@@ -3576,44 +3543,37 @@ const tryFixTweet = () => {
     ifr.style.border = '0';
     ifr.style.minHeight = '200px';
     ifr.loading = 'lazy';
-    // трохи безпечніший sandbox
     ifr.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-popups');
     container.appendChild(ifr);
 
-    // простий авто-підгін висоти
     const H = () => { if (ifr.contentWindow) ifr.style.height = Math.max(ifr.clientHeight, 520) + 'px'; };
     ifr.addEventListener('load', H);
-    setTimeout(H, 1500); // на випадок повільного завантаження
+    setTimeout(H, 1500); 
   };
 
-  // 1) готуємо «класичний» блок для FixTweet/official
   container.innerHTML = '';
   const bq = document.createElement('blockquote');
   bq.className = 'twitter-tweet';
   bq.innerHTML = `<a href="${twitterURL}"></a>`;
   container.appendChild(bq);
 
-  // 2) гарантуємо наявність скриптів
   ensureFxScript();
   ensureTwWidgets();
 
-  // 3) спроби рендеру: FixTweet → Official → twitframe (форс)
   if (tryFixTweet()) return;
 
   let ticks = 0;
   const timer = setInterval(() => {
     ticks++;
 
-    // пробуємо FixTweet
+
     if (tryFixTweet()) { clearInterval(timer); return; }
 
-    // після кількох спроб — пробуємо офіційний
     if (ticks === 8) tryOfficial();
 
-    // якщо за ~5 секунд нічого — iframe-фолбек
     if (ticks >= 20) {
       clearInterval(timer);
-      // якщо досі немає iframe — робимо twitframe
+ 
       if (!container.querySelector('iframe')) useTwitframe();
         scaleTweetWhenReady(container, TWEET_SCALE);
     }
@@ -3685,7 +3645,7 @@ avatar.onerror = () => { avatar.src = "../logo1.png"; };
 const content = document.createElement("div");
 content.className = "message-content";
 
-let right = null; // меню показуємо тільки для «повного» повідомлення
+let right = null; 
 
 if (!isContinuation) {
   const header = document.createElement("div");
@@ -3762,7 +3722,7 @@ const withEmoji = replaceEmojisWithIconify(linked);
 textEl.innerHTML = withEmoji;
   content.appendChild(textEl);
 
-  // reactions row (якщо вже є)
+
   if (messageObj.reactions) {
     const reactionRow = document.createElement("div");
     reactionRow.className = "reaction-row";
@@ -3793,7 +3753,7 @@ textEl.innerHTML = withEmoji;
     content.appendChild(reactionRow);
   }
 
-  // Tweet embedding (офіційний + FixTweet fallback) — підтримує кілька посилань в одному повідомленні
+
 const tweetUrls = (messageObj.text || "").match(/https?:\/\/(?:www\.)?(?:mobile\.)?(?:twitter|x)\.com\/[^\/\s]+\/status\/\d+[^\s]*/gi);
 if (tweetUrls){
   tweetUrls.forEach(u => {
@@ -3807,7 +3767,7 @@ if (tweetUrls){
   if (!isContinuation) msgEl.appendChild(avatar);
   msgEl.appendChild(content);
 
-  // WRAPPER (для reply + меню)
+
   const wrapper = document.createElement("div");
   wrapper.className = "message-wrapper";
 
@@ -3852,7 +3812,7 @@ if (!messageObj.replyTo?.displayName) {
     if (!nick) return;
     const key = (messageObj.replyTo.sender || '').toLowerCase();
     nicknameCache[key] = nick;
-    mapNickname(messageObj.replyTo.sender, nick);   // ← щоб @ніки одразу працювали
+    mapNickname(messageObj.replyTo.sender, nick);
     const el = replyBlock.querySelector('.reply-to-name');
     if (el) el.textContent = nick;
   });
@@ -4048,16 +4008,15 @@ function editMessage(key, section) {
   });
 }
 
-/* ==== Пікер реакцій (окремий від інпут-пікерів!) ==== */
 function openReactionPicker(event, msgKey, section) {
-  // прибираємо попередній саме реакційний пікер
+
   const existing = document.querySelector('emoji-picker[data-role="react-picker"]');
   if (existing) existing.remove();
 
   const picker = document.createElement("emoji-picker");
   picker.setAttribute("data-role", "react-picker");
 
-  // стилі під "як у пікера для повідомлень"
+
   picker.style.position = "absolute";
   picker.style.bottom = "45px";
   picker.style.right = "0";
@@ -4071,15 +4030,14 @@ function openReactionPicker(event, msgKey, section) {
   picker.style.zIndex = "1000";
   picker.style.boxShadow = "0 6px 24px rgba(0,0,0,0.45)";
 
-  // якір — у межах повідомлення, щоб не “вистрибував” з чату
+
   const anchor = event.currentTarget.closest(".message-wrapper") || event.currentTarget;
-  // гарантуємо контекст позиціонування
   if (anchor && getComputedStyle(anchor).position === "static") {
     anchor.style.position = "relative";
   }
   (anchor || event.currentTarget).appendChild(picker);
 
-  // клік по емодзі
+
   picker.addEventListener("emoji-click", async e => {
     const emoji = e.detail.unicode;
     const messageRef = getChatMessagesRef(section).child(msgKey);
@@ -4108,7 +4066,7 @@ function openReactionPicker(event, msgKey, section) {
     picker.remove();
   });
 
-  // закриття при кліку поза пікером
+
   setTimeout(() => {
     const onDocClick = (ev) => {
       if (!picker.contains(ev.target)) {
@@ -4297,11 +4255,31 @@ window.addEventListener('resize', () => {
     enterMobileMode();
   } else if (!mobileNow && wasMobile) {
     // повернення до десктопу
-    document.body.classList.remove('mobile-ui','choose-mode','collapsed-mode');
-    __mobileReady = false;
-    const header = document.querySelector('.nav-buttons');
-    if (header) header.style.display = '';
+document.body.classList.remove('mobile-ui','choose-mode','collapsed-mode');
+__mobileReady = false;
+expandSidebarFromTopBar();
+const header = document.querySelector('.nav-buttons');
+if (header) header.style.display = '';
   }
+});
+
+    // коли повертаємося на сторінку з гаманця — пересинхронізувати UI
+document.addEventListener('visibilitychange', async () => {
+  if (document.visibilityState !== 'visible') return;
+  const saved = getConnectedWalletAddress();
+  if (!saved) return;
+
+  updateWalletButtons(saved);
+  await populateSidebarUserInfo(saved);
+
+  const amAdmin = isAdmin(saved);
+  const info = await getHolderInfoOnce(saved).catch(()=>null);
+  const can = amAdmin || !!info?.found;
+
+  setSidebarAccess({ loggedIn: true, isHolder: can });
+  setChatInputsEnabled(can, saved);
+  if (can) showSection('collection');
+  updateMobileSectionsDropdown();
 });
 
     /* ===== WALLET PICKER (UniSat + Xverse) ===== */
@@ -4362,18 +4340,24 @@ function bindSidebarNavOnce(){
       if (target === 'collection' && w) renderMyCollection(w);
       if (target === 'raffles' && w) { renderRafflesEligibility(w); renderRafflesGrid(); }
       if (w) await markAsRead(target, w);
-        collapseSidebarToTopBar();
-      updateMobileSectionsDropdown();
-      maybeCollapseAfterPick();
-      buildSectionsInWalletDropdown();
+      if (isMobileUI()) {
+  collapseSidebarToTopBar();
+  maybeCollapseAfterPick();
+} else {
+  expandSidebarFromTopBar();
+}
+updateMobileSectionsDropdown();
+buildSectionsInWalletDropdown();
     });
   });
 }
 
 bindSidebarNavOnce();
 
-    let currentWallet = getConnectedWalletAddress() || null;
-    const seenMessages = new Set();
+if (!isMobileUI()) expandSidebarFromTopBar();
+
+let currentWallet = getConnectedWalletAddress() || null;
+const seenMessages = new Set();
 
 // === Wallet connect (UniSat + Xverse) ===
 
@@ -4387,12 +4371,11 @@ async function connectUniSatWallet() {
     await window.unisat.requestAccounts();
     const address = (await window.unisat.getAccounts())[0];
 
-    localStorage.setItem("taproot_wallet", address);
-    updateWalletButtons(address);
-    await populateSidebarUserInfo(address);
+setConnectedWalletAddress(address);
+updateWalletButtons(address);
+await populateSidebarUserInfo(address);
+currentWallet = address;
 
-    // оновлюємо «глобальний» стейт
-    currentWallet = address;
 
     // тимчасово даємо доступ адмінам (до перевірки холдера)
     const amAdmin = isAdmin(address);
@@ -4528,9 +4511,9 @@ Time: ${new Date().toISOString()}`;
       createdAt: Date.now(), version: 1,
     });
 
-    localStorage.setItem('taproot_wallet', address);
-    updateWalletButtons(address);
-    await populateSidebarUserInfo(address);
+   setConnectedWalletAddress(address);
+updateWalletButtons(address);
+await populateSidebarUserInfo(address);
 
     const amAdmin = isAdmin(address);
     setSidebarAccess({ loggedIn: true, isHolder: amAdmin });
@@ -4674,8 +4657,10 @@ bindSidebarNavOnce();
   document.querySelectorAll(".logout-btn, .sidebar-logout").forEach(el => {
     el.addEventListener("click", (e) => {
       e.preventDefault();
-      localStorage.removeItem("taproot_wallet");
-      location.reload();
+      setConnectedWalletAddress(null);
+try { localStorage.removeItem('taproot_wallet'); } catch {}
+try { sessionStorage.removeItem('taproot_wallet'); } catch {}
+location.reload();
     });
   });
 }
