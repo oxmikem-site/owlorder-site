@@ -1293,7 +1293,8 @@ body{
   body.mobile-ui.collapsed-mode .profile-sidebar{ display:none !important; }
   body.mobile-ui.collapsed-mode .profile-section.active{ display:flex !important; }
 
-  body.mobile-ui .nav-buttons{ display:none !important; }
+ body.mobile-ui .nav-buttons{ display:flex !important; }  
+  body.mobile-ui.menu-open .nav-buttons{ display:none !important; } 
 }
 
 
@@ -1327,6 +1328,25 @@ body{
   }
   #wallet-header-dropdown .sections-dropdown .dd-item:hover{background:#222}
 
+
+        /* показувати мобільні вставки лише на малих екранах */
+.only-mobile{ display:none !important; }
+@media (max-width:900px){
+  .only-mobile{ display:block !important; }
+}
+
+/* дропдаун гамансета — завжди прихований за замовчуванням */
+#wallet-header-dropdown{ display:none; }
+
+/* на мобі – позиціонуємо як фіксований попап, щоб не «вилазив» */
+@media (max-width:900px){
+  #wallet-header-dropdown{
+    position: fixed !important;
+    top: 64px; right: 12px; left: auto;
+    max-width: 92vw;
+    z-index: 1000;
+  }
+}
 
     </style>
 </head>
@@ -4177,8 +4197,10 @@ function ensureWalletDropdown(){
 }
 
 function moveHeaderButtonsIntoWalletMenu(){
-  const dd = ensureWalletDropdown(); if (!dd) return;
+    if (!isMobileUI()) return;
+ const dd = ensureWalletDropdown(); if (!dd) return;
   const navGroup = dd.querySelector('.menu-group.header-links'); if (!navGroup) return;
+  navGroup.classList.add('only-mobile');  
   const header = document.querySelector('.nav-buttons'); if (!header) return;
   navGroup.querySelectorAll('.menu-item.nav-port').forEach(n => n.remove());
   header.querySelectorAll('a, button').forEach(el => {
@@ -4192,8 +4214,10 @@ function moveHeaderButtonsIntoWalletMenu(){
 }
 
 function buildSectionsInWalletDropdown(){
+  if (!isMobileUI()) return;
   const dd = ensureWalletDropdown(); if (!dd) return;
   const secGroup = dd.querySelector('.menu-group.section-links'); if (!secGroup) return;
+  secGroup.classList.add('only-mobile');
   secGroup.querySelectorAll('.menu-item.sec-port').forEach(n => n.remove());
   document.querySelectorAll('#sidebar-nav a[data-section]').forEach(a => {
     const sec = a.getAttribute('data-section');
@@ -4411,13 +4435,12 @@ currentWallet = address;
   }
 }
 
-  async function connectXverseWallet () {
-  // 1) перевірка провайдера
+async function connectXverseWallet () {
   const hasXverse =
-    !!window.BitcoinProvider ||
-    !!window.XverseProviders ||
-    !!window.xverseProviders ||
-    (window?.bitcoin && typeof window.bitcoin.request === "function");
+    !!window?.bitcoin?.request ||
+    !!window?.BitcoinProvider ||
+    !!window?.XverseProviders ||
+    !!window?.xverseProviders;
 
   if (!hasXverse) {
     alert("Xverse не знайдено. Увімкніть розширення і дозвольте доступ сайту.");
@@ -4425,42 +4448,79 @@ currentWallet = address;
   }
 
   try {
-    const { request, AddressPurpose } = await window.loadSatsV3();
-
-    // 2) РЕКОМЕНДОВАНО: wallet_connect
-    let resp;
+    let addresses = [];
     try {
-      resp = await request('wallet_connect', {
-        // якщо у тебе тестнет — постав 'Testnet'
+      const { request, AddressPurpose } = await window.loadSatsV3();
+      const res = await request('getAddresses', {
+        purposes: [AddressPurpose.Ordinals, AddressPurpose.Payment],
         network: 'Mainnet',
-        // можна не вказувати: за замовчуванням запитує ordinals/payment/stacks
-        addresses: ['ordinals', 'payment', 'stacks'],
         message: 'Connect to OWL',
       });
-    } catch (e) {
-      // фолбек на старі провайдери
-      const prov = window.BitcoinProvider || window.bitcoin;
-      if (!prov || typeof prov.request !== 'function') throw e;
-      resp = await prov.request('wallet_connect', {
-        network: 'Mainnet',
-        addresses: ['ordinals', 'payment', 'stacks'],
-        message: 'Connect to OWL',
-      });
+      addresses = res?.addresses || res?.result?.addresses || [];
+    } catch (_) { /* падаємо у фолбек */ }
+
+
+    if (!addresses.length) {
+      const prov = window.bitcoin?.request ? window.bitcoin : (window.BitcoinProvider || null);
+      if (prov?.request) {
+        const resp = await prov.request('wallet_connect', {
+          network: 'Mainnet',
+          addresses: ['ordinals', 'payment'],
+          message: 'Connect to OWL',
+        });
+        addresses =
+          resp?.addresses ||
+          resp?.result?.addresses ||
+          resp?.result || [];
+      }
     }
 
-    console.log('wallet_connect raw:', resp);
-
-    // 3) Нормалізуємо відповідь (у різних версіях ключ може бути різним)
-    const list =
-      (Array.isArray(resp?.result?.addresses) && resp.result.addresses) ||
-      (Array.isArray(resp?.addresses) && resp.addresses) ||
-      (Array.isArray(resp?.result) && resp.result) ||
-      [];
-
-    if (!list.length) {
-      alert("Xverse did not return the address. Create an Ordinals account and do not uncheck the box in the popup.");
+    if (!addresses.length) {
+      alert('Xverse не повернув адресу. Створіть Ordinals-акаунт у Xverse і НЕ знімайте галочку "Ordinals address" у попапі.');
       return;
     }
+
+    const ord = addresses.find(a => (a.purpose||a.type) === 'ordinals');
+    const pay = addresses.find(a => (a.purpose||a.type) === 'payment');
+    const address = (ord || pay || addresses[0])?.address;
+    if (!address) { alert('Невірна відповідь Xverse (немає поля address).'); return; }
+
+
+    try {
+      const { request } = await window.loadSatsV3();
+      const nonce = crypto.getRandomValues(new Uint8Array(16)).reduce((s,b)=>s+b.toString(16).padStart(2,'0'),'');
+      const msg = `OWL login
+Domain: ${location.origin}
+Address: ${address}
+Nonce: ${nonce}
+Time: ${new Date().toISOString()}`;
+      await request('signMessage', { address, message: msg, signatureType: 'bip322-simple' });
+    } catch {}
+
+
+    setConnectedWalletAddress(address);
+    updateWalletButtons(address);
+    await populateSidebarUserInfo(address);
+
+    const amAdmin = isAdmin(address);
+    setSidebarAccess({ loggedIn: true, isHolder: amAdmin });
+    setChatInputsEnabled(amAdmin, address);
+    initUnreadTracking(address);
+    initSettingsUI(address);
+    renderMyCollection(address);
+
+    const info = await getHolderInfoOnce(address).catch(()=>null);
+    const can = amAdmin || !!info?.found;
+    setSidebarAccess({ loggedIn: true, isHolder: can });
+    setChatInputsEnabled(can, address);
+    updateMobileSectionsDropdown();
+    if (can) showSection('collection');
+    await recalcSectionIndicators(address);
+  } catch (err) {
+    console.error('Xverse connect error:', err);
+    alert('Xverse connection failed. Перевірте, що Ordinals-акаунт створений і галочку в попапі не знято.');
+  }
+}
 
     const ord = list.find(a => a.purpose === 'ordinals' || a.purpose === AddressPurpose.Ordinals);
     const pay = list.find(a => a.purpose === 'payment'  || a.purpose === AddressPurpose.Payment);
@@ -4596,9 +4656,9 @@ if (wrapper && dropdown) {
       return;
     }
 
-      moveHeaderButtonsIntoWalletMenu();
-      buildSectionsInWalletDropdown();
-    dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+      const willShow = dropdown.style.display !== "block";
+    dropdown.style.display = willShow ? "block" : "none";
+    document.body.classList.toggle('menu-open', willShow); 
   });
 }
 
