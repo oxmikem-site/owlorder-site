@@ -4508,8 +4508,8 @@ async function connectXverseWallet () {
     if (!address) {
       const hadOrd = norm.some(a => (a.purpose || '').toLowerCase() === 'ordinals');
       alert(hadOrd
-        ? "Failed to read address from Xverse."
-        : "Xverse did not return the address. Create an Ordinals account in Xverse and DO NOT uncheck the "Ordinals address" box in the popup.");
+  ? 'Failed to read address from Xverse.'
+  : 'Xverse did not return the address. Create an Ordinals account in Xverse and DO NOT uncheck the "Ordinals address" box in the popup.');
       return;
     }
 
