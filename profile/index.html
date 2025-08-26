@@ -4435,6 +4435,7 @@ currentWallet = address;
   }
 }
 
+
 async function connectXverseWallet () {
   const hasXverse =
     !!window.BitcoinProvider ||
@@ -4442,13 +4443,10 @@ async function connectXverseWallet () {
     !!window.xverseProviders ||
     (window?.bitcoin && typeof window.bitcoin.request === "function");
 
-  if (!hasXverse) {
-    alert("Xverse не знайдено. Увімкніть розширення і дозвольте доступ сайту.");
-    return;
-  }
+  if (!hasXverse) { alert("Xverse not found. Enable the extension and allow access to the site."); return; }
 
   try {
-    // 1) пробуємо через sats-connect (wallet_connect)
+  
     const { request, AddressPurpose } = await window.loadSatsV3();
 
     let resp;
@@ -4459,36 +4457,66 @@ async function connectXverseWallet () {
         message: 'Connect to OWL',
       });
     } catch (e) {
-      // 2) фолбек на window.bitcoin / BitcoinProvider
       const prov = window.BitcoinProvider || window.bitcoin;
       if (!prov || typeof prov.request !== 'function') throw e;
-      resp = await prov.request('wallet_connect', {
-        network: 'Mainnet',
-        addresses: ['ordinals', 'payment', 'stacks'],
-        message: 'Connect to OWL',
-      });
+      try {
+        resp = await prov.request('wallet_connect', {
+          network: 'Mainnet',
+          addresses: ['ordinals', 'payment', 'stacks'],
+          message: 'Connect to OWL',
+        });
+      } catch {
+        resp = await prov.request('getAddresses', { network: 'Mainnet' });
+      }
     }
 
-    // 3) витягуємо адреси у всіх відомих форматах відповіді
-    const list =
-      (Array.isArray(resp?.result?.addresses) && resp.result.addresses) ||
-      (Array.isArray(resp?.addresses)        && resp.addresses)        ||
-      (Array.isArray(resp?.result)           && resp.result)           || [];
+    const norm = (() => {
+      const out = [];
 
-    // бувають поля purpose або type — врахуємо обидва
-    const ord = list.find(a => (a.purpose || a.type) === 'ordinals' || (a.purpose === AddressPurpose?.Ordinals));
-    const pay = list.find(a => (a.purpose || a.type) === 'payment'  || (a.purpose === AddressPurpose?.Payment));
-    const chosen  = ord || pay || list[0];
+      const arr =
+        (Array.isArray(resp?.result?.addresses) && resp.result.addresses) ||
+        (Array.isArray(resp?.addresses) && resp.addresses) ||
+        (Array.isArray(resp?.result) && resp.result) || null;
+
+      if (Array.isArray(arr)) {
+        arr.forEach(a => {
+          if (!a) return;
+          if (typeof a === 'string') out.push({ purpose: 'unknown', address: a });
+          else if (a.address) out.push({ purpose: (a.purpose || a.type || 'unknown'), address: a.address });
+        });
+      }
+
+      const map = resp?.result?.addresses || resp?.addresses;
+      if (map && typeof map === 'object' && !Array.isArray(map)) {
+        for (const [purpose, v] of Object.entries(map)) {
+          if (!v) continue;
+          if (typeof v === 'string') out.push({ purpose, address: v });
+          else if (typeof v === 'object' && v.address) out.push({ purpose: (v.purpose || purpose), address: v.address });
+        }
+      }
+      return out;
+    })();
+
+    const pick = (want) => norm.find(a =>
+      (a.purpose || '').toLowerCase() === want ||
+      (AddressPurpose && a.purpose === AddressPurpose[want.charAt(0).toUpperCase()+want.slice(1)])
+    );
+
+    const chosen = pick('ordinals') || pick('payment') || norm[0];
     const address = chosen?.address;
 
     if (!address) {
-      alert("Xverse не повернув адресу. Створіть Ordinals-акаунт у Xverse і НЕ знімайте галочку “Ordinals address” у попапі.");
+      const hadOrd = norm.some(a => (a.purpose || '').toLowerCase() === 'ordinals');
+      alert(hadOrd
+        ? "Failed to read address from Xverse."
+        : "Xverse did not return the address. Create an Ordinals account in Xverse and DO NOT uncheck the "Ordinals address" box in the popup.");
       return;
     }
 
-    // 4) (опційно) підтвердження володіння — якщо підтримує, інакше ігноруємо
+    // 4) (опційно) підпис
     try {
-      const nonce = (() => { const b = new Uint8Array(16); crypto.getRandomValues(b); return Array.from(b).map(x=>x.toString(16).padStart(2,'0')).join(''); })();
+      const b = new Uint8Array(16); crypto.getRandomValues(b);
+      const nonce = Array.from(b).map(x=>x.toString(16).padStart(2,'0')).join('');
       const message =
 `OWL login
 Domain: ${location.origin}
@@ -4497,12 +4525,11 @@ Nonce: ${nonce}
 Time: ${new Date().toISOString()}`;
       await request('signMessage', { address, message, signatureType: 'bip322-simple' });
     } catch (e) {
-      // якщо користувач відхилив або гаманець не вміє — не блокуємо конект
       const code = String(e?.error?.code || e?.code || '');
-      if (code.includes('USER_REJECTION')) { alert('Підпис відхилено у Xverse.'); return; }
+      if (code.includes('USER_REJECTION')) { alert('Signature rejected in Xverse.'); return; }
+
     }
 
-    // 5) далі — твій існуючий потік
     setConnectedWalletAddress(address);
     updateWalletButtons(address);
     await populateSidebarUserInfo(address);
