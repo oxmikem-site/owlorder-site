@@ -4253,9 +4253,9 @@ function expandSidebarForSelection(){
 function enterMobileMode(){
   if (__mobileReady) return;
   document.body.classList.add('mobile-ui');
-  expandSidebarForSelection();            // старт — тільки сайдбар
-  moveHeaderButtonsIntoWalletMenu();      // хедерні кнопки → дропер
-  buildSectionsInWalletDropdown();        // секції → дропер
+  expandSidebarForSelection();      
+  moveHeaderButtonsIntoWalletMenu();     
+  buildSectionsInWalletDropdown();       
   __mobileReady = true;
 }
 function maybeCollapseAfterPick(){
@@ -4263,7 +4263,7 @@ function maybeCollapseAfterPick(){
   if (!document.body.classList.contains('collapsed-mode')) collapseSidebar();
 }
 
-/* ==== Старт програми ==== */
+
 window.addEventListener("DOMContentLoaded", async () => {
   // Firebase
  app = (firebase.apps && firebase.apps.length)
@@ -4288,7 +4288,7 @@ window.addEventListener('resize', () => {
   if (mobileNow && !wasMobile) {
     enterMobileMode();
   } else if (!mobileNow && wasMobile) {
-    // повернення до десктопу
+
 document.body.classList.remove('mobile-ui','choose-mode','collapsed-mode');
 __mobileReady = false;
 expandSidebarFromTopBar();
@@ -4297,7 +4297,6 @@ if (header) header.style.display = '';
   }
 });
 
-    // коли повертаємося на сторінку з гаманця — пересинхронізувати UI
 document.addEventListener('visibilitychange', async () => {
   if (document.visibilityState !== 'visible') return;
   const saved = getConnectedWalletAddress();
@@ -4411,17 +4410,14 @@ await populateSidebarUserInfo(address);
 currentWallet = address;
 
 
-    // тимчасово даємо доступ адмінам (до перевірки холдера)
     const amAdmin = isAdmin(address);
     setSidebarAccess({ loggedIn: true, isHolder: amAdmin });
     setChatInputsEnabled(amAdmin, currentWallet);
 
-    // ініціалізації
     initUnreadTracking(address);
     initSettingsUI(address);
     renderMyCollection(address);
 
-    // фінальна перевірка холдера
     getHolderInfoOnce(address).then(async info => {
       const can = amAdmin || !!info?.found;
       currentIsHolder = !!info?.found;
@@ -4437,124 +4433,140 @@ currentWallet = address;
 }
 
 async function connectXverseWallet () {
+  const hasXverse =
+    !!window.BitcoinProvider ||
+    !!window.XverseProviders ||
+    !!window.xverseProviders ||
+    (window?.bitcoin && typeof window.bitcoin.request === "function");
+
+  if (!hasXverse) {
+    alert("Xverse не знайдено. Увімкніть розширення і дозвольте доступ сайту.");
+    return;
+  }
+
   try {
-    const { request, getProviders, AddressPurpose } = await window.loadSatsV3();
+    const { request, AddressPurpose } = await window.loadSatsV3();
 
-    // 1) Перевірка провайдера + мобільний редірект
-    let hasProvider = false;
+
+    let resp;
     try {
-      const providers = (typeof getProviders === 'function') ? await getProviders() : [];
-      hasProvider = Array.isArray(providers) && providers.length > 0;
-    } catch {}
-    // Фолбеки на старі ін’єкції
-    hasProvider = hasProvider || !!(window.BitcoinProvider || window.bitcoin || window.XverseProviders || window.xverseProviders);
-
-    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-    if (!hasProvider && isMobile) {
-      const link = 'https://connect.xverse.app/browser?url=' + encodeURIComponent(location.href);
-      location.href = link;
-      return;
-    }
-    if (!hasProvider) {
-      alert('Xverse не знайдено. Увімкніть розширення або відкрийте цю сторінку в Xverse.');
-      return;
-    }
-
-    // 2) Основний конект
-    let res = await request('wallet_connect', {
-      network: 'Mainnet',
-      addresses: [AddressPurpose.ORDINALS, AddressPurpose.PAYMENT],
-      message: 'Connect to OWL'
-    });
-    console.debug('wallet_connect response:', res);
-
-    let addresses =
-      res?.result?.addresses ??
-      res?.addresses ??
-      (Array.isArray(res?.result) ? res.result : []);
-
-    // 3) Фолбеки, якщо адреси не прийшли
-    if (!addresses?.length) {
-      try {
-        const r2 = await request('getAddresses', { purposes: ['ordinals','payment'] });
-        console.debug('getAddresses response:', r2);
-        addresses = r2?.result?.addresses ?? r2?.addresses ?? [];
-      } catch (e) {
-        console.warn('getAddresses failed', e);
-      }
-    }
-    if (!addresses?.length) {
-      try {
-        const r3 = await request('wallet_getAccount');
-        console.debug('wallet_getAccount response:', r3);
-        addresses = r3?.result?.addresses ?? r3?.addresses ?? [];
-      } catch (e) {
-        console.warn('wallet_getAccount failed', e);
-      }
+      resp = await request('wallet_connect', {
+        network: 'Mainnet',
+        addresses: ['ordinals', 'payment', 'stacks'],
+        message: 'Connect to OWL',
+      });
+    } catch (e) {
+      // фолбек на старі провайдери
+      const prov = window.BitcoinProvider || window.bitcoin;
+      if (!prov || typeof prov.request !== 'function') throw e;
+      resp = await prov.request('wallet_connect', {
+        network: 'Mainnet',
+        addresses: ['ordinals', 'payment', 'stacks'],
+        message: 'Connect to OWL',
+      });
     }
 
-    if (!addresses?.length) {
-      alert('Xverse підключено, але адреси не повернуті. Увімкніть або створіть Ordinals-акаунт (bc1p…) у Xverse і повторіть спробу.');
+    console.log('wallet_connect raw:', resp);
+
+
+    const list =
+      (Array.isArray(resp?.result?.addresses) && resp.result.addresses) ||
+      (Array.isArray(resp?.addresses) && resp.addresses) ||
+      (Array.isArray(resp?.result) && resp.result) ||
+      [];
+
+    if (!list.length) {
+      alert("Xverse did not return the address. Create an Ordinals account and do not uncheck the box in the popup.");
       return;
     }
 
-    // 4) Вибір Ordinals або Payment адреси
-    const pick = (list) => {
-      const norm = v => (v?.purpose || v?.type || '').toLowerCase();
-      return list.find(a => norm(a) === 'ordinals') || list.find(a => norm(a) === 'payment') || list[0];
-    };
-    const chosen  = pick(addresses);
+    const ord = list.find(a => a.purpose === 'ordinals' || a.purpose === AddressPurpose.Ordinals);
+    const pay = list.find(a => a.purpose === 'payment'  || a.purpose === AddressPurpose.Payment);
+    const chosen = ord || pay || list[0];
     const address = chosen?.address;
 
     if (!address) {
-      alert('Xverse не повернув адресу. Спробуйте ще раз або перевірте наявність Ordinals-акаунта.');
+      alert("Xverse returned an invalid response (no address field).");
       return;
     }
 
-    // 5) (Опційно) підтвердження підписом BIP-322
-    try {
-      const nonce = Math.random().toString(36).slice(2);
-      const msg =
+    const nonce = (() => {
+      const b = new Uint8Array(16); crypto.getRandomValues(b);
+      return Array.from(b).map(x => x.toString(16).padStart(2, '0')).join('');
+    })();
+
+    const message =
 `OWL login
 Domain: ${location.origin}
 Address: ${address}
 Nonce: ${nonce}
 Time: ${new Date().toISOString()}`;
-      await request('signMessage', { address, protocol: 'bip322', message: msg });
+
+    let signResp;
+    try {
+      signResp = await request('signMessage', {
+        address,
+        message,
+        signatureType: 'bip322-simple',
+      });
     } catch (e) {
-      const code = String(e?.error?.code ?? e?.code ?? '');
-      if (!code.includes('USER_REJECTION')) console.warn('signMessage failed', e);
+      const code = String(e?.error?.code || e?.code || '');
+      if (code.includes('USER_REJECTION')) {
+        alert('Signature rejected in Xverse window.');
+        return;
+      }
+      throw e;
     }
 
-    // 6) Інтеграція з вашим UI
-    setConnectedWalletAddress(address);
-    updateWalletButtons(address);
-    await populateSidebarUserInfo(address);
+    const signature =
+      signResp?.result?.signature ||
+      signResp?.signature ||
+      signResp?.result?.signatureHex || '';
+
+    if (!signature) {
+      alert('Xverse did not return a signature.');
+      return;
+    }
+
+    // 5) твій потік після успіху
+    const uid = window.CURRENT_UID;
+    if (!uid) { alert('Auth not ready, try again.'); return; }
+
+    await db.ref(`proofs/${address.toLowerCase()}`).set({
+      uid, wallet: 'xverse', address, message, signature,
+      createdAt: Date.now(), version: 1,
+    });
+
+   setConnectedWalletAddress(address);
+updateWalletButtons(address);
+await populateSidebarUserInfo(address);
 
     const amAdmin = isAdmin(address);
     setSidebarAccess({ loggedIn: true, isHolder: amAdmin });
     setChatInputsEnabled(amAdmin, address);
-
     initUnreadTracking(address);
     initSettingsUI(address);
     renderMyCollection(address);
 
-    const info = await getHolderInfoOnce(address).catch(() => null);
-    const can  = amAdmin || !!info?.found;
-    setSidebarAccess({ loggedIn: true, isHolder: can });
-    setChatInputsEnabled(can, address);
-    updateMobileSectionsDropdown();
-    if (can) showSection('collection');
-    await recalcSectionIndicators(address);
+    getHolderInfoOnce(address).then(async info => {
+      const can = amAdmin || !!info?.found;
+      setSidebarAccess({ loggedIn: true, isHolder: can });
+      setChatInputsEnabled(can, address);
+        updateMobileSectionsDropdown();
+      if (can) showSection('collection');
+      await recalcSectionIndicators(address);
+    });
 
   } catch (err) {
-    const code = String(err?.error?.code ?? err?.code ?? '');
-    if (code.includes('USER_REJECTION')) return; // користувач відмінив — це ок
     console.error('Xverse connect error:', err);
-    alert('Xverse connection failed: ' + (err?.message || err));
+    const msg = (err?.error?.message || err?.message || '').toString();
+    if (/USER_REJECTION/i.test(msg)) {
+      alert('The Xverse request was rejected in the extension window.');
+    } else {
+      alert('Xverse connection failed. Make sure the addresses are not unchecked and the correct network is selected.');
+    }
   }
 }
-
 
 
 document.querySelectorAll(".wallet-trigger").forEach(btn => {
