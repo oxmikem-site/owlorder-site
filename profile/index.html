@@ -4438,23 +4438,21 @@ currentWallet = address;
 
 async function connectXverseWallet () {
   try {
-    const { request, getProviders } = await window.loadSatsV3();
+    const { request, getProviders, AddressPurpose } = await window.loadSatsV3();
 
-    // 1) Перевірка наявності провайдера (новий стандарт)
+    // 1) Перевірка провайдера + мобільний редірект
     let hasProvider = false;
     try {
       const providers = (typeof getProviders === 'function') ? await getProviders() : [];
       hasProvider = Array.isArray(providers) && providers.length > 0;
     } catch {}
-    // старі поля як фолбек
+    // Фолбеки на старі ін’єкції
     hasProvider = hasProvider || !!(window.BitcoinProvider || window.bitcoin || window.XverseProviders || window.xverseProviders);
 
-    // 2) Мобільний кейс: якщо провайдера нема – відкриваємо сторінку у Xverse
     const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     if (!hasProvider && isMobile) {
       const link = 'https://connect.xverse.app/browser?url=' + encodeURIComponent(location.href);
-      // можна показати модалку, але тут — простий редірект:
-      location.href = link; 
+      location.href = link;
       return;
     }
     if (!hasProvider) {
@@ -4462,39 +4460,58 @@ async function connectXverseWallet () {
       return;
     }
 
-    // 3) Підключення
-    let resp = await request('wallet_connect', {
+    // 2) Основний конект
+    let res = await request('wallet_connect', {
       network: 'Mainnet',
-      addresses: ['ordinals','payment'],
+      addresses: [AddressPurpose.ORDINALS, AddressPurpose.PAYMENT],
       message: 'Connect to OWL'
-    }); // docs: Connect to Xverse Wallet
-    // 4) Зчитуємо адреси надійно
-    let addresses =
-      resp?.result?.addresses ||
-      resp?.addresses ||
-      (Array.isArray(resp?.result) ? resp.result : []) ||
-      [];
+    });
+    console.debug('wallet_connect response:', res);
 
-    // Спробуємо новий метод, якщо список пустий:
-    if (!addresses.length) {
-      const acc = await request('wallet_getAccount').catch(()=>null); // новий метод
-      const maybe = acc?.result?.addresses || acc?.addresses || [];
-      if (Array.isArray(maybe)) addresses = maybe;
+    let addresses =
+      res?.result?.addresses ??
+      res?.addresses ??
+      (Array.isArray(res?.result) ? res.result : []);
+
+    // 3) Фолбеки, якщо адреси не прийшли
+    if (!addresses?.length) {
+      try {
+        const r2 = await request('getAddresses', { purposes: ['ordinals','payment'] });
+        console.debug('getAddresses response:', r2);
+        addresses = r2?.result?.addresses ?? r2?.addresses ?? [];
+      } catch (e) {
+        console.warn('getAddresses failed', e);
+      }
+    }
+    if (!addresses?.length) {
+      try {
+        const r3 = await request('wallet_getAccount');
+        console.debug('wallet_getAccount response:', r3);
+        addresses = r3?.result?.addresses ?? r3?.addresses ?? [];
+      } catch (e) {
+        console.warn('wallet_getAccount failed', e);
+      }
     }
 
-    // вибір Ordinals або перший доступний
-    const pick = (list) => {
-      const norm = (v) => (v?.purpose || v?.type || '').toLowerCase();
-      return list.find(a => norm(a) === 'ordinals') || list.find(a => norm(a) === 'payment') || list[0];
-    };
-    const chosen = pick(addresses || []);
-    const address = chosen?.address;
-    if (!address) {
-      alert('Гаманець не повернув адресу. У Xverse має бути увімкнений Ordinals-акаунт.');
+    if (!addresses?.length) {
+      alert('Xverse підключено, але адреси не повернуті. Увімкніть або створіть Ordinals-акаунт (bc1p…) у Xverse і повторіть спробу.');
       return;
     }
 
-    // 5) (опційно) перевірочний підпис — новий параметр protocol
+    // 4) Вибір Ordinals або Payment адреси
+    const pick = (list) => {
+      const norm = v => (v?.purpose || v?.type || '').toLowerCase();
+      return list.find(a => norm(a) === 'ordinals') || list.find(a => norm(a) === 'payment') || list[0];
+    };
+    const chosen  = pick(addresses);
+    const address = chosen?.address;
+
+    if (!address) {
+      alert('Xverse не повернув адресу. Спробуйте ще раз або перевірте наявність Ordinals-акаунта.');
+      return;
+    }
+
+    // 5) (Опційно) підтвердження підписом BIP-322
     try {
       const nonce = Math.random().toString(36).slice(2);
       const msg =
@@ -4503,17 +4520,13 @@ Domain: ${location.origin}
 Address: ${address}
 Nonce: ${nonce}
 Time: ${new Date().toISOString()}`;
-      await request('signMessage', { address, protocol: 'bip322', message: msg }); // новий API
+      await request('signMessage', { address, protocol: 'bip322', message: msg });
     } catch (e) {
-      const code = String(e?.error?.code || e?.code || '');
-      if (code.includes('USER_REJECTION')) {
-        // користувач відхилив — не критично для логіну
-      } else {
-        console.warn('signMessage failed', e);
-      }
+      const code = String(e?.error?.code ?? e?.code ?? '');
+      if (!code.includes('USER_REJECTION')) console.warn('signMessage failed', e);
     }
 
-    // 6) Далі ваш існуючий UI-потік
+    // 6) Інтеграція з вашим UI
     setConnectedWalletAddress(address);
     updateWalletButtons(address);
     await populateSidebarUserInfo(address);
@@ -4521,12 +4534,13 @@ Time: ${new Date().toISOString()}`;
     const amAdmin = isAdmin(address);
     setSidebarAccess({ loggedIn: true, isHolder: amAdmin });
     setChatInputsEnabled(amAdmin, address);
+
     initUnreadTracking(address);
     initSettingsUI(address);
     renderMyCollection(address);
 
-    const info = await getHolderInfoOnce(address).catch(()=>null);
-    const can = amAdmin || !!info?.found;
+    const info = await getHolderInfoOnce(address).catch(() => null);
+    const can  = amAdmin || !!info?.found;
     setSidebarAccess({ loggedIn: true, isHolder: can });
     setChatInputsEnabled(can, address);
     updateMobileSectionsDropdown();
@@ -4534,10 +4548,13 @@ Time: ${new Date().toISOString()}`;
     await recalcSectionIndicators(address);
 
   } catch (err) {
+    const code = String(err?.error?.code ?? err?.code ?? '');
+    if (code.includes('USER_REJECTION')) return; // користувач відмінив — це ок
     console.error('Xverse connect error:', err);
-    alert('Xverse connection failed.');
+    alert('Xverse connection failed: ' + (err?.message || err));
   }
 }
+
 
 
 document.querySelectorAll(".wallet-trigger").forEach(btn => {
