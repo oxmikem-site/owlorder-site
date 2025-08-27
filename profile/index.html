@@ -1323,17 +1323,17 @@ body{
 }
 
 #wallet-header-dropdown{
-  position: fixed;           
-  z-index: 100000;           
-  min-width: 260px;
+  position: fixed;
+  z-index: 100000;
+  display: none;
+  width: max-content;                 /* під контент */
+  max-width: min(380px, calc(100vw - 24px));  /* clamp */
   background: #161616;
   border: 1px solid #333;
   border-radius: 12px;
   box-shadow: 0 14px 50px rgba(0,0,0,.55);
-  display: none;             
-  pointer-events: auto;
+  overflow: hidden;
 }
-
 
     </style>
 </head>
@@ -1812,9 +1812,15 @@ function setSidebarAccess({ loggedIn, isHolder }) {
 
 
   const connectBtn = document.getElementById("sidebar-connect-btn");
-  if (connectBtn) connectBtn.style.display = loggedIn ? "none" : "inline-block";
+if (connectBtn) {
+  const amAdmin = isAdmin(wallet);
+  if (!loggedIn) {
+    connectBtn.style.display = "inline-block";
+  } else {
+    const showGetOwl = !amAdmin && !isHolder;
+    connectBtn.style.display = showGetOwl ? "inline-block" : "none";
+  }
 }
-
 
 function collapseSidebarToTopBar() {
   const el = document.getElementById('sidebar-nav');
@@ -1827,15 +1833,8 @@ function expandSidebarFromTopBar() {
   if (wrap) wrap.style.display = '';
 }
 function updateMobileSectionsDropdown() {
-  const dd = document.getElementById('wallet-header-dropdown');
-  if (!dd) return;
-
-  let box = dd.querySelector('.sections-dropdown');
-  if (!box){
-    box = document.createElement('div');
-    box.className = 'sections-dropdown';
-    dd.appendChild(box);
-  }
+  buildSectionsInWalletDropdown();
+}
 
   const items = Array.from(document.querySelectorAll('#sidebar-nav a[data-section]'))
     .filter(a => a.closest('li')?.style.display !== 'none')
@@ -2992,13 +2991,11 @@ if (ptsEl) ptsEl.style.display = "none";
 getHolderInfoOnce(address).then(info => {
   cachedHolderInfo = info;
 
-
   if (info.imageId) {
     setProfileImageById(info.imageId);
   } else if (img) {
     img.style.display = "none";
   }
-
 
   if (ptsEl) {
     if (info.points != null && info.points !== "") {
@@ -3008,14 +3005,15 @@ getHolderInfoOnce(address).then(info => {
       ptsEl.style.display = "none";
     }
   }
-
   if (connectBtn) {
-    if (info.imageId) {
-      connectBtn.style.display = "none";
-    } else {
+    const amAdmin = isAdmin(address);
+    const shouldShowGetOwl = !amAdmin && info && info.found === false;
+    if (shouldShowGetOwl) {
       connectBtn.textContent = "Get your OWL";
       connectBtn.onclick = () => { window.location.href = "https://owlbtc.art/collection"; };
       connectBtn.style.display = "inline-block";
+    } else {
+      connectBtn.style.display = "none";
     }
   }
 });
@@ -4602,18 +4600,24 @@ document.querySelectorAll(".wallet-trigger").forEach(btn => {
 
   // перенести елемент у <body>, щоб вийти з будь-яких stacking-context
   if (!dropdown.__movedToBody) {
+    dropdown.addEventListener('click', e => e.stopPropagation());
     document.body.appendChild(dropdown);
     dropdown.__movedToBody = true;
     dropdown.style.position = 'fixed';
     dropdown.style.zIndex   = '100000';
   }
 
-  function positionDropdown() {
-    const r = wrapper.getBoundingClientRect();
-    dropdown.style.top   = (r.bottom + 8) + "px";                   // під кнопкою
-    dropdown.style.right = Math.max(12, window.innerWidth - r.right) + "px";
-    dropdown.style.left  = "auto";
-  }
+function positionDropdown() {
+  const r = wrapper.getBoundingClientRect();
+  const gap = 8;
+  const rightPx = Math.max(12, window.innerWidth - r.right);
+  dropdown.style.top = (r.bottom + gap) + "px";
+  dropdown.style.left = "auto";
+  dropdown.style.right = rightPx + "px";
+  const maxPx = Math.min(380, window.innerWidth - 24);
+  dropdown.style.maxWidth = maxPx + "px";
+  dropdown.style.width = "max-content";
+}
 
   function showDropdown(show) {
     if (show) {
