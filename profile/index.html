@@ -1309,10 +1309,10 @@ body{
   .only-mobile{ display:block !important; }
 }
 
-/* дропдаун гамансета — завжди прихований за замовчуванням */
+
 #wallet-header-dropdown{ display:none; }
 
-/* на мобі – позиціонуємо як фіксований попап, щоб не «вилазив» */
+
 @media (max-width:900px){
   #wallet-header-dropdown{
     position: fixed !important;
@@ -1321,6 +1321,19 @@ body{
     z-index: 1000;
   }
 }
+
+#wallet-header-dropdown{
+  position: fixed;           
+  z-index: 100000;           
+  min-width: 260px;
+  background: #161616;
+  border: 1px solid #333;
+  border-radius: 12px;
+  box-shadow: 0 14px 50px rgba(0,0,0,.55);
+  display: none;             
+  pointer-events: auto;
+}
+
 
     </style>
 </head>
@@ -4581,15 +4594,43 @@ document.querySelectorAll(".wallet-trigger").forEach(btn => {
   });
 });
 
-// Дропдаун у хедері
-const wrapper = document.querySelector(".wallet-wrapper");
-const dropdown = document.getElementById("wallet-header-dropdown");
-if (wrapper && dropdown) {
+// === HEADER DROPDOWN (завжди поверх) ===
+(function setupWalletDropdownOnTop(){
+  const wrapper  = document.querySelector(".wallet-wrapper");
+  const dropdown = document.getElementById("wallet-header-dropdown");
+  if (!wrapper || !dropdown) return;
+
+  // перенести елемент у <body>, щоб вийти з будь-яких stacking-context
+  if (!dropdown.__movedToBody) {
+    document.body.appendChild(dropdown);
+    dropdown.__movedToBody = true;
+    dropdown.style.position = 'fixed';
+    dropdown.style.zIndex   = '100000';
+  }
+
+  function positionDropdown() {
+    const r = wrapper.getBoundingClientRect();
+    dropdown.style.top   = (r.bottom + 8) + "px";                   // під кнопкою
+    dropdown.style.right = Math.max(12, window.innerWidth - r.right) + "px";
+    dropdown.style.left  = "auto";
+  }
+
+  function showDropdown(show) {
+    if (show) {
+      positionDropdown();
+      dropdown.style.display = "block";
+      document.body.classList.add("menu-open");
+    } else {
+      dropdown.style.display = "none";
+      document.body.classList.remove("menu-open");
+    }
+  }
+
   wrapper.addEventListener("click", (e) => {
     e.stopPropagation();
-    const saved = getConnectedWalletAddress();
+    const saved = getConnectedWalletAddress && getConnectedWalletAddress();
     if (!saved) {
-      // маленький вибірник
+      // твій маленький пікер підключення — залишаю як було
       const pick = document.createElement('div');
       pick.style.position = 'fixed';
       pick.style.inset = '0';
@@ -4614,16 +4655,20 @@ if (wrapper && dropdown) {
       return;
     }
 
-      const willShow = dropdown.style.display !== "block";
-    dropdown.style.display = willShow ? "block" : "none";
-    document.body.classList.toggle('menu-open', willShow); 
+    const willShow = dropdown.style.display !== "block";
+    showDropdown(willShow);
   });
-}
 
-document.addEventListener("click", () => {
-  const dd = document.getElementById("wallet-header-dropdown");
-  if (dd) dd.style.display = "none";
-});
+
+  document.addEventListener("click", () => showDropdown(false));
+  window.addEventListener("resize", () => {
+    if (dropdown.style.display === "block") positionDropdown();
+  });
+  window.addEventListener("scroll", () => {
+    if (dropdown.style.display === "block") positionDropdown();
+  });
+})();
+
 
      db.ref('users').on('child_changed', snap => {
   const addr = (snap.key || '').toLowerCase();
