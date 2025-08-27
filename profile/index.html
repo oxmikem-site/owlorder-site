@@ -4273,6 +4273,7 @@ if (header) header.style.display = '';
 
 document.addEventListener('visibilitychange', async () => {
   if (document.visibilityState !== 'visible') return;
+
   const saved = getConnectedWalletAddress();
   if (!saved) return;
 
@@ -4280,14 +4281,33 @@ document.addEventListener('visibilitychange', async () => {
   await populateSidebarUserInfo(saved);
 
   const amAdmin = isAdmin(saved);
-  const info = await getHolderInfoOnce(saved).catch(()=>null);
-  const can = amAdmin || !!info?.found;
+  const info = await getHolderInfoOnce(saved).catch(() => null);
+  const can  = amAdmin || !!info?.found;
 
   setSidebarAccess({ loggedIn: true, isHolder: can });
   setChatInputsEnabled(can, saved);
-  if (can) showSection('collection');
+  const active = document.querySelector('.profile-section.active');
+  const isVisible = active && getComputedStyle(active).display !== 'none';
+  if (!isVisible) {
+    const firstVisibleLink = Array.from(document.querySelectorAll('#sidebar-nav a[data-section]'))
+      .find(a => a.closest('li')?.style.display !== 'none');
+    if (firstVisibleLink) firstVisibleLink.click();
+  }
+
   updateMobileSectionsDropdown();
 });
+    
+document.querySelectorAll('#sidebar-nav a[data-section]').forEach(a => {
+  a.addEventListener('click', () => {
+    localStorage.setItem('last_section', a.getAttribute('data-section'));
+  });
+});
+
+const last = localStorage.getItem('last_section');
+if (last) {
+  const link = document.querySelector(`#sidebar-nav a[data-section="${last}"]`);
+  if (link && link.closest('li')?.style.display !== 'none') link.click();
+}
 
     /* ===== WALLET PICKER (UniSat + Xverse) ===== */
 function ensurePickerMask(){
@@ -4385,8 +4405,15 @@ currentWallet = address;
 
 
     const amAdmin = isAdmin(address);
-    setSidebarAccess({ loggedIn: true, isHolder: amAdmin });
-    setChatInputsEnabled(amAdmin, currentWallet);
+    setSidebarAccess({ loggedIn: true, isHolder: false });
+setChatInputsEnabled(false, address);
+getHolderInfoOnce(address).then(info => {
+  const can = amAdmin || !!info?.found;
+  setSidebarAccess({ loggedIn: true, isHolder: can });
+  setChatInputsEnabled(can, address);
+  if (can) showSection('collection');
+  recalcSectionIndicators(address);
+});
 
     initUnreadTracking(address);
     initSettingsUI(address);
