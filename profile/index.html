@@ -1772,7 +1772,7 @@ function sectionAllowsPosting(section, wallet){
 }
 
 
-const HOLDER_ONLY = new Set(["links","announcements","general","share-art","spot-request","raffles","settings","collection"]);
+const HOLDER_ONLY = new Set(["links","announcements","general","share-art","spot-request","raffles","collection"]);
 
 
 function setSidebarAccess({ loggedIn, isHolder }) {
@@ -1871,7 +1871,7 @@ const replyToMessageBySection = {};
 let cachedHolderInfo = null;
 
 
-const HOLDER_CACHE_TTL = 6 * 60 * 60 * 1000; 
+const HOLDER_CACHE_TTL = 10 * 60 * 1000;
 
 function readHolderCache(address){
   try {
@@ -4045,20 +4045,43 @@ async function toggleReactionForMessage(section, key, emoji) {
   if (!wallet) return;
   const ref = getChatMessagesRef(section).child(key).child('reactions');
 
-  await ref.transaction(reactions => {
-    reactions = reactions || {};
-    const cur = (reactions[emoji] && typeof reactions[emoji] === 'object') ? reactions[emoji] : {};
-    if (cur[wallet]) {
-      delete cur[wallet];
-      if (Object.keys(cur).length === 0) delete reactions[emoji];
-      else reactions[emoji] = cur;
+ async function toggleReactionForMessage(section, key, emoji) {
+   const wallet = (getConnectedWalletAddress() || '').toLowerCase();
+   if (!wallet) return;
+   const ref = getChatMessagesRef(section).child(key).child('reactions');
+
+ await ref.transaction((raw) => {
+    const reactions = (raw && typeof raw === 'object') ? { ...raw } : {};
+    const em = String(emoji);
+
+    // 1) поточний список користувачів для емодзі уніфікуємо в мапу
+    const rawUsers = reactions[em];
+    const users = {};
+    if (Array.isArray(rawUsers)) {
+      rawUsers.forEach(a => { if (a) users[String(a).toLowerCase()] = true; });
+    } else if (rawUsers && typeof rawUsers === 'object') {
+      Object.keys(rawUsers).forEach(a => {
+        if (rawUsers[a]) users[String(a).toLowerCase()] = true;
+      });
+    }
+
+    // 2) тумблер для мого гаманця
+    if (users[wallet]) {
+      delete users[wallet];
+      if (Object.keys(users).length) reactions[em] = users;
+      else delete reactions[em];
     } else {
-      if (!reactions[emoji] && Object.keys(reactions).length >= 6) return; // abort
-      reactions[emoji] = { ...cur, [wallet]: true };
+      if (!reactions[em] && Object.keys(reactions).length >= 6) return reactions; // не даємо 7-му емодзі
+     users[wallet] = true;
+      reactions[em] = users;
     }
     return reactions;
+  }).catch((e) => {
+    console.error('Reaction update failed:', e);
+    alert('Failed to react (permissions/rules?).');
   });
-}
+ }
+
 
                 async function migrateReactions() {
   for (const section of chatSections) {
