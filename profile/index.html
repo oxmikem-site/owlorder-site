@@ -1776,8 +1776,8 @@ const HOLDER_ONLY = new Set(["links","announcements","general","share-art","spot
 
 
 function setSidebarAccess({ loggedIn, isHolder }) {
-  const wallet   = getConnectedWalletAddress();
-  const amAdmin  = isAdmin(wallet);
+  const wallet    = getConnectedWalletAddress();
+  const amAdmin   = isAdmin(wallet);
   const canAccess = !!loggedIn && (amAdmin || !!isHolder);
 
   document.querySelectorAll('#sidebar-nav a[data-section]').forEach(a => {
@@ -1788,12 +1788,14 @@ function setSidebarAccess({ loggedIn, isHolder }) {
     const requiresHolder = HOLDER_ONLY.has(sec);
     const show = requiresHolder ? canAccess : !!loggedIn;
 
-    if (show) {
-      if (li) li.style.display = "";
-      if (panel) panel.style.display = "";
-    } else {
-      if (li) li.style.display = "none";
-      if (panel) { panel.classList.remove("active"); panel.style.display = "none"; }
+    if (li) li.style.display = show ? "" : "none";
+    if (panel) {
+      if (show) {
+        panel.style.display = "";
+      } else {
+        panel.classList.remove("active");
+        panel.style.display = "none";
+      }
     }
   });
 
@@ -1812,15 +1814,16 @@ function setSidebarAccess({ loggedIn, isHolder }) {
 
 
   const connectBtn = document.getElementById("sidebar-connect-btn");
-if (connectBtn) {
-  const amAdmin = isAdmin(wallet);
-  if (!loggedIn) {
-    connectBtn.style.display = "inline-block";
-  } else {
-    const showGetOwl = !amAdmin && !isHolder;
-    connectBtn.style.display = showGetOwl ? "inline-block" : "none";
+  if (connectBtn) {
+    const amAdminNow = isAdmin(wallet);
+    if (!loggedIn) {
+      connectBtn.style.display = "inline-block";
+    } else {
+      const showGetOwl = !amAdminNow && !isHolder;
+      connectBtn.style.display = showGetOwl ? "inline-block" : "none";
+    }
   }
-}
+} 
 
 function collapseSidebarToTopBar() {
   const el = document.getElementById('sidebar-nav');
@@ -1833,30 +1836,10 @@ function expandSidebarFromTopBar() {
   if (wrap) wrap.style.display = '';
 }
 function updateMobileSectionsDropdown() {
+
   buildSectionsInWalletDropdown();
 }
 
-  const items = Array.from(document.querySelectorAll('#sidebar-nav a[data-section]'))
-    .filter(a => a.closest('li')?.style.display !== 'none')
-    .map(a => ({ section: a.getAttribute('data-section'), label: (a.textContent || '').trim() }));
-
-  if (!items.length){ box.innerHTML = ''; return; }
-
-  box.innerHTML = `
-    <div class="dd-title">Sections</div>
-    ${items.map(it => `<button class="dd-item" data-section="${it.section}">${escapeHTML(it.label)}</button>`).join('')}
-  `;
-
-  box.querySelectorAll('.dd-item').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      const sec = btn.getAttribute('data-section');
-      const a = document.querySelector(`#sidebar-nav a[data-section="${sec}"]`);
-      if (a) a.click();
-      dd.style.display = 'none';
-    });
-  });
-}
 
 function setChatInputsEnabled(enabled, wallet) {
   chatSections.forEach(sec => {
@@ -3892,8 +3875,8 @@ function replyTo(key, section) {
 
   const input = document.getElementById(`chat-input-${section}`);
   if (input) {
-    const display = getDisplayNameSync(senderFull);
-input.placeholder = `Replying to ${display}: ${text.slice(0,50)}${text.length>50?'...':''}`;
+const disp = getDisplayNameSync(senderFull);
+input.placeholder = `Replying to ${disp}: ${text.slice(0,50)}${text.length>50?'...':''}`;
 
 prefetchNickname(senderFull).then(nick => {
     if (nick) input.placeholder = `Replying to ${nick}: ${text.slice(0,50)}${text.length>50?'...':''}`;
@@ -4205,15 +4188,17 @@ function buildSectionsInWalletDropdown(){
   const secGroup = dd.querySelector('.menu-group.section-links'); if (!secGroup) return;
   secGroup.classList.add('only-mobile');
   secGroup.querySelectorAll('.menu-item.sec-port').forEach(n => n.remove());
-  document.querySelectorAll('#sidebar-nav a[data-section]').forEach(a => {
-    const sec = a.getAttribute('data-section');
-    const title = (a.textContent || sec).trim();
-    const item = document.createElement('a');
-    item.className = 'menu-item sec-port'; item.href = '#';
-    item.innerHTML = `<span class="dot"></span><span>${title}</span>`;
-    item.addEventListener('click', (e) => { e.preventDefault(); a.click(); dd.style.display = "none"; });
-    secGroup.appendChild(item);
-  });
+document.querySelectorAll('#sidebar-nav a[data-section]').forEach(a => {
+  const li = a.closest('li');
+  if (!li || li.style.display === 'none') return; // ⟵ пропускаємо приховані
+  const sec = a.getAttribute('data-section');
+  const title = (a.textContent || sec).trim();
+  const item = document.createElement('a');
+  item.className = 'menu-item sec-port'; item.href = '#';
+  item.innerHTML = `<span class="dot"></span><span>${title}</span>`;
+  item.addEventListener('click', (e) => { e.preventDefault(); a.click(); dd.style.display = "none"; });
+  secGroup.appendChild(item);
+});
   if (!secGroup.querySelector('.menu-item.reopen-sidebar')) {
     const reopen = document.createElement('a');
     reopen.href = '#'; reopen.className = 'menu-item reopen-sidebar';
@@ -4385,7 +4370,6 @@ function bindSidebarNavOnce(){
   expandSidebarFromTopBar();
 }
 updateMobileSectionsDropdown();
-buildSectionsInWalletDropdown();
     });
   });
 }
