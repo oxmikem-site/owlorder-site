@@ -3722,34 +3722,27 @@ textEl.innerHTML = withEmoji;
 
 
   if (messageObj.reactions) {
-    const reactionRow = document.createElement("div");
-    reactionRow.className = "reaction-row";
-    for (const [emoji, users] of Object.entries(messageObj.reactions)) {
-      const btn = document.createElement("button");
-      btn.className = "reaction-btn";
-      const arr = Array.isArray(users) ? users : [];
-      btn.textContent = `${emoji} ${arr.length}`;
-      if (arr.includes(getConnectedWalletAddress())) btn.classList.add("reacted");
-      btn.addEventListener("click", async () => {
-        const wallet = getConnectedWalletAddress();
-        if (!wallet) return;
-        const msgRef = getChatMessagesRef(section).child(key);
-        const snapshot = await msgRef.get();
-        const msg = snapshot.val();
-        if (!msg) return;
-        const reactions = msg.reactions || {};
-        const currentUsers = Array.isArray(reactions[emoji]) ? reactions[emoji] : [];
-        const hasReacted = currentUsers.includes(wallet);
-        reactions[emoji] = hasReacted
-          ? currentUsers.filter(w => w !== wallet)
-          : [...currentUsers, wallet];
-        if (Array.isArray(reactions[emoji]) && reactions[emoji].length === 0) delete reactions[emoji];
-        await msgRef.update({ reactions });
-      });
-      reactionRow.appendChild(btn);
-    }
-    content.appendChild(reactionRow);
+  const reactionRow = document.createElement("div");
+  reactionRow.className = "reaction-row";
+  for (const [emoji, users] of Object.entries(messageObj.reactions)) {
+    const btn = document.createElement("button");
+    btn.className = "reaction-btn";
+
+    const map = (users && typeof users === 'object') ? users : {};
+    const count = Object.keys(map).length;
+    btn.textContent = `${emoji} ${count}`;
+
+    const me = (getConnectedWalletAddress() || '').toLowerCase();
+    if (map[me]) btn.classList.add("reacted");
+
+    btn.addEventListener("click", async () => {
+      await toggleReactionForMessage(section, key, emoji);
+    });
+
+    reactionRow.appendChild(btn);
   }
+  content.appendChild(reactionRow);
+}
 
 
 const tweetUrls = (messageObj.text || "").match(/https?:\/\/(?:www\.)?(?:mobile\.)?(?:twitter|x)\.com\/[^\/\s]+\/status\/\d+[^\s]*/gi);
@@ -3916,29 +3909,23 @@ function normalizeDiscordHandle(h){
   return h.trim();
 }
 
-
 function updateReactionButtons(reactionRow, updatedMsg, section, key) {
   reactionRow.innerHTML = "";
   for (const [emoji, users] of Object.entries(updatedMsg.reactions || {})) {
     const btn = document.createElement("button");
     btn.className = "reaction-btn";
-    const list = Array.isArray(users) ? users : [];
-    btn.textContent = `${emoji} ${list.length}`;
-    if (list.includes(getConnectedWalletAddress())) btn.classList.add("reacted");
+
+    const map = (users && typeof users === 'object') ? users : {};
+    const count = Object.keys(map).length;
+    btn.textContent = `${emoji} ${count}`;
+
+    const me = (getConnectedWalletAddress() || '').toLowerCase();
+    if (map[me]) btn.classList.add("reacted");
+
     btn.addEventListener("click", async () => {
-      const wallet = getConnectedWalletAddress();
-      if (!wallet) return;
-      const msgRef = getChatMessagesRef(section).child(key);
-      const snap = await msgRef.get();
-      const msg = snap.val();
-      if (!msg) return;
-      const reactions = msg.reactions || {};
-      const cur = Array.isArray(reactions[emoji]) ? reactions[emoji] : [];
-      const has = cur.includes(wallet);
-      reactions[emoji] = has ? cur.filter(w => w !== wallet) : [...cur, wallet];
-      if (Array.isArray(reactions[emoji]) && reactions[emoji].length === 0) delete reactions[emoji];
-      await msgRef.update({ reactions });
+      await toggleReactionForMessage(section, key, emoji);
     });
+
     reactionRow.appendChild(btn);
   }
 }
@@ -4036,34 +4023,11 @@ function openReactionPicker(event, msgKey, section) {
   (anchor || event.currentTarget).appendChild(picker);
 
 
-  picker.addEventListener("emoji-click", async e => {
-    const emoji = e.detail.unicode;
-    const messageRef = getChatMessagesRef(section).child(msgKey);
-    const snapshot = await messageRef.get();
-    const msg = snapshot.val();
-    if (!msg) return;
-
-    const wallet = getConnectedWalletAddress();
-    if (!wallet) return;
-
-    const reactions = msg.reactions || {};
-    const cur = Array.isArray(reactions[emoji]) ? reactions[emoji] : [];
-    const has = cur.includes(wallet);
-
-    if (has) {
-      reactions[emoji] = cur.filter(w => w !== wallet);
-      if (reactions[emoji].length === 0) delete reactions[emoji];
-    } else {
-      if (Object.keys(reactions).length >= 6 && !reactions[emoji]) {
-        alert("Максимум 6 різних реакцій.");
-        return;
-      }
-      reactions[emoji] = [...cur, wallet];
-    }
-    await messageRef.update({ reactions });
-    picker.remove();
-  });
-
+picker.addEventListener("emoji-click", async e => {
+  const emoji = e.detail.unicode;
+  await toggleReactionForMessage(section, msgKey, emoji);
+  picker.remove();
+});
 
   setTimeout(() => {
     const onDocClick = (ev) => {
@@ -4075,6 +4039,51 @@ function openReactionPicker(event, msgKey, section) {
     document.addEventListener("click", onDocClick);
   }, 0);
 }
+
+async function toggleReactionForMessage(section, key, emoji) {
+  const wallet = (getConnectedWalletAddress() || '').toLowerCase();
+  if (!wallet) return;
+  const ref = getChatMessagesRef(section).child(key).child('reactions');
+
+  await ref.transaction(reactions => {
+    reactions = reactions || {};
+    const cur = (reactions[emoji] && typeof reactions[emoji] === 'object') ? reactions[emoji] : {};
+    if (cur[wallet]) {
+      delete cur[wallet];
+      if (Object.keys(cur).length === 0) delete reactions[emoji];
+      else reactions[emoji] = cur;
+    } else {
+      if (!reactions[emoji] && Object.keys(reactions).length >= 6) return; // abort
+      reactions[emoji] = { ...cur, [wallet]: true };
+    }
+    return reactions;
+  });
+}
+
+                async function migrateReactions() {
+  for (const section of chatSections) {
+    const ref = getChatMessagesRef(section);
+    const snap = await ref.get();
+    const updates = {};
+    snap.forEach(s => {
+      const msg = s.val() || {};
+      const r = msg.reactions || {};
+      let changed = false, next = {};
+      Object.entries(r).forEach(([emoji, users]) => {
+        if (Array.isArray(users)) {
+          const map = {};
+          users.forEach(w => { const k=(w||'').toLowerCase(); if (k) map[k]=true; });
+          if (Object.keys(map).length) { next[emoji]=map; changed = true; }
+        } else if (users && typeof users === 'object') {
+          next[emoji] = users;
+        }
+      });
+      if (changed) updates[`${s.key}/reactions`] = next;
+    });
+    if (Object.keys(updates).length) await ref.update(updates);
+  }
+}
+
 
     // ---- image utils (валідація + компресія) ----
 const MAX_UPLOAD_MB = 5;
