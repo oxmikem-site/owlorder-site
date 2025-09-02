@@ -4040,11 +4040,6 @@ picker.addEventListener("emoji-click", async e => {
   }, 0);
 }
 
-async function toggleReactionForMessage(section, key, emoji) {
-  const wallet = (getConnectedWalletAddress() || '').toLowerCase();
-  if (!wallet) return;
-  const ref = getChatMessagesRef(section).child(key).child('reactions');
-
  async function toggleReactionForMessage(section, key, emoji) {
    const wallet = (getConnectedWalletAddress() || '').toLowerCase();
    if (!wallet) return;
