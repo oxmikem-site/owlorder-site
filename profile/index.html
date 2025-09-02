@@ -3245,10 +3245,22 @@ if (!isActive && (replyIsToMe || mentionIsToMe) && m.timestamp > lastReplySeen) 
   return db.ref(`users/${wallet}/profile`);
 }
 
+                async function ensureProfileOwnership(wallet){
+  const uid = window.CURRENT_UID;
+  if (!uid) throw new Error('Auth not ready');
+  try {
+    await getUserProfileRef(wallet).child('ownerUid').set(uid);
+  } catch (e) {
+  }
+}
+
                async function loadSettings(wallet) {
   if (!wallet) return {nickname:'', socials:{}, wallets:{btc:[], evm:[]}};
+let data = {};
+try {
   const snap = await getUserProfileRef(wallet).get();
-  const data = snap.val() || {};
+  data = snap.val() || {};
+} catch { data = {}; }
 
   const nickname = data.nickname || '';
 
@@ -3333,9 +3345,14 @@ async function addWallet(type) {
   if (type === 'btc' && !isValidBTC(addr)) return alert('Invalid Bitcoin address');
   if (type === 'evm' && !isValidETH(addr)) return alert('Invalid Ethereum address');
 
+  await ensureProfileOwnership(wallet);
+
   const ref = getUserProfileRef(wallet).child('wallets');
-  const snap = await ref.get();
-  const wallets = snap.val() || { btc:[], evm:[] };
+  let wallets = { btc:[], evm:[] };
+  try {
+    const snap = await ref.get();
+    wallets = snap.val() || { btc:[], evm:[] };
+  } catch {}
 
   const list = Array.isArray(wallets[type]) ? wallets[type] : [];
   if (list.length >= 10) return alert('Limit is 10 addresses.');
@@ -3354,18 +3371,14 @@ async function saveNickname() {
   if (!inp) return;
 
   const nickname = (inp.value || '').trim().slice(0,24);
-
   const uid = window.CURRENT_UID;
   if (!uid) return alert('Auth not ready');
 
-  const ref = getUserProfileRef(wallet);
-  const snap = await ref.get();
-  const hasOwner = !!(snap.val() && snap.val().ownerUid);
+  // 1) гарантуємо ownerUid
+  await ensureProfileOwnership(wallet);
 
-  await ref.update({
-    nickname,
-    ...(hasOwner ? {} : { ownerUid: uid })
-  });
+  // 2) пишемо ЛИШЕ поле nickname (не в корінь profile)
+  await getUserProfileRef(wallet).child('nickname').set(nickname);
 
   currentUserNickname = nickname;
   await populateSidebarUserInfo(wallet);
@@ -3391,7 +3404,7 @@ if (addEvm) addEvm.onclick = () => addWallet('evm');
 loadSettings(wallet);
 }
 
-                async function saveSocials(){
+async function saveSocials(){
   const wallet = getConnectedWalletAddress();
   if (!wallet) return alert('Connect wallet first');
 
@@ -3404,29 +3417,33 @@ loadSettings(wallet);
     return alert('Enter a valid X/Twitter handle, e.g. @owl_art');
   }
   if (dcRaw && !isValidDiscordHandle(dcRaw)) {
-    return alert('Enter a valid Discord username, e.g. owl.art or owl#1234');
+    return alert('Enter a valid Discord username, e.g. owl.art');
   }
 
   const twHandle = normalizeTwitterHandle(twRaw);
   const dcHandle = normalizeDiscordHandle(dcRaw);
 
-  const ref = getUserProfileRef(wallet);
-  const snap = await ref.get();
-  const hasOwner = !!(snap.val() && snap.val().ownerUid);
   const uid = window.CURRENT_UID;
   if (!uid) return alert('Auth not ready');
 
-  await ref.update({
-    ...(hasOwner ? {} : { ownerUid: uid }),
-    socials: {
-      twitter: { connected: true, handle: twHandle, url: `https://x.com/${twHandle}` },
-      discord: { connected: true, handle: dcHandle }
-    }
+  // 1) гарантуємо ownerUid
+  await ensureProfileOwnership(wallet);
+
+  // 2) оновлюємо лише підвузол socials
+  await getUserProfileRef(wallet).child('socials').update({
+    twitter: twHandle
+      ? { connected: true, handle: twHandle, url: `https://x.com/${twHandle}` }
+      : { connected: false },
+    discord: dcHandle
+      ? { connected: true, handle: dcHandle }
+      : { connected: false }
   });
 
   const status = document.getElementById('settings-social-status');
   if (status) {
-    status.textContent = `Twitter: @${twHandle} · Discord: ${dcHandle}`;
+    const twTxt = twHandle ? '@' + twHandle : 'not connected';
+    const dcTxt = dcHandle || 'not connected';
+    status.textContent = `Twitter: ${twTxt} · Discord: ${dcTxt}`;
   }
   alert('Socials saved');
 }
