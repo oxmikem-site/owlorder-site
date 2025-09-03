@@ -2030,6 +2030,24 @@ function isMentionForWallet(msg, wallet){
   return false;
 }
 
+                function refreshRoleHighlights(){
+  const me = getConnectedWalletAddress && getConnectedWalletAddress();
+  if (!me) return;
+
+  document.querySelectorAll('.chat-messages .message-wrapper').forEach(wrap => {
+    const msgEl = wrap.querySelector('.chat-message');
+    if (!msgEl) return;
+
+    const sender  = msgEl.dataset.senderFull || '';
+    const rawText = msgEl.dataset.rawText   || '';
+
+    const m = { sender, mentions: buildMentions(rawText) };
+    if (isMentionForWallet(m, me)) {
+      wrap.classList.add('reply-highlight');
+    }
+  });
+}
+
 
 function shortenAddress(addr) {
   return addr ? addr.slice(0, 6) + "..." + addr.slice(-4) : "";
@@ -2999,6 +3017,7 @@ getHolderInfoOnce(address).then(info => {
       connectBtn.style.display = "none";
     }
   }
+  refreshRoleHighlights();
 });
 }
 
@@ -4333,8 +4352,8 @@ document.addEventListener('visibilitychange', async () => {
       .find(a => a.closest('li')?.style.display !== 'none');
     if (firstVisibleLink) firstVisibleLink.click();
   }
-
   updateMobileSectionsDropdown();
+    refreshRoleHighlights();
 });
     
 document.querySelectorAll('#sidebar-nav a[data-section]').forEach(a => {
@@ -4465,6 +4484,7 @@ getHolderInfoOnce(address).then(info => {
       setChatInputsEnabled(can, currentWallet);
       if (can) showSection('collection');
       await recalcSectionIndicators(address);
+          refreshRoleHighlights();
     });
   } catch (e) {
     console.error(e);
@@ -4595,6 +4615,7 @@ await populateSidebarUserInfo(address);
         updateMobileSectionsDropdown();
       if (can) showSection('collection');
       await recalcSectionIndicators(address);
+          refreshRoleHighlights();
     });
 
   } catch (err) {
@@ -4745,6 +4766,7 @@ if (!currentWallet) {
     setChatInputsEnabled(can, currentWallet);
     if (can) showSection('collection');
     await recalcSectionIndicators(currentWallet);
+        refreshRoleHighlights();
   });
 
     // якщо на старті якась секція вже активна — познач її прочитаною
