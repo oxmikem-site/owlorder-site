@@ -688,24 +688,36 @@ header{ position: relative; z-index: 50; }
   bottom:-6px;
 }
 
-
 .addr-row{
   position:relative;
   width:78%;
   margin:10px auto 0;
 }
+
 .addr-row .connect-wallet{
+  position:relative;
+  display:block;
   width:100%;
   margin:0;
-  display:block;
-}
-.rank-badge--addr{
-  position:absolute;
-  top:50%;
-  right:-6px;              
-  transform:translateY(-50%);
 }
 
+.addr-row .connect-wallet::after{
+  content:"# " attr(data-rank);
+  position:absolute;
+  top:50%;
+  right:-6px;
+  transform:translateY(-50%);
+  padding:6px 10px;
+  border-radius:12px;
+  background: var(--accent);
+  color:#000;
+  font-weight:700;
+  font-size:12px;
+  line-height:1;
+  white-space:nowrap;
+  box-shadow:0 4px 10px rgba(0,0,0,.5);
+  border:1px solid rgba(255,255,255,.15);
+}
 
 
   </style>
@@ -1029,14 +1041,11 @@ addrBtn.textContent = shortenAddress(address);
 addrBtn.style.cursor = "default";
 addrBtn.disabled = true;
 
-const rankBadge = document.createElement("span");
-rankBadge.className = "rank-badge rank-badge--addr";
-rankBadge.textContent = `#${result.rank}`;
-
+addrBtn.dataset.rank = result.rank; 
 addrRow.appendChild(addrBtn);
-addrRow.appendChild(rankBadge);
-wrapper.appendChild(addrRow);
+wrapper.appendChild(addrRow);  
 
+wrapper.querySelectorAll('.rank-badge--addr').forEach(el => el.remove());
 
     img.insertAdjacentElement("afterend", wrapper);
   } else {
