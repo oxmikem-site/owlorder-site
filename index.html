@@ -684,35 +684,35 @@ header{ position: relative; z-index: 50; }
 
 .rank-badge--avatar{ display:none !important; }
 
-
 .wallet-info .connect-wallet,
 .wallet-info a.connect-wallet,
-.wallet-info button.connect-wallet,
-.addr-row .connect-wallet{
-  max-width: none !important;
-}
-
-
-.addr-row{
-  position: relative;
+.wallet-info button.connect-wallet {
   width: 78%;
   margin: 10px auto 0;
-  overflow: visible;         
+  max-width: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.addr-row .connect-wallet{
+.addr-row {
+  width: 78%;
+  margin: 10px 0 0 calc((100% - 78%) / 2); 
+  overflow: visible;
+}
+
+.addr-row .connect-wallet {
   position: relative;
-  display: block;
   width: 100%;
   margin: 0;
+  max-width: none;
 }
 
-
-.addr-row .connect-wallet::after{
+.addr-row .connect-wallet::after {
   content: "# " attr(data-rank);
   position: absolute;
   top: 50%;
-  left: calc(100% + 8px);     
+  left: calc(100% + 8px);
   transform: translateY(-50%);
   padding: 6px 10px;
   border-radius: 12px;
@@ -725,20 +725,7 @@ header{ position: relative; z-index: 50; }
   box-shadow: 0 4px 10px rgba(0,0,0,.5);
   border: 1px solid rgba(255,255,255,.15);
 }
-.addr-row{
-  width: 78%;
-  margin: 10px 0 0 calc((100% - 78%) / 2);
-  margin-right: 0;
-  overflow: visible;
-}
 
-.addr-row .connect-wallet{
-  width: 100%;
-}
-
-.addr-row .connect-wallet::after{
-  left: calc(100% + 8px);
-}
   </style>
 </head>
 <body>
