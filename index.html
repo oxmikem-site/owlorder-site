@@ -682,43 +682,49 @@ header{ position: relative; z-index: 50; }
 }
 
 
-.rank-badge--avatar{
-  position:absolute;
-  right:-6px;
-  bottom:-6px;
+.rank-badge--avatar{ display:none !important; }
+
+
+.wallet-info .connect-wallet,
+.wallet-info a.connect-wallet,
+.wallet-info button.connect-wallet,
+.addr-row .connect-wallet{
+  max-width: none !important;
 }
 
+
 .addr-row{
-  position:relative;
-  width:78%;
-  margin:10px auto 0;
+  position: relative;
+  width: 78%;
+  margin: 10px auto 0;
+  overflow: visible;         
 }
 
 .addr-row .connect-wallet{
-  position:relative;
-  display:block;
-  width:100%;
-  margin:0;
+  position: relative;
+  display: block;
+  width: 100%;
+  margin: 0;
 }
+
 
 .addr-row .connect-wallet::after{
-  content:"# " attr(data-rank);
-  position:absolute;
-  top:50%;
-  right:-6px;
-  transform:translateY(-50%);
-  padding:6px 10px;
-  border-radius:12px;
+  content: "# " attr(data-rank);
+  position: absolute;
+  top: 50%;
+  left: calc(100% + 8px);     
+  transform: translateY(-50%);
+  padding: 6px 10px;
+  border-radius: 12px;
   background: var(--accent);
-  color:#000;
-  font-weight:700;
-  font-size:12px;
-  line-height:1;
-  white-space:nowrap;
-  box-shadow:0 4px 10px rgba(0,0,0,.5);
-  border:1px solid rgba(255,255,255,.15);
+  color: #000;
+  font-weight: 700;
+  font-size: 12px;
+  line-height: 1;
+  white-space: nowrap;
+  box-shadow: 0 4px 10px rgba(0,0,0,.5);
+  border: 1px solid rgba(255,255,255,.15);
 }
-
 
   </style>
 </head>
@@ -996,16 +1002,6 @@ async function handleWalletConnected(address) {
       img.parentNode.insertBefore(wrap, img);
       wrap.appendChild(img);
     }
-
-let badge = img.parentElement.querySelector('.rank-badge--avatar');
-if (!badge) {
-  badge = document.createElement('div');
-  badge.className = 'rank-badge rank-badge--avatar';
-  img.parentElement.appendChild(badge);
-}
-
-    badge.textContent = `#${result.rank}`;
-    badge.title = `Rank ${result.rank} of ${result.total.toLocaleString()}`;
 
     const stats = document.createElement("div");
     stats.className = "user-stats";
