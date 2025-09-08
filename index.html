@@ -623,6 +623,59 @@ header{ position: relative; z-index: 50; }
 .side-left{  left:  var(--side-art-offset, -60px); }
 .side-right{ right: var(--side-art-offset, -60px); }
 
+    /* ——— User stats chips ——— */
+.user-stats{
+  display:flex;
+  gap:10px;
+  margin-top:12px;
+}
+.stat-chip{
+  flex:1;
+  padding:10px 12px;
+  border-radius:12px;
+  background: linear-gradient(145deg,#1b1b1b,#101010);
+  border:1px solid rgba(255,255,255,.06);
+  box-shadow:
+    0 4px 10px rgba(0,0,0,.6),
+    inset 0 1px 0 rgba(255,255,255,.05),
+    inset 0 -1px 0 rgba(0,0,0,.4);
+}
+.stat-chip .label{
+  font-size:11px;
+  letter-spacing:.6px;
+  text-transform:uppercase;
+  color: var(--accent-color);
+  opacity:.95;
+}
+.stat-chip .value{
+  margin-top:2px;
+  font-weight:700;
+  font-size:20px;
+  color:#fff;
+}
+.stat-chip .value .muted{
+  font-size:12px;
+  opacity:.7;
+  margin-left:4px;
+}
+.stat-chip .hint{
+  margin-top:4px;
+  font-size:11px;
+  opacity:.75;
+  color:#fff;
+}
+
+    /* ——— Rank badge біля аватарки ——— */
+.avatar-wrap{ position:relative; display:inline-block; }
+.rank-badge{
+  position:absolute; right:-6px; bottom:-6px;
+  padding:4px 10px; border-radius:999px;
+  background: linear-gradient(90deg,#bfa758,#d4c87c);
+  color:#2d2400; font-weight:700; font-size:12px;
+  border:1px solid rgba(255,255,255,.15);
+  box-shadow:0 4px 10px rgba(0,0,0,.5);
+}
+
   </style>
 </head>
 <body>
@@ -846,13 +899,30 @@ async function checkHolderInSheet(address){
   const res  = await fetch(sheetURL, { cache:'no-store' });
   const csv  = await res.text();
   const tbl  = parseCSV(csv);
+
   const head = tbl[0].map(h => (h||'').trim().toLowerCase());
-  const ai   = head.indexOf('holder address');
-  const pi   = head.indexOf('total points');
-  const me   = address.trim().toLowerCase();
-  const row  = tbl.slice(1).find(r => ((r[ai]||'')+'').trim().toLowerCase() === me);
-  return row ? { found:true, address, points:(r=>r? r.replace(/,/g,'') : '0')(row[pi]) }
-             : { found:false };
+  // намагаємось знайти колонки за назвою; якщо їх нема — падаємо на позиції [0,1,3]
+  let iRank = head.findIndex(h => h.includes('rank'));
+  let iAddr = head.findIndex(h => h.includes('address'));
+  let iPts  = head.findIndex(h => h.includes('points'));
+
+  if (iRank < 0 && iAddr < 0 && iPts < 0) { iRank = 0; iAddr = 1; iPts = 3; }
+
+  const rows  = tbl.slice(1);
+  const total = rows.length;
+  const me    = (address||'').trim().toLowerCase();
+
+  let rank = null, points = null;
+  for (const r of rows){
+    const addr = ((r[iAddr]||'')+'').trim().toLowerCase();
+    if (addr === me){
+      rank   = Number(((r[iRank]||'')+'').replace(/[^\d]/g,''));
+      points = Number(((r[iPts] || '0')+'').replace(/,/g,''));
+      break;
+    }
+  }
+  if (rank == null) return { found:false };
+  return { found:true, address, points, rank, total };
 }
 
 async function handleWalletConnected(address) {
@@ -871,17 +941,46 @@ async function handleWalletConnected(address) {
   wrapper.style.cssText = "margin-top:16px;font-size:15px;line-height:1.6;";
 
   if (result.found) {
-    // приховуємо стару кнопку CONNECT WALLET у юзер-панелі
+    // ховаємо CONNECT WALLET збоку
     if (sideBtn) sideBtn.style.display = "none";
-
     img.style.display = "block";
 
-    const totalPointsEl = document.createElement("div");
-    totalPointsEl.style.cssText = "margin-top:10px;font-size:15px;";
-    totalPointsEl.innerHTML = `<strong>Total Points:</strong> ${result.points}`;
-    wrapper.appendChild(totalPointsEl);
+    // обгортаємо аватарку контейнером, щоб навісити бейдж
+    if (!img.parentElement.classList.contains('avatar-wrap')) {
+      const wrap = document.createElement('div');
+      wrap.className = 'avatar-wrap';
+      img.parentNode.insertBefore(wrap, img);
+      wrap.appendChild(img);
+    }
 
-    // Profile (повна ширина, як у хедері)
+    // створюємо/оновлюємо бейдж із позицією в лідерборді
+    let badge = img.parentElement.querySelector('.rank-badge');
+    if (!badge) {
+      badge = document.createElement('div');
+      badge.className = 'rank-badge';
+      img.parentElement.appendChild(badge);
+    }
+    badge.textContent = `#${result.rank}`;
+    badge.title = `Rank ${result.rank} of ${result.total.toLocaleString()}`;
+
+    // картки-статистики
+    const stats = document.createElement("div");
+    stats.className = "user-stats";
+    stats.innerHTML = `
+      <div class="stat-chip">
+        <div class="label">Total Points</div>
+        <div class="value">${Number(result.points).toLocaleString()}</div>
+        <div class="hint">accumulated from snapshots</div>
+      </div>
+      <div class="stat-chip">
+        <div class="label">Leaderboard Rank</div>
+        <div class="value">#${result.rank}<span class="muted"> / ${result.total.toLocaleString()}</span></div>
+        <div class="hint">exact position</div>
+      </div>
+    `;
+    wrapper.appendChild(stats);
+
+    // кнопки як і було
     const profileBtn = document.createElement("a");
     profileBtn.href = "https://owlbtc.art/profile/";
     profileBtn.textContent = "Profile";
@@ -890,7 +989,6 @@ async function handleWalletConnected(address) {
     profileBtn.style.textDecoration = "none";
     wrapper.appendChild(profileBtn);
 
-    // Адреса (не клікабельна)
     const addrBtn = document.createElement("button");
     addrBtn.className = "connect-wallet profile-button";
     addrBtn.textContent = shortenAddress(address);
@@ -901,19 +999,22 @@ async function handleWalletConnected(address) {
 
     img.insertAdjacentElement("afterend", wrapper);
   } else {
-    // гість — показуємо кнопку CONNECT WALLET у юзер-панелі
+    // гість
     if (sideBtn) sideBtn.style.display = "";
     img.style.display = "none";
 
-    const getOwlBtn = document.createElement("button");
-    getOwlBtn.textContent = "Get your OWL";
-    getOwlBtn.className = "connect-wallet";
-    getOwlBtn.style.marginTop = "10px";
-    getOwlBtn.onclick = () => window.open("https://owlbtc.art/collection", "_blank");
-    userPanel.appendChild(getOwlBtn);
+    const overlay = userPanel.querySelector(".overlay") || userPanel;
+    if (!overlay.querySelector('#get-owl-btn')) {
+      const getOwlBtn = document.createElement("button");
+      getOwlBtn.id = "get-owl-btn";
+      getOwlBtn.textContent = "Get your OWL";
+      getOwlBtn.className = "connect-wallet";
+      getOwlBtn.style.marginTop = "10px";
+      getOwlBtn.onclick = () => window.open("https://owlbtc.art/collection", "_blank");
+      overlay.appendChild(getOwlBtn);
+    }
   }
 }
-
 
 async function loadtop5(){
   const res  = await fetch(sheetURL, { cache:'no-store' });
