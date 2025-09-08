@@ -676,6 +676,31 @@ header{ position: relative; z-index: 50; }
   box-shadow:0 4px 10px rgba(0,0,0,.5);
 }
 
+    /* адреса + бейдж у один ряд */
+.addr-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  width:78%;           /* як у ваших кнопок */
+  margin:10px auto 0;  /* вирівнювання по центру панелі */
+}
+.addr-row .connect-wallet{
+  width:100% !important; /* кнопка займає всю ширину в ряду */
+  margin:0;
+}
+
+/* маленький бейдж із позицією */
+.rank-badge{
+  padding:6px 10px;
+  border-radius:12px;
+  background: var(--accent);
+  color:#000;
+  font-weight:700;
+  font-size:12px;
+  line-height:1;
+  white-space:nowrap;
+}
+
   </style>
 </head>
 <body>
@@ -966,18 +991,17 @@ async function handleWalletConnected(address) {
     // картки-статистики
     const stats = document.createElement("div");
     stats.className = "user-stats";
-    stats.innerHTML = `
-      <div class="stat-chip">
-        <div class="label">Total Points</div>
-        <div class="value">${Number(result.points).toLocaleString()}</div>
-        <div class="hint">accumulated from snapshots</div>
-      </div>
-      <div class="stat-chip">
-        <div class="label">Leaderboard Rank</div>
-        <div class="value">#${result.rank}<span class="muted"> / ${result.total.toLocaleString()}</span></div>
-        <div class="hint">exact position</div>
-      </div>
-    `;
+stats.innerHTML = `
+  <div class="stat-chip">
+    <div class="label">Total Points</div>
+    <div class="value">${Number(result.points).toLocaleString()}</div>
+  </div>
+  <div class="stat-chip">
+    <div class="label">Leaderboard Rank</div>
+    <div class="value">#${result.rank}<span class="muted"> / ${result.total.toLocaleString()}</span></div>
+  </div>
+`;
+
     wrapper.appendChild(stats);
 
     // кнопки як і було
@@ -989,13 +1013,24 @@ async function handleWalletConnected(address) {
     profileBtn.style.textDecoration = "none";
     wrapper.appendChild(profileBtn);
 
-    const addrBtn = document.createElement("button");
-    addrBtn.className = "connect-wallet profile-button";
-    addrBtn.textContent = shortenAddress(address);
-    addrBtn.style.marginTop = "10px";
-    addrBtn.style.cursor = "default";
-    addrBtn.disabled = true;
-    wrapper.appendChild(addrBtn);
+
+const addrRow = document.createElement("div");
+addrRow.className = "addr-row";
+
+const addrBtn = document.createElement("button");
+addrBtn.className = "connect-wallet profile-button";
+addrBtn.textContent = shortenAddress(address);
+addrBtn.style.cursor = "default";
+addrBtn.disabled = true;
+
+const rankBadge = document.createElement("span");
+rankBadge.className = "rank-badge";
+rankBadge.textContent = `#${result.rank}`;
+
+addrRow.appendChild(addrBtn);
+addrRow.appendChild(rankBadge);
+wrapper.appendChild(addrRow);
+
 
     img.insertAdjacentElement("afterend", wrapper);
   } else {
