@@ -725,7 +725,20 @@ header{ position: relative; z-index: 50; }
   box-shadow: 0 4px 10px rgba(0,0,0,.5);
   border: 1px solid rgba(255,255,255,.15);
 }
+.addr-row{
+  width: 78%;
+  margin: 10px 0 0 calc((100% - 78%) / 2);
+  margin-right: 0;
+  overflow: visible;
+}
 
+.addr-row .connect-wallet{
+  width: 100%;
+}
+
+.addr-row .connect-wallet::after{
+  left: calc(100% + 8px);
+}
   </style>
 </head>
 <body>
