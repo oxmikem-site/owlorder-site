@@ -665,31 +665,9 @@ header{ position: relative; z-index: 50; }
   color:#fff;
 }
 
-    /* ——— Rank badge біля аватарки ——— */
+    /* ——— Rank badges ——— */
 .avatar-wrap{ position:relative; display:inline-block; }
-.rank-badge{
-  position:absolute; right:-6px; bottom:-6px;
-  padding:4px 10px; border-radius:999px;
-  background: linear-gradient(90deg,#bfa758,#d4c87c);
-  color:#2d2400; font-weight:700; font-size:12px;
-  border:1px solid rgba(255,255,255,.15);
-  box-shadow:0 4px 10px rgba(0,0,0,.5);
-}
 
-    /* адреса + бейдж у один ряд */
-.addr-row{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  width:78%;           /* як у ваших кнопок */
-  margin:10px auto 0;  /* вирівнювання по центру панелі */
-}
-.addr-row .connect-wallet{
-  width:100% !important; /* кнопка займає всю ширину в ряду */
-  margin:0;
-}
-
-/* маленький бейдж із позицією */
 .rank-badge{
   padding:6px 10px;
   border-radius:12px;
@@ -699,7 +677,37 @@ header{ position: relative; z-index: 50; }
   font-size:12px;
   line-height:1;
   white-space:nowrap;
+  box-shadow:0 4px 10px rgba(0,0,0,.5);
+  border:1px solid rgba(255,255,255,.15);
 }
+
+.avatar-wrap .rank-badge{
+  position:absolute;
+  right:-6px;
+  bottom:-6px;
+}
+
+.addr-row .rank-badge{
+  position:static;
+  margin-left:8px;
+  flex:0 0 auto;
+}
+
+.addr-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  width:78%;
+  margin:10px auto 0;
+  flex-wrap:nowrap;       
+}
+.addr-row .connect-wallet{
+  flex:1 1 auto;          
+  width:auto !important;   
+  margin:0;
+  min-width:0;
+}
+
 
   </style>
 </head>
