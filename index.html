@@ -665,7 +665,7 @@ header{ position: relative; z-index: 50; }
   color:#fff;
 }
 
-    /* ——— Rank badges ——— */
+/* ——— Rank badges ——— */
 .avatar-wrap{ position:relative; display:inline-block; }
 
 .rank-badge{
@@ -681,32 +681,31 @@ header{ position: relative; z-index: 50; }
   border:1px solid rgba(255,255,255,.15);
 }
 
-.avatar-wrap .rank-badge{
+
+.rank-badge--avatar{
   position:absolute;
   right:-6px;
   bottom:-6px;
 }
 
-.addr-row .rank-badge{
-  position:static;
-  margin-left:8px;
-  flex:0 0 auto;
-}
 
 .addr-row{
-  display:flex;
-  align-items:center;
-  gap:10px;
+  position:relative;
   width:78%;
   margin:10px auto 0;
-  flex-wrap:nowrap;       
 }
 .addr-row .connect-wallet{
-  flex:1 1 auto;          
-  width:auto !important;   
+  width:100%;
   margin:0;
-  min-width:0;
+  display:block;
 }
+.rank-badge--addr{
+  position:absolute;
+  top:50%;
+  right:-6px;              
+  transform:translateY(-50%);
+}
+
 
 
   </style>
@@ -974,11 +973,11 @@ async function handleWalletConnected(address) {
   wrapper.style.cssText = "margin-top:16px;font-size:15px;line-height:1.6;";
 
   if (result.found) {
-    // ховаємо CONNECT WALLET збоку
+
     if (sideBtn) sideBtn.style.display = "none";
     img.style.display = "block";
 
-    // обгортаємо аватарку контейнером, щоб навісити бейдж
+
     if (!img.parentElement.classList.contains('avatar-wrap')) {
       const wrap = document.createElement('div');
       wrap.className = 'avatar-wrap';
@@ -986,17 +985,16 @@ async function handleWalletConnected(address) {
       wrap.appendChild(img);
     }
 
-    // створюємо/оновлюємо бейдж із позицією в лідерборді
-    let badge = img.parentElement.querySelector('.rank-badge');
-    if (!badge) {
-      badge = document.createElement('div');
-      badge.className = 'rank-badge';
-      img.parentElement.appendChild(badge);
-    }
+let badge = img.parentElement.querySelector('.rank-badge--avatar');
+if (!badge) {
+  badge = document.createElement('div');
+  badge.className = 'rank-badge rank-badge--avatar';
+  img.parentElement.appendChild(badge);
+}
+
     badge.textContent = `#${result.rank}`;
     badge.title = `Rank ${result.rank} of ${result.total.toLocaleString()}`;
 
-    // картки-статистики
     const stats = document.createElement("div");
     stats.className = "user-stats";
 stats.innerHTML = `
@@ -1012,7 +1010,7 @@ stats.innerHTML = `
 
     wrapper.appendChild(stats);
 
-    // кнопки як і було
+
     const profileBtn = document.createElement("a");
     profileBtn.href = "https://owlbtc.art/profile/";
     profileBtn.textContent = "Profile";
@@ -1032,7 +1030,7 @@ addrBtn.style.cursor = "default";
 addrBtn.disabled = true;
 
 const rankBadge = document.createElement("span");
-rankBadge.className = "rank-badge";
+rankBadge.className = "rank-badge rank-badge--addr";
 rankBadge.textContent = `#${result.rank}`;
 
 addrRow.appendChild(addrBtn);
