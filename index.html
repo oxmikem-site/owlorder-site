@@ -684,6 +684,7 @@ header{ position: relative; z-index: 50; }
 
 .rank-badge--avatar{ display:none !important; }
 
+/* Кнопки в юзер-панелі = 78% і центр */
 .wallet-info .connect-wallet,
 .wallet-info a.connect-wallet,
 .wallet-info button.connect-wallet {
@@ -695,9 +696,10 @@ header{ position: relative; z-index: 50; }
   justify-content: center;
 }
 
+/* Рядок гаманця + бейдж вирівняний по лівому краю кнопки Profile */
 .addr-row {
   width: 78%;
-  margin: 10px 0 0 calc((100% - 78%) / 2); 
+  margin: 10px 0 0 calc((100% - 78%) / 2); /* той самий лівий край */
   overflow: visible;
 }
 
@@ -708,6 +710,7 @@ header{ position: relative; z-index: 50; }
   max-width: none;
 }
 
+/* Бейдж праворуч від кнопки */
 .addr-row .connect-wallet::after {
   content: "# " attr(data-rank);
   position: absolute;
@@ -725,6 +728,7 @@ header{ position: relative; z-index: 50; }
   box-shadow: 0 4px 10px rgba(0,0,0,.5);
   border: 1px solid rgba(255,255,255,.15);
 }
+
 
   </style>
 </head>
