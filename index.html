@@ -682,34 +682,29 @@ header{ position: relative; z-index: 50; }
 
 .rank-badge--avatar{ display:none !important; }
 
-/* 1) Спільні змінні для вирівнювання */
 .wallet-info{
   --btn-w: 78%;
-  --btn-ml: calc((100% - var(--btn-w)) / 2);
+  --btn-ml: 0;
 }
 
-/* 2) Кнопка Profile — як і було, але явно задаємо лівий відступ */
 .wallet-info .profile-button{
   width: var(--btn-w);
-  margin: 10px 0 0 var(--btn-ml);
+  margin: 10px 0 0 0;
 }
 
-/* 3) Контейнер рядка з адресою під той самий лівий край */
 .wallet-info .addr-row{
   width: var(--btn-w);
-  margin: 10px 0 0 var(--btn-ml);
+  margin: 10px 0 0 0;
   overflow: visible;
 }
 
-/* 4) Кнопка з адресою займає весь рядок */
 .wallet-info .addr-row .connect-wallet{
   position: relative;
   width: 100%;
   margin: 0;
-  max-width: none;
+  max-width: none; 
 }
 
-/* 5) Бейдж праворуч від кнопки */
 .wallet-info .addr-row .connect-wallet::after{
   content: "# " attr(data-rank);
   position: absolute;
@@ -727,6 +722,9 @@ header{ position: relative; z-index: 50; }
   box-shadow: 0 4px 10px rgba(0,0,0,.5);
   border: 1px solid rgba(255,255,255,.15);
 }
+
+
+.wallet-info .connect-wallet{ max-width: none; }
 
   </style>
 </head>
