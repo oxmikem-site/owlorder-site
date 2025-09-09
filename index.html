@@ -730,6 +730,39 @@ header{ position: relative; z-index: 50; }
 }
 
 
+.wallet-info{
+  --btn-w: 78%;
+  --btn-ml: calc((100% - var(--btn-w)) / 2);
+}
+
+.wallet-info .profile-button{
+  width: var(--btn-w);
+  margin: 10px 0 0 var(--btn-ml); 
+}
+
+
+.addr-row{
+  width: var(--btn-w);
+  margin: 10px 0 0 var(--btn-ml);
+  overflow: visible;
+}
+
+.addr-row .connect-wallet{
+  position: relative;
+  width: 100%;
+  margin: 0;
+  max-width: none;
+}
+
+.addr-row .connect-wallet::after{
+  content:"# " attr(data-rank);
+  position:absolute; top:50%; left:calc(100% + 8px); transform:translateY(-50%);
+  padding:6px 10px; border-radius:12px; background:var(--accent); color:#000; font-weight:700;
+  font-size:12px; line-height:1; white-space:nowrap; box-shadow:0 4px 10px rgba(0,0,0,.5);
+  border:1px solid rgba(255,255,255,.15);
+}
+
+
   </style>
 </head>
 <body>
