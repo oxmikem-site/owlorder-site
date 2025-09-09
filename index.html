@@ -848,27 +848,16 @@ async function fetchProfileImage(wallet) {
   const img = document.getElementById("profile-image");
   const res = await fetch(SNAPSHOT_CSV_URL);
   const csv = await res.text();
-  const rows = csv.split("\n").slice(1);
+  const rows = parseCSV(csv).slice(1); // без заголовка
 
   let match = null;
-  for (const row of rows) {
-    const cols = row.split(",");
-    const address = cols[1]?.trim();
-    const nftNumber = cols[9]?.trim();
-    if (address === wallet && nftNumber) {
-      match = nftNumber;
-      break;
-    }
+  for (const cols of rows) {
+    const address = (cols[1] || '').trim();
+    const nftNumber = (cols[9] || '').trim();
+    if (address === wallet && nftNumber) { match = nftNumber; break; }
   }
 
-  if (!match) {
-    img.src = "../logo1.png";
-    img.style.display = "block";
-    return;
-  }
-
-  const imageURL = `${imageBaseURL}${match}.webp`;
-  img.src = imageURL;
+  img.src = match ? `${imageBaseURL}${match}.webp` : "../logo1.png";
   img.onerror = () => (img.src = "../logo1.png");
   img.style.display = "block";
 }
