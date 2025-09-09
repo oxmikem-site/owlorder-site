@@ -513,9 +513,7 @@
 .wallet-info button.connect-wallet {
   display: inline-flex;         
   align-items: center;
-  justify-content: center;
-  width: 78%;                 
-  margin: 10px auto 0;     
+  justify-content: center;   
   padding: 6px 14px;         
   line-height: 1;                
   height: auto;                 
@@ -684,34 +682,35 @@ header{ position: relative; z-index: 50; }
 
 .rank-badge--avatar{ display:none !important; }
 
-/* Кнопки в юзер-панелі = 78% і центр */
-.wallet-info .connect-wallet,
-.wallet-info a.connect-wallet,
-.wallet-info button.connect-wallet {
-  width: 78%;
-  margin: 10px auto 0;
-  max-width: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+/* 1) Спільні змінні для вирівнювання */
+.wallet-info{
+  --btn-w: 78%;
+  --btn-ml: calc((100% - var(--btn-w)) / 2);
 }
 
-/* Рядок гаманця + бейдж вирівняний по лівому краю кнопки Profile */
-.addr-row {
-  width: 78%;
-  margin: 10px auto 0;   /* ← те саме центрування, що й у Profile */
+/* 2) Кнопка Profile — як і було, але явно задаємо лівий відступ */
+.wallet-info .profile-button{
+  width: var(--btn-w);
+  margin: 10px 0 0 var(--btn-ml);
+}
+
+/* 3) Контейнер рядка з адресою під той самий лівий край */
+.wallet-info .addr-row{
+  width: var(--btn-w);
+  margin: 10px 0 0 var(--btn-ml);
   overflow: visible;
 }
 
-.addr-row .connect-wallet {
+/* 4) Кнопка з адресою займає весь рядок */
+.wallet-info .addr-row .connect-wallet{
   position: relative;
   width: 100%;
   margin: 0;
   max-width: none;
 }
 
-/* Бейдж праворуч від кнопки */
-.addr-row .connect-wallet::after {
+/* 5) Бейдж праворуч від кнопки */
+.wallet-info .addr-row .connect-wallet::after{
   content: "# " attr(data-rank);
   position: absolute;
   top: 50%;
@@ -728,40 +727,6 @@ header{ position: relative; z-index: 50; }
   box-shadow: 0 4px 10px rgba(0,0,0,.5);
   border: 1px solid rgba(255,255,255,.15);
 }
-
-
-.wallet-info{
-  --btn-w: 78%;
-  --btn-ml: calc((100% - var(--btn-w)) / 2);
-}
-
-.wallet-info .profile-button{
-  width: var(--btn-w);
-  margin: 10px 0 0 var(--btn-ml); 
-}
-
-
-.addr-row{
-  width: var(--btn-w);
-  margin: 10px 0 0 var(--btn-ml);
-  overflow: visible;
-}
-
-.addr-row .connect-wallet{
-  position: relative;
-  width: 100%;
-  margin: 0;
-  max-width: none;
-}
-
-.addr-row .connect-wallet::after{
-  content:"# " attr(data-rank);
-  position:absolute; top:50%; left:calc(100% + 8px); transform:translateY(-50%);
-  padding:6px 10px; border-radius:12px; background:var(--accent); color:#000; font-weight:700;
-  font-size:12px; line-height:1; white-space:nowrap; box-shadow:0 4px 10px rgba(0,0,0,.5);
-  border:1px solid rgba(255,255,255,.15);
-}
-
 
   </style>
 </head>
